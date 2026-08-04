@@ -10,7 +10,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://apis.google.com/js/platform.js"></script>
     <style>
         * {
             -webkit-touch-callout: none;
@@ -44,7 +44,7 @@
         const { useState, useEffect } = React;
 
         const CLIENT_ID = '170316275267-hdnt6plii4tdk8k70uuqbvqdsulffuk5.apps.googleusercontent.com';
-        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+        const SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file'];
 
         const SITES = {
             NX: { label: 'NX', hex: '#FFBE0B', bg: 'rgba(255, 190, 11, 0.08)' },
@@ -83,48 +83,77 @@
                     const token = localStorage.getItem('gauth_token');
                     if (token) {
                         setIsLoggedIn(true);
+                        initGoogleApi(token);
                     }
                 } catch (error) {
                     console.log('No saved data');
                 }
-                initGoogleApi();
             }, []);
 
-            const initGoogleApi = () => {
-                gapi.load('client:auth2', () => {
+            const initGoogleApi = (token) => {
+                if (window.gapi && window.gapi.client) {
                     gapi.client.init({
+                        apiKey: null,
                         clientId: CLIENT_ID,
-                        scope: SCOPES,
-                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                    }).then(() => {
-                        const auth = gapi.auth2.getAuthInstance();
-                        if (auth.isSignedIn.get()) {
-                            setIsLoggedIn(true);
-                        }
-                    });
-                });
+                        scope: SCOPES.join(' '),
+                        discoveryDocs: [
+                            'https://sheets.googleapis.com/$discovery/rest?version=v4',
+                            'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+                        ]
+                    }).catch(err => console.log('API init error:', err));
+                }
             };
 
             const handleGoogleLogin = async () => {
                 try {
-                    const auth = gapi.auth2.getAuthInstance();
-                    await auth.signIn();
-                    const token = auth.currentUser.get().getAuthResponse().id_token;
-                    localStorage.setItem('gauth_token', token);
-                    setIsLoggedIn(true);
-                    alert('Signed in successfully!');
+                    if (!window.gapi) {
+                        alert('Google API not loaded yet. Please wait and try again.');
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = 'https://accounts.google.com/gsi/client';
+                    script.async = true;
+                    script.onload = () => {
+                        if (window.google && window.google.accounts) {
+                            window.google.accounts.id.initialize({
+                                client_id: CLIENT_ID,
+                                callback: handleCredentialResponse
+                            });
+                            
+                            const btn = document.createElement('button');
+                            btn.style.display = 'none';
+                            document.body.appendChild(btn);
+                            
+                            window.google.accounts.id.renderButton(btn, { theme: 'outline', size: 'large' });
+                            btn.click();
+                        }
+                    };
+                    document.head.appendChild(script);
                 } catch (error) {
-                    alert('Sign in failed: ' + error.message);
+                    alert('Sign in error: ' + (error.message || 'Unknown error'));
+                }
+            };
+
+            const handleCredentialResponse = async (response) => {
+                try {
+                    if (response.credential) {
+                        localStorage.setItem('gauth_token', response.credential);
+                        setIsLoggedIn(true);
+                        initGoogleApi(response.credential);
+                        alert('Signed in successfully!');
+                    }
+                } catch (error) {
+                    alert('Failed to save credentials: ' + error.message);
                 }
             };
 
             const handleGoogleLogout = () => {
-                const auth = gapi.auth2.getAuthInstance();
-                auth.signOut();
                 localStorage.removeItem('gauth_token');
                 localStorage.removeItem('sheetId');
                 setIsLoggedIn(false);
                 setSheetId(null);
+                alert('Signed out');
             };
 
             const syncToGoogleSheets = async (jobsToSync) => {
@@ -135,22 +164,31 @@
 
                 setSyncing(true);
                 try {
+                    const token = localStorage.getItem('gauth_token');
                     let currentSheetId = sheetId;
 
                     if (!currentSheetId) {
-                        // Create new sheet
-                        const resource = {
-                            properties: { title: 'Job Logger' }
-                        };
-                        const response = await gapi.client.sheets.spreadsheets.create({
-                            resource: resource
+                        const createResponse = await fetch('https://sheets.googleapis.com/v4/spreadsheets?key=' + CLIENT_ID, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                properties: { title: 'Job Logger' }
+                            })
                         });
-                        currentSheetId = response.result.spreadsheetId;
+
+                        if (!createResponse.ok) {
+                            throw new Error('Failed to create sheet');
+                        }
+
+                        const createData = await createResponse.json();
+                        currentSheetId = createData.spreadsheetId;
                         setSheetId(currentSheetId);
                         localStorage.setItem('sheetId', currentSheetId);
                     }
 
-                    // Prepare data
                     const values = [['Ticket Number', 'Date', 'Site', 'Start Time', 'Finish Time', 'Work Done', 'Parts Used']];
                     
                     jobsToSync.forEach(job => {
@@ -175,17 +213,21 @@
                         ]);
                     });
 
-                    // Clear existing data and write new
-                    await gapi.client.sheets.spreadsheets.values.clear({
-                        spreadsheetId: currentSheetId,
-                        range: 'Sheet1'
+                    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${currentSheetId}/values/Sheet1:clearBasic`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        }
                     });
 
-                    await gapi.client.sheets.spreadsheets.values.update({
-                        spreadsheetId: currentSheetId,
-                        range: 'Sheet1!A1',
-                        valueInputOption: 'USER_ENTERED',
-                        resource: { values: values }
+                    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${currentSheetId}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ values: values })
                     });
 
                     setSyncing(false);
@@ -241,7 +283,6 @@
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
                 
-                // Auto-sync to Google Sheets
                 if (isLoggedIn) {
                     await syncToGoogleSheets(updatedJobs);
                 }
@@ -255,7 +296,6 @@
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
                 
-                // Update Google Sheets
                 if (isLoggedIn) {
                     await syncToGoogleSheets(updatedJobs);
                 }
@@ -284,27 +324,6 @@
                 }
             };
 
-            const formatDate = (dateTimeString) => {
-                if (!dateTimeString) return '';
-                const date = new Date(dateTimeString);
-                return date.toLocaleDateString('en-GB', { 
-                    weekday: 'short', 
-                    year: '2-digit', 
-                    month: '2-digit', 
-                    day: '2-digit' 
-                });
-            };
-
-            const formatDateOnly = (dateTimeString) => {
-                if (!dateTimeString) return '';
-                const date = new Date(dateTimeString);
-                return date.toLocaleDateString('en-GB', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                });
-            };
-
             const formatDateTime = (dateTimeString) => {
                 if (!dateTimeString) return '';
                 const date = new Date(dateTimeString);
@@ -316,6 +335,16 @@
                 }) + ' ' + date.toLocaleTimeString('en-GB', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
+                });
+            };
+
+            const formatDateOnly = (dateTimeString) => {
+                if (!dateTimeString) return '';
+                const date = new Date(dateTimeString);
+                return date.toLocaleDateString('en-GB', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
                 });
             };
 
@@ -340,7 +369,6 @@
             });
 
             return React.createElement('div', { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' } },
-                // Header
                 React.createElement('div', { style: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } },
                     React.createElement('h1', { style: { fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#111827' } }, 'Logger'),
                     React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
@@ -363,14 +391,11 @@
                     )
                 ),
 
-                // Sync Status
                 isLoggedIn && React.createElement('div', { style: { backgroundColor: '#D1FAE5', borderBottom: '1px solid #6EE7B7', padding: '0.75rem 1rem', fontSize: '0.75rem', color: '#065F46', textAlign: 'center', fontWeight: '600' } },
                     syncing ? '⏳ Syncing to Google Sheets...' : '✓ Connected to Google Sheets'
                 ),
 
-                // Content
                 React.createElement('div', { style: { flex: 1, overflowY: 'auto' } },
-                    // New Job Card
                     showNewCard && React.createElement('div', { style: { padding: '1rem', paddingBottom: '8rem' } },
                         React.createElement('div', { style: { backgroundColor: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' } },
                             React.createElement('div', null,
@@ -472,7 +497,6 @@
                         )
                     ),
 
-                    // Jobs List
                     !showNewCard && React.createElement('div', { style: { padding: '1rem' } },
                         monthKeys.length === 0 ? 
                             React.createElement('div', { style: { textAlign: 'center', paddingTop: '4rem', paddingBottom: '4rem' } },
