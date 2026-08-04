@@ -13,7 +13,14 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
+
+        const SITES = {
+            NX: { label: 'NX', color: 'bg-blue-500', textColor: 'text-blue-600' },
+            WS: { label: 'WS', color: 'bg-green-500', textColor: 'text-green-600' },
+            RH: { label: 'RH', color: 'bg-red-500', textColor: 'text-red-600' },
+            MMUH: { label: 'MMUH', color: 'bg-purple-500', textColor: 'text-purple-600' }
+        };
 
         function JobLogger() {
             const [jobs, setJobs] = useState([]);
@@ -24,12 +31,12 @@
                 startDateTime: '',
                 finishDateTime: '',
                 workDone: '',
-                partsUsed: ''
+                parts: [{ partNumber: '', partDescription: '' }],
+                site: ''
             });
             const [expandedMonth, setExpandedMonth] = useState(null);
-            const [touchStart, setTouchStart] = useState(0);
+            const [showSiteSelector, setShowSiteSelector] = useState(false);
 
-            // Load jobs from localStorage
             useEffect(() => {
                 try {
                     const saved = localStorage.getItem('jobsData');
@@ -49,8 +56,10 @@
                     startDateTime: isoDateTime,
                     finishDateTime: isoDateTime,
                     workDone: '',
-                    partsUsed: ''
+                    parts: [{ partNumber: '', partDescription: '' }],
+                    site: ''
                 });
+                setShowSiteSelector(false);
             };
 
             const handleNewJob = () => {
@@ -60,9 +69,13 @@
             };
 
             const handleEditJob = (job) => {
-                setFormData(job);
+                setFormData({
+                    ...job,
+                    parts: job.parts || [{ partNumber: '', partDescription: '' }]
+                });
                 setEditingId(job.id);
                 setShowNewCard(true);
+                setShowSiteSelector(false);
             };
 
             const handleSave = () => {
@@ -83,13 +96,7 @@
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
                 setShowNewCard(false);
-                setFormData({
-                    ticketNumber: '',
-                    startDateTime: '',
-                    finishDateTime: '',
-                    workDone: '',
-                    partsUsed: ''
-                });
+                initializeForm();
             };
 
             const handleDelete = (id) => {
@@ -98,16 +105,49 @@
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
             };
 
-            const handleTouchStart = (e) => {
-                setTouchStart(e.touches[0].clientX);
+            const handlePartChange = (index, field, value) => {
+                const newParts = [...formData.parts];
+                newParts[index][field] = value;
+                
+                // Auto-add new row if current row is filled and it's the last row
+                if (field === 'partDescription' && value.trim() && index === newParts.length - 1) {
+                    newParts.push({ partNumber: '', partDescription: '' });
+                }
+                
+                setFormData({ ...formData, parts: newParts });
             };
 
-            const handleTouchEnd = (e) => {
-                if (!touchStart) return;
-                const touchEnd = e.changedTouches[0].clientX;
-                if (touchStart - touchEnd > 50) {
-                    handleSave();
+            const handlePartKeyPress = (index, field, e) => {
+                if (e.key === 'Enter' && field === 'partDescription') {
+                    const newParts = [...formData.parts];
+                    if (formData.parts[index].partNumber.trim() && formData.parts[index].partDescription.trim()) {
+                        if (index === newParts.length - 1) {
+                            newParts.push({ partNumber: '', partDescription: '' });
+                            setFormData({ ...formData, parts: newParts });
+                        }
+                    }
                 }
+            };
+
+            const handleBackupData = () => {
+                const backupData = {
+                    exportDate: new Date().toISOString(),
+                    jobs: jobs,
+                    totalJobs: jobs.length
+                };
+                
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `job-logger-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                alert(`Backup created! ${jobs.length} jobs saved.`);
             };
 
             const formatDate = (dateTimeString) => {
@@ -161,26 +201,31 @@
                     <div className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 shadow-sm z-10">
                         <div className="flex items-center justify-between">
                             <h1 className="text-2xl font-bold text-slate-900">Job Log</h1>
-                            {!showNewCard && (
-                                <button
-                                    onClick={handleNewJob}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700"
-                                >
-                                    + New Job
-                                </button>
-                            )}
+                            <div className="flex gap-2">
+                                {!showNewCard && (
+                                    <button
+                                        onClick={handleBackupData}
+                                        className="bg-green-600 text-white px-3 py-2 rounded-lg font-medium text-sm hover:bg-green-700"
+                                        title="Backup all jobs to your Files"
+                                    >
+                                        💾 Sync
+                                    </button>
+                                )}
+                                {!showNewCard && (
+                                    <button
+                                        onClick={handleNewJob}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700"
+                                    >
+                                        + New Job
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
                     {/* New Job Card */}
                     {showNewCard && (
-                        <div 
-                            onTouchStart={handleTouchStart}
-                            onTouchEnd={handleTouchEnd}
-                            className="mx-4 mt-6 p-6 bg-white rounded-xl shadow-lg border-2 border-blue-200"
-                        >
-                            <p className="text-xs text-slate-500 mb-4 text-center">Swipe left to save or use Save button</p>
-
+                        <div className="mx-4 mt-6 p-6 bg-white rounded-xl shadow-lg border-2 border-blue-200 pb-20">
                             <div className="mb-5">
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Ticket Number</label>
                                 <input
@@ -224,15 +269,34 @@
 
                             <div className="mb-6">
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Parts Used</label>
-                                <textarea
-                                    value={formData.partsUsed}
-                                    onChange={(e) => setFormData({ ...formData, partsUsed: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-24 resize-none"
-                                    placeholder="List of parts used..."
-                                />
+                                <div className="border border-slate-300 rounded-lg overflow-hidden">
+                                    <div className="bg-slate-100 grid grid-cols-2 font-semibold text-sm">
+                                        <div className="p-3 border-r border-slate-300">Part Number</div>
+                                        <div className="p-3">Part Description</div>
+                                    </div>
+                                    {formData.parts.map((part, index) => (
+                                        <div key={index} className="grid grid-cols-2 border-t border-slate-300">
+                                            <input
+                                                type="text"
+                                                value={part.partNumber}
+                                                onChange={(e) => handlePartChange(index, 'partNumber', e.target.value)}
+                                                className="p-3 border-r border-slate-300 text-sm outline-none focus:bg-blue-50"
+                                                placeholder="e.g. AB123"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={part.partDescription}
+                                                onChange={(e) => handlePartChange(index, 'partDescription', e.target.value)}
+                                                onKeyPress={(e) => handlePartKeyPress(index, 'partDescription', e)}
+                                                className="p-3 text-sm outline-none focus:bg-blue-50"
+                                                placeholder="e.g. Pump seal"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 mb-6">
                                 <button
                                     onClick={handleSave}
                                     className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
@@ -240,11 +304,36 @@
                                     Save Job
                                 </button>
                                 <button
-                                    onClick={() => setShowNewCard(false)}
+                                    onClick={() => {
+                                        setShowNewCard(false);
+                                        setEditingId(null);
+                                    }}
                                     className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg font-semibold hover:bg-slate-300"
                                 >
                                     Cancel
                                 </button>
+                            </div>
+
+                            {/* Site Selector at bottom */}
+                            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-50">
+                                <div className="flex justify-around gap-2">
+                                    {Object.entries(SITES).map(([key, site]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => {
+                                                setFormData({ ...formData, site: key });
+                                                setShowSiteSelector(false);
+                                            }}
+                                            className={`flex-1 py-3 rounded-lg font-semibold transition ${
+                                                formData.site === key
+                                                    ? `${site.color} text-white`
+                                                    : `bg-slate-200 text-slate-700 hover:bg-slate-300`
+                                            }`}
+                                        >
+                                            {site.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -283,10 +372,20 @@
                                                     >
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div className="flex-1">
-                                                                <p className="font-semibold text-slate-900">
-                                                                    {formatDate(job.startDateTime)} - {job.ticketNumber}
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <p className="font-semibold text-slate-900">
+                                                                        {formatDate(job.startDateTime)}
+                                                                    </p>
+                                                                    {job.site && (
+                                                                        <span className={`${SITES[job.site].color} text-white px-2 py-1 rounded text-xs font-bold`}>
+                                                                            {SITES[job.site].label}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-blue-600 mb-1">
+                                                                    Ticket: {job.ticketNumber}
                                                                 </p>
-                                                                <p className="text-xs text-slate-500 mt-1">
+                                                                <p className="text-xs text-slate-500">
                                                                     {formatDateTime(job.startDateTime)} to {formatDateTime(job.finishDateTime)}
                                                                 </p>
                                                             </div>
@@ -305,8 +404,10 @@
                                                         {job.workDone && (
                                                             <p className="text-sm text-slate-600 mb-2 line-clamp-2">{job.workDone}</p>
                                                         )}
-                                                        {job.partsUsed && (
-                                                            <p className="text-xs text-slate-500">Parts: {job.partsUsed.split('\n')[0]}</p>
+                                                        {job.parts && job.parts.some(p => p.partNumber || p.partDescription) && (
+                                                            <p className="text-xs text-slate-500">
+                                                                Parts: {job.parts.filter(p => p.partNumber || p.partDescription).length}
+                                                            </p>
                                                         )}
                                                     </div>
                                                 ))}
