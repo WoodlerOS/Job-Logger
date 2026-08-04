@@ -10,6 +10,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         * {
             -webkit-touch-callout: none;
@@ -25,6 +26,8 @@
             position: fixed;
             width: 100%;
             height: 100vh;
+            margin: 0;
+            padding: 0;
         }
         #root {
             width: 100%;
@@ -40,17 +43,23 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        const CLIENT_ID = '170316275267-hdnt6plii4tdk8k70uuqbvqdsulffuk5.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+
         const SITES = {
-            NX: { label: 'NX', hex: '#FFBE0B', rgb: 'rgb(255, 190, 11)' },
-            WS: { label: 'WS', hex: '#FF006E', rgb: 'rgb(255, 0, 110)' },
-            RH: { label: 'RH', hex: '#06D6A0', rgb: 'rgb(6, 214, 160)' },
-            MMUH: { label: 'MMUH', hex: '#F97316', rgb: 'rgb(249, 115, 22)' }
+            NX: { label: 'NX', hex: '#FFBE0B', bg: 'rgba(255, 190, 11, 0.08)' },
+            WS: { label: 'WS', hex: '#FF006E', bg: 'rgba(255, 0, 110, 0.08)' },
+            RH: { label: 'RH', hex: '#06D6A0', bg: 'rgba(6, 214, 160, 0.08)' },
+            MMUH: { label: 'MMUH', hex: '#F97316', bg: 'rgba(249, 115, 22, 0.08)' }
         };
 
         function JobLogger() {
             const [jobs, setJobs] = useState([]);
             const [showNewCard, setShowNewCard] = useState(false);
             const [editingId, setEditingId] = useState(null);
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [sheetId, setSheetId] = useState(null);
+            const [syncing, setSyncing] = useState(false);
             const [formData, setFormData] = useState({
                 ticketNumber: '',
                 startDateTime: '',
@@ -67,10 +76,124 @@
                     if (saved) {
                         setJobs(JSON.parse(saved));
                     }
+                    const savedSheetId = localStorage.getItem('sheetId');
+                    if (savedSheetId) {
+                        setSheetId(savedSheetId);
+                    }
+                    const token = localStorage.getItem('gauth_token');
+                    if (token) {
+                        setIsLoggedIn(true);
+                    }
                 } catch (error) {
-                    console.log('No saved jobs');
+                    console.log('No saved data');
                 }
+                initGoogleApi();
             }, []);
+
+            const initGoogleApi = () => {
+                gapi.load('client:auth2', () => {
+                    gapi.client.init({
+                        clientId: CLIENT_ID,
+                        scope: SCOPES,
+                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4', 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                    }).then(() => {
+                        const auth = gapi.auth2.getAuthInstance();
+                        if (auth.isSignedIn.get()) {
+                            setIsLoggedIn(true);
+                        }
+                    });
+                });
+            };
+
+            const handleGoogleLogin = async () => {
+                try {
+                    const auth = gapi.auth2.getAuthInstance();
+                    await auth.signIn();
+                    const token = auth.currentUser.get().getAuthResponse().id_token;
+                    localStorage.setItem('gauth_token', token);
+                    setIsLoggedIn(true);
+                    alert('Signed in successfully!');
+                } catch (error) {
+                    alert('Sign in failed: ' + error.message);
+                }
+            };
+
+            const handleGoogleLogout = () => {
+                const auth = gapi.auth2.getAuthInstance();
+                auth.signOut();
+                localStorage.removeItem('gauth_token');
+                localStorage.removeItem('sheetId');
+                setIsLoggedIn(false);
+                setSheetId(null);
+            };
+
+            const syncToGoogleSheets = async (jobsToSync) => {
+                if (!isLoggedIn) {
+                    alert('Please sign in first');
+                    return;
+                }
+
+                setSyncing(true);
+                try {
+                    let currentSheetId = sheetId;
+
+                    if (!currentSheetId) {
+                        // Create new sheet
+                        const resource = {
+                            properties: { title: 'Job Logger' }
+                        };
+                        const response = await gapi.client.sheets.spreadsheets.create({
+                            resource: resource
+                        });
+                        currentSheetId = response.result.spreadsheetId;
+                        setSheetId(currentSheetId);
+                        localStorage.setItem('sheetId', currentSheetId);
+                    }
+
+                    // Prepare data
+                    const values = [['Ticket Number', 'Date', 'Site', 'Start Time', 'Finish Time', 'Work Done', 'Parts Used']];
+                    
+                    jobsToSync.forEach(job => {
+                        const startDate = new Date(job.startDateTime);
+                        const finishDate = new Date(job.finishDateTime);
+                        
+                        const partsText = job.parts && job.parts.length > 0
+                            ? job.parts
+                                .filter(p => p.partNumber || p.partDescription)
+                                .map(p => `${p.partNumber} - ${p.partDescription}`)
+                                .join('; ')
+                            : '';
+
+                        values.push([
+                            job.ticketNumber,
+                            startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                            SITES[job.site] ? SITES[job.site].label : '',
+                            startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                            finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                            job.workDone,
+                            partsText
+                        ]);
+                    });
+
+                    // Clear existing data and write new
+                    await gapi.client.sheets.spreadsheets.values.clear({
+                        spreadsheetId: currentSheetId,
+                        range: 'Sheet1'
+                    });
+
+                    await gapi.client.sheets.spreadsheets.values.update({
+                        spreadsheetId: currentSheetId,
+                        range: 'Sheet1!A1',
+                        valueInputOption: 'USER_ENTERED',
+                        resource: { values: values }
+                    });
+
+                    setSyncing(false);
+                } catch (error) {
+                    setSyncing(false);
+                    alert('Sync failed: ' + error.message);
+                }
+            };
 
             const initializeForm = () => {
                 const now = new Date();
@@ -100,7 +223,7 @@
                 setShowNewCard(true);
             };
 
-            const handleSave = () => {
+            const handleSave = async () => {
                 if (!formData.ticketNumber.trim()) {
                     alert('Please enter a ticket number');
                     return;
@@ -117,14 +240,25 @@
 
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
+                
+                // Auto-sync to Google Sheets
+                if (isLoggedIn) {
+                    await syncToGoogleSheets(updatedJobs);
+                }
+                
                 setShowNewCard(false);
                 initializeForm();
             };
 
-            const handleDelete = (id) => {
+            const handleDelete = async (id) => {
                 const updatedJobs = jobs.filter(job => job.id !== id);
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
+                
+                // Update Google Sheets
+                if (isLoggedIn) {
+                    await syncToGoogleSheets(updatedJobs);
+                }
             };
 
             const handlePartChange = (index, field, value) => {
@@ -148,27 +282,6 @@
                         }
                     }
                 }
-            };
-
-            const handleBackupData = () => {
-                const backupData = {
-                    exportDate: new Date().toISOString(),
-                    jobs: jobs,
-                    totalJobs: jobs.length
-                };
-                
-                const dataStr = JSON.stringify(backupData, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `job-logger-backup-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                alert(`Backup created! ${jobs.length} jobs saved.`);
             };
 
             const formatDate = (dateTimeString) => {
@@ -226,248 +339,202 @@
                 return dateB - dateA;
             });
 
-            const getCardBackground = (siteKey) => {
-                if (!siteKey || !SITES[siteKey]) return '#FFFFFF';
-                const site = SITES[siteKey];
-                // Return softer version with very light opacity
-                return `rgba(${site.rgb.match(/\d+/g).join(',')}, 0.08)`;
-            };
+            return React.createElement('div', { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' } },
+                // Header
+                React.createElement('div', { style: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } },
+                    React.createElement('h1', { style: { fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#111827' } }, 'Logger'),
+                    React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
+                        !showNewCard && (
+                            isLoggedIn ? 
+                                React.createElement('button', {
+                                    onClick: handleGoogleLogout,
+                                    style: { backgroundColor: '#DC2626', color: 'white', padding: '0.625rem 0.875rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.75rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                                }, 'Sign Out')
+                            :
+                                React.createElement('button', {
+                                    onClick: handleGoogleLogin,
+                                    style: { backgroundColor: '#4285F4', color: 'white', padding: '0.625rem 0.875rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.75rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                                }, 'Sign In')
+                        ),
+                        !showNewCard && React.createElement('button', {
+                            onClick: handleNewJob,
+                            style: { backgroundColor: '#3B82F6', color: 'white', padding: '0.625rem 1.25rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.875rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                        }, '+ Add')
+                    )
+                ),
 
-            return (
-                <div className="w-full h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col">
-                    {/* Header */}
-                    <div className="bg-white border-b border-slate-100 px-4 py-5 shadow-sm flex-shrink-0">
-                        <div className="flex items-center justify-between gap-3">
-                            <h1 className="text-3xl font-bold text-slate-900">Logger</h1>
-                            <div className="flex gap-2">
-                                {!showNewCard && (
-                                    <button
-                                        onClick={handleBackupData}
-                                        className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2.5 rounded-full font-semibold text-sm hover:from-emerald-600 hover:to-teal-600 shadow-md active:shadow-lg transition-all"
-                                        title="Backup all jobs"
-                                    >
-                                        💾
-                                    </button>
-                                )}
-                                {!showNewCard && (
-                                    <button
-                                        onClick={handleNewJob}
-                                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:from-blue-600 hover:to-blue-700 shadow-md active:shadow-lg transition-all"
-                                    >
-                                        + Add
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                // Sync Status
+                isLoggedIn && React.createElement('div', { style: { backgroundColor: '#D1FAE5', borderBottom: '1px solid #6EE7B7', padding: '0.75rem 1rem', fontSize: '0.75rem', color: '#065F46', textAlign: 'center', fontWeight: '600' } },
+                    syncing ? '⏳ Syncing to Google Sheets...' : '✓ Connected to Google Sheets'
+                ),
 
-                    {/* Content Area */}
-                    <div className="flex-1 overflow-y-auto">
-                        {/* New Job Card */}
-                        {showNewCard && (
-                            <div className="p-4 pb-32">
-                                <div className="bg-white rounded-3xl shadow-lg p-6 space-y-5">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">Ticket Number</label>
-                                        <input
-                                            type="text"
-                                            value={formData.ticketNumber}
-                                            onChange={(e) => setFormData({ ...formData, ticketNumber: e.target.value })}
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900"
-                                            placeholder="Enter ticket number"
-                                        />
-                                    </div>
+                // Content
+                React.createElement('div', { style: { flex: 1, overflowY: 'auto' } },
+                    // New Job Card
+                    showNewCard && React.createElement('div', { style: { padding: '1rem', paddingBottom: '8rem' } },
+                        React.createElement('div', { style: { backgroundColor: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' } },
+                            React.createElement('div', null,
+                                React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Ticket Number'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: formData.ticketNumber,
+                                    onChange: (e) => setFormData({ ...formData, ticketNumber: e.target.value }),
+                                    style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' },
+                                    placeholder: 'Enter ticket number'
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Start Date & Time'),
+                                React.createElement('input', {
+                                    type: 'datetime-local',
+                                    value: formData.startDateTime,
+                                    onChange: (e) => setFormData({ ...formData, startDateTime: e.target.value }),
+                                    style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' }
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Finish Date & Time'),
+                                React.createElement('input', {
+                                    type: 'datetime-local',
+                                    value: formData.finishDateTime,
+                                    onChange: (e) => setFormData({ ...formData, finishDateTime: e.target.value }),
+                                    style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' }
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Work Done'),
+                                React.createElement('textarea', {
+                                    value: formData.workDone,
+                                    onChange: (e) => setFormData({ ...formData, workDone: e.target.value }),
+                                    style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', minHeight: '8rem', resize: 'none', color: '#111827', fontFamily: 'inherit' },
+                                    placeholder: 'Detailed notes about work completed...'
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Parts Used'),
+                                React.createElement('div', { style: { border: '1px solid #E5E7EB', borderRadius: '1rem', overflow: 'hidden' } },
+                                    React.createElement('div', { style: { backgroundColor: '#F3F4F6', display: 'grid', gridTemplateColumns: '1fr 1fr', fontWeight: '600', fontSize: '0.75rem', color: '#374151' } },
+                                        React.createElement('div', { style: { padding: '0.75rem', borderRight: '1px solid #E5E7EB' } }, 'Part Number'),
+                                        React.createElement('div', { style: { padding: '0.75rem' } }, 'Part Description')
+                                    ),
+                                    formData.parts.map((part, index) =>
+                                        React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #E5E7EB' } },
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: part.partNumber,
+                                                onChange: (e) => handlePartChange(index, 'partNumber', e.target.value),
+                                                style: { padding: '0.75rem', borderRight: '1px solid #E5E7EB', fontSize: '0.875rem', outline: 'none', color: '#111827' },
+                                                placeholder: 'e.g. AB123'
+                                            }),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: part.partDescription,
+                                                onChange: (e) => handlePartChange(index, 'partDescription', e.target.value),
+                                                onKeyPress: (e) => handlePartKeyPress(index, 'partDescription', e),
+                                                style: { padding: '0.75rem', fontSize: '0.875rem', outline: 'none', color: '#111827' },
+                                                placeholder: 'e.g. Pump seal'
+                                            })
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement('div', { style: { display: 'flex', gap: '0.75rem', paddingTop: '1rem' } },
+                                React.createElement('button', {
+                                    onClick: handleSave,
+                                    style: { flex: 1, backgroundColor: '#3B82F6', color: 'white', padding: '0.75rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                                }, 'Save Job'),
+                                React.createElement('button', {
+                                    onClick: () => setShowNewCard(false),
+                                    style: { flex: 1, backgroundColor: '#F3F4F6', color: '#374151', padding: '0.75rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer' }
+                                }, 'Cancel')
+                            )
+                        ),
+                        React.createElement('div', { style: { marginTop: '1rem', backgroundColor: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
+                            React.createElement('p', { style: { fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0.5rem' } }, 'Select Site'),
+                            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
+                                Object.entries(SITES).map(([key, site]) =>
+                                    React.createElement('button', {
+                                        key: key,
+                                        onClick: () => setFormData({ ...formData, site: key }),
+                                        style: {
+                                            backgroundColor: formData.site === key ? site.hex : '#F3F4F6',
+                                            color: formData.site === key ? '#FFFFFF' : '#374151',
+                                            padding: '0.75rem',
+                                            borderRadius: '9999px',
+                                            fontWeight: '600',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }
+                                    }, site.label)
+                                )
+                            )
+                        )
+                    ),
 
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">Start Date & Time</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={formData.startDateTime}
-                                            onChange={(e) => setFormData({ ...formData, startDateTime: e.target.value })}
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">Finish Date & Time</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={formData.finishDateTime}
-                                            onChange={(e) => setFormData({ ...formData, finishDateTime: e.target.value })}
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">Work Done</label>
-                                        <textarea
-                                            value={formData.workDone}
-                                            onChange={(e) => setFormData({ ...formData, workDone: e.target.value })}
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-32 resize-none text-slate-900"
-                                            placeholder="Detailed notes about work completed..."
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">Parts Used</label>
-                                        <div className="border border-slate-200 rounded-2xl overflow-hidden">
-                                            <div className="bg-slate-50 grid grid-cols-2 font-semibold text-xs text-slate-600">
-                                                <div className="p-3 border-r border-slate-200">Part Number</div>
-                                                <div className="p-3">Part Description</div>
-                                            </div>
-                                            {formData.parts.map((part, index) => (
-                                                <div key={index} className="grid grid-cols-2 border-t border-slate-200">
-                                                    <input
-                                                        type="text"
-                                                        value={part.partNumber}
-                                                        onChange={(e) => handlePartChange(index, 'partNumber', e.target.value)}
-                                                        className="p-3 border-r border-slate-200 text-sm outline-none focus:bg-blue-50 text-slate-900"
-                                                        placeholder="e.g. AB123"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        value={part.partDescription}
-                                                        onChange={(e) => handlePartChange(index, 'partDescription', e.target.value)}
-                                                        onKeyPress={(e) => handlePartKeyPress(index, 'partDescription', e)}
-                                                        className="p-3 text-sm outline-none focus:bg-blue-50 text-slate-900"
-                                                        placeholder="e.g. Pump seal"
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 pt-4">
-                                        <button
-                                            onClick={handleSave}
-                                            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-full font-semibold hover:from-blue-600 hover:to-blue-700 shadow-md active:shadow-lg transition-all"
-                                        >
-                                            Save Job
-                                        </button>
-                                        <button
-                                            onClick={() => setShowNewCard(false)}
-                                            className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-full font-semibold hover:bg-slate-200 transition-all"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Site Selector */}
-                                <div className="mt-4 bg-white rounded-3xl shadow-lg p-4 space-y-3">
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-2">Select Site</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {Object.entries(SITES).map(([key, site]) => (
-                                            <button
-                                                key={key}
-                                                onClick={() => setFormData({ ...formData, site: key })}
-                                                style={{
-                                                    backgroundColor: formData.site === key ? site.hex : '#F3F4F6',
-                                                    color: formData.site === key ? '#FFFFFF' : '#374151'
-                                                }}
-                                                className="py-3 rounded-full font-semibold transition-all"
-                                            >
-                                                {site.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Jobs List */}
-                        {!showNewCard && (
-                            <div className="p-4">
-                                {monthKeys.length === 0 ? (
-                                    <div className="text-center py-16 px-4">
-                                        <p className="text-slate-500 text-lg mb-6 font-medium">No jobs logged yet</p>
-                                        <button
-                                            onClick={handleNewJob}
-                                            className="inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:from-blue-600 hover:to-blue-700 shadow-md transition-all"
-                                        >
-                                            Log Your First Job
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {monthKeys.map(monthKey => (
-                                            <div key={monthKey}>
-                                                <button
-                                                    onClick={() => setExpandedMonth(expandedMonth === monthKey ? null : monthKey)}
-                                                    className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-200 to-slate-100 rounded-2xl font-semibold text-slate-700 hover:from-slate-300 hover:to-slate-200 transition-all"
-                                                >
-                                                    <span>{monthKey}</span>
-                                                    <span className="text-xl transition-transform" style={{ transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                                                        ▼
-                                                    </span>
-                                                </button>
-
-                                                {expandedMonth === monthKey && (
-                                                    <div className="mt-2 space-y-2 pl-1">
-                                                        {groupedJobs[monthKey].map(job => (
-                                                            <div
-                                                                key={job.id}
-                                                                onClick={() => handleEditJob(job)}
-                                                                style={{ backgroundColor: getCardBackground(job.site) }}
-                                                                className="p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 cursor-pointer transition-all"
-                                                            >
-                                                                <div className="flex justify-between items-start mb-2">
-                                                                    <div className="flex-1">
-                                                                        <div className="flex items-center gap-2 mb-1">
-                                                                            <p className="font-bold text-slate-900 text-lg">
-                                                                                {job.ticketNumber}
-                                                                            </p>
-                                                                            {job.site && (
-                                                                                <span style={{ backgroundColor: SITES[job.site].hex }} className="text-white px-2.5 py-1 rounded-full text-xs font-bold">
-                                                                                    {SITES[job.site].label}
-                                                                                </span>
-                                                            )}
-                                                                        </div>
-                                                                        <p className="text-xs text-slate-500">
-                                                                            {formatDateTime(job.startDateTime)} to {formatDateTime(job.finishDateTime)}
-                                                                        </p>
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (window.confirm('Delete this job?')) {
-                                                                                handleDelete(job.id);
-                                                                            }
-                                                                        }}
-                                                                        className="ml-3 p-2 text-red-400 hover:bg-red-50 rounded-full transition-all"
-                                                                    >
-                                                                        🗑️
-                                                                    </button>
-                                                                </div>
-                                                                {job.workDone && (
-                                                                    <p className="text-sm text-slate-600 mb-2 line-clamp-2">{job.workDone}</p>
-                                                                )}
-                                                                <div className="flex justify-between items-center">
-                                                                    {job.parts && job.parts.some(p => p.partNumber || p.partDescription) && (
-                                                                        <p className="text-xs text-slate-500">
-                                                                            {job.parts.filter(p => p.partNumber || p.partDescription).length} part{job.parts.filter(p => p.partNumber || p.partDescription).length !== 1 ? 's' : ''}
-                                                                        </p>
-                                                                    )}
-                                                                    <p className="text-xs text-slate-400 ml-auto">
-                                                                        {formatDateOnly(job.startDateTime)}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
+                    // Jobs List
+                    !showNewCard && React.createElement('div', { style: { padding: '1rem' } },
+                        monthKeys.length === 0 ? 
+                            React.createElement('div', { style: { textAlign: 'center', paddingTop: '4rem', paddingBottom: '4rem' } },
+                                React.createElement('p', { style: { color: '#6B7280', fontSize: '1.125rem', marginBottom: '1.5rem' } }, 'No jobs logged yet'),
+                                React.createElement('button', {
+                                    onClick: handleNewJob,
+                                    style: { backgroundColor: '#3B82F6', color: 'white', padding: '0.75rem 2rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                                }, 'Log Your First Job')
+                            )
+                        :
+                            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
+                                monthKeys.map(monthKey =>
+                                    React.createElement('div', { key: monthKey },
+                                        React.createElement('button', {
+                                            onClick: () => setExpandedMonth(expandedMonth === monthKey ? null : monthKey),
+                                            style: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#D1D5DB', borderRadius: '1rem', fontWeight: '600', color: '#374151', border: 'none', cursor: 'pointer' }
+                                        },
+                                            monthKey,
+                                            React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' } }, '▼')
+                                        ),
+                                        expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' } },
+                                            groupedJobs[monthKey].map(job =>
+                                                React.createElement('div', {
+                                                    key: job.id,
+                                                    onClick: () => handleEditJob(job),
+                                                    style: { padding: '1rem', backgroundColor: job.site ? SITES[job.site].bg : '#FFFFFF', borderRadius: '1rem', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer' }
+                                                },
+                                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' } },
+                                                        React.createElement('div', { style: { flex: 1 } },
+                                                            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' } },
+                                                                React.createElement('p', { style: { fontWeight: 'bold', color: '#111827', fontSize: '1.125rem', margin: 0 } }, job.ticketNumber),
+                                                                job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: 'white', padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 'bold' } }, SITES[job.site].label)
+                                                            ),
+                                                            React.createElement('p', { style: { fontSize: '0.75rem', color: '#6B7280', margin: 0 } }, formatDateTime(job.startDateTime) + ' to ' + formatDateTime(job.finishDateTime))
+                                                        ),
+                                                        React.createElement('button', {
+                                                            onClick: (e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm('Delete this job?')) {
+                                                                    handleDelete(job.id);
+                                                                }
+                                                            },
+                                                            style: { marginLeft: '0.75rem', padding: '0.5rem', color: '#F87171', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.125rem' }
+                                                        }, '🗑️')
+                                                    ),
+                                                    job.workDone && React.createElement('p', { style: { fontSize: '0.875rem', color: '#374151', marginBottom: '0.5rem', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
+                                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                                                        job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('p', { style: { fontSize: '0.75rem', color: '#6B7280', margin: 0 } }, job.parts.filter(p => p.partNumber || p.partDescription).length + ' part' + (job.parts.filter(p => p.partNumber || p.partDescription).length !== 1 ? 's' : '')),
+                                                        React.createElement('p', { style: { fontSize: '0.75rem', color: '#9CA3AF', margin: 0, marginLeft: 'auto' } }, formatDateOnly(job.startDateTime))
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                    )
+                )
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<JobLogger />);
+        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(JobLogger));
     </script>
 </body>
 </html>
