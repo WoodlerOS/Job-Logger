@@ -10,7 +10,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             -webkit-touch-callout: none;
@@ -35,18 +34,13 @@
             overflow-y: auto;
             overflow-x: hidden;
         }
-        #g_id_onload {
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-
-        const CLIENT_ID = '170316275267-hdnt6plii4tdk8k70uuqbvqdsulffuk5.apps.googleusercontent.com';
+        const { useState, useEffect } = React;
 
         const SITES = {
             NX: { label: 'NX', hex: '#FFBE0B', bg: 'rgba(255, 190, 11, 0.08)' },
@@ -63,7 +57,6 @@
             const [sheetId, setSheetId] = useState(null);
             const [syncing, setSyncing] = useState(false);
             const [accessToken, setAccessToken] = useState(null);
-            const googleButtonRef = useRef(null);
             const [formData, setFormData] = useState({
                 ticketNumber: '',
                 startDateTime: '',
@@ -92,38 +85,20 @@
                 } catch (error) {
                     console.log('No saved data');
                 }
-                initGoogleButton();
             }, []);
 
-            const initGoogleButton = () => {
-                if (window.google && window.google.accounts && window.google.accounts.id) {
-                    window.google.accounts.id.initialize({
-                        client_id: CLIENT_ID,
-                        callback: handleCredentialResponse
-                    });
-                }
-            };
-
-            const handleCredentialResponse = (response) => {
-                try {
-                    const token = response.credential;
-                    localStorage.setItem('gauth_token', token);
-                    setAccessToken(token);
-                    setIsLoggedIn(true);
-                    alert('Signed in successfully!');
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                }
-            };
-
             const handleGoogleLogin = () => {
-                if (googleButtonRef.current && window.google && window.google.accounts && window.google.accounts.id) {
-                    window.google.accounts.id.renderButton(googleButtonRef.current, {
-                        theme: 'outline',
-                        size: 'large',
-                        text: 'signin_with'
-                    });
-                }
+                const clientId = '170316275267-hdnt6plii4tdk8k70uuqbvqdsulffuk5.apps.googleusercontent.com';
+                const redirectUri = 'https://woodleros.github.io/job-logger';
+                const scope = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+                
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${clientId}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=token&` +
+                    `scope=${encodeURIComponent(scope)}`;
+                
+                window.location.href = authUrl;
             };
 
             const handleGoogleLogout = () => {
@@ -211,7 +186,6 @@
                     setSyncing(false);
                 } catch (error) {
                     setSyncing(false);
-                    console.error('Sync error:', error);
                     alert('Sync failed: ' + error.message);
                 }
             };
