@@ -8,26 +8,20 @@
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
   html, body {
-    margin:0; padding:0;
-    width:100%; max-width:100%;
-    overflow-x:hidden;
-    overscroll-behavior-x:none;
-    touch-action:pan-y;
+    margin:0; padding:0; width:100%; max-width:100%;
+    overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
     background:#F2F2F7;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    color:#1C1C1E;
-    -webkit-tap-highlight-color:transparent;
+    color:#1C1C1E; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh; }
   input, textarea { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
-  input[type="datetime-local"] {
-    -webkit-appearance:none; appearance:none;
-    text-align:left; min-width:0; width:100%;
-  }
+  input[type="datetime-local"] { -webkit-appearance:none; appearance:none; text-align:left; min-width:0; width:100%; }
   button { font-family:inherit; transition:transform .12s ease, opacity .12s ease, background-color .15s ease; }
   button:active { transform:scale(0.95); opacity:0.85; }
   .card { background:#FFF; border-radius:22px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
@@ -103,9 +97,10 @@ function App() {
     return Math.floor(m/60) + 'h ' + String(m%60).padStart(2,'0') + 'm';
   };
 
-  const exportCSV = () => {
+  const exportSheet = async () => {
     if (!jobs.length) { alert('No tickets to export yet.'); return; }
-    const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+    if (typeof XLSX === 'undefined') { alert('Spreadsheet library still loading — try again in a moment.'); return; }
+
     const rows = [['Ticket','Site','Date','Travel','Start','Finish','Duration','Work Done','Parts Used']];
     [...jobs].sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p => p.partNumber || p.partDescription)
@@ -114,12 +109,35 @@ function App() {
         j.hasTravel ? fmtTime(j.travelDateTime) : '', fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
         duration(j.startDateTime, j.finishDateTime), (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
     });
-    const csv = '\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:16},{wch:8},{wch:12},{wch:9},{wch:9},{wch:9},{wch:10},{wch:60},{wch:40}];
+    ws['!freeze'] = { xSplit:0, ySplit:1 };
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rows.length-1, c:8} }) };
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
+
+    const out = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const blob = new Blob([out], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const name = 'Tickets.xlsx';
+
+    // iOS: use the share sheet so it can go straight into Numbers / Sheets / Files
+    try {
+      const file = new File([blob], name, { type: blob.type });
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        await navigator.share({ files:[file], title:'Tickets' });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'Tickets.csv';
+    a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
   };
 
   const openNew  = () => { setForm(blank()); setEditingId(null); setShowCard(true); window.scrollTo(0,0); };
@@ -150,15 +168,13 @@ function App() {
   });
   const months = Object.keys(grouped).sort((a,b) => new Date(grouped[b][0].startDateTime) - new Date(grouped[a][0].startDateTime));
 
-  // ---------- HOME HEADER (hidden on the form) ----------
   const header = !showCard && e('div', { style:{ padding:'1rem 1rem 0.7rem', display:'flex', justifyContent:'flex-end', gap:'0.55rem' } },
-    e('button', { onClick:exportCSV, title:'Export CSV',
+    e('button', { onClick:exportSheet, title:'Export spreadsheet',
       style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#007AFF', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,122,255,0.32)' } }, e(SyncIcon)),
     e('button', { onClick:openNew,
       style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add')
   );
 
-  // ---------- FORM ----------
   const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
     e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
 
@@ -242,7 +258,6 @@ function App() {
     )
   );
 
-  // ---------- LIST ----------
   const empty = e('div', { style:{ textAlign:'center', padding:'4rem 1.5rem' } },
     e('p', { style:{ color:'#8E8E93', fontSize:'1rem', marginBottom:'1.3rem' } }, 'No tickets logged yet'),
     e('button', { onClick:openNew,
