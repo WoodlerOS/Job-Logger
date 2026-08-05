@@ -45,6 +45,12 @@ const SITES = {
   RH:   { label:'RH',   hex:'#06D6A0', tint:'#E1FAF3' },
   MMUH: { label:'MMUH', hex:'#F97316', tint:'#FFEEE2' }
 };
+const EQUIP = {
+  C:   { label:'C',   full:'Alinity C' },
+  I:   { label:'I',   full:'Alinity I' },
+  SCM: { label:'SCM', full:'Alinity SCM' },
+  GLP: { label:'GLP', full:'GLP track' }
+};
 
 const LBL   = { display:'block', fontSize:'0.64rem', fontWeight:700, color:'#8E8E93', marginBottom:'0.35rem', textTransform:'uppercase', letterSpacing:'0.5px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.7rem 0.85rem', border:'1.5px solid #E5E5EA', borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAFC', color:'#1C1C1E' };
@@ -74,29 +80,30 @@ function Toggle({ on, onChange }) {
 function App() {
   const [jobs, setJobs] = useState([]);
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState('list');           // list | form | stats
+  const [view, setView] = useState('list');
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState(blank());
 
   const [query, setQuery] = useState('');
   const [siteFilter, setSiteFilter] = useState([]);
+  const [equipFilter, setEquipFilter] = useState([]);
   const [period, setPeriod] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [groupBy, setGroupBy] = useState('month');
   const [openGroups, setOpenGroups] = useState({});
   const [showFilters, setShowFilters] = useState(false);
-  const [statPeriod, setStatPeriod] = useState('all');
+  const [statMonth, setStatMonth] = useState(() => { const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
   function blank() {
     const iso = new Date().toISOString().slice(0,16);
-    return { ticketNumber:'', startDateTime:iso, finishDateTime:iso, hasTravel:false, travelDateTime:iso, workDone:'', parts:[{partNumber:'',partDescription:''}], site:'' };
+    return { ticketNumber:'', startDateTime:iso, finishDateTime:iso, hasTravel:false, travelDateTime:iso, workDone:'', parts:[{partNumber:'',partDescription:''}], site:'', equipment:[] };
   }
 
   useEffect(() => { (async () => {
     let data = await dbGet(KEY);
     if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) { data = JSON.parse(s); await dbSet(KEY, data); } } catch (err) {} }
-    if (Array.isArray(data)) setJobs(data);
+    if (Array.isArray(data)) setJobs(data.map(j => ({ equipment:[], ...j })));
     setReady(true);
   })(); }, []);
 
@@ -115,6 +122,7 @@ function App() {
   const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
   const hm = (m) => Math.floor(m/60)+'h '+String(Math.round(m%60)).padStart(2,'0')+'m';
   const duration = (a,b) => { const m = mins(a,b); return m ? hm(m) : ''; };
+  const eqOf = (j) => Array.isArray(j.equipment) ? j.equipment : [];
 
   const rangeFor = (p) => {
     const d = new Date(); d.setHours(0,0,0,0);
@@ -123,7 +131,6 @@ function App() {
     if (p === 'last')  { const from=new Date(d); from.setDate(1); from.setMonth(from.getMonth()-1);
                          const to=new Date(d); to.setDate(1); return [from,to]; }
     if (p === '90')    { d.setDate(d.getDate()-90); return [d,null]; }
-    if (p === 'year')  { d.setMonth(0,1); return [d,null]; }
     return [null,null];
   };
 
@@ -132,11 +139,13 @@ function App() {
     const [from,to] = rangeFor(period);
     let out = jobs.filter(j => {
       if (siteFilter.length && !siteFilter.includes(j.site)) return false;
+      if (equipFilter.length && !eqOf(j).some(x => equipFilter.includes(x))) return false;
       const d = new Date(j.startDateTime);
       if (from && d < from) return false;
       if (to && d >= to) return false;
       if (!q) return true;
       const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+        ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x].full+' '+x : x),
         ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
       return hay.includes(q);
     });
@@ -148,14 +157,13 @@ function App() {
       return new Date(b.startDateTime) - new Date(a.startDateTime);
     });
     return out;
-  }, [jobs, query, siteFilter, period, sortBy]);
+  }, [jobs, query, siteFilter, equipFilter, period, sortBy]);
 
   const groups = useMemo(() => {
     if (groupBy === 'none') return [{ key:'All tickets', items:filtered }];
     const map = {};
     filtered.forEach(j => {
-      const k = groupBy === 'site'
-        ? (SITES[j.site] ? SITES[j.site].label : 'No site')
+      const k = groupBy === 'site' ? (SITES[j.site] ? SITES[j.site].label : 'No site')
         : new Date(j.startDateTime).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
       (map[k] = map[k] || []).push(j);
     });
@@ -166,10 +174,10 @@ function App() {
   }, [filtered, groupBy]);
 
   useEffect(() => {
-    if (groupBy === 'none' || query.trim() || siteFilter.length) {
+    if (groupBy === 'none' || query.trim() || siteFilter.length || equipFilter.length) {
       const all = {}; groups.forEach(g => all[g.key] = true); setOpenGroups(all);
     }
-  }, [groupBy, query, siteFilter.length, groups.length]);
+  }, [groupBy, query, siteFilter.length, equipFilter.length, groups.length]);
 
   const partHistory = useMemo(() => {
     const set = new Map();
@@ -179,89 +187,56 @@ function App() {
     return [...set.entries()];
   }, [jobs]);
 
-  const filterActive = query.trim() || siteFilter.length || period !== 'all';
+  const filterActive = query.trim() || siteFilter.length || equipFilter.length || period !== 'all';
 
-  /* ---------- statistics ---------- */
-  const stats = useMemo(() => {
-    const [from,to] = rangeFor(statPeriod);
+  /* ---------- month statistics ---------- */
+  const monthStats = useMemo(() => {
+    const y = statMonth.getFullYear(), m = statMonth.getMonth();
     const src = jobs.filter(j => {
       const d = new Date(j.startDateTime);
-      if (from && d < from) return false;
-      if (to && d >= to) return false;
-      return true;
+      return d.getFullYear() === y && d.getMonth() === m;
     });
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
 
-    let onsite=0, travel=0, partCount=0;
-    const perSite={}, perMonth={}, perDow=[0,0,0,0,0,0,0], perDowCount=[0,0,0,0,0,0,0];
-    const perDay={}, partTally={};
-    let longest=null, shortest=null;
-
+    const days = {};
+    const siteDays = {}, siteTickets = {}, equipTickets = {}, equipDays = {};
     src.forEach(j => {
-      const m = mins(j.startDateTime, j.finishDateTime);
-      const t = j.hasTravel ? mins(j.travelDateTime, j.startDateTime) : 0;
-      onsite += m; travel += t;
-      const d = new Date(j.startDateTime);
-      const mk = d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'});
-      perMonth[mk] = perMonth[mk] || { mins:0, count:0, sort:new Date(d.getFullYear(), d.getMonth(), 1).getTime() };
-      perMonth[mk].mins += m; perMonth[mk].count++;
-      const dow = (d.getDay()+6)%7;
-      perDow[dow] += m; perDowCount[dow]++;
-      const dk = d.toDateString();
-      perDay[dk] = (perDay[dk]||0) + m;
-      if (j.site) { perSite[j.site] = perSite[j.site] || { mins:0, count:0, travel:0 };
-        perSite[j.site].mins += m; perSite[j.site].count++; perSite[j.site].travel += t; }
-      (j.parts||[]).forEach(p => {
-        if (!p.partNumber && !p.partDescription) return;
-        partCount++;
-        const key = (p.partNumber||p.partDescription).trim();
-        partTally[key] = partTally[key] || { n:0, desc:p.partDescription||'' };
-        partTally[key].n++;
-      });
-      if (m > 0) {
-        if (!longest  || m > mins(longest.startDateTime, longest.finishDateTime))  longest = j;
-        if (!shortest || m < mins(shortest.startDateTime, shortest.finishDateTime)) shortest = j;
-      }
+      const dnum = new Date(j.startDateTime).getDate();
+      days[dnum] = days[dnum] || { sites:new Set(), equip:new Set(), tickets:[] };
+      if (j.site) days[dnum].sites.add(j.site);
+      eqOf(j).forEach(x => days[dnum].equip.add(x));
+      days[dnum].tickets.push(j);
+      if (j.site) siteTickets[j.site] = (siteTickets[j.site]||0) + 1;
+      eqOf(j).forEach(x => { equipTickets[x] = (equipTickets[x]||0) + 1; });
+    });
+    Object.keys(days).forEach(d => {
+      days[d].sites.forEach(s => { siteDays[s] = (siteDays[s]||0) + 1; });
+      days[d].equip.forEach(x => { equipDays[x] = (equipDays[x]||0) + 1; });
     });
 
-    const monthKeys = Object.keys(perMonth).sort((a,b)=>perMonth[a].sort-perMonth[b].sort).slice(-6);
-    const busiestDay = Object.keys(perDay).sort((a,b)=>perDay[b]-perDay[a])[0];
-    const topParts = Object.keys(partTally).sort((a,b)=>partTally[b].n-partTally[a].n).slice(0,5);
-    const withTravel = src.filter(j=>j.hasTravel).length;
+    const workedDays = Object.keys(days).length;
+    let multiSiteDays = 0;
+    Object.keys(days).forEach(d => { if (days[d].sites.size > 1) multiSiteDays++; });
 
-    let spanWeeks = 1;
-    if (src.length) {
-      const times = src.map(j=>new Date(j.startDateTime).getTime());
-      spanWeeks = Math.max(1, (Math.max(...times)-Math.min(...times)) / (7*86400000));
-    }
-
-    return { src, count:src.length, onsite, travel, partCount, perSite, perMonth, monthKeys,
-      perDow, perDowCount, busiestDay, busiestDayMins: busiestDay ? perDay[busiestDay] : 0,
-      topParts, partTally, longest, shortest, withTravel,
-      avgJob: src.length ? onsite/src.length : 0,
-      avgTravel: withTravel ? travel/withTravel : 0,
-      perWeek: src.length / spanWeeks,
-      daysWorked: Object.keys(perDay).length };
-  }, [jobs, statPeriod]);
+    return { y, m, src, days, daysInMonth, firstDow, siteDays, siteTickets, equipTickets, equipDays, workedDays, multiSiteDays };
+  }, [jobs, statMonth]);
 
   /* ---------- export ---------- */
   const buildXlsxBlob = (rowsSrc) => {
-    let tOn=0, tTr=0, tP=0;
-    const rows = [['Ticket','Site','Date','Travel start','Travel mins','Start','Finish','Duration','Work Done','Parts Used']];
+    const rows = [['Ticket','Site','Equipment','Date','Travel start','Travel mins','Start','Finish','Duration','Work Done','Parts Used']];
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
       const m = mins(j.startDateTime,j.finishDateTime), t = j.hasTravel?mins(j.travelDateTime,j.startDateTime):0;
-      tOn+=m; tTr+=t; tP+=(j.parts||[]).filter(p=>p.partNumber||p.partDescription).length;
-      rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', fmtDate(j.startDateTime),
+      rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', eqOf(j).join(', '), fmtDate(j.startDateTime),
         j.hasTravel?fmtTime(j.travelDateTime):'', j.hasTravel?t:'',
-        fmtTime(j.startDateTime), fmtTime(j.finishDateTime), hm(m),
+        fmtTime(j.startDateTime), fmtTime(j.finishDateTime), m?hm(m):'',
         (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
     });
-    rows.push([]);
-    rows.push(['TOTAL','',rowsSrc.length+' tickets','',tTr,'','',hm(tOn),'',tP+' parts']);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:16},{wch:8},{wch:12},{wch:11},{wch:11},{wch:9},{wch:9},{wch:10},{wch:60},{wch:40}];
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:9} }) };
+    ws['!cols'] = [{wch:16},{wch:8},{wch:12},{wch:12},{wch:11},{wch:11},{wch:9},{wch:9},{wch:10},{wch:60},{wch:40}];
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:10} }) };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
     return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
@@ -292,7 +267,7 @@ function App() {
   const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
     const name = stamp()+' App tickets backup.json';
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:2, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:3, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
     setMenuOpen(false);
   };
@@ -307,7 +282,8 @@ function App() {
           const parsed = JSON.parse(reader.result);
           const list = Array.isArray(parsed) ? parsed : parsed.jobs;
           if (!Array.isArray(list)) throw new Error('bad');
-          const merged = [...list]; const seen = new Set(list.map(j=>j.id));
+          const merged = list.map(j => ({ equipment:[], ...j }));
+          const seen = new Set(merged.map(j=>j.id));
           jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
           merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
           await persist(merged); setMenuOpen(false);
@@ -324,9 +300,8 @@ function App() {
     const lines = filtered.map(j => {
       const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
         .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
-      return [ j.ticketNumber + (SITES[j.site]?' ['+SITES[j.site].label+']':''),
-        fmtDate(j.startDateTime)+'  '+fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)+
-        (duration(j.startDateTime,j.finishDateTime)?'  ('+duration(j.startDateTime,j.finishDateTime)+')':''),
+      return [ j.ticketNumber + (SITES[j.site]?' ['+SITES[j.site].label+']':'') + (eqOf(j).length?' ('+eqOf(j).join(', ')+')':''),
+        fmtDate(j.startDateTime)+'  '+fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime),
         j.workDone||'', p?('Parts: '+p):'' ].filter(Boolean).join('\n');
     }).join('\n\n———\n\n');
     try { await navigator.clipboard.writeText(lines); alert('Copied '+filtered.length+' ticket(s).'); }
@@ -343,7 +318,7 @@ function App() {
   /* ---------- form ---------- */
   const openNew  = () => { setForm(blank()); setEditingId(null); setView('form'); window.scrollTo(0,0); };
   const openEdit = (j) => {
-    setForm({ hasTravel:false, travelDateTime:j.startDateTime, ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
+    setForm({ hasTravel:false, travelDateTime:j.startDateTime, equipment:[], ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
     setEditingId(j.id); setView('form'); window.scrollTo(0,0);
   };
   const duplicate = () => {
@@ -363,6 +338,11 @@ function App() {
 
   const remove = (id) => persist(jobs.filter(j => j.id !== id));
 
+  const toggleEquip = (k) => {
+    const cur = eqOf(form);
+    setForm({ ...form, equipment: cur.includes(k) ? cur.filter(x=>x!==k) : [...cur, k] });
+  };
+
   const partChange = (i, field, val) => {
     const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
     if (field === 'partNumber') {
@@ -377,7 +357,7 @@ function App() {
     setForm({ ...form, parts: parts.length ? parts : [{partNumber:'',partDescription:''}] });
   };
 
-  /* ---------- shared bits ---------- */
+  /* ---------- menu / header ---------- */
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
       background:'#F7F7FA', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
@@ -390,7 +370,7 @@ function App() {
       style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
-      menuRow('Statistics', 'Hours, sites, parts and trends', ()=>{ setMenuOpen(false); setView('stats'); window.scrollTo(0,0); }),
+      menuRow('Monthly breakdown', 'Which site you were at, day by day', ()=>{ setMenuOpen(false); setView('stats'); window.scrollTo(0,0); }),
       menuRow('Spreadsheet — current view', filtered.length+' ticket(s) matching your filters', ()=>doSpreadsheet(true)),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet(false)),
       menuRow('Copy current view as text', 'For pasting into an email or notes', doCopySummary),
@@ -407,11 +387,11 @@ function App() {
       : e('button', { onClick:()=>setMenuOpen(true),
           style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontSize:'1.15rem', fontWeight:800, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '⋯'),
     view === 'stats'
-      ? e('span', { style:{ fontSize:'1.1rem', fontWeight:800 } }, 'Statistics')
+      ? e('span', { style:{ fontSize:'1.05rem', fontWeight:800 } }, 'Breakdown')
       : e('button', { onClick:openNew,
           style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add'));
 
-  /* ---------- list view ---------- */
+  /* ---------- list controls ---------- */
   const controls = view === 'list' && jobs.length > 0 && e('div', { style:{ padding:'0 0.85rem 0.6rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('div', { style:{ flex:1, position:'relative' } },
@@ -434,6 +414,14 @@ function App() {
             style:{ padding:'0.4rem 0.85rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', flexShrink:0,
               border:'1.5px solid '+(on?s.hex:'#E5E5EA'), background: on?s.hex:'#FFF', color: on?'#FFF':'#3A3A3C' } }, s.label);
         })),
+      e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
+        Object.keys(EQUIP).map(k => {
+          const on = equipFilter.includes(k);
+          return e('button', { key:k,
+            onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
+            style:{ padding:'0.4rem 0.85rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', flexShrink:0,
+              border:'1.5px solid '+(on?'#1C1C1E':'#E5E5EA'), background: on?'#1C1C1E':'#FFF', color: on?'#FFF':'#3A3A3C' } }, EQUIP[k].label);
+        })),
       e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem' } },
         e('select', { value:period, onChange:(ev)=>setPeriod(ev.target.value), style:SEL },
           e('option', { value:'all' }, 'All time'),
@@ -451,26 +439,26 @@ function App() {
           e('option', { value:'month' }, 'By month'),
           e('option', { value:'site' }, 'By site'),
           e('option', { value:'none' }, 'Flat list'))),
-      filterActive && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setPeriod('all'); },
+      filterActive && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); setPeriod('all'); },
         style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'#FFF0F0', color:'#FF3B30', fontWeight:700, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear all filters')),
 
     filterActive && e('div', { style:{ fontSize:'0.7rem', color:'#8E8E93', fontWeight:600, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'));
 
   const ticketCard = (j) => {
-    const s = SITES[j.site];
+    const s = SITES[j.site], eq = eqOf(j);
     return e('div', { key:j.id, onClick:()=>openEdit(j),
       style:{ padding:'0.95rem 1.05rem', borderRadius:'18px', cursor:'pointer',
         background: s?s.tint:'#FFF', border:'1.5px solid '+(s?s.hex+'44':'#E5E5EA'), boxShadow:'0 2px 8px rgba(0,0,0,0.035)' } },
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', marginBottom:'0.25rem', flexWrap:'wrap' } },
+          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.25rem', flexWrap:'wrap' } },
             e('span', { style:{ fontWeight:800, fontSize:'1rem' } }, j.ticketNumber),
-            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.4px' } }, s.label)),
+            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.4px' } }, s.label),
+            eq.map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.08)', color:'#3A3A3C', padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:800 } }, x))),
           e('div', { style:{ fontSize:'0.72rem', color:'#6E6E73' } },
             fmtShort(j.startDateTime)+' → '+fmtTime(j.finishDateTime)+
-            (duration(j.startDateTime,j.finishDateTime)?'  ·  '+duration(j.startDateTime,j.finishDateTime):'')+
-            (j.hasTravel?'  ·  Travel '+hm(mins(j.travelDateTime,j.startDateTime)):''))),
+            (duration(j.startDateTime,j.finishDateTime)?'  ·  '+duration(j.startDateTime,j.finishDateTime):''))),
         e('button', { onClick:(ev)=>{ ev.stopPropagation(); if (window.confirm('Delete this ticket?')) remove(j.id); },
           style:{ background:'rgba(255,255,255,0.75)', border:'none', color:'#FF3B30', width:'27px', height:'27px', borderRadius:'999px', cursor:'pointer', fontSize:'0.8rem', fontWeight:700, flexShrink:0 } }, '✕')),
       j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#3A3A3C', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
@@ -481,7 +469,7 @@ function App() {
 
   const noResults = e('div', { style:{ textAlign:'center', padding:'3rem 1.5rem' } },
     e('p', { style:{ color:'#8E8E93', fontSize:'0.95rem', marginBottom:'1rem' } }, 'No tickets match this view'),
-    e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setPeriod('all'); },
+    e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); setPeriod('all'); },
       style:{ padding:'0.7rem 1.4rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer' } }, 'Clear filters'));
 
   const empty = e('div', { style:{ textAlign:'center', padding:'4rem 1.5rem' } },
@@ -491,7 +479,6 @@ function App() {
 
   const list = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     groups.map(g => {
-      const gMins = g.items.reduce((t,j)=>t+mins(j.startDateTime,j.finishDateTime), 0);
       const open = groupBy === 'none' ? true : !!openGroups[g.key];
       return e('div', { key:g.key },
         groupBy !== 'none' && e('button', { onClick:()=>setOpenGroups({ ...openGroups, [g.key]: !open }),
@@ -500,116 +487,105 @@ function App() {
             cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
           e('span', null, g.key),
           e('span', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
-            e('span', { style:{ fontSize:'0.68rem', color:'#8E8E93', fontWeight:700 } }, hm(gMins)),
             e('span', { style:{ background:'#F0F0F4', color:'#8E8E93', fontSize:'0.68rem', fontWeight:700, padding:'0.15rem 0.55rem', borderRadius:'999px' } }, String(g.items.length)),
             e('span', { style:{ fontSize:'0.68rem', color:'#C7C7CC', display:'inline-block', transform: open?'rotate(180deg)':'none', transition:'transform .25s ease' } }, '▼'))),
         open && e('div', { style:{ marginTop: groupBy!=='none' ? '0.55rem' : 0, display:'flex', flexDirection:'column', gap:'0.55rem' } },
           g.items.map(ticketCard)));
     }));
 
-  /* ---------- statistics view ---------- */
-  const statBox = (label, value, sub, colour) =>
-    e('div', { key:label, style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem 0.8rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-      e('div', { style:{ fontSize:'1.25rem', fontWeight:800, color: colour||'#1C1C1E' } }, value),
-      e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px', fontWeight:700, marginTop:'0.15rem' } }, label),
-      sub && e('div', { style:{ fontSize:'0.65rem', color:'#C7C7CC', marginTop:'0.15rem' } }, sub));
+  /* ---------- monthly breakdown ---------- */
+  const DOW = ['M','T','W','T','F','S','S'];
+  const ms = monthStats;
+  const monthLabel = statMonth.toLocaleDateString('en-GB',{ month:'long', year:'numeric' });
+  const shiftMonth = (n) => setStatMonth(new Date(ms.y, ms.m + n, 1));
 
-  const sectionTitle = (t) => e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.4rem 0.5rem 0' } }, t);
-
-  const maxSiteMins = Math.max(1, ...Object.values(stats.perSite).map(s=>s.mins));
-  const maxMonthMins = Math.max(1, ...stats.monthKeys.map(k=>stats.perMonth[k].mins));
-  const maxDow = Math.max(1, ...stats.perDow);
-  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayCell = (dnum) => {
+    const d = ms.days[dnum];
+    const sites = d ? [...d.sites] : [];
+    const dow = (new Date(ms.y, ms.m, dnum).getDay() + 6) % 7;
+    const weekend = dow >= 5;
+    let bg = weekend ? '#F7F7FA' : '#FFF';
+    if (sites.length === 1) bg = SITES[sites[0]].tint;
+    else if (sites.length > 1) bg = '#F0F0F4';
+    return e('div', { key:dnum, style:{ aspectRatio:'1 / 1', borderRadius:'10px', background:bg,
+        border:'1px solid '+(sites.length===1 ? SITES[sites[0]].hex+'55' : '#EDEDF0'),
+        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px', padding:'2px' } },
+      e('span', { style:{ fontSize:'0.6rem', fontWeight:700, color: d ? '#1C1C1E' : '#C7C7CC' } }, String(dnum)),
+      sites.length ? e('div', { style:{ display:'flex', gap:'2px' } },
+        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px', background:SITES[s].hex } }))) : null);
+  };
 
   const statsView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('select', { value:statPeriod, onChange:(ev)=>setStatPeriod(ev.target.value),
-      style:{ ...SEL, background:'#FFF', padding:'0.7rem', fontSize:'0.85rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-      e('option', { value:'all' }, 'All time'),
-      e('option', { value:'week' }, 'This week'),
-      e('option', { value:'month' }, 'This month'),
-      e('option', { value:'last' }, 'Last month'),
-      e('option', { value:'90' }, 'Last 90 days'),
-      e('option', { value:'year' }, 'This year')),
+    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#FFF', borderRadius:'18px', padding:'0.6rem 0.8rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+      e('button', { onClick:()=>shiftMonth(-1),
+        style:{ width:'34px', height:'34px', borderRadius:'999px', border:'none', background:'#F0F0F4', color:'#1C1C1E', fontWeight:800, cursor:'pointer' } }, '‹'),
+      e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, monthLabel),
+      e('button', { onClick:()=>shiftMonth(1),
+        style:{ width:'34px', height:'34px', borderRadius:'999px', border:'none', background:'#F0F0F4', color:'#1C1C1E', fontWeight:800, cursor:'pointer' } }, '›')),
 
-    stats.count === 0
-      ? e('div', { style:{ textAlign:'center', padding:'3rem 1rem', color:'#8E8E93' } }, 'No tickets in this period')
+    ms.src.length === 0
+      ? e('div', { style:{ textAlign:'center', padding:'3rem 1rem', color:'#8E8E93', fontSize:'0.9rem' } }, 'No tickets logged this month')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
-          statBox('Tickets', String(stats.count), stats.perWeek.toFixed(1)+' per week'),
-          statBox('On site', hm(stats.onsite), 'avg '+hm(stats.avgJob)),
-          statBox('Travel', hm(stats.travel), stats.withTravel+' of '+stats.count+' logged', '#3A6FD8'),
-          statBox('Total time', hm(stats.onsite+stats.travel),
-            stats.onsite+stats.travel ? Math.round(stats.travel/(stats.onsite+stats.travel)*100)+'% travel' : '')),
+        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.5rem' } },
+          [['Days out', String(ms.workedDays)], ['Tickets', String(ms.src.length)], ['Multi-site days', String(ms.multiSiteDays)]]
+            .map(([k,v]) => e('div', { key:k, style:{ background:'#FFF', borderRadius:'16px', padding:'0.75rem 0.4rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+              e('div', { style:{ fontSize:'1.15rem', fontWeight:800 } }, v),
+              e('div', { style:{ fontSize:'0.56rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.4px', fontWeight:700, marginTop:'0.1rem' } }, k)))),
 
-        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
-          statBox('Parts fitted', String(stats.partCount), Object.keys(stats.partTally).length+' distinct'),
-          statBox('Days worked', String(stats.daysWorked),
-            stats.daysWorked ? hm(stats.onsite/stats.daysWorked)+' avg/day' : '')),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px', marginBottom:'5px' } },
+            DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.55rem', fontWeight:800, color:'#C7C7CC' } }, d))),
+          e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px' } },
+            [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
+            [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))),
+          e('div', { className:'chips', style:{ display:'flex', gap:'0.5rem', marginTop:'0.7rem', overflowX:'auto', justifyContent:'center' } },
+            Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.25rem', fontSize:'0.6rem', fontWeight:700, color:'#8E8E93', flexShrink:0 } },
+              e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label)))),
 
-        sectionTitle('Time by site'),
-        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          Object.keys(stats.perSite).length === 0
+        e('div', { style:{ fontSize:'0.66rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.3rem 0.5rem 0' } }, 'Days at each site'),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', display:'flex', flexDirection:'column', gap:'0.6rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          Object.keys(SITES).filter(k => ms.siteDays[k]).length === 0
             ? e('div', { style:{ fontSize:'0.8rem', color:'#8E8E93', textAlign:'center' } }, 'No sites recorded')
-            : Object.keys(stats.perSite).sort((a,b)=>stats.perSite[b].mins-stats.perSite[a].mins).map(k => {
-                const s = SITES[k], d = stats.perSite[k];
-                return e('div', { key:k },
-                  e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.75rem', fontWeight:700, marginBottom:'0.3rem' } },
-                    e('span', null, s.label + '  ·  ' + d.count + ' ticket' + (d.count!==1?'s':'')),
-                    e('span', { style:{ color:'#6E6E73' } }, hm(d.mins) + '  (' + Math.round(d.mins/stats.onsite*100) + '%)')),
-                  e('div', { style:{ height:'9px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
-                    e('div', { style:{ width:(d.mins/maxSiteMins*100)+'%', height:'100%', background:s.hex, borderRadius:'999px' } })),
-                  e('div', { style:{ fontSize:'0.62rem', color:'#C7C7CC', marginTop:'0.2rem' } },
-                    'avg ' + hm(d.mins/d.count) + ' per visit' + (d.travel ? '  ·  ' + hm(d.travel) + ' travel' : '')));
-              })),
+            : Object.keys(SITES).filter(k => ms.siteDays[k])
+                .sort((a,b)=>ms.siteDays[b]-ms.siteDays[a]).map(k => {
+                  const s = SITES[k], d = ms.siteDays[k];
+                  const maxD = Math.max(...Object.values(ms.siteDays));
+                  return e('div', { key:k },
+                    e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.75rem', fontWeight:700, marginBottom:'0.3rem' } },
+                      e('span', null, s.label),
+                      e('span', { style:{ color:'#6E6E73' } }, d + (d===1?' day':' days') + '  ·  ' + ms.siteTickets[k] + ' ticket' + (ms.siteTickets[k]!==1?'s':''))),
+                    e('div', { style:{ height:'9px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
+                      e('div', { style:{ width:(d/maxD*100)+'%', height:'100%', background:s.hex, borderRadius:'999px' } })));
+                })),
 
-        stats.monthKeys.length > 1 && sectionTitle('Last 6 months'),
-        stats.monthKeys.length > 1 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'1rem 0.9rem 0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          e('div', { style:{ display:'flex', alignItems:'flex-end', gap:'0.4rem', height:'110px' } },
-            stats.monthKeys.map(k => e('div', { key:k, style:{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.3rem', height:'100%', justifyContent:'flex-end' } },
-              e('div', { style:{ fontSize:'0.58rem', color:'#8E8E93', fontWeight:700 } }, Math.round(stats.perMonth[k].mins/60)+'h'),
-              e('div', { style:{ width:'100%', height:(stats.perMonth[k].mins/maxMonthMins*72)+'px', minHeight:'4px', background:'#007AFF', borderRadius:'6px 6px 0 0' } }),
-              e('div', { style:{ fontSize:'0.58rem', color:'#8E8E93', fontWeight:700 } }, k.split(' ')[0]),
-              e('div', { style:{ fontSize:'0.55rem', color:'#C7C7CC' } }, stats.perMonth[k].count+'t'))))),
+        Object.keys(ms.equipTickets).length > 0 && e('div', { style:{ fontSize:'0.66rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.3rem 0.5rem 0' } }, 'Equipment worked on'),
+        Object.keys(ms.equipTickets).length > 0 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', display:'flex', flexDirection:'column', gap:'0.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          Object.keys(EQUIP).filter(k => ms.equipTickets[k]).sort((a,b)=>ms.equipTickets[b]-ms.equipTickets[a]).map(k =>
+            e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+              e('span', { style:{ minWidth:'42px', background:'#1C1C1E', color:'#FFF', padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.62rem', fontWeight:800, textAlign:'center' } }, k),
+              e('div', { style:{ flex:1, minWidth:0 } },
+                e('div', { style:{ fontSize:'0.78rem', fontWeight:700 } }, EQUIP[k].full),
+                e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93' } }, ms.equipDays[k] + (ms.equipDays[k]===1?' day':' days'))),
+              e('span', { style:{ fontSize:'0.78rem', fontWeight:800, color:'#007AFF' } }, ms.equipTickets[k] + (ms.equipTickets[k]===1?' job':' jobs'))))),
 
-        sectionTitle('Busiest weekdays'),
-        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.45rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          DOW.map((d,i) => e('div', { key:d, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
-            e('span', { style:{ width:'30px', fontSize:'0.68rem', fontWeight:700, color:'#8E8E93' } }, d),
-            e('div', { style:{ flex:1, height:'8px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
-              e('div', { style:{ width:(stats.perDow[i]/maxDow*100)+'%', height:'100%', background: stats.perDow[i]===maxDow ? '#34C759' : '#C7C7CC', borderRadius:'999px' } })),
-            e('span', { style:{ width:'62px', textAlign:'right', fontSize:'0.65rem', color:'#6E6E73', fontWeight:600 } },
-              stats.perDow[i] ? hm(stats.perDow[i]) : '—')))),
-
-        stats.topParts.length > 0 && sectionTitle('Most used parts'),
-        stats.topParts.length > 0 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          stats.topParts.map((p,i) => e('div', { key:p, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
-            e('span', { style:{ width:'20px', height:'20px', borderRadius:'999px', background:'#F0F0F4', color:'#8E8E93', fontSize:'0.62rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)),
-            e('div', { style:{ flex:1, minWidth:0 } },
-              e('div', { style:{ fontSize:'0.8rem', fontWeight:700, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, p),
-              stats.partTally[p].desc && e('div', { style:{ fontSize:'0.65rem', color:'#8E8E93', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, stats.partTally[p].desc)),
-            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:'#007AFF', flexShrink:0 } }, '×'+stats.partTally[p].n)))),
-
-        sectionTitle('Records'),
-        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          stats.longest && e('div', { onClick:()=>openEdit(stats.longest), style:{ cursor:'pointer' } },
-            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Longest job'),
-            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
-              stats.longest.ticketNumber + ' — ' + hm(mins(stats.longest.startDateTime, stats.longest.finishDateTime))),
-            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } },
-              fmtDate(stats.longest.startDateTime) + (SITES[stats.longest.site]?'  ·  '+SITES[stats.longest.site].label:''))),
-          stats.shortest && e('div', { onClick:()=>openEdit(stats.shortest), style:{ cursor:'pointer' } },
-            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Shortest job'),
-            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
-              stats.shortest.ticketNumber + ' — ' + hm(mins(stats.shortest.startDateTime, stats.shortest.finishDateTime))),
-            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } },
-              fmtDate(stats.shortest.startDateTime) + (SITES[stats.shortest.site]?'  ·  '+SITES[stats.shortest.site].label:''))),
-          stats.busiestDay && e('div', null,
-            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Busiest day'),
-            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
-              new Date(stats.busiestDay).toLocaleDateString('en-GB',{weekday:'short', day:'2-digit', month:'short', year:'numeric'})),
-            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } }, hm(stats.busiestDayMins) + ' on site')))));
+        e('div', { style:{ fontSize:'0.66rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.3rem 0.5rem 0' } }, 'Day by day'),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.5rem', display:'flex', flexDirection:'column', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map((dnum,idx,arr) => {
+            const d = ms.days[dnum];
+            const date = new Date(ms.y, ms.m, dnum);
+            return e('div', { key:dnum, style:{ display:'flex', alignItems:'center', gap:'0.7rem', padding:'0.55rem 0.6rem',
+              borderBottom: idx < arr.length-1 ? '1px solid #F2F2F7' : 'none' } },
+              e('div', { style:{ minWidth:'46px', textAlign:'center' } },
+                e('div', { style:{ fontSize:'0.95rem', fontWeight:800, lineHeight:1 } }, String(dnum)),
+                e('div', { style:{ fontSize:'0.55rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase' } },
+                  date.toLocaleDateString('en-GB',{ weekday:'short' }))),
+              e('div', { style:{ flex:1, minWidth:0, display:'flex', flexWrap:'wrap', gap:'0.3rem' } },
+                [...d.sites].map(s => e('span', { key:s, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label)),
+                [...d.equip].map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.08)', color:'#3A3A3C', padding:'0.18rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:800 } }, x))),
+              e('span', { style:{ fontSize:'0.68rem', color:'#8E8E93', fontWeight:700, flexShrink:0 } }, d.tickets.length + (d.tickets.length===1?' job':' jobs')));
+          }))));
 
   /* ---------- form view ---------- */
   const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
@@ -618,6 +594,17 @@ function App() {
         e('label', { style:LBL }, 'Ticket Number'),
         e('input', { type:'text', value:form.ticketNumber, placeholder:'e.g. INC0012345',
           onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:FIELD })),
+
+      e('div', null,
+        e('label', { style:LBL }, 'Equipment'),
+        e('div', { style:{ display:'flex', gap:'0.35rem' } },
+          Object.keys(EQUIP).map(k => {
+            const on = eqOf(form).includes(k);
+            return e('button', { key:k, onClick:()=>toggleEquip(k), title:EQUIP[k].full,
+              style:{ flex:1, padding:'0.45rem 0.2rem', borderRadius:'10px', fontWeight:800, fontSize:'0.72rem', cursor:'pointer',
+                border:'1.5px solid '+(on?'#1C1C1E':'#E5E5EA'), background: on?'#1C1C1E':'#FFF', color: on?'#FFF':'#8E8E93' } }, k);
+          }))),
+
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.75rem', background:'#F7F7FA', borderRadius:'14px', padding:'0.55rem 0.85rem' } },
         e('span', { style:{ fontSize:'0.88rem', fontWeight:600 } }, 'Add travel time'),
         e(Toggle, { on:form.hasTravel, onChange:()=>setForm({ ...form, hasTravel:!form.hasTravel }) })),
