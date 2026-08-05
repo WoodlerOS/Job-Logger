@@ -84,15 +84,6 @@ async function dbSet(val) {
   } catch (err) { return false; }
 }
 
-function SyncIcon() {
-  return e('svg', { width:21, height:21, viewBox:'0 0 24 24', fill:'none', stroke:'#FFF', strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' },
-    e('polyline', { points:'21 3 21 9 15 9' }),
-    e('polyline', { points:'3 21 3 15 9 15' }),
-    e('path', { d:'M20.5 9A8.5 8.5 0 0 0 6.2 5.6L3 9' }),
-    e('path', { d:'M3.5 15A8.5 8.5 0 0 0 17.8 18.4L21 15' })
-  );
-}
-
 function Toggle({ on, onChange }) {
   return e('div', { onClick:onChange, style:{
     width:'46px', height:'27px', borderRadius:'999px', padding:'3px', flexShrink:0,
@@ -117,7 +108,6 @@ function App() {
     return { ticketNumber:'', startDateTime:iso, finishDateTime:iso, hasTravel:false, travelDateTime:iso, workDone:'', parts:[{partNumber:'',partDescription:''}], site:'' };
   }
 
-  /* load: IndexedDB first, migrate from localStorage if needed */
   useEffect(() => {
     (async () => {
       let data = await dbGet();
@@ -138,6 +128,12 @@ function App() {
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   const fmtTime  = (s) => s ? new Date(s).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
   const fmtShort = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' · ' + fmtTime(s) : '';
+
+  const stamp = () => {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2,'0');
+    return p(d.getFullYear() % 100) + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+  };
 
   const duration = (a,b) => {
     if (!a || !b) return '';
@@ -186,24 +182,22 @@ function App() {
     return false;
   };
 
-  const doSync = async () => {
+  const doSpreadsheet = async () => {
     if (!jobs.length) { alert('No tickets to export yet.'); return; }
     if (typeof XLSX === 'undefined') { alert('Spreadsheet library still loading — try again in a moment.'); return; }
-    const stamp = new Date().toISOString().slice(0,10);
-    const xlsx = buildXlsxBlob(), backup = buildBackupBlob();
-    const files = [ new File([xlsx],'Tickets.xlsx',{type:xlsx.type}), new File([backup],'Tickets-backup-'+stamp+'.json',{type:'application/json'}) ];
-    if (await shareFiles(files)) return;
-    download(xlsx, 'Tickets.xlsx');
-    setTimeout(() => download(backup, 'Tickets-backup-'+stamp+'.json'), 600);
+    const name = stamp() + ' App tickets.xlsx';
+    const blob = buildXlsxBlob();
+    if (await shareFiles([ new File([blob], name, { type: blob.type }) ])) { setMenuOpen(false); return; }
+    download(blob, name);
+    setMenuOpen(false);
   };
 
-  const doBackupOnly = async () => {
+  const doBackup = async () => {
     if (!jobs.length) { alert('No tickets to back up yet.'); return; }
-    const stamp = new Date().toISOString().slice(0,10);
-    const backup = buildBackupBlob();
-    const f = [ new File([backup],'Tickets-backup-'+stamp+'.json',{type:'application/json'}) ];
-    if (await shareFiles(f)) { setMenuOpen(false); return; }
-    download(backup, 'Tickets-backup-'+stamp+'.json');
+    const name = stamp() + ' App tickets backup.json';
+    const blob = buildBackupBlob();
+    if (await shareFiles([ new File([blob], name, { type:'application/json' }) ])) { setMenuOpen(false); return; }
+    download(blob, name);
     setMenuOpen(false);
   };
 
@@ -227,7 +221,7 @@ function App() {
           setMenuOpen(false);
           alert('Restored ' + list.length + ' ticket(s). Total now ' + merged.length + '.');
         } catch (err) {
-          alert('That file could not be read. Pick a Tickets-backup .json file.');
+          alert('That file could not be read. Pick an "App tickets backup" .json file.');
         }
       };
       reader.readAsText(file);
@@ -270,7 +264,7 @@ function App() {
   });
   const months = Object.keys(grouped).sort((a,b) => new Date(grouped[b][0].startDateTime) - new Date(grouped[a][0].startDateTime));
 
-  /* ---------- MENU SHEET ---------- */
+  /* ---------- MENU ---------- */
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.9rem 1rem', borderRadius:'16px', border:'none',
       background:'#F7F7FA', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.15rem' } },
@@ -285,19 +279,18 @@ function App() {
       style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
-      menuRow('Backup file only', 'Save a .json restore file', doBackupOnly),
-      menuRow('Restore from backup', 'Load a Tickets-backup .json file', doRestore),
+      menuRow('Create spreadsheet', 'Excel file — "' + stamp() + ' App tickets.xlsx"', doSpreadsheet),
+      menuRow('Create backup file', 'Save a .json restore file', doBackup),
+      menuRow('Restore from backup', 'Load an "App tickets backup" .json file', doRestore),
       menuRow('Clear all tickets', 'Deletes everything on this device', doClear, '#FF3B30'),
       e('button', { onClick:()=>setMenuOpen(false),
         style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')
     )
   );
 
-  const header = !showCard && e('div', { style:{ padding:'1rem 1rem 0.7rem', display:'flex', justifyContent:'flex-end', gap:'0.5rem', alignItems:'center' } },
+  const header = !showCard && e('div', { style:{ padding:'1rem 1rem 0.7rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
     e('button', { onClick:()=>setMenuOpen(true), title:'Menu',
       style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontSize:'1.15rem', fontWeight:800, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '⋯'),
-    e('button', { onClick:doSync, title:'Export spreadsheet + backup',
-      style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#007AFF', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,122,255,0.32)' } }, e(SyncIcon)),
     e('button', { onClick:openNew,
       style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add')
   );
