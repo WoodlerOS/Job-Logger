@@ -8,7 +8,6 @@
     <title>Job Logger</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         * {
@@ -27,12 +26,30 @@
             height: 100vh;
             margin: 0;
             padding: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         }
         #root {
             width: 100%;
             height: 100%;
             overflow-y: auto;
             overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
@@ -43,20 +60,16 @@
         const { useState, useEffect } = React;
 
         const SITES = {
-            NX: { label: 'NX', hex: '#FFBE0B', bg: 'rgba(255, 190, 11, 0.08)' },
-            WS: { label: 'WS', hex: '#FF006E', bg: 'rgba(255, 0, 110, 0.08)' },
-            RH: { label: 'RH', hex: '#06D6A0', bg: 'rgba(6, 214, 160, 0.08)' },
-            MMUH: { label: 'MMUH', hex: '#F97316', bg: 'rgba(249, 115, 22, 0.08)' }
+            NX: { label: 'NX', hex: '#FFD60A', bg: 'rgba(255, 214, 10, 0.1)' },
+            WS: { label: 'WS', hex: '#FF006E', bg: 'rgba(255, 0, 110, 0.1)' },
+            RH: { label: 'RH', hex: '#00F5FF', bg: 'rgba(0, 245, 255, 0.1)' },
+            MMUH: { label: 'MMUH', hex: '#FF5D00', bg: 'rgba(255, 93, 0, 0.1)' }
         };
 
         function JobLogger() {
             const [jobs, setJobs] = useState([]);
             const [showNewCard, setShowNewCard] = useState(false);
             const [editingId, setEditingId] = useState(null);
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const [sheetId, setSheetId] = useState(null);
-            const [syncing, setSyncing] = useState(false);
-            const [accessToken, setAccessToken] = useState(null);
             const [formData, setFormData] = useState({
                 ticketNumber: '',
                 startDateTime: '',
@@ -73,121 +86,45 @@
                     if (saved) {
                         setJobs(JSON.parse(saved));
                     }
-                    const savedSheetId = localStorage.getItem('sheetId');
-                    if (savedSheetId) {
-                        setSheetId(savedSheetId);
-                    }
-                    const token = localStorage.getItem('gauth_token');
-                    if (token) {
-                        setIsLoggedIn(true);
-                        setAccessToken(token);
-                    }
                 } catch (error) {
-                    console.log('No saved data');
+                    console.log('No saved jobs');
                 }
             }, []);
 
-            const handleGoogleLogin = () => {
-                const clientId = '170316275267-hdnt6plii4tdk8k70uuqbvqdsulffuk5.apps.googleusercontent.com';
-                const redirectUri = 'https://woodleros.github.io/job-logger';
-                const scope = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
+            const exportToCSV = (jobsToExport) => {
+                let csv = 'Ticket Number,Date,Site,Start Time,Finish Time,Work Done,Parts Used\n';
                 
-                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                    `client_id=${clientId}&` +
-                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                    `response_type=token&` +
-                    `scope=${encodeURIComponent(scope)}`;
-                
-                window.location.href = authUrl;
-            };
-
-            const handleGoogleLogout = () => {
-                localStorage.removeItem('gauth_token');
-                localStorage.removeItem('sheetId');
-                setIsLoggedIn(false);
-                setAccessToken(null);
-                setSheetId(null);
-                alert('Signed out');
-            };
-
-            const syncToGoogleSheets = async (jobsToSync) => {
-                if (!isLoggedIn || !accessToken) {
-                    alert('Please sign in first');
-                    return;
-                }
-
-                setSyncing(true);
-                try {
-                    let currentSheetId = sheetId;
-
-                    if (!currentSheetId) {
-                        const createResponse = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer ' + accessToken,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                properties: { title: 'Job Logger' }
-                            })
-                        });
-
-                        if (!createResponse.ok) {
-                            throw new Error('Failed to create sheet');
-                        }
-
-                        const createData = await createResponse.json();
-                        currentSheetId = createData.spreadsheetId;
-                        setSheetId(currentSheetId);
-                        localStorage.setItem('sheetId', currentSheetId);
-                    }
-
-                    const values = [['Ticket Number', 'Date', 'Site', 'Start Time', 'Finish Time', 'Work Done', 'Parts Used']];
+                jobsToExport.forEach(job => {
+                    const startDate = new Date(job.startDateTime);
+                    const finishDate = new Date(job.finishDateTime);
                     
-                    jobsToSync.forEach(job => {
-                        const startDate = new Date(job.startDateTime);
-                        const finishDate = new Date(job.finishDateTime);
-                        
-                        const partsText = job.parts && job.parts.length > 0
-                            ? job.parts
-                                .filter(p => p.partNumber || p.partDescription)
-                                .map(p => `${p.partNumber} - ${p.partDescription}`)
-                                .join('; ')
-                            : '';
+                    const partsText = job.parts && job.parts.length > 0
+                        ? job.parts
+                            .filter(p => p.partNumber || p.partDescription)
+                            .map(p => `${p.partNumber} - ${p.partDescription}`)
+                            .join('; ')
+                        : '';
 
-                        values.push([
-                            job.ticketNumber,
-                            startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-                            SITES[job.site] ? SITES[job.site].label : '',
-                            startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                            finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                            job.workDone,
-                            partsText
-                        ]);
-                    });
+                    const dateStr = startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const startTimeStr = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    const finishTimeStr = finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    const siteLabel = SITES[job.site] ? SITES[job.site].label : '';
 
-                    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${currentSheetId}/values/Sheet1:clear`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                    const workDoneEscaped = `"${job.workDone.replace(/"/g, '""')}"`;
+                    const partsEscaped = `"${partsText.replace(/"/g, '""')}"`;
 
-                    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${currentSheetId}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ values: values })
-                    });
+                    csv += `${job.ticketNumber},${dateStr},${siteLabel},${startTimeStr},${finishTimeStr},${workDoneEscaped},${partsEscaped}\n`;
+                });
 
-                    setSyncing(false);
-                } catch (error) {
-                    setSyncing(false);
-                    alert('Sync failed: ' + error.message);
-                }
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Job-Logger-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
             };
 
             const initializeForm = () => {
@@ -218,7 +155,7 @@
                 setShowNewCard(true);
             };
 
-            const handleSave = async () => {
+            const handleSave = () => {
                 if (!formData.ticketNumber.trim()) {
                     alert('Please enter a ticket number');
                     return;
@@ -235,23 +172,28 @@
 
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
-                
-                if (isLoggedIn) {
-                    await syncToGoogleSheets(updatedJobs);
-                }
+                exportToCSV(updatedJobs);
                 
                 setShowNewCard(false);
                 initializeForm();
             };
 
-            const handleDelete = async (id) => {
+            const handleDelete = (id) => {
                 const updatedJobs = jobs.filter(job => job.id !== id);
                 setJobs(updatedJobs);
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
                 
-                if (isLoggedIn) {
-                    await syncToGoogleSheets(updatedJobs);
+                if (updatedJobs.length > 0) {
+                    exportToCSV(updatedJobs);
                 }
+            };
+
+            const handleDownload = () => {
+                if (jobs.length === 0) {
+                    alert('No jobs to download');
+                    return;
+                }
+                exportToCSV(jobs);
             };
 
             const handlePartChange = (index, field, value) => {
@@ -321,97 +263,143 @@
                 return dateB - dateA;
             });
 
-            return React.createElement('div', { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' } },
-                React.createElement('div', { style: { backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } },
-                    React.createElement('h1', { style: { fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#111827' } }, 'Logger'),
-                    React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
-                        !showNewCard && (
-                            isLoggedIn ? 
-                                React.createElement('button', {
-                                    onClick: handleGoogleLogout,
-                                    style: { backgroundColor: '#DC2626', color: 'white', padding: '0.625rem 0.875rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.75rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
-                                }, 'Sign Out')
-                            :
-                                React.createElement('button', {
-                                    onClick: handleGoogleLogin,
-                                    style: { backgroundColor: '#4285F4', color: 'white', padding: '0.625rem 0.875rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.75rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
-                                }, 'Sign In')
-                        ),
+            return React.createElement('div', { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } },
+                // Header
+                React.createElement('div', { style: { padding: '1.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } },
+                    React.createElement('h1', { style: { fontSize: '2.5rem', fontWeight: '800', margin: 0, color: '#FFFFFF', letterSpacing: '-0.5px' } }, 'Logger'),
+                    React.createElement('div', { style: { display: 'flex', gap: '0.75rem' } },
+                        !showNewCard && React.createElement('button', {
+                            onClick: handleDownload,
+                            style: { 
+                                background: 'rgba(255, 255, 255, 0.15)',
+                                backdropFilter: 'blur(10px)',
+                                WebkitBackdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                color: 'white', 
+                                padding: '0.75rem 1rem', 
+                                borderRadius: '16px', 
+                                fontWeight: '700', 
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                            },
+                            onMouseOver: (e) => {
+                                e.target.style.background = 'rgba(255, 255, 255, 0.25)';
+                            },
+                            onMouseOut: (e) => {
+                                e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+                            },
+                            title: 'Download CSV'
+                        }, '📊 Export'),
                         !showNewCard && React.createElement('button', {
                             onClick: handleNewJob,
-                            style: { backgroundColor: '#3B82F6', color: 'white', padding: '0.625rem 1.25rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.875rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                            style: { 
+                                background: 'linear-gradient(135deg, #00F5FF 0%, #0099FF 100%)',
+                                color: '#000', 
+                                padding: '0.75rem 1.25rem', 
+                                borderRadius: '16px', 
+                                fontWeight: '700', 
+                                fontSize: '1rem',
+                                border: 'none',
+                                cursor: 'pointer',
+                                boxShadow: '0 8px 24px rgba(0, 245, 255, 0.4)',
+                                transition: 'all 0.3s ease'
+                            },
+                            onMouseOver: (e) => {
+                                e.target.style.boxShadow = '0 12px 32px rgba(0, 245, 255, 0.6)';
+                                e.target.style.transform = 'translateY(-2px)';
+                            },
+                            onMouseOut: (e) => {
+                                e.target.style.boxShadow = '0 8px 24px rgba(0, 245, 255, 0.4)';
+                                e.target.style.transform = 'translateY(0)';
+                            }
                         }, '+ Add')
                     )
                 ),
 
-                isLoggedIn && React.createElement('div', { style: { backgroundColor: '#D1FAE5', borderBottom: '1px solid #6EE7B7', padding: '0.75rem 1rem', fontSize: '0.75rem', color: '#065F46', textAlign: 'center', fontWeight: '600' } },
-                    syncing ? '⏳ Syncing to Google Sheets...' : '✓ Connected to Google Sheets'
-                ),
-
-                React.createElement('div', { style: { flex: 1, overflowY: 'auto' } },
-                    showNewCard && React.createElement('div', { style: { padding: '1rem', paddingBottom: '2rem' } },
-                        React.createElement('div', { style: { backgroundColor: 'white', borderRadius: '1.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', minHeight: '90vh', justifyContent: 'space-between' } },
-                            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1.25rem' } },
+                // Content
+                React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '0 1rem 1rem' } },
+                    showNewCard && React.createElement('div', { style: { paddingBottom: '2rem' } },
+                        React.createElement('div', { 
+                            className: 'glass',
+                            style: { 
+                                borderRadius: '28px', 
+                                padding: '2rem', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '1.5rem',
+                                minHeight: '90vh',
+                                justifyContent: 'space-between'
+                            } 
+                        },
+                            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1.5rem' } },
                                 React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Ticket Number'),
+                                    React.createElement('label', { style: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' } }, 'Ticket'),
                                     React.createElement('input', {
                                         type: 'text',
                                         value: formData.ticketNumber,
                                         onChange: (e) => setFormData({ ...formData, ticketNumber: e.target.value }),
-                                        style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' },
-                                        placeholder: 'Enter ticket number'
+                                        className: 'glass-input',
+                                        style: { width: '100%', padding: '1rem', borderRadius: '14px', outline: 'none', color: '#FFFFFF', fontSize: '1rem' },
+                                        placeholder: 'ABC123'
                                     })
                                 ),
                                 React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Start Date & Time'),
+                                    React.createElement('label', { style: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' } }, 'Start'),
                                     React.createElement('input', {
                                         type: 'datetime-local',
                                         value: formData.startDateTime,
                                         onChange: (e) => setFormData({ ...formData, startDateTime: e.target.value }),
-                                        style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' }
+                                        className: 'glass-input',
+                                        style: { width: '100%', padding: '1rem', borderRadius: '14px', outline: 'none', color: '#FFFFFF', fontSize: '1rem' }
                                     })
                                 ),
                                 React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Finish Date & Time'),
+                                    React.createElement('label', { style: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' } }, 'Finish'),
                                     React.createElement('input', {
                                         type: 'datetime-local',
                                         value: formData.finishDateTime,
                                         onChange: (e) => setFormData({ ...formData, finishDateTime: e.target.value }),
-                                        style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', color: '#111827' }
+                                        className: 'glass-input',
+                                        style: { width: '100%', padding: '1rem', borderRadius: '14px', outline: 'none', color: '#FFFFFF', fontSize: '1rem' }
                                     })
                                 ),
                                 React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Work Done'),
+                                    React.createElement('label', { style: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' } }, 'Work Done'),
                                     React.createElement('textarea', {
                                         value: formData.workDone,
                                         onChange: (e) => setFormData({ ...formData, workDone: e.target.value }),
-                                        style: { width: '100%', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '1rem', outline: 'none', minHeight: '8rem', resize: 'none', color: '#111827', fontFamily: 'inherit' },
-                                        placeholder: 'Detailed notes about work completed...'
+                                        className: 'glass-input',
+                                        style: { width: '100%', padding: '1rem', borderRadius: '14px', outline: 'none', minHeight: '10rem', resize: 'none', color: '#FFFFFF', fontSize: '1rem', fontFamily: 'inherit' },
+                                        placeholder: 'Detailed notes...'
                                     })
                                 ),
                                 React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.625rem' } }, 'Parts Used'),
-                                    React.createElement('div', { style: { border: '1px solid #E5E7EB', borderRadius: '1rem', overflow: 'hidden' } },
-                                        React.createElement('div', { style: { backgroundColor: '#F3F4F6', display: 'grid', gridTemplateColumns: '1fr 1fr', fontWeight: '600', fontSize: '0.75rem', color: '#374151' } },
-                                            React.createElement('div', { style: { padding: '0.75rem', borderRight: '1px solid #E5E7EB' } }, 'Part Number'),
-                                            React.createElement('div', { style: { padding: '0.75rem' } }, 'Part Description')
+                                    React.createElement('label', { style: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' } }, 'Parts Used'),
+                                    React.createElement('div', { 
+                                        className: 'glass-input',
+                                        style: { borderRadius: '14px', overflow: 'hidden' } 
+                                    },
+                                        React.createElement('div', { style: { background: 'rgba(255, 255, 255, 0.05)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontWeight: '600', fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)' } },
+                                            React.createElement('div', { style: { padding: '0.75rem', borderRight: '1px solid rgba(255, 255, 255, 0.1)' } }, 'Part #'),
+                                            React.createElement('div', { style: { padding: '0.75rem' } }, 'Description')
                                         ),
                                         formData.parts.map((part, index) =>
-                                            React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #E5E7EB' } },
+                                            React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid rgba(255, 255, 255, 0.1)' } },
                                                 React.createElement('input', {
                                                     type: 'text',
                                                     value: part.partNumber,
                                                     onChange: (e) => handlePartChange(index, 'partNumber', e.target.value),
-                                                    style: { padding: '0.75rem', borderRight: '1px solid #E5E7EB', fontSize: '0.875rem', outline: 'none', color: '#111827' },
-                                                    placeholder: 'e.g. AB123'
+                                                    style: { padding: '0.75rem', borderRight: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '0.95rem', outline: 'none', background: 'transparent', color: '#FFFFFF' },
+                                                    placeholder: 'AB123'
                                                 }),
                                                 React.createElement('input', {
                                                     type: 'text',
                                                     value: part.partDescription,
                                                     onChange: (e) => handlePartChange(index, 'partDescription', e.target.value),
                                                     onKeyPress: (e) => handlePartKeyPress(index, 'partDescription', e),
-                                                    style: { padding: '0.75rem', fontSize: '0.875rem', outline: 'none', color: '#111827' },
-                                                    placeholder: 'e.g. Pump seal'
+                                                    style: { padding: '0.75rem', fontSize: '0.95rem', outline: 'none', background: 'transparent', color: '#FFFFFF' },
+                                                    placeholder: 'Seal'
                                                 })
                                             )
                                         )
@@ -420,49 +408,94 @@
                             ),
 
                             React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
-                                React.createElement('div', { style: { backgroundColor: '#F9FAFB', borderRadius: '1rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
-                                    React.createElement('p', { style: { fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0' } }, 'Select Site'),
-                                    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
+                                React.createElement('div', { 
+                                    style: { 
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        borderRadius: '16px', 
+                                        padding: '1.25rem', 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        gap: '1rem' 
+                                    } 
+                                },
+                                    React.createElement('p', { style: { fontSize: '0.8rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.7)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0' } }, 'Site'),
+                                    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' } },
                                         Object.entries(SITES).map(([key, site]) =>
                                             React.createElement('button', {
                                                 key: key,
                                                 onClick: () => setFormData({ ...formData, site: key }),
                                                 style: {
-                                                    backgroundColor: formData.site === key ? site.hex : '#E5E7EB',
-                                                    color: formData.site === key ? '#FFFFFF' : '#374151',
-                                                    padding: '0.75rem',
-                                                    borderRadius: '9999px',
-                                                    fontWeight: '600',
-                                                    border: 'none',
+                                                    backgroundColor: formData.site === key ? site.hex : 'rgba(255, 255, 255, 0.1)',
+                                                    color: formData.site === key ? '#000' : '#FFFFFF',
+                                                    padding: '0.875rem',
+                                                    borderRadius: '12px',
+                                                    fontWeight: '700',
+                                                    border: formData.site === key ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s'
+                                                    transition: 'all 0.3s ease',
+                                                    fontSize: '0.9rem'
                                                 }
                                             }, site.label)
                                         )
                                     )
                                 ),
 
-                                React.createElement('div', { style: { display: 'flex', gap: '0.75rem' } },
+                                React.createElement('div', { style: { display: 'flex', gap: '1rem' } },
                                     React.createElement('button', {
                                         onClick: handleSave,
-                                        style: { flex: 1, backgroundColor: '#3B82F6', color: 'white', padding: '0.875rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
-                                    }, 'Save Job'),
+                                        style: { 
+                                            flex: 1, 
+                                            background: 'linear-gradient(135deg, #00F5FF 0%, #0099FF 100%)',
+                                            color: '#000',
+                                            padding: '1rem', 
+                                            borderRadius: '14px', 
+                                            fontWeight: '700', 
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 8px 24px rgba(0, 245, 255, 0.4)',
+                                            transition: 'all 0.3s ease',
+                                            fontSize: '1rem'
+                                        }
+                                    }, 'Save'),
                                     React.createElement('button', {
                                         onClick: () => setShowNewCard(false),
-                                        style: { flex: 1, backgroundColor: '#F3F4F6', color: '#374151', padding: '0.875rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer' }
+                                        style: { 
+                                            flex: 1, 
+                                            background: 'rgba(255, 255, 255, 0.1)',
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)',
+                                            color: '#FFFFFF',
+                                            padding: '1rem', 
+                                            borderRadius: '14px', 
+                                            fontWeight: '700', 
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            fontSize: '1rem'
+                                        }
                                     }, 'Cancel')
                                 )
                             )
                         )
                     ),
 
-                    !showNewCard && React.createElement('div', { style: { padding: '1rem' } },
+                    !showNewCard && React.createElement('div', {},
                         monthKeys.length === 0 ? 
-                            React.createElement('div', { style: { textAlign: 'center', paddingTop: '4rem', paddingBottom: '4rem' } },
-                                React.createElement('p', { style: { color: '#6B7280', fontSize: '1.125rem', marginBottom: '1.5rem' } }, 'No jobs logged yet'),
+                            React.createElement('div', { style: { textAlign: 'center', paddingTop: '6rem', paddingBottom: '4rem' } },
+                                React.createElement('p', { style: { color: 'rgba(255, 255, 255, 0.6)', fontSize: '1.25rem', marginBottom: '2rem', fontWeight: '500' } }, 'No jobs yet'),
                                 React.createElement('button', {
                                     onClick: handleNewJob,
-                                    style: { backgroundColor: '#3B82F6', color: 'white', padding: '0.75rem 2rem', borderRadius: '9999px', fontWeight: '600', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
+                                    style: { 
+                                        background: 'linear-gradient(135deg, #00F5FF 0%, #0099FF 100%)',
+                                        color: '#000',
+                                        padding: '1rem 2rem', 
+                                        borderRadius: '16px', 
+                                        fontWeight: '700', 
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 8px 24px rgba(0, 245, 255, 0.4)',
+                                        fontSize: '1rem'
+                                    }
                                 }, 'Log Your First Job')
                             )
                         :
@@ -471,40 +504,61 @@
                                     React.createElement('div', { key: monthKey },
                                         React.createElement('button', {
                                             onClick: () => setExpandedMonth(expandedMonth === monthKey ? null : monthKey),
-                                            style: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#D1D5DB', borderRadius: '1rem', fontWeight: '600', color: '#374151', border: 'none', cursor: 'pointer' }
+                                            style: { 
+                                                width: '100%', 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'center', 
+                                                padding: '1rem',
+                                                background: 'rgba(255, 255, 255, 0.08)',
+                                                backdropFilter: 'blur(10px)',
+                                                WebkitBackdropFilter: 'blur(10px)',
+                                                borderRadius: '12px', 
+                                                fontWeight: '700', 
+                                                color: '#FFFFFF', 
+                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                cursor: 'pointer',
+                                                fontSize: '1rem'
+                                            }
                                         },
                                             monthKey,
-                                            React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' } }, '▼')
+                                            React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s', fontSize: '1.25rem' } }, '▼')
                                         ),
-                                        expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' } },
+                                        expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
                                             groupedJobs[monthKey].map(job =>
                                                 React.createElement('div', {
                                                     key: job.id,
                                                     onClick: () => handleEditJob(job),
-                                                    style: { padding: '1rem', backgroundColor: job.site ? SITES[job.site].bg : '#FFFFFF', borderRadius: '1rem', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer' }
+                                                    className: 'glass',
+                                                    style: { 
+                                                        padding: '1.25rem', 
+                                                        borderRadius: '18px', 
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.3s ease'
+                                                    }
                                                 },
-                                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' } },
+                                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' } },
                                                         React.createElement('div', { style: { flex: 1 } },
-                                                            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' } },
-                                                                React.createElement('p', { style: { fontWeight: 'bold', color: '#111827', fontSize: '1.125rem', margin: 0 } }, job.ticketNumber),
-                                                                job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: 'white', padding: '0.25rem 0.625rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 'bold' } }, SITES[job.site].label)
+                                                            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' } },
+                                                                React.createElement('p', { style: { fontWeight: '800', color: '#00F5FF', fontSize: '1.25rem', margin: 0 } }, job.ticketNumber),
+                                                                job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: '#000', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700' } }, SITES[job.site].label)
                                                             ),
-                                                            React.createElement('p', { style: { fontSize: '0.75rem', color: '#6B7280', margin: 0 } }, formatDateTime(job.startDateTime) + ' to ' + formatDateTime(job.finishDateTime))
+                                                            React.createElement('p', { style: { fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', margin: 0 } }, formatDateTime(job.startDateTime) + ' → ' + formatDateTime(job.finishDateTime))
                                                         ),
                                                         React.createElement('button', {
                                                             onClick: (e) => {
                                                                 e.stopPropagation();
-                                                                if (window.confirm('Delete this job?')) {
+                                                                if (window.confirm('Delete?')) {
                                                                     handleDelete(job.id);
                                                                 }
                                                             },
-                                                            style: { marginLeft: '0.75rem', padding: '0.5rem', color: '#F87171', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.125rem' }
-                                                        }, '🗑️')
+                                                            style: { marginLeft: '0.75rem', padding: '0.5rem', color: '#FF006E', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.25rem' }
+                                                        }, '✕')
                                                     ),
-                                                    job.workDone && React.createElement('p', { style: { fontSize: '0.875rem', color: '#374151', marginBottom: '0.5rem', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
+                                                    job.workDone && React.createElement('p', { style: { fontSize: '0.95rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
                                                     React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                                                        job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('p', { style: { fontSize: '0.75rem', color: '#6B7280', margin: 0 } }, job.parts.filter(p => p.partNumber || p.partDescription).length + ' part' + (job.parts.filter(p => p.partNumber || p.partDescription).length !== 1 ? 's' : '')),
-                                                        React.createElement('p', { style: { fontSize: '0.75rem', color: '#9CA3AF', margin: 0, marginLeft: 'auto' } }, formatDateOnly(job.startDateTime))
+                                                        job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('p', { style: { fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.5)', margin: 0 } }, job.parts.filter(p => p.partNumber || p.partDescription).length + ' part' + (job.parts.filter(p => p.partNumber || p.partDescription).length !== 1 ? 's' : '')),
+                                                        React.createElement('p', { style: { fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.4)', margin: 0, marginLeft: 'auto' } }, formatDateOnly(job.startDateTime))
                                                     )
                                                 )
                                             )
