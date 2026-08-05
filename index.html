@@ -54,4 +54,502 @@ const SEL   = { padding:'0.5rem 0.8rem', borderRadius:'999px', border:'none', ba
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
-  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE);};
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+async function dbGet(k){try{const db=await openDB();return await new Promise((res,rej)=>{
+  const r=db.transaction(STORE,'readonly').objectStore(STORE).get(k);
+  r.onsuccess=()=>res(r.result||null); r.onerror=()=>rej(r.error);});}catch(err){return null;}}
+async function dbSet(k,v){try{const db=await openDB();await new Promise((res,rej)=>{
+  const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(v,k);
+  tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);});return true;}catch(err){return false;}}
+
+function Toggle({ on, onChange }) {
+  return e('div', { onClick:onChange, style:{
+    width:'46px', height:'27px', borderRadius:'999px', padding:'3px', flexShrink:0,
+    background: on ? '#34C759' : '#E5E5EA',
+    display:'flex', alignItems:'center', justifyContent: on ? 'flex-end' : 'flex-start',
+    cursor:'pointer', transition:'background-color .2s ease' } },
+    e('div', { style:{ width:'21px', height:'21px', borderRadius:'999px', background:'#FFF', boxShadow:'0 1px 3px rgba(0,0,0,0.25)' } }));
+}
+
+function App() {
+  const [jobs, setJobs] = useState([]);
+  const [ready, setReady] = useState(false);
+  const [showCard, setShowCard] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [form, setForm] = useState(blank());
+
+  const [query, setQuery] = useState('');
+  const [siteFilter, setSiteFilter] = useState([]);
+  const [period, setPeriod] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [groupBy, setGroupBy] = useState('month');
+  const [openGroups, setOpenGroups] = useState({});
+  const [showFilters, setShowFilters] = useState(false);
+
+  function blank() {
+    const iso = new Date().toISOString().slice(0,16);
+    return { ticketNumber:'', startDateTime:iso, finishDateTime:iso, hasTravel:false, travelDateTime:iso, workDone:'', parts:[{partNumber:'',partDescription:''}], site:'' };
+  }
+
+  useEffect(() => { (async () => {
+    let data = await dbGet(KEY);
+    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) { data = JSON.parse(s); await dbSet(KEY, data); } } catch (err) {} }
+    if (Array.isArray(data)) setJobs(data);
+    setReady(true);
+  })(); }, []);
+
+  const persist = async (next) => {
+    setJobs(next); await dbSet(KEY, next);
+    try { localStorage.setItem('jobsData', JSON.stringify(next)); } catch (err) {}
+  };
+
+  const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  const fmtTime  = (s) => s ? new Date(s).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+  const fmtShort = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' · ' + fmtTime(s) : '';
+  const stamp = () => { const d=new Date(), p=(n)=>String(n).padStart(2,'0');
+    return p(d.getFullYear()%100)+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); };
+  const nowLocal = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
+
+  const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
+  const hm = (m) => Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m';
+  const duration = (a,b) => { const m = mins(a,b); return m ? hm(m) : ''; };
+
+  /* ---------- filtering / sorting ---------- */
+  const periodStart = () => {
+    const d = new Date(); d.setHours(0,0,0,0);
+    if (period === 'week')   { const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d; }
+    if (period === 'month')  { d.setDate(1); return d; }
+    if (period === 'last')   { d.setDate(1); d.setMonth(d.getMonth()-1); return d; }
+    if (period === '90')     { d.setDate(d.getDate()-90); return d; }
+    return null;
+  };
+  const periodEnd = () => {
+    if (period !== 'last') return null;
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d;
+  };
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const from = periodStart(), to = periodEnd();
+    let out = jobs.filter(j => {
+      if (siteFilter.length && !siteFilter.includes(j.site)) return false;
+      const d = new Date(j.startDateTime);
+      if (from && d < from) return false;
+      if (to && d >= to) return false;
+      if (!q) return true;
+      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+        ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+    out.sort((a,b) => {
+      if (sortBy === 'oldest')  return new Date(a.startDateTime) - new Date(b.startDateTime);
+      if (sortBy === 'longest') return mins(b.startDateTime,b.finishDateTime) - mins(a.startDateTime,a.finishDateTime);
+      if (sortBy === 'ticket')  return String(a.ticketNumber).localeCompare(String(b.ticketNumber), undefined, {numeric:true});
+      if (sortBy === 'site')    return String(a.site).localeCompare(String(b.site));
+      return new Date(b.startDateTime) - new Date(a.startDateTime);
+    });
+    return out;
+  }, [jobs, query, siteFilter, period, sortBy]);
+
+  const stats = useMemo(() => {
+    let onsite = 0, travel = 0, parts = 0;
+    const perSite = {};
+    filtered.forEach(j => {
+      const m = mins(j.startDateTime, j.finishDateTime);
+      onsite += m;
+      if (j.hasTravel) travel += mins(j.travelDateTime, j.startDateTime);
+      parts += (j.parts||[]).filter(p => p.partNumber || p.partDescription).length;
+      if (j.site) perSite[j.site] = (perSite[j.site]||0) + m;
+    });
+    return { count:filtered.length, onsite, travel, parts, perSite };
+  }, [filtered]);
+
+  const groups = useMemo(() => {
+    if (groupBy === 'none') return [{ key:'All tickets', items:filtered }];
+    const map = {};
+    filtered.forEach(j => {
+      const k = groupBy === 'site'
+        ? (SITES[j.site] ? SITES[j.site].label : 'No site')
+        : new Date(j.startDateTime).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+      (map[k] = map[k] || []).push(j);
+    });
+    const keys = Object.keys(map);
+    if (groupBy === 'month') keys.sort((a,b) => new Date(map[b][0].startDateTime) - new Date(map[a][0].startDateTime));
+    else keys.sort();
+    return keys.map(k => ({ key:k, items:map[k] }));
+  }, [filtered, groupBy]);
+
+  useEffect(() => {
+    if (groupBy === 'none' || (query.trim() || siteFilter.length)) {
+      const all = {}; groups.forEach(g => all[g.key] = true); setOpenGroups(all);
+    }
+  }, [groupBy, query, siteFilter.length, groups.length]);
+
+  const partHistory = useMemo(() => {
+    const set = new Map();
+    jobs.forEach(j => (j.parts||[]).forEach(p => {
+      if (p.partNumber && p.partNumber.trim()) set.set(p.partNumber.trim(), p.partDescription||'');
+    }));
+    return [...set.entries()];
+  }, [jobs]);
+
+  const filterActive = query.trim() || siteFilter.length || period !== 'all';
+
+  /* ---------- export ---------- */
+  const buildXlsxBlob = (rowsSrc) => {
+    const rows = [['Ticket','Site','Date','Travel start','Travel mins','Start','Finish','Duration','Work Done','Parts Used']];
+    [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
+      const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
+        .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
+      rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', fmtDate(j.startDateTime),
+        j.hasTravel?fmtTime(j.travelDateTime):'', j.hasTravel?mins(j.travelDateTime,j.startDateTime):'',
+        fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
+        duration(j.startDateTime,j.finishDateTime), (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
+    });
+    rows.push([]);
+    rows.push(['TOTAL', '', rowsSrc.length+' tickets', '', stats.travel, '', '', hm(stats.onsite), '', stats.parts+' parts']);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:16},{wch:8},{wch:12},{wch:11},{wch:11},{wch:9},{wch:9},{wch:10},{wch:60},{wch:40}];
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:9} }) };
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
+    return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
+      { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  };
+
+  const download = (blob, name) => {
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  };
+  const shareFiles = async (files) => {
+    try { if (navigator.canShare && navigator.canShare({files})) { await navigator.share({files,title:'Tickets'}); return true; } }
+    catch (err) { if (err && err.name==='AbortError') return true; }
+    return false;
+  };
+
+  const doSpreadsheet = async (onlyFiltered) => {
+    const src = onlyFiltered ? filtered : jobs;
+    if (!src.length) { alert('Nothing to export.'); return; }
+    if (typeof XLSX === 'undefined') { alert('Still loading — try again in a moment.'); return; }
+    const name = stamp()+' App tickets'+(onlyFiltered && filterActive ? ' (filtered)' : '')+'.xlsx';
+    const blob = buildXlsxBlob(src);
+    if (!(await shareFiles([new File([blob],name,{type:blob.type})]))) download(blob,name);
+    setMenuOpen(false);
+  };
+
+  const doBackup = async () => {
+    if (!jobs.length) { alert('Nothing to back up.'); return; }
+    const name = stamp()+' App tickets backup.json';
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:2, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
+    setMenuOpen(false);
+  };
+
+  const doRestore = () => {
+    const input = document.getElementById('restoreInput'); input.value='';
+    input.onchange = () => {
+      const file = input.files && input.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const list = Array.isArray(parsed) ? parsed : parsed.jobs;
+          if (!Array.isArray(list)) throw new Error('bad');
+          const merged = [...list]; const seen = new Set(list.map(j=>j.id));
+          jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
+          merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
+          await persist(merged); setMenuOpen(false);
+          alert('Restored. Total now '+merged.length+' tickets.');
+        } catch (err) { alert('That file could not be read.'); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  const doCopySummary = async () => {
+    if (!filtered.length) { alert('Nothing to copy.'); return; }
+    const lines = filtered.map(j => {
+      const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
+        .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
+      return [ j.ticketNumber + (SITES[j.site]?' ['+SITES[j.site].label+']':''),
+        fmtDate(j.startDateTime)+'  '+fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)+
+        (duration(j.startDateTime,j.finishDateTime)?'  ('+duration(j.startDateTime,j.finishDateTime)+')':''),
+        j.workDone||'', p?('Parts: '+p):'' ].filter(Boolean).join('\n');
+    }).join('\n\n———\n\n');
+    try { await navigator.clipboard.writeText(lines); alert('Copied '+filtered.length+' ticket(s) to clipboard.'); }
+    catch (err) { alert('Copy failed — your browser blocked clipboard access.'); }
+    setMenuOpen(false);
+  };
+
+  const doClear = async () => {
+    if (!window.confirm('Delete ALL tickets? Make a backup first.')) return;
+    if (!window.confirm('Really delete everything?')) return;
+    await persist([]); setMenuOpen(false);
+  };
+
+  /* ---------- form ---------- */
+  const openNew  = () => { setForm(blank()); setEditingId(null); setShowCard(true); window.scrollTo(0,0); };
+  const openEdit = (j) => {
+    setForm({ hasTravel:false, travelDateTime:j.startDateTime, ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
+    setEditingId(j.id); setShowCard(true); window.scrollTo(0,0);
+  };
+  const duplicate = () => {
+    const iso = nowLocal();
+    setForm({ ...form, ticketNumber:'', startDateTime:iso, finishDateTime:iso, travelDateTime:iso });
+    setEditingId(null); window.scrollTo(0,0);
+  };
+
+  const save = async () => {
+    if (!form.ticketNumber.trim()) { alert('Please enter a ticket number'); return; }
+    const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
+    if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
+    await persist(editingId ? jobs.map(j => j.id===editingId ? { ...form, id:editingId } : j)
+                            : [{ ...form, id:Date.now() }, ...jobs]);
+    setShowCard(false); setEditingId(null); setForm(blank());
+  };
+
+  const remove = (id) => persist(jobs.filter(j => j.id !== id));
+
+  const partChange = (i, field, val) => {
+    const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
+    if (field === 'partNumber') {
+      const known = partHistory.find(([n]) => n.toLowerCase() === val.trim().toLowerCase());
+      if (known && !parts[i].partDescription) parts[i].partDescription = known[1];
+    }
+    if (val.trim() && i===parts.length-1) parts.push({ partNumber:'', partDescription:'' });
+    setForm({ ...form, parts });
+  };
+  const removePart = (i) => {
+    const parts = form.parts.filter((_,idx) => idx !== i);
+    setForm({ ...form, parts: parts.length ? parts : [{partNumber:'',partDescription:''}] });
+  };
+
+  /* ---------- UI ---------- */
+  const menuRow = (label, sub, onClick, colour) =>
+    e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
+      background:'#F7F7FA', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
+      e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || '#1C1C1E' } }, label),
+      e('span', { style:{ fontSize:'0.7rem', color:'#8E8E93' } }, sub));
+
+  const menu = menuOpen && e('div', { onClick:()=>setMenuOpen(false),
+    style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', zIndex:50, display:'flex', alignItems:'flex-end' } },
+    e('div', { onClick:(ev)=>ev.stopPropagation(),
+      style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
+        display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
+      e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
+      menuRow('Spreadsheet — current view', filtered.length+' ticket(s) matching your filters', ()=>doSpreadsheet(true)),
+      menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet(false)),
+      menuRow('Copy current view as text', 'For pasting into an email or notes', doCopySummary),
+      menuRow('Create backup file', 'Save a .json restore file', doBackup),
+      menuRow('Restore from backup', 'Load an "App tickets backup" .json file', doRestore),
+      menuRow('Clear all tickets', 'Deletes everything on this device', doClear, '#FF3B30'),
+      e('button', { onClick:()=>setMenuOpen(false),
+        style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
+
+  const header = !showCard && e('div', { style:{ padding:'0.9rem 0.9rem 0.5rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
+    e('button', { onClick:()=>setMenuOpen(true),
+      style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontSize:'1.15rem', fontWeight:800, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '⋯'),
+    e('button', { onClick:openNew,
+      style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add'));
+
+  const controls = !showCard && jobs.length > 0 && e('div', { style:{ padding:'0 0.85rem 0.6rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
+
+    e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
+      e('div', { style:{ flex:1, position:'relative' } },
+        e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
+          onChange:(ev)=>setQuery(ev.target.value),
+          style:{ width:'100%', padding:'0.65rem 2rem 0.65rem 0.9rem', border:'none', borderRadius:'999px', outline:'none',
+            fontSize:'0.88rem', background:'#FFF', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' } }),
+        query && e('button', { onClick:()=>setQuery(''),
+          style:{ position:'absolute', right:'0.45rem', top:'50%', transform:'translateY(-50%)', border:'none', background:'#E5E5EA', color:'#8E8E93', width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.65rem', cursor:'pointer', lineHeight:1 } }, '✕')),
+      e('button', { onClick:()=>setShowFilters(!showFilters),
+        style:{ width:'42px', height:'38px', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.95rem',
+          background: filterActive ? '#007AFF' : '#FFF', color: filterActive ? '#FFF' : '#1C1C1E', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' } }, '⚙')),
+
+    showFilters && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:'#FFF', borderRadius:'18px', padding:'0.75rem', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' } },
+      e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
+        Object.keys(SITES).map(k => {
+          const s = SITES[k], on = siteFilter.includes(k);
+          return e('button', { key:k,
+            onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
+            style:{ padding:'0.4rem 0.85rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', flexShrink:0,
+              border:'1.5px solid '+(on?s.hex:'#E5E5EA'), background: on?s.hex:'#FFF', color: on?'#FFF':'#3A3A3C' } }, s.label);
+        })),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem' } },
+        e('select', { value:period, onChange:(ev)=>setPeriod(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+          e('option', { value:'all' }, 'All time'),
+          e('option', { value:'week' }, 'This week'),
+          e('option', { value:'month' }, 'This month'),
+          e('option', { value:'last' }, 'Last month'),
+          e('option', { value:'90' }, 'Last 90 days')),
+        e('select', { value:sortBy, onChange:(ev)=>setSortBy(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+          e('option', { value:'newest' }, 'Newest'),
+          e('option', { value:'oldest' }, 'Oldest'),
+          e('option', { value:'longest' }, 'Longest'),
+          e('option', { value:'ticket' }, 'Ticket no.'),
+          e('option', { value:'site' }, 'Site')),
+        e('select', { value:groupBy, onChange:(ev)=>setGroupBy(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+          e('option', { value:'month' }, 'By month'),
+          e('option', { value:'site' }, 'By site'),
+          e('option', { value:'none' }, 'Flat list'))),
+      filterActive && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setPeriod('all'); },
+        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'#FFF0F0', color:'#FF3B30', fontWeight:700, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear all filters')),
+
+    e('div', { style:{ display:'flex', gap:'0.4rem', background:'#FFF', borderRadius:'16px', padding:'0.65rem 0.5rem', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' } },
+      [['Tickets', String(stats.count)], ['On site', hm(stats.onsite)], ['Travel', hm(stats.travel)], ['Parts', String(stats.parts)]]
+        .map(([k,v]) => e('div', { key:k, style:{ flex:1, textAlign:'center' } },
+          e('div', { style:{ fontSize:'0.95rem', fontWeight:800 } }, v),
+          e('div', { style:{ fontSize:'0.6rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px', fontWeight:700 } }, k)))),
+
+    Object.keys(stats.perSite).length > 1 && e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
+      Object.keys(stats.perSite).sort((a,b)=>stats.perSite[b]-stats.perSite[a]).map(k =>
+        e('div', { key:k, style:{ flexShrink:0, display:'flex', alignItems:'center', gap:'0.35rem', background:SITES[k].tint,
+          border:'1px solid '+SITES[k].hex+'55', borderRadius:'999px', padding:'0.3rem 0.7rem', fontSize:'0.72rem', fontWeight:700 } },
+          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }),
+          SITES[k].label + ' · ' + hm(stats.perSite[k])))));
+
+  const ticketCard = (j) => {
+    const s = SITES[j.site];
+    return e('div', { key:j.id, onClick:()=>openEdit(j),
+      style:{ padding:'0.95rem 1.05rem', borderRadius:'18px', cursor:'pointer',
+        background: s?s.tint:'#FFF', border:'1.5px solid '+(s?s.hex+'44':'#E5E5EA'), boxShadow:'0 2px 8px rgba(0,0,0,0.035)' } },
+      e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
+        e('div', { style:{ flex:1, minWidth:0 } },
+          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', marginBottom:'0.25rem', flexWrap:'wrap' } },
+            e('span', { style:{ fontWeight:800, fontSize:'1rem' } }, j.ticketNumber),
+            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.4px' } }, s.label)),
+          e('div', { style:{ fontSize:'0.72rem', color:'#6E6E73' } },
+            fmtShort(j.startDateTime)+' → '+fmtTime(j.finishDateTime)+
+            (duration(j.startDateTime,j.finishDateTime)?'  ·  '+duration(j.startDateTime,j.finishDateTime):'')+
+            (j.hasTravel?'  ·  Travel '+hm(mins(j.travelDateTime,j.startDateTime)):''))),
+        e('button', { onClick:(ev)=>{ ev.stopPropagation(); if (window.confirm('Delete this ticket?')) remove(j.id); },
+          style:{ background:'rgba(255,255,255,0.75)', border:'none', color:'#FF3B30', width:'27px', height:'27px', borderRadius:'999px', cursor:'pointer', fontSize:'0.8rem', fontWeight:700, flexShrink:0 } }, '✕')),
+      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#3A3A3C', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
+      e('div', { style:{ display:'flex', justifyContent:'space-between', marginTop:'0.55rem', fontSize:'0.68rem', color:'#8E8E93' } },
+        e('span', null, (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length ? (j.parts.filter(p=>p.partNumber||p.partDescription).length+' part(s)') : ''),
+        e('span', null, fmtDate(j.startDateTime))));
+  };
+
+  const noResults = e('div', { style:{ textAlign:'center', padding:'3rem 1.5rem' } },
+    e('p', { style:{ color:'#8E8E93', fontSize:'0.95rem', marginBottom:'1rem' } }, 'No tickets match this view'),
+    e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setPeriod('all'); },
+      style:{ padding:'0.7rem 1.4rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer' } }, 'Clear filters'));
+
+  const empty = e('div', { style:{ textAlign:'center', padding:'4rem 1.5rem' } },
+    e('p', { style:{ color:'#8E8E93', fontSize:'1rem', marginBottom:'1.3rem' } }, 'No tickets logged yet'),
+    e('button', { onClick:openNew,
+      style:{ padding:'0.85rem 1.6rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'0.95rem', cursor:'pointer', boxShadow:'0 3px 12px rgba(0,122,255,0.32)' } }, 'Log Your First Ticket'));
+
+  const list = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+    groups.map(g => {
+      const gMins = g.items.reduce((t,j)=>t+mins(j.startDateTime,j.finishDateTime), 0);
+      const open = groupBy === 'none' ? true : !!openGroups[g.key];
+      return e('div', { key:g.key },
+        groupBy !== 'none' && e('button', { onClick:()=>setOpenGroups({ ...openGroups, [g.key]: !open }),
+          style:{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.8rem 1.1rem',
+            background:'#FFF', border:'none', borderRadius:'18px', fontWeight:700, fontSize:'0.92rem', color:'#1C1C1E',
+            cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          e('span', null, g.key),
+          e('span', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
+            e('span', { style:{ fontSize:'0.68rem', color:'#8E8E93', fontWeight:700 } }, hm(gMins)),
+            e('span', { style:{ background:'#F0F0F4', color:'#8E8E93', fontSize:'0.68rem', fontWeight:700, padding:'0.15rem 0.55rem', borderRadius:'999px' } }, String(g.items.length)),
+            e('span', { style:{ fontSize:'0.68rem', color:'#C7C7CC', display:'inline-block', transform: open?'rotate(180deg)':'none', transition:'transform .25s ease' } }, '▼'))),
+        open && e('div', { style:{ marginTop: groupBy!=='none' ? '0.55rem' : 0, display:'flex', flexDirection:'column', gap:'0.55rem' } },
+          g.items.map(ticketCard)));
+    }));
+
+  const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
+    e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
+      e('div', null,
+        e('label', { style:LBL }, 'Ticket Number'),
+        e('input', { type:'text', value:form.ticketNumber, placeholder:'e.g. INC0012345',
+          onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:FIELD })),
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.75rem', background:'#F7F7FA', borderRadius:'14px', padding:'0.55rem 0.85rem' } },
+        e('span', { style:{ fontSize:'0.88rem', fontWeight:600 } }, 'Add travel time'),
+        e(Toggle, { on:form.hasTravel, onChange:()=>setForm({ ...form, hasTravel:!form.hasTravel }) })),
+      form.hasTravel && e('div', { style:{ background:'#EEF4FF', border:'1.5px solid #D6E4FF', borderRadius:'14px', padding:'0.6rem 0.75rem' } },
+        e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
+          e('label', { style:{ ...LBL, color:'#3A6FD8', marginBottom:'0.3rem' } }, 'Travel'),
+          e('button', { onClick:()=>setForm({ ...form, travelDateTime:nowLocal() }),
+            style:{ border:'none', background:'#D6E4FF', color:'#2F5FC0', fontSize:'0.65rem', fontWeight:800, padding:'0.2rem 0.6rem', borderRadius:'999px', cursor:'pointer' } }, 'NOW')),
+        e('input', { type:'datetime-local', value:form.travelDateTime,
+          onChange:(ev)=>setForm({ ...form, travelDateTime:ev.target.value }),
+          style:{ ...DT, background:'#FFF', borderColor:'#D6E4FF' } }),
+        mins(form.travelDateTime, form.startDateTime) > 0 &&
+          e('div', { style:{ fontSize:'0.68rem', color:'#3A6FD8', marginTop:'0.35rem', fontWeight:700 } },
+            hm(mins(form.travelDateTime, form.startDateTime)) + ' travel')),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)', gap:'0.55rem' } },
+        e('div', { style:{ minWidth:0 } },
+          e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
+            e('label', { style:{ ...LBL, marginBottom:'0.3rem' } }, 'Start'),
+            e('button', { onClick:()=>setForm({ ...form, startDateTime:nowLocal() }),
+              style:{ border:'none', background:'#E8E8ED', color:'#3A3A3C', fontSize:'0.62rem', fontWeight:800, padding:'0.15rem 0.5rem', borderRadius:'999px', cursor:'pointer' } }, 'NOW')),
+          e('input', { type:'datetime-local', value:form.startDateTime,
+            onChange:(ev)=>setForm({ ...form, startDateTime:ev.target.value }), style:DT })),
+        e('div', { style:{ minWidth:0 } },
+          e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
+            e('label', { style:{ ...LBL, marginBottom:'0.3rem' } }, 'Finish'),
+            e('button', { onClick:()=>setForm({ ...form, finishDateTime:nowLocal() }),
+              style:{ border:'none', background:'#E8E8ED', color:'#3A3A3C', fontSize:'0.62rem', fontWeight:800, padding:'0.15rem 0.5rem', borderRadius:'999px', cursor:'pointer' } }, 'NOW')),
+          e('input', { type:'datetime-local', value:form.finishDateTime,
+            onChange:(ev)=>setForm({ ...form, finishDateTime:ev.target.value }), style:DT }))),
+      mins(form.startDateTime, form.finishDateTime) > 0 &&
+        e('div', { style:{ fontSize:'0.72rem', color:'#34C759', fontWeight:800, textAlign:'center', marginTop:'-0.4rem' } },
+          'On site: ' + hm(mins(form.startDateTime, form.finishDateTime))),
+      e('div', null,
+        e('label', { style:LBL }, 'Work Done'),
+        e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
+          onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
+          style:{ ...FIELD, minHeight:'7rem', resize:'none' } })),
+      e('div', null,
+        e('label', { style:LBL }, 'Parts Used'),
+        e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
+        e('div', { style:{ border:'1.5px solid #E5E5EA', borderRadius:'14px', overflow:'hidden', background:'#FAFAFC' } },
+          e('div', { style:{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 30px', background:'#F0F0F4', fontSize:'0.62rem', fontWeight:700, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px' } },
+            e('div', { style:{ padding:'0.55rem 0.7rem', borderRight:'1px solid #E5E5EA' } }, 'Part No.'),
+            e('div', { style:{ padding:'0.55rem 0.7rem' } }, 'Description'),
+            e('div', null)),
+          form.parts.map((p,i) => e('div', { key:i, style:{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr) 30px', borderTop:'1px solid #E5E5EA', alignItems:'center' } },
+            e('input', { type:'text', value:p.partNumber, placeholder:'AB123', list:'partList',
+              onChange:(ev)=>partChange(i,'partNumber',ev.target.value),
+              style:{ width:'100%', minWidth:0, padding:'0.6rem 0.7rem', border:'none', borderRight:'1px solid #E5E5EA', outline:'none', background:'transparent', fontSize:'0.85rem' } }),
+            e('input', { type:'text', value:p.partDescription, placeholder:'Pump seal',
+              onChange:(ev)=>partChange(i,'partDescription',ev.target.value),
+              style:{ width:'100%', minWidth:0, padding:'0.6rem 0.7rem', border:'none', outline:'none', background:'transparent', fontSize:'0.85rem' } }),
+            (p.partNumber || p.partDescription) ? e('button', { onClick:()=>removePart(i),
+              style:{ border:'none', background:'transparent', color:'#C7C7CC', cursor:'pointer', fontSize:'0.8rem' } }, '✕') : e('span'))))),
+      e('div', null,
+        e('label', { style:LBL }, 'Site'),
+        e('div', { style:{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)', gap:'0.5rem' } },
+          Object.keys(SITES).map(k => {
+            const s = SITES[k], on = form.site===k;
+            return e('button', { key:k, onClick:()=>setForm({ ...form, site:k }),
+              style:{ padding:'0.7rem', borderRadius:'999px', fontWeight:700, fontSize:'0.9rem', cursor:'pointer',
+                border:'2px solid '+(on?s.hex:'#E5E5EA'), background: on?s.hex:'#FFF', color: on?'#FFF':'#3A3A3C',
+                boxShadow: on ? '0 3px 10px '+s.hex+'55' : 'none' } }, s.label);
+          })))),
+    e('div', { className:'card', style:{ padding:'0.8rem', display:'flex', flexDirection:'column', gap:'0.6rem' } },
+      e('div', { style:{ display:'flex', gap:'0.6rem' } },
+        e('button', { onClick:save,
+          style:{ flex:1, padding:'0.9rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'0.95rem', cursor:'pointer', boxShadow:'0 3px 12px rgba(0,122,255,0.32)' } },
+          editingId ? 'Update' : 'Save'),
+        e('button', { onClick:()=>{ setShowCard(false); setEditingId(null); },
+          style:{ flex:1, padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Cancel')),
+      editingId && e('button', { onClick:duplicate,
+        style:{ padding:'0.75rem', borderRadius:'999px', border:'none', background:'#F0F7FF', color:'#007AFF', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' } },
+        'Duplicate as new ticket')));
+
+  if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:'#8E8E93' } }, 'Loading…');
+
+  return e('div', null, header, controls,
+    showCard ? formView : (jobs.length === 0 ? empty : (filtered.length ? list : noResults)), menu);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+</script>
+</body>
+</html>
