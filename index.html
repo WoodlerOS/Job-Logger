@@ -1,274 +1,327 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Job Logger</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        * {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        input, textarea, select {
-            -webkit-user-select: text;
-            user-select: text;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background: #F2F2F7;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        #root {
-            width: 100%;
-            min-height: 100vh;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Tickets</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; box-sizing: border-box; }
+  input, textarea { -webkit-user-select: text; user-select: text; font-family: inherit; }
+  body {
+    margin: 0; padding: 0;
+    background: #F2F2F7;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: #1C1C1E;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #root { width: 100%; min-height: 100vh; }
+  button { font-family: inherit; transition: transform .12s ease, opacity .12s ease, background-color .15s ease; }
+  button:active { transform: scale(0.95); opacity: 0.85; }
+  .card { background:#FFFFFF; border-radius:24px; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+  input, textarea { transition: border-color .15s ease, background-color .15s ease; }
+  input:focus, textarea:focus { border-color:#007AFF !important; }
+</style>
 </head>
 <body>
-    <div id="root"></div>
-    
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+<div id="root"></div>
 
-        const SITES = {
-            NX: { label: 'NX', hex: '#FFBE0B' },
-            WS: { label: 'WS', hex: '#FF006E' },
-            RH: { label: 'RH', hex: '#06D6A0' },
-            MMUH: { label: 'MMUH', hex: '#F97316' }
-        };
+<script type="text/babel">
+const { useState, useEffect } = React;
+const e = React.createElement;
 
-        function JobLogger() {
-            const [jobs, setJobs] = useState([]);
-            const [showNewCard, setShowNewCard] = useState(false);
-            const [editingId, setEditingId] = useState(null);
-            const [formData, setFormData] = useState({
-                ticketNumber: '',
-                startDateTime: '',
-                finishDateTime: '',
-                workDone: '',
-                parts: [{ partNumber: '', partDescription: '' }],
-                site: ''
-            });
-            const [expandedMonth, setExpandedMonth] = useState(null);
+const SITES = {
+  NX:   { label: 'NX',   hex: '#FFBE0B', tint: '#FFF7E0' },
+  WS:   { label: 'WS',   hex: '#FF006E', tint: '#FFE6F1' },
+  RH:   { label: 'RH',   hex: '#06D6A0', tint: '#E1FAF3' },
+  MMUH: { label: 'MMUH', hex: '#F97316', tint: '#FFEEE2' }
+};
 
-            useEffect(() => {
-                try {
-                    const saved = localStorage.getItem('jobsData');
-                    if (saved) setJobs(JSON.parse(saved));
-                } catch (e) {}
-            }, []);
+const LBL = { display:'block', fontSize:'0.7rem', fontWeight:700, color:'#8E8E93', marginBottom:'0.5rem', textTransform:'uppercase', letterSpacing:'0.6px' };
+const FIELD = { width:'100%', padding:'0.85rem 1rem', border:'1.5px solid #E5E5EA', borderRadius:'16px', outline:'none', fontSize:'1rem', background:'#FAFAFC', color:'#1C1C1E' };
+const SMALL_FIELD = { ...FIELD, padding:'0.55rem 0.75rem', fontSize:'0.85rem', borderRadius:'14px' };
 
-            const exportToCSV = (jobsToExport) => {
-                let csv = 'Ticket Number,Date,Site,Start Time,Finish Time,Work Done,Parts Used\n';
-                
-                jobsToExport.forEach(job => {
-                    const startDate = new Date(job.startDateTime);
-                    const finishDate = new Date(job.finishDateTime);
-                    const partsText = job.parts?.filter(p => p.partNumber || p.partDescription)
-                        .map(p => `${p.partNumber} - ${p.partDescription}`).join('; ') || '';
-                    const dateStr = startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    const startTimeStr = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    const finishTimeStr = finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    const siteLabel = SITES[job.site]?.label || '';
+function SyncIcon() {
+  return e('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'#FFFFFF', strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' },
+    e('polyline', { points:'21 3 21 9 15 9' }),
+    e('polyline', { points:'3 21 3 15 9 15' }),
+    e('path', { d:'M20.5 9A8.5 8.5 0 0 0 6.2 5.6L3 9' }),
+    e('path', { d:'M3.5 15A8.5 8.5 0 0 0 17.8 18.4L21 15' })
+  );
+}
 
-                    csv += `${job.ticketNumber},${dateStr},${siteLabel},${startTimeStr},${finishTimeStr},"${job.workDone.replace(/"/g, '""')}","${partsText.replace(/"/g, '""')}"\n`;
-                });
+function Toggle({ on, onChange }) {
+  return e('div', {
+    onClick: onChange,
+    style: {
+      width:'50px', height:'30px', borderRadius:'999px', padding:'3px',
+      background: on ? '#34C759' : '#E5E5EA',
+      display:'flex', alignItems:'center',
+      justifyContent: on ? 'flex-end' : 'flex-start',
+      cursor:'pointer', transition:'background-color .2s ease', flexShrink:0
+    }
+  },
+    e('div', { style:{ width:'24px', height:'24px', borderRadius:'999px', background:'#FFF', boxShadow:'0 2px 4px rgba(0,0,0,0.2)', transition:'all .2s ease' } })
+  );
+}
 
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `Job-Logger-${new Date().toISOString().split('T')[0]}.csv`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            };
+function App() {
+  const [jobs, setJobs] = useState([]);
+  const [showCard, setShowCard] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [expandedMonth, setExpandedMonth] = useState(null);
+  const [form, setForm] = useState(blank());
 
-            const handleNewJob = () => {
-                const now = new Date();
-                const isoDateTime = now.toISOString().slice(0, 16);
-                setFormData({
-                    ticketNumber: '',
-                    startDateTime: isoDateTime,
-                    finishDateTime: isoDateTime,
-                    workDone: '',
-                    parts: [{ partNumber: '', partDescription: '' }],
-                    site: ''
-                });
-                setEditingId(null);
-                setShowNewCard(true);
-            };
+  function blank() {
+    const iso = new Date().toISOString().slice(0,16);
+    return { ticketNumber:'', startDateTime:iso, finishDateTime:iso, hasTravel:false, travelDateTime:iso, workDone:'', parts:[{partNumber:'',partDescription:''}], site:'' };
+  }
 
-            const handleEditJob = (job) => {
-                setFormData({ ...job, parts: job.parts || [{ partNumber: '', partDescription: '' }] });
-                setEditingId(job.id);
-                setShowNewCard(true);
-            };
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('jobsData');
+      if (saved) setJobs(JSON.parse(saved));
+    } catch (err) {}
+  }, []);
 
-            const handleSave = () => {
-                if (!formData.ticketNumber.trim()) {
-                    alert('Please enter a ticket number');
-                    return;
-                }
+  const persist = (next) => {
+    setJobs(next);
+    try { localStorage.setItem('jobsData', JSON.stringify(next)); } catch (err) {}
+  };
 
-                let updatedJobs;
-                if (editingId) {
-                    updatedJobs = jobs.map(job => job.id === editingId ? { ...formData, id: editingId } : job);
-                } else {
-                    updatedJobs = [{ ...formData, id: Date.now() }, ...jobs];
-                }
+  const fmtDate = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  const fmtTime = (s) => s ? new Date(s).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+  const fmtShort = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' · ' + fmtTime(s) : '';
 
-                setJobs(updatedJobs);
-                localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
-                exportToCSV(updatedJobs);
-                setShowNewCard(false);
-            };
+  const duration = (a,b) => {
+    if (!a || !b) return '';
+    const mins = Math.round((new Date(b) - new Date(a)) / 60000);
+    if (isNaN(mins) || mins < 0) return '';
+    return Math.floor(mins/60) + 'h ' + String(mins%60).padStart(2,'0') + 'm';
+  };
 
-            const handleDelete = (id) => {
-                const updatedJobs = jobs.filter(job => job.id !== id);
-                setJobs(updatedJobs);
-                localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
-                if (updatedJobs.length > 0) exportToCSV(updatedJobs);
-            };
+  const exportCSV = () => {
+    if (!jobs.length) { alert('No tickets to export yet.'); return; }
+    const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+    const rows = [['Ticket','Site','Date','Start','Finish','Duration','Travel','Work Done','Parts Used']];
 
-            const handlePartChange = (index, field, value) => {
-                const newParts = [...formData.parts];
-                newParts[index][field] = value;
-                if (field === 'partDescription' && value.trim() && index === newParts.length - 1) {
-                    newParts.push({ partNumber: '', partDescription: '' });
-                }
-                setFormData({ ...formData, parts: newParts });
-            };
+    const sorted = [...jobs].sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+    sorted.forEach(j => {
+      const parts = (j.parts||[]).filter(p => p.partNumber || p.partDescription)
+        .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — ' + p.partDescription.trim() : '')).join(' | ');
+      rows.push([
+        j.ticketNumber, SITES[j.site] ? SITES[j.site].label : '',
+        fmtDate(j.startDateTime), fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
+        duration(j.startDateTime, j.finishDateTime),
+        j.hasTravel ? fmtTime(j.travelDateTime) : '',
+        (j.workDone||'').replace(/\r?\n/g,' '), parts
+      ]);
+    });
 
-            const formatDateTime = (dateTimeString) => {
-                if (!dateTimeString) return '';
-                const date = new Date(dateTimeString);
-                return date.toLocaleDateString('en-GB', { weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            };
+    const csv = '\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Tickets.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
 
-            const formatDateOnly = (dateTimeString) => {
-                if (!dateTimeString) return '';
-                const date = new Date(dateTimeString);
-                return date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-            };
+  const openNew = () => { setForm(blank()); setEditingId(null); setShowCard(true); window.scrollTo(0,0); };
+  const openEdit = (j) => {
+    setForm({ hasTravel:false, travelDateTime:j.startDateTime, ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
+    setEditingId(j.id); setShowCard(true); window.scrollTo(0,0);
+  };
 
-            const groupJobsByMonth = () => {
-                const grouped = {};
-                jobs.forEach(job => {
-                    const date = new Date(job.startDateTime);
-                    const monthKey = date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-                    if (!grouped[monthKey]) grouped[monthKey] = [];
-                    grouped[monthKey].push(job);
-                });
-                return grouped;
-            };
+  const save = () => {
+    if (!form.ticketNumber.trim()) { alert('Please enter a ticket number'); return; }
+    const next = editingId
+      ? jobs.map(j => j.id === editingId ? { ...form, id: editingId } : j)
+      : [{ ...form, id: Date.now() }, ...jobs];
+    persist(next);
+    setShowCard(false); setEditingId(null); setForm(blank());
+  };
 
-            const groupedJobs = groupJobsByMonth();
-            const monthKeys = Object.keys(groupedJobs).sort((a, b) => new Date(groupedJobs[b][0].startDateTime) - new Date(groupedJobs[a][0].startDateTime));
+  const remove = (id) => persist(jobs.filter(j => j.id !== id));
 
-            return React.createElement('div', { style: { paddingBottom: '2rem' } },
-                React.createElement('div', { style: { background: '#FFFFFF', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E5E5EA', borderBottomStyle: 'solid' } },
-                    React.createElement('h1', { style: { fontSize: '1.875rem', fontWeight: '700', margin: 0, color: '#000' } }, 'Logger'),
-                    React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
-                        !showNewCard && React.createElement('button', {
-                            onClick: () => jobs.length > 0 && exportToCSV(jobs),
-                            style: { padding: '0.6rem 0.9rem', background: '#E8E8ED', color: '#000', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }
-                        }, '📊'),
-                        !showNewCard && React.createElement('button', {
-                            onClick: handleNewJob,
-                            style: { padding: '0.6rem 1rem', background: '#007AFF', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }
-                        }, '+ Add')
-                    )
+  const partChange = (i, field, val) => {
+    const parts = form.parts.map((p,idx) => idx === i ? { ...p, [field]: val } : p);
+    if (val.trim() && i === parts.length - 1) parts.push({ partNumber:'', partDescription:'' });
+    setForm({ ...form, parts });
+  };
+
+  const grouped = {};
+  jobs.forEach(j => {
+    const k = new Date(j.startDateTime).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    (grouped[k] = grouped[k] || []).push(j);
+  });
+  const months = Object.keys(grouped).sort((a,b) => new Date(grouped[b][0].startDateTime) - new Date(grouped[a][0].startDateTime));
+
+  // ---------- HEADER ----------
+  const header = e('div', { style:{ padding:'1.25rem 1.15rem 0.9rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
+    e('h1', { style:{ fontSize:'2.1rem', fontWeight:800, margin:0, letterSpacing:'-0.8px' } }, 'Tickets'),
+    !showCard && e('div', { style:{ display:'flex', gap:'0.6rem', alignItems:'center' } },
+      e('button', { onClick: exportCSV, title:'Export CSV',
+        style:{ width:'46px', height:'46px', borderRadius:'999px', border:'none', background:'#007AFF', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 4px 12px rgba(0,122,255,0.35)' } },
+        e(SyncIcon)),
+      e('button', { onClick: openNew,
+        style:{ height:'46px', padding:'0 1.3rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.95rem', cursor:'pointer', boxShadow:'0 4px 12px rgba(0,0,0,0.18)' } }, '+ Add')
+    )
+  );
+
+  // ---------- FORM ----------
+  const travelBlock = form.hasTravel && e('div', { style:{ background:'#EEF4FF', border:'1.5px solid #D6E4FF', borderRadius:'18px', padding:'0.9rem 1rem' } },
+    e('label', { style:{ ...LBL, color:'#3A6FD8' } }, 'Travel'),
+    e('input', { type:'datetime-local', value:form.travelDateTime,
+      onChange:(ev)=>setForm({ ...form, travelDateTime:ev.target.value }),
+      style:{ ...SMALL_FIELD, background:'#FFFFFF', borderColor:'#D6E4FF' } })
+  );
+
+  const formCard = e('div', { style:{ padding:'0 1rem 2.5rem', display:'flex', flexDirection:'column', gap:'1rem' } },
+    e('div', { className:'card', style:{ padding:'1.4rem', display:'flex', flexDirection:'column', gap:'1.15rem' } },
+
+      e('div', null,
+        e('label', { style:LBL }, 'Ticket Number'),
+        e('input', { type:'text', value:form.ticketNumber, placeholder:'e.g. INC0012345',
+          onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:FIELD })
+      ),
+
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#F7F7FA', borderRadius:'18px', padding:'0.75rem 1rem' } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:600 } }, 'Add travel time'),
+        e(Toggle, { on:form.hasTravel, onChange:()=>setForm({ ...form, hasTravel: !form.hasTravel }) })
+      ),
+
+      travelBlock,
+
+      e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' } },
+        e('div', null,
+          e('label', { style:LBL }, 'Start'),
+          e('input', { type:'datetime-local', value:form.startDateTime,
+            onChange:(ev)=>setForm({ ...form, startDateTime:ev.target.value }), style:SMALL_FIELD })
+        ),
+        e('div', null,
+          e('label', { style:LBL }, 'Finish'),
+          e('input', { type:'datetime-local', value:form.finishDateTime,
+            onChange:(ev)=>setForm({ ...form, finishDateTime:ev.target.value }), style:SMALL_FIELD })
+        )
+      ),
+
+      e('div', null,
+        e('label', { style:LBL }, 'Work Done'),
+        e('textarea', { value:form.workDone, placeholder:'Detailed notes about work completed…',
+          onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
+          style:{ ...FIELD, minHeight:'9rem', resize:'none' } })
+      ),
+
+      e('div', null,
+        e('label', { style:LBL }, 'Parts Used'),
+        e('div', { style:{ border:'1.5px solid #E5E5EA', borderRadius:'18px', overflow:'hidden', background:'#FAFAFC' } },
+          e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', background:'#F0F0F4', fontSize:'0.7rem', fontWeight:700, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px' } },
+            e('div', { style:{ padding:'0.7rem 0.85rem', borderRight:'1px solid #E5E5EA' } }, 'Part No.'),
+            e('div', { style:{ padding:'0.7rem 0.85rem' } }, 'Description')
+          ),
+          form.parts.map((p,i) => e('div', { key:i, style:{ display:'grid', gridTemplateColumns:'1fr 1fr', borderTop:'1px solid #E5E5EA' } },
+            e('input', { type:'text', value:p.partNumber, placeholder:'AB123',
+              onChange:(ev)=>partChange(i,'partNumber',ev.target.value),
+              style:{ padding:'0.75rem 0.85rem', border:'none', borderRight:'1px solid #E5E5EA', outline:'none', background:'transparent', fontSize:'0.9rem' } }),
+            e('input', { type:'text', value:p.partDescription, placeholder:'Pump seal',
+              onChange:(ev)=>partChange(i,'partDescription',ev.target.value),
+              style:{ padding:'0.75rem 0.85rem', border:'none', outline:'none', background:'transparent', fontSize:'0.9rem' } })
+          ))
+        )
+      ),
+
+      e('div', null,
+        e('label', { style:LBL }, 'Site'),
+        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' } },
+          Object.keys(SITES).map(k => {
+            const s = SITES[k], on = form.site === k;
+            return e('button', { key:k, onClick:()=>setForm({ ...form, site:k }),
+              style:{ padding:'0.85rem', borderRadius:'999px', fontWeight:700, fontSize:'0.95rem', cursor:'pointer',
+                border: on ? '2px solid ' + s.hex : '2px solid #E5E5EA',
+                background: on ? s.hex : '#FFFFFF', color: on ? '#FFFFFF' : '#3A3A3C',
+                boxShadow: on ? '0 4px 12px ' + s.hex + '55' : 'none' } }, s.label);
+          })
+        )
+      )
+    ),
+
+    // Save / Cancel — separate card
+    e('div', { className:'card', style:{ padding:'1rem', display:'flex', gap:'0.75rem' } },
+      e('button', { onClick:save,
+        style:{ flex:1, padding:'1rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'1rem', cursor:'pointer', boxShadow:'0 4px 14px rgba(0,122,255,0.35)' } },
+        editingId ? 'Update Ticket' : 'Save Ticket'),
+      e('button', { onClick:()=>{ setShowCard(false); setEditingId(null); },
+        style:{ flex:1, padding:'1rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'1rem', cursor:'pointer' } }, 'Cancel')
+    )
+  );
+
+  // ---------- LIST ----------
+  const empty = e('div', { style:{ textAlign:'center', padding:'5rem 1.5rem' } },
+    e('p', { style:{ color:'#8E8E93', fontSize:'1.05rem', marginBottom:'1.5rem' } }, 'No tickets logged yet'),
+    e('button', { onClick:openNew,
+      style:{ padding:'0.95rem 1.8rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'1rem', cursor:'pointer', boxShadow:'0 4px 14px rgba(0,122,255,0.35)' } },
+      'Log Your First Ticket')
+  );
+
+  const list = e('div', { style:{ padding:'0 1rem 3rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
+    months.map(m => e('div', { key:m },
+      e('button', { onClick:()=>setExpandedMonth(expandedMonth === m ? null : m),
+        style:{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1rem 1.25rem',
+          background:'#FFFFFF', border:'none', borderRadius:'20px', fontWeight:700, fontSize:'1rem', color:'#1C1C1E',
+          cursor:'pointer', boxShadow:'0 2px 10px rgba(0,0,0,0.05)' } },
+        e('span', null, m),
+        e('span', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+          e('span', { style:{ background:'#F0F0F4', color:'#8E8E93', fontSize:'0.75rem', fontWeight:700, padding:'0.2rem 0.6rem', borderRadius:'999px' } }, String(grouped[m].length)),
+          e('span', { style:{ fontSize:'0.75rem', color:'#C7C7CC', transform: expandedMonth === m ? 'rotate(180deg)' : 'none', transition:'transform .25s ease', display:'inline-block' } }, '▼')
+        )
+      ),
+
+      expandedMonth === m && e('div', { style:{ marginTop:'0.7rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+        grouped[m].map(j => {
+          const s = SITES[j.site];
+          return e('div', { key:j.id, onClick:()=>openEdit(j),
+            style:{ padding:'1.15rem 1.25rem', borderRadius:'22px', cursor:'pointer',
+              background: s ? s.tint : '#FFFFFF',
+              border: '1.5px solid ' + (s ? s.hex + '44' : '#E5E5EA'),
+              boxShadow:'0 2px 10px rgba(0,0,0,0.04)' } },
+
+            e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.75rem' } },
+              e('div', { style:{ flex:1, minWidth:0 } },
+                e('div', { style:{ display:'flex', alignItems:'center', gap:'0.55rem', marginBottom:'0.35rem', flexWrap:'wrap' } },
+                  e('span', { style:{ fontWeight:800, fontSize:'1.1rem' } }, j.ticketNumber),
+                  s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.22rem 0.65rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800, letterSpacing:'0.4px' } }, s.label)
                 ),
-
-                showNewCard && React.createElement('div', { style: { padding: '1rem' } },
-                    React.createElement('div', { style: { background: '#FFFFFF', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' } },
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Ticket Number'),
-                            React.createElement('input', { type: 'text', value: formData.ticketNumber, onChange: (e) => setFormData({ ...formData, ticketNumber: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Start'),
-                            React.createElement('input', { type: 'datetime-local', value: formData.startDateTime, onChange: (e) => setFormData({ ...formData, startDateTime: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Finish'),
-                            React.createElement('input', { type: 'datetime-local', value: formData.finishDateTime, onChange: (e) => setFormData({ ...formData, finishDateTime: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Work Done'),
-                            React.createElement('textarea', { value: formData.workDone, onChange: (e) => setFormData({ ...formData, workDone: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', minHeight: '8rem', resize: 'none', fontSize: '1rem' } })
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Parts Used'),
-                            React.createElement('div', { style: { border: '1px solid #E5E5EA', borderRadius: '8px', overflow: 'hidden' } },
-                                React.createElement('div', { style: { background: '#F2F2F7', display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '0.75rem', fontWeight: '600', fontSize: '0.75rem', borderBottomWidth: 1, borderBottomColor: '#E5E5EA', borderBottomStyle: 'solid' } },
-                                    React.createElement('div', null, 'Part #'),
-                                    React.createElement('div', null, 'Description')
-                                ),
-                                formData.parts.map((part, index) => React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTopWidth: 1, borderTopColor: '#E5E5EA', borderTopStyle: 'solid' } },
-                                    React.createElement('input', { type: 'text', value: part.partNumber, onChange: (e) => handlePartChange(index, 'partNumber', e.target.value), style: { padding: '0.75rem', border: 'none', outline: 'none', fontSize: '1rem', borderRightWidth: 1, borderRightColor: '#E5E5EA', borderRightStyle: 'solid' } }),
-                                    React.createElement('input', { type: 'text', value: part.partDescription, onChange: (e) => handlePartChange(index, 'partDescription', e.target.value), style: { padding: '0.75rem', border: 'none', outline: 'none', fontSize: '1rem' } })
-                                ))
-                            )
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.75rem', textTransform: 'uppercase' } }, 'Site'),
-                            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
-                                Object.entries(SITES).map(([key, site]) => React.createElement('button', { key, onClick: () => setFormData({ ...formData, site: key }), style: { backgroundColor: formData.site === key ? site.hex : '#E8E8ED', color: formData.site === key ? '#FFF' : '#000', padding: '0.75rem', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } }, site.label))
-                            )
-                        ),
-                        React.createElement('div', { style: { display: 'flex', gap: '0.75rem' } },
-                            React.createElement('button', { onClick: handleSave, style: { flex: 1, padding: '0.9rem', background: '#007AFF', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '1rem' } }, 'Save'),
-                            React.createElement('button', { onClick: () => setShowNewCard(false), style: { flex: 1, padding: '0.9rem', background: '#E8E8ED', color: '#000', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '1rem' } }, 'Cancel')
-                        )
-                    )
-                ),
-
-                !showNewCard && React.createElement('div', { style: { padding: '1rem' } },
-                    monthKeys.length === 0 ? React.createElement('div', { style: { textAlign: 'center', paddingTop: '4rem' } },
-                        React.createElement('p', { style: { color: '#999', marginBottom: '1.5rem' } }, 'No jobs yet'),
-                        React.createElement('button', { onClick: handleNewJob, style: { background: '#007AFF', color: '#FFF', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } }, 'Log First Job')
-                    ) : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
-                        monthKeys.map(monthKey => React.createElement('div', { key: monthKey },
-                            React.createElement('button', { onClick: () => setExpandedMonth(expandedMonth === monthKey ? null : monthKey), style: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#FFFFFF', border: '1px solid #E5E5EA', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } },
-                                monthKey,
-                                React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' } }, '▼')
-                            ),
-                            expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' } },
-                                groupedJobs[monthKey].map(job => React.createElement('div', { key: job.id, onClick: () => handleEditJob(job), style: { padding: '1rem', background: '#FFFFFF', border: '1px solid #E5E5EA', borderRadius: '8px', cursor: 'pointer' } },
-                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' } },
-                                        React.createElement('div', null,
-                                            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' } },
-                                                React.createElement('p', { style: { fontWeight: '700', fontSize: '1.1rem', margin: 0 } }, job.ticketNumber),
-                                                job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: '#FFF', padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '600' } }, SITES[job.site].label)
-                                            ),
-                                            React.createElement('p', { style: { fontSize: '0.85rem', color: '#999', margin: 0 } }, formatDateTime(job.startDateTime))
-                                        ),
-                                        React.createElement('button', { onClick: (e) => { e.stopPropagation(); if (window.confirm('Delete?')) handleDelete(job.id); }, style: { background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', fontSize: '1.2rem' } }, '✕')
-                                    ),
-                                    job.workDone && React.createElement('p', { style: { fontSize: '0.9rem', color: '#333', margin: '0.5rem 0 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
-                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: '#999' } },
-                                        job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('span', null, job.parts.filter(p => p.partNumber || p.partDescription).length + ' parts'),
-                                        React.createElement('span', null, formatDateOnly(job.startDateTime))
-                                    )
-                                ))
-                            )
-                        ))
-                    )
+                e('div', { style:{ fontSize:'0.78rem', color:'#6E6E73' } },
+                  fmtShort(j.startDateTime) + ' → ' + fmtTime(j.finishDateTime) +
+                  (duration(j.startDateTime, j.finishDateTime) ? '  ·  ' + duration(j.startDateTime, j.finishDateTime) : '') +
+                  (j.hasTravel ? '  ·  Travel ' + fmtTime(j.travelDateTime) : '')
                 )
-            );
-        }
+              ),
+              e('button', { onClick:(ev)=>{ ev.stopPropagation(); if (window.confirm('Delete this ticket?')) remove(j.id); },
+                style:{ background:'rgba(255,255,255,0.7)', border:'none', color:'#FF3B30', width:'30px', height:'30px', borderRadius:'999px', cursor:'pointer', fontSize:'0.9rem', fontWeight:700, flexShrink:0 } }, '✕')
+            ),
 
-        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(JobLogger));
-    </script>
+            j.workDone && e('p', { style:{ fontSize:'0.9rem', color:'#3A3A3C', margin:'0.7rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
+
+            e('div', { style:{ display:'flex', justifyContent:'space-between', marginTop:'0.7rem', fontSize:'0.72rem', color:'#8E8E93' } },
+              e('span', null, (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length ? (j.parts.filter(p=>p.partNumber||p.partDescription).length + ' part(s)') : ''),
+              e('span', null, fmtDate(j.startDateTime))
+            )
+          );
+        })
+      )
+    ))
+  );
+
+  return e('div', null, header, showCard ? formCard : (months.length ? list : empty));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+</script>
 </body>
 </html>
