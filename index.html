@@ -94,6 +94,8 @@ function App() {
   const [openGroups, setOpenGroups] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   const [statMonth, setStatMonth] = useState(() => { const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [statMode, setStatMode] = useState('calendar');
+  const [dayDetail, setDayDetail] = useState(null);
 
   function blank() {
     const iso = new Date().toISOString().slice(0,16);
@@ -203,16 +205,25 @@ function App() {
     const siteDays = {}, siteTickets = {}, equipTickets = {}, equipDays = {};
     src.forEach(j => {
       const dnum = new Date(j.startDateTime).getDate();
-      days[dnum] = days[dnum] || { sites:new Set(), equip:new Set(), tickets:[] };
-      if (j.site) days[dnum].sites.add(j.site);
-      eqOf(j).forEach(x => days[dnum].equip.add(x));
+      days[dnum] = days[dnum] || { tickets:[] };
       days[dnum].tickets.push(j);
       if (j.site) siteTickets[j.site] = (siteTickets[j.site]||0) + 1;
       eqOf(j).forEach(x => { equipTickets[x] = (equipTickets[x]||0) + 1; });
     });
+
     Object.keys(days).forEach(d => {
-      days[d].sites.forEach(s => { siteDays[s] = (siteDays[s]||0) + 1; });
-      days[d].equip.forEach(x => { equipDays[x] = (equipDays[x]||0) + 1; });
+      const day = days[d];
+      day.tickets.sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+      // sites in the order the jobs were done, collapsing repeats in a row
+      const seq = [];
+      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+      day.siteSequence = seq;
+      day.sites = new Set(day.tickets.map(j=>j.site).filter(Boolean));
+      day.equip = new Set(day.tickets.flatMap(eqOf));
+      day.first = day.tickets[0].startDateTime;
+      day.last  = day.tickets[day.tickets.length-1].finishDateTime;
+      day.sites.forEach(s => { siteDays[s] = (siteDays[s]||0) + 1; });
+      day.equip.forEach(x => { equipDays[x] = (equipDays[x]||0) + 1; });
     });
 
     const workedDays = Object.keys(days).length;
@@ -319,7 +330,7 @@ function App() {
   const openNew  = () => { setForm(blank()); setEditingId(null); setView('form'); window.scrollTo(0,0); };
   const openEdit = (j) => {
     setForm({ hasTravel:false, travelDateTime:j.startDateTime, equipment:[], ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
-    setEditingId(j.id); setView('form'); window.scrollTo(0,0);
+    setEditingId(j.id); setDayDetail(null); setView('form'); window.scrollTo(0,0);
   };
   const duplicate = () => {
     const iso = nowLocal();
@@ -370,7 +381,7 @@ function App() {
       style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
-      menuRow('Monthly breakdown', 'Which site you were at, day by day', ()=>{ setMenuOpen(false); setView('stats'); window.scrollTo(0,0); }),
+      menuRow('Monthly breakdown', 'Calendar and day-by-day view', ()=>{ setMenuOpen(false); setView('stats'); window.scrollTo(0,0); }),
       menuRow('Spreadsheet — current view', filtered.length+' ticket(s) matching your filters', ()=>doSpreadsheet(true)),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet(false)),
       menuRow('Copy current view as text', 'For pasting into an email or notes', doCopySummary),
@@ -497,7 +508,15 @@ function App() {
   const DOW = ['M','T','W','T','F','S','S'];
   const ms = monthStats;
   const monthLabel = statMonth.toLocaleDateString('en-GB',{ month:'long', year:'numeric' });
-  const shiftMonth = (n) => setStatMonth(new Date(ms.y, ms.m + n, 1));
+  const shiftMonth = (n) => { setStatMonth(new Date(ms.y, ms.m + n, 1)); setDayDetail(null); };
+
+  const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.25rem', flexWrap:'wrap' } },
+    seq.length === 0
+      ? e('span', { style:{ fontSize:'0.68rem', color:'#C7C7CC', fontWeight:700 } }, 'No site set')
+      : seq.map((s,i) => [
+          e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
+          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.6rem', color:'#C7C7CC', fontWeight:800 } }, '→') : null
+        ]));
 
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
@@ -507,13 +526,44 @@ function App() {
     let bg = weekend ? '#F7F7FA' : '#FFF';
     if (sites.length === 1) bg = SITES[sites[0]].tint;
     else if (sites.length > 1) bg = '#F0F0F4';
-    return e('div', { key:dnum, style:{ aspectRatio:'1 / 1', borderRadius:'10px', background:bg,
+    return e('button', { key:dnum, onClick: d ? ()=>setDayDetail(dnum) : undefined,
+      style:{ aspectRatio:'1 / 1', borderRadius:'10px', background:bg, padding:'2px',
         border:'1px solid '+(sites.length===1 ? SITES[sites[0]].hex+'55' : '#EDEDF0'),
-        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px', padding:'2px' } },
+        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
+        cursor: d ? 'pointer' : 'default' } },
       e('span', { style:{ fontSize:'0.6rem', fontWeight:700, color: d ? '#1C1C1E' : '#C7C7CC' } }, String(dnum)),
       sites.length ? e('div', { style:{ display:'flex', gap:'2px' } },
         sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px', background:SITES[s].hex } }))) : null);
   };
+
+  const calendarBlock = e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px', marginBottom:'5px' } },
+      DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.55rem', fontWeight:800, color:'#C7C7CC' } }, d))),
+    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px' } },
+      [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
+      [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))),
+    e('div', { style:{ fontSize:'0.6rem', color:'#C7C7CC', textAlign:'center', marginTop:'0.6rem', fontWeight:600 } }, 'Tap a day for the full run-down'),
+    e('div', { className:'chips', style:{ display:'flex', gap:'0.5rem', marginTop:'0.5rem', overflowX:'auto', justifyContent:'center' } },
+      Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.25rem', fontSize:'0.6rem', fontWeight:700, color:'#8E8E93', flexShrink:0 } },
+        e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label))));
+
+  const listBlock = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+    Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map(dnum => {
+      const d = ms.days[dnum];
+      const date = new Date(ms.y, ms.m, dnum);
+      return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
+        style:{ width:'100%', textAlign:'left', background:'#FFF', border:'none', borderRadius:'16px', padding:'0.75rem 0.85rem',
+          display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+        e('div', { style:{ minWidth:'42px', textAlign:'center', flexShrink:0 } },
+          e('div', { style:{ fontSize:'1.05rem', fontWeight:800, lineHeight:1 } }, String(dnum)),
+          e('div', { style:{ fontSize:'0.53rem', color:'#8E8E93', fontWeight:800, textTransform:'uppercase', marginTop:'2px' } },
+            date.toLocaleDateString('en-GB',{ weekday:'short' }))),
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.3rem' } },
+          siteSeqRow(d.siteSequence),
+          e('div', { style:{ fontSize:'0.63rem', color:'#8E8E93', fontWeight:600 } },
+            fmtTime(d.first) + '–' + fmtTime(d.last) +
+            (d.equip.size ? '  ·  ' + [...d.equip].join(', ') : ''))),
+        e('span', { style:{ fontSize:'0.65rem', color:'#8E8E93', fontWeight:800, flexShrink:0 } }, d.tickets.length + (d.tickets.length===1?' job':' jobs'))); }));
 
   const statsView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
@@ -523,6 +573,13 @@ function App() {
       e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, monthLabel),
       e('button', { onClick:()=>shiftMonth(1),
         style:{ width:'34px', height:'34px', borderRadius:'999px', border:'none', background:'#F0F0F4', color:'#1C1C1E', fontWeight:800, cursor:'pointer' } }, '›')),
+
+    e('div', { style:{ display:'flex', background:'#E9E9EE', borderRadius:'999px', padding:'3px' } },
+      ['calendar','list'].map(mode => e('button', { key:mode, onClick:()=>setStatMode(mode),
+        style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.8rem', fontWeight:700,
+          background: statMode===mode ? '#FFF' : 'transparent', color: statMode===mode ? '#1C1C1E' : '#8E8E93',
+          boxShadow: statMode===mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
+        mode === 'calendar' ? 'Calendar' : 'Workdays'))),
 
     ms.src.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'3rem 1rem', color:'#8E8E93', fontSize:'0.9rem' } }, 'No tickets logged this month')
@@ -534,15 +591,7 @@ function App() {
               e('div', { style:{ fontSize:'1.15rem', fontWeight:800 } }, v),
               e('div', { style:{ fontSize:'0.56rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.4px', fontWeight:700, marginTop:'0.1rem' } }, k)))),
 
-        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px', marginBottom:'5px' } },
-            DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.55rem', fontWeight:800, color:'#C7C7CC' } }, d))),
-          e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'4px' } },
-            [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
-            [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))),
-          e('div', { className:'chips', style:{ display:'flex', gap:'0.5rem', marginTop:'0.7rem', overflowX:'auto', justifyContent:'center' } },
-            Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.25rem', fontSize:'0.6rem', fontWeight:700, color:'#8E8E93', flexShrink:0 } },
-              e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label)))),
+        statMode === 'calendar' ? calendarBlock : listBlock,
 
         e('div', { style:{ fontSize:'0.66rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.3rem 0.5rem 0' } }, 'Days at each site'),
         e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', display:'flex', flexDirection:'column', gap:'0.6rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
@@ -568,24 +617,50 @@ function App() {
               e('div', { style:{ flex:1, minWidth:0 } },
                 e('div', { style:{ fontSize:'0.78rem', fontWeight:700 } }, EQUIP[k].full),
                 e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93' } }, ms.equipDays[k] + (ms.equipDays[k]===1?' day':' days'))),
-              e('span', { style:{ fontSize:'0.78rem', fontWeight:800, color:'#007AFF' } }, ms.equipTickets[k] + (ms.equipTickets[k]===1?' job':' jobs'))))),
+              e('span', { style:{ fontSize:'0.78rem', fontWeight:800, color:'#007AFF' } }, ms.equipTickets[k] + (ms.equipTickets[k]===1?' job':' jobs')))))));
 
-        e('div', { style:{ fontSize:'0.66rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.3rem 0.5rem 0' } }, 'Day by day'),
-        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.5rem', display:'flex', flexDirection:'column', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-          Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map((dnum,idx,arr) => {
-            const d = ms.days[dnum];
-            const date = new Date(ms.y, ms.m, dnum);
-            return e('div', { key:dnum, style:{ display:'flex', alignItems:'center', gap:'0.7rem', padding:'0.55rem 0.6rem',
-              borderBottom: idx < arr.length-1 ? '1px solid #F2F2F7' : 'none' } },
-              e('div', { style:{ minWidth:'46px', textAlign:'center' } },
-                e('div', { style:{ fontSize:'0.95rem', fontWeight:800, lineHeight:1 } }, String(dnum)),
-                e('div', { style:{ fontSize:'0.55rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase' } },
-                  date.toLocaleDateString('en-GB',{ weekday:'short' }))),
-              e('div', { style:{ flex:1, minWidth:0, display:'flex', flexWrap:'wrap', gap:'0.3rem' } },
-                [...d.sites].map(s => e('span', { key:s, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label)),
-                [...d.equip].map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.08)', color:'#3A3A3C', padding:'0.18rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:800 } }, x))),
-              e('span', { style:{ fontSize:'0.68rem', color:'#8E8E93', fontWeight:700, flexShrink:0 } }, d.tickets.length + (d.tickets.length===1?' job':' jobs')));
-          }))));
+  /* ---------- day detail sheet ---------- */
+  const dd = dayDetail != null ? ms.days[dayDetail] : null;
+  const daySheet = dd && e('div', { onClick:()=>setDayDetail(null),
+    style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', zIndex:60, display:'flex', alignItems:'flex-end' } },
+    e('div', { onClick:(ev)=>ev.stopPropagation(),
+      style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
+        display:'flex', flexDirection:'column', gap:'0.7rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto' } },
+      e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.3rem' } }),
+
+      e('div', null,
+        e('div', { style:{ fontSize:'1.05rem', fontWeight:800 } },
+          new Date(ms.y, ms.m, dayDetail).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long', year:'numeric' })),
+        e('div', { style:{ fontSize:'0.72rem', color:'#8E8E93', fontWeight:600, marginTop:'0.15rem' } },
+          dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
+
+      e('div', { style:{ background:'#F7F7FA', borderRadius:'14px', padding:'0.7rem 0.85rem' } },
+        e('div', { style:{ fontSize:'0.6rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.6px', marginBottom:'0.4rem' } }, 'Route'),
+        siteSeqRow(dd.siteSequence)),
+
+      dd.tickets.map((j,i) => {
+        const s = SITES[j.site], eq = eqOf(j);
+        const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
+        return e('div', { key:j.id, onClick:()=>openEdit(j),
+          style:{ background: s?s.tint:'#F7F7FA', border:'1.5px solid '+(s?s.hex+'44':'#E5E5EA'),
+            borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer' } },
+          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.3rem' } },
+            e('span', { style:{ background:'#1C1C1E', color:'#FFF', width:'18px', height:'18px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
+            e('span', { style:{ fontWeight:800, fontSize:'0.92rem' } }, j.ticketNumber),
+            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.16rem 0.5rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800 } }, s.label),
+            eq.map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.08)', color:'#3A3A3C', padding:'0.14rem 0.4rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, x))),
+          e('div', { style:{ fontSize:'0.68rem', color:'#6E6E73', fontWeight:600 } },
+            (j.hasTravel ? 'Travel ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
+            fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) +
+            (duration(j.startDateTime,j.finishDateTime) ? '  ·  ' + duration(j.startDateTime,j.finishDateTime) : '')),
+          j.workDone && e('p', { style:{ fontSize:'0.8rem', color:'#3A3A3C', margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
+          parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
+            parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:'#6E6E73' } },
+              '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
+      }),
+
+      e('button', { onClick:()=>setDayDetail(null),
+        style:{ marginTop:'0.2rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
 
   /* ---------- form view ---------- */
   const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
@@ -686,7 +761,7 @@ function App() {
     : view === 'stats' ? statsView
     : (jobs.length === 0 ? empty : (filtered.length ? list : noResults));
 
-  return e('div', null, header, controls, body, menu);
+  return e('div', null, header, controls, body, menu, daySheet);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
