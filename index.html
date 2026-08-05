@@ -49,10 +49,9 @@ const SITES = {
 const LBL   = { display:'block', fontSize:'0.64rem', fontWeight:700, color:'#8E8E93', marginBottom:'0.35rem', textTransform:'uppercase', letterSpacing:'0.5px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.7rem 0.85rem', border:'1.5px solid #E5E5EA', borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAFC', color:'#1C1C1E' };
 const DT    = { ...FIELD, padding:'0.5rem 0.6rem', fontSize:'0.78rem', borderRadius:'12px' };
-const SEL   = { padding:'0.5rem 0.8rem', borderRadius:'999px', border:'none', background:'#FFF', fontSize:'0.78rem', fontWeight:700, color:'#1C1C1E', boxShadow:'0 1px 5px rgba(0,0,0,0.06)', textAlign:'center' };
+const SEL   = { padding:'0.5rem 0.8rem', borderRadius:'999px', border:'none', background:'#F7F7FA', fontSize:'0.78rem', fontWeight:700, color:'#1C1C1E', textAlign:'center' };
 
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
-
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
   r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE);};
   r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
@@ -75,7 +74,7 @@ function Toggle({ on, onChange }) {
 function App() {
   const [jobs, setJobs] = useState([]);
   const [ready, setReady] = useState(false);
-  const [showCard, setShowCard] = useState(false);
+  const [view, setView] = useState('list');           // list | form | stats
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState(blank());
@@ -87,6 +86,7 @@ function App() {
   const [groupBy, setGroupBy] = useState('month');
   const [openGroups, setOpenGroups] = useState({});
   const [showFilters, setShowFilters] = useState(false);
+  const [statPeriod, setStatPeriod] = useState('all');
 
   function blank() {
     const iso = new Date().toISOString().slice(0,16);
@@ -113,26 +113,23 @@ function App() {
   const nowLocal = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
 
   const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
-  const hm = (m) => Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m';
+  const hm = (m) => Math.floor(m/60)+'h '+String(Math.round(m%60)).padStart(2,'0')+'m';
   const duration = (a,b) => { const m = mins(a,b); return m ? hm(m) : ''; };
 
-  /* ---------- filtering / sorting ---------- */
-  const periodStart = () => {
+  const rangeFor = (p) => {
     const d = new Date(); d.setHours(0,0,0,0);
-    if (period === 'week')   { const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d; }
-    if (period === 'month')  { d.setDate(1); return d; }
-    if (period === 'last')   { d.setDate(1); d.setMonth(d.getMonth()-1); return d; }
-    if (period === '90')     { d.setDate(d.getDate()-90); return d; }
-    return null;
-  };
-  const periodEnd = () => {
-    if (period !== 'last') return null;
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(1); return d;
+    if (p === 'week')  { const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return [d,null]; }
+    if (p === 'month') { d.setDate(1); return [d,null]; }
+    if (p === 'last')  { const from=new Date(d); from.setDate(1); from.setMonth(from.getMonth()-1);
+                         const to=new Date(d); to.setDate(1); return [from,to]; }
+    if (p === '90')    { d.setDate(d.getDate()-90); return [d,null]; }
+    if (p === 'year')  { d.setMonth(0,1); return [d,null]; }
+    return [null,null];
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const from = periodStart(), to = periodEnd();
+    const [from,to] = rangeFor(period);
     let out = jobs.filter(j => {
       if (siteFilter.length && !siteFilter.includes(j.site)) return false;
       const d = new Date(j.startDateTime);
@@ -153,19 +150,6 @@ function App() {
     return out;
   }, [jobs, query, siteFilter, period, sortBy]);
 
-  const stats = useMemo(() => {
-    let onsite = 0, travel = 0, parts = 0;
-    const perSite = {};
-    filtered.forEach(j => {
-      const m = mins(j.startDateTime, j.finishDateTime);
-      onsite += m;
-      if (j.hasTravel) travel += mins(j.travelDateTime, j.startDateTime);
-      parts += (j.parts||[]).filter(p => p.partNumber || p.partDescription).length;
-      if (j.site) perSite[j.site] = (perSite[j.site]||0) + m;
-    });
-    return { count:filtered.length, onsite, travel, parts, perSite };
-  }, [filtered]);
-
   const groups = useMemo(() => {
     if (groupBy === 'none') return [{ key:'All tickets', items:filtered }];
     const map = {};
@@ -182,7 +166,7 @@ function App() {
   }, [filtered, groupBy]);
 
   useEffect(() => {
-    if (groupBy === 'none' || (query.trim() || siteFilter.length)) {
+    if (groupBy === 'none' || query.trim() || siteFilter.length) {
       const all = {}; groups.forEach(g => all[g.key] = true); setOpenGroups(all);
     }
   }, [groupBy, query, siteFilter.length, groups.length]);
@@ -197,19 +181,84 @@ function App() {
 
   const filterActive = query.trim() || siteFilter.length || period !== 'all';
 
+  /* ---------- statistics ---------- */
+  const stats = useMemo(() => {
+    const [from,to] = rangeFor(statPeriod);
+    const src = jobs.filter(j => {
+      const d = new Date(j.startDateTime);
+      if (from && d < from) return false;
+      if (to && d >= to) return false;
+      return true;
+    });
+
+    let onsite=0, travel=0, partCount=0;
+    const perSite={}, perMonth={}, perDow=[0,0,0,0,0,0,0], perDowCount=[0,0,0,0,0,0,0];
+    const perDay={}, partTally={};
+    let longest=null, shortest=null;
+
+    src.forEach(j => {
+      const m = mins(j.startDateTime, j.finishDateTime);
+      const t = j.hasTravel ? mins(j.travelDateTime, j.startDateTime) : 0;
+      onsite += m; travel += t;
+      const d = new Date(j.startDateTime);
+      const mk = d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'});
+      perMonth[mk] = perMonth[mk] || { mins:0, count:0, sort:new Date(d.getFullYear(), d.getMonth(), 1).getTime() };
+      perMonth[mk].mins += m; perMonth[mk].count++;
+      const dow = (d.getDay()+6)%7;
+      perDow[dow] += m; perDowCount[dow]++;
+      const dk = d.toDateString();
+      perDay[dk] = (perDay[dk]||0) + m;
+      if (j.site) { perSite[j.site] = perSite[j.site] || { mins:0, count:0, travel:0 };
+        perSite[j.site].mins += m; perSite[j.site].count++; perSite[j.site].travel += t; }
+      (j.parts||[]).forEach(p => {
+        if (!p.partNumber && !p.partDescription) return;
+        partCount++;
+        const key = (p.partNumber||p.partDescription).trim();
+        partTally[key] = partTally[key] || { n:0, desc:p.partDescription||'' };
+        partTally[key].n++;
+      });
+      if (m > 0) {
+        if (!longest  || m > mins(longest.startDateTime, longest.finishDateTime))  longest = j;
+        if (!shortest || m < mins(shortest.startDateTime, shortest.finishDateTime)) shortest = j;
+      }
+    });
+
+    const monthKeys = Object.keys(perMonth).sort((a,b)=>perMonth[a].sort-perMonth[b].sort).slice(-6);
+    const busiestDay = Object.keys(perDay).sort((a,b)=>perDay[b]-perDay[a])[0];
+    const topParts = Object.keys(partTally).sort((a,b)=>partTally[b].n-partTally[a].n).slice(0,5);
+    const withTravel = src.filter(j=>j.hasTravel).length;
+
+    let spanWeeks = 1;
+    if (src.length) {
+      const times = src.map(j=>new Date(j.startDateTime).getTime());
+      spanWeeks = Math.max(1, (Math.max(...times)-Math.min(...times)) / (7*86400000));
+    }
+
+    return { src, count:src.length, onsite, travel, partCount, perSite, perMonth, monthKeys,
+      perDow, perDowCount, busiestDay, busiestDayMins: busiestDay ? perDay[busiestDay] : 0,
+      topParts, partTally, longest, shortest, withTravel,
+      avgJob: src.length ? onsite/src.length : 0,
+      avgTravel: withTravel ? travel/withTravel : 0,
+      perWeek: src.length / spanWeeks,
+      daysWorked: Object.keys(perDay).length };
+  }, [jobs, statPeriod]);
+
   /* ---------- export ---------- */
   const buildXlsxBlob = (rowsSrc) => {
+    let tOn=0, tTr=0, tP=0;
     const rows = [['Ticket','Site','Date','Travel start','Travel mins','Start','Finish','Duration','Work Done','Parts Used']];
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
+      const m = mins(j.startDateTime,j.finishDateTime), t = j.hasTravel?mins(j.travelDateTime,j.startDateTime):0;
+      tOn+=m; tTr+=t; tP+=(j.parts||[]).filter(p=>p.partNumber||p.partDescription).length;
       rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', fmtDate(j.startDateTime),
-        j.hasTravel?fmtTime(j.travelDateTime):'', j.hasTravel?mins(j.travelDateTime,j.startDateTime):'',
-        fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
-        duration(j.startDateTime,j.finishDateTime), (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
+        j.hasTravel?fmtTime(j.travelDateTime):'', j.hasTravel?t:'',
+        fmtTime(j.startDateTime), fmtTime(j.finishDateTime), hm(m),
+        (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
     });
     rows.push([]);
-    rows.push(['TOTAL', '', rowsSrc.length+' tickets', '', stats.travel, '', '', hm(stats.onsite), '', stats.parts+' parts']);
+    rows.push(['TOTAL','',rowsSrc.length+' tickets','',tTr,'','',hm(tOn),'',tP+' parts']);
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{wch:16},{wch:8},{wch:12},{wch:11},{wch:11},{wch:9},{wch:9},{wch:10},{wch:60},{wch:40}];
     ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:9} }) };
@@ -280,8 +329,8 @@ function App() {
         (duration(j.startDateTime,j.finishDateTime)?'  ('+duration(j.startDateTime,j.finishDateTime)+')':''),
         j.workDone||'', p?('Parts: '+p):'' ].filter(Boolean).join('\n');
     }).join('\n\n———\n\n');
-    try { await navigator.clipboard.writeText(lines); alert('Copied '+filtered.length+' ticket(s) to clipboard.'); }
-    catch (err) { alert('Copy failed — your browser blocked clipboard access.'); }
+    try { await navigator.clipboard.writeText(lines); alert('Copied '+filtered.length+' ticket(s).'); }
+    catch (err) { alert('Copy failed — clipboard access blocked.'); }
     setMenuOpen(false);
   };
 
@@ -292,10 +341,10 @@ function App() {
   };
 
   /* ---------- form ---------- */
-  const openNew  = () => { setForm(blank()); setEditingId(null); setShowCard(true); window.scrollTo(0,0); };
+  const openNew  = () => { setForm(blank()); setEditingId(null); setView('form'); window.scrollTo(0,0); };
   const openEdit = (j) => {
     setForm({ hasTravel:false, travelDateTime:j.startDateTime, ...j, parts: j.parts && j.parts.length ? j.parts : [{partNumber:'',partDescription:''}] });
-    setEditingId(j.id); setShowCard(true); window.scrollTo(0,0);
+    setEditingId(j.id); setView('form'); window.scrollTo(0,0);
   };
   const duplicate = () => {
     const iso = nowLocal();
@@ -309,7 +358,7 @@ function App() {
     if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
     await persist(editingId ? jobs.map(j => j.id===editingId ? { ...form, id:editingId } : j)
                             : [{ ...form, id:Date.now() }, ...jobs]);
-    setShowCard(false); setEditingId(null); setForm(blank());
+    setView('list'); setEditingId(null); setForm(blank());
   };
 
   const remove = (id) => persist(jobs.filter(j => j.id !== id));
@@ -328,7 +377,7 @@ function App() {
     setForm({ ...form, parts: parts.length ? parts : [{partNumber:'',partDescription:''}] });
   };
 
-  /* ---------- UI ---------- */
+  /* ---------- shared bits ---------- */
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
       background:'#F7F7FA', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
@@ -341,6 +390,7 @@ function App() {
       style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
+      menuRow('Statistics', 'Hours, sites, parts and trends', ()=>{ setMenuOpen(false); setView('stats'); window.scrollTo(0,0); }),
       menuRow('Spreadsheet — current view', filtered.length+' ticket(s) matching your filters', ()=>doSpreadsheet(true)),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet(false)),
       menuRow('Copy current view as text', 'For pasting into an email or notes', doCopySummary),
@@ -350,14 +400,19 @@ function App() {
       e('button', { onClick:()=>setMenuOpen(false),
         style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
 
-  const header = !showCard && e('div', { style:{ padding:'0.9rem 0.9rem 0.5rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
-    e('button', { onClick:()=>setMenuOpen(true),
-      style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontSize:'1.15rem', fontWeight:800, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '⋯'),
-    e('button', { onClick:openNew,
-      style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add'));
+  const header = view !== 'form' && e('div', { style:{ padding:'0.9rem 0.9rem 0.5rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
+    view === 'stats'
+      ? e('button', { onClick:()=>{ setView('list'); window.scrollTo(0,0); },
+          style:{ height:'42px', padding:'0 1.1rem', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontWeight:700, fontSize:'0.88rem', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '← Tickets')
+      : e('button', { onClick:()=>setMenuOpen(true),
+          style:{ width:'42px', height:'42px', borderRadius:'999px', border:'none', background:'#FFF', color:'#1C1C1E', fontSize:'1.15rem', fontWeight:800, cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.07)' } }, '⋯'),
+    view === 'stats'
+      ? e('span', { style:{ fontSize:'1.1rem', fontWeight:800 } }, 'Statistics')
+      : e('button', { onClick:openNew,
+          style:{ height:'42px', padding:'0 1.2rem', borderRadius:'999px', border:'none', background:'#1C1C1E', color:'#FFF', fontWeight:700, fontSize:'0.9rem', cursor:'pointer', boxShadow:'0 3px 10px rgba(0,0,0,0.16)' } }, '+ Add'));
 
-  const controls = !showCard && jobs.length > 0 && e('div', { style:{ padding:'0 0.85rem 0.6rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
-
+  /* ---------- list view ---------- */
+  const controls = view === 'list' && jobs.length > 0 && e('div', { style:{ padding:'0 0.85rem 0.6rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('div', { style:{ flex:1, position:'relative' } },
         e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
@@ -380,37 +435,27 @@ function App() {
               border:'1.5px solid '+(on?s.hex:'#E5E5EA'), background: on?s.hex:'#FFF', color: on?'#FFF':'#3A3A3C' } }, s.label);
         })),
       e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem' } },
-        e('select', { value:period, onChange:(ev)=>setPeriod(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+        e('select', { value:period, onChange:(ev)=>setPeriod(ev.target.value), style:SEL },
           e('option', { value:'all' }, 'All time'),
           e('option', { value:'week' }, 'This week'),
           e('option', { value:'month' }, 'This month'),
           e('option', { value:'last' }, 'Last month'),
           e('option', { value:'90' }, 'Last 90 days')),
-        e('select', { value:sortBy, onChange:(ev)=>setSortBy(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+        e('select', { value:sortBy, onChange:(ev)=>setSortBy(ev.target.value), style:SEL },
           e('option', { value:'newest' }, 'Newest'),
           e('option', { value:'oldest' }, 'Oldest'),
           e('option', { value:'longest' }, 'Longest'),
           e('option', { value:'ticket' }, 'Ticket no.'),
           e('option', { value:'site' }, 'Site')),
-        e('select', { value:groupBy, onChange:(ev)=>setGroupBy(ev.target.value), style:{ ...SEL, background:'#F7F7FA', boxShadow:'none' } },
+        e('select', { value:groupBy, onChange:(ev)=>setGroupBy(ev.target.value), style:SEL },
           e('option', { value:'month' }, 'By month'),
           e('option', { value:'site' }, 'By site'),
           e('option', { value:'none' }, 'Flat list'))),
       filterActive && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setPeriod('all'); },
         style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'#FFF0F0', color:'#FF3B30', fontWeight:700, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear all filters')),
 
-    e('div', { style:{ display:'flex', gap:'0.4rem', background:'#FFF', borderRadius:'16px', padding:'0.65rem 0.5rem', boxShadow:'0 1px 5px rgba(0,0,0,0.06)' } },
-      [['Tickets', String(stats.count)], ['On site', hm(stats.onsite)], ['Travel', hm(stats.travel)], ['Parts', String(stats.parts)]]
-        .map(([k,v]) => e('div', { key:k, style:{ flex:1, textAlign:'center' } },
-          e('div', { style:{ fontSize:'0.95rem', fontWeight:800 } }, v),
-          e('div', { style:{ fontSize:'0.6rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px', fontWeight:700 } }, k)))),
-
-    Object.keys(stats.perSite).length > 1 && e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
-      Object.keys(stats.perSite).sort((a,b)=>stats.perSite[b]-stats.perSite[a]).map(k =>
-        e('div', { key:k, style:{ flexShrink:0, display:'flex', alignItems:'center', gap:'0.35rem', background:SITES[k].tint,
-          border:'1px solid '+SITES[k].hex+'55', borderRadius:'999px', padding:'0.3rem 0.7rem', fontSize:'0.72rem', fontWeight:700 } },
-          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }),
-          SITES[k].label + ' · ' + hm(stats.perSite[k])))));
+    filterActive && e('div', { style:{ fontSize:'0.7rem', color:'#8E8E93', fontWeight:600, paddingLeft:'0.4rem' } },
+      filtered.length + ' of ' + jobs.length + ' tickets'));
 
   const ticketCard = (j) => {
     const s = SITES[j.site];
@@ -462,6 +507,111 @@ function App() {
           g.items.map(ticketCard)));
     }));
 
+  /* ---------- statistics view ---------- */
+  const statBox = (label, value, sub, colour) =>
+    e('div', { key:label, style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem 0.8rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+      e('div', { style:{ fontSize:'1.25rem', fontWeight:800, color: colour||'#1C1C1E' } }, value),
+      e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px', fontWeight:700, marginTop:'0.15rem' } }, label),
+      sub && e('div', { style:{ fontSize:'0.65rem', color:'#C7C7CC', marginTop:'0.15rem' } }, sub));
+
+  const sectionTitle = (t) => e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.8px', padding:'0.4rem 0.5rem 0' } }, t);
+
+  const maxSiteMins = Math.max(1, ...Object.values(stats.perSite).map(s=>s.mins));
+  const maxMonthMins = Math.max(1, ...stats.monthKeys.map(k=>stats.perMonth[k].mins));
+  const maxDow = Math.max(1, ...stats.perDow);
+  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const statsView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+
+    e('select', { value:statPeriod, onChange:(ev)=>setStatPeriod(ev.target.value),
+      style:{ ...SEL, background:'#FFF', padding:'0.7rem', fontSize:'0.85rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+      e('option', { value:'all' }, 'All time'),
+      e('option', { value:'week' }, 'This week'),
+      e('option', { value:'month' }, 'This month'),
+      e('option', { value:'last' }, 'Last month'),
+      e('option', { value:'90' }, 'Last 90 days'),
+      e('option', { value:'year' }, 'This year')),
+
+    stats.count === 0
+      ? e('div', { style:{ textAlign:'center', padding:'3rem 1rem', color:'#8E8E93' } }, 'No tickets in this period')
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.7rem' } },
+
+        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
+          statBox('Tickets', String(stats.count), stats.perWeek.toFixed(1)+' per week'),
+          statBox('On site', hm(stats.onsite), 'avg '+hm(stats.avgJob)),
+          statBox('Travel', hm(stats.travel), stats.withTravel+' of '+stats.count+' logged', '#3A6FD8'),
+          statBox('Total time', hm(stats.onsite+stats.travel),
+            stats.onsite+stats.travel ? Math.round(stats.travel/(stats.onsite+stats.travel)*100)+'% travel' : '')),
+
+        e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
+          statBox('Parts fitted', String(stats.partCount), Object.keys(stats.partTally).length+' distinct'),
+          statBox('Days worked', String(stats.daysWorked),
+            stats.daysWorked ? hm(stats.onsite/stats.daysWorked)+' avg/day' : '')),
+
+        sectionTitle('Time by site'),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          Object.keys(stats.perSite).length === 0
+            ? e('div', { style:{ fontSize:'0.8rem', color:'#8E8E93', textAlign:'center' } }, 'No sites recorded')
+            : Object.keys(stats.perSite).sort((a,b)=>stats.perSite[b].mins-stats.perSite[a].mins).map(k => {
+                const s = SITES[k], d = stats.perSite[k];
+                return e('div', { key:k },
+                  e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.75rem', fontWeight:700, marginBottom:'0.3rem' } },
+                    e('span', null, s.label + '  ·  ' + d.count + ' ticket' + (d.count!==1?'s':'')),
+                    e('span', { style:{ color:'#6E6E73' } }, hm(d.mins) + '  (' + Math.round(d.mins/stats.onsite*100) + '%)')),
+                  e('div', { style:{ height:'9px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
+                    e('div', { style:{ width:(d.mins/maxSiteMins*100)+'%', height:'100%', background:s.hex, borderRadius:'999px' } })),
+                  e('div', { style:{ fontSize:'0.62rem', color:'#C7C7CC', marginTop:'0.2rem' } },
+                    'avg ' + hm(d.mins/d.count) + ' per visit' + (d.travel ? '  ·  ' + hm(d.travel) + ' travel' : '')));
+              })),
+
+        stats.monthKeys.length > 1 && sectionTitle('Last 6 months'),
+        stats.monthKeys.length > 1 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'1rem 0.9rem 0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          e('div', { style:{ display:'flex', alignItems:'flex-end', gap:'0.4rem', height:'110px' } },
+            stats.monthKeys.map(k => e('div', { key:k, style:{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.3rem', height:'100%', justifyContent:'flex-end' } },
+              e('div', { style:{ fontSize:'0.58rem', color:'#8E8E93', fontWeight:700 } }, Math.round(stats.perMonth[k].mins/60)+'h'),
+              e('div', { style:{ width:'100%', height:(stats.perMonth[k].mins/maxMonthMins*72)+'px', minHeight:'4px', background:'#007AFF', borderRadius:'6px 6px 0 0' } }),
+              e('div', { style:{ fontSize:'0.58rem', color:'#8E8E93', fontWeight:700 } }, k.split(' ')[0]),
+              e('div', { style:{ fontSize:'0.55rem', color:'#C7C7CC' } }, stats.perMonth[k].count+'t'))))),
+
+        sectionTitle('Busiest weekdays'),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.45rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          DOW.map((d,i) => e('div', { key:d, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+            e('span', { style:{ width:'30px', fontSize:'0.68rem', fontWeight:700, color:'#8E8E93' } }, d),
+            e('div', { style:{ flex:1, height:'8px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
+              e('div', { style:{ width:(stats.perDow[i]/maxDow*100)+'%', height:'100%', background: stats.perDow[i]===maxDow ? '#34C759' : '#C7C7CC', borderRadius:'999px' } })),
+            e('span', { style:{ width:'62px', textAlign:'right', fontSize:'0.65rem', color:'#6E6E73', fontWeight:600 } },
+              stats.perDow[i] ? hm(stats.perDow[i]) : '—')))),
+
+        stats.topParts.length > 0 && sectionTitle('Most used parts'),
+        stats.topParts.length > 0 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.5rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          stats.topParts.map((p,i) => e('div', { key:p, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+            e('span', { style:{ width:'20px', height:'20px', borderRadius:'999px', background:'#F0F0F4', color:'#8E8E93', fontSize:'0.62rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)),
+            e('div', { style:{ flex:1, minWidth:0 } },
+              e('div', { style:{ fontSize:'0.8rem', fontWeight:700, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, p),
+              stats.partTally[p].desc && e('div', { style:{ fontSize:'0.65rem', color:'#8E8E93', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, stats.partTally[p].desc)),
+            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:'#007AFF', flexShrink:0 } }, '×'+stats.partTally[p].n)))),
+
+        sectionTitle('Records'),
+        e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.9rem', display:'flex', flexDirection:'column', gap:'0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
+          stats.longest && e('div', { onClick:()=>openEdit(stats.longest), style:{ cursor:'pointer' } },
+            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Longest job'),
+            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
+              stats.longest.ticketNumber + ' — ' + hm(mins(stats.longest.startDateTime, stats.longest.finishDateTime))),
+            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } },
+              fmtDate(stats.longest.startDateTime) + (SITES[stats.longest.site]?'  ·  '+SITES[stats.longest.site].label:''))),
+          stats.shortest && e('div', { onClick:()=>openEdit(stats.shortest), style:{ cursor:'pointer' } },
+            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Shortest job'),
+            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
+              stats.shortest.ticketNumber + ' — ' + hm(mins(stats.shortest.startDateTime, stats.shortest.finishDateTime))),
+            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } },
+              fmtDate(stats.shortest.startDateTime) + (SITES[stats.shortest.site]?'  ·  '+SITES[stats.shortest.site].label:''))),
+          stats.busiestDay && e('div', null,
+            e('div', { style:{ fontSize:'0.62rem', color:'#8E8E93', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px' } }, 'Busiest day'),
+            e('div', { style:{ fontSize:'0.85rem', fontWeight:700 } },
+              new Date(stats.busiestDay).toLocaleDateString('en-GB',{weekday:'short', day:'2-digit', month:'short', year:'numeric'})),
+            e('div', { style:{ fontSize:'0.68rem', color:'#8E8E93' } }, hm(stats.busiestDayMins) + ' on site')))));
+
+  /* ---------- form view ---------- */
   const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
     e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
       e('div', null,
@@ -537,7 +687,7 @@ function App() {
         e('button', { onClick:save,
           style:{ flex:1, padding:'0.9rem', borderRadius:'999px', border:'none', background:'#007AFF', color:'#FFF', fontWeight:700, fontSize:'0.95rem', cursor:'pointer', boxShadow:'0 3px 12px rgba(0,122,255,0.32)' } },
           editingId ? 'Update' : 'Save'),
-        e('button', { onClick:()=>{ setShowCard(false); setEditingId(null); },
+        e('button', { onClick:()=>{ setView('list'); setEditingId(null); },
           style:{ flex:1, padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Cancel')),
       editingId && e('button', { onClick:duplicate,
         style:{ padding:'0.75rem', borderRadius:'999px', border:'none', background:'#F0F7FF', color:'#007AFF', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' } },
@@ -545,8 +695,11 @@ function App() {
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:'#8E8E93' } }, 'Loading…');
 
-  return e('div', null, header, controls,
-    showCard ? formView : (jobs.length === 0 ? empty : (filtered.length ? list : noResults)), menu);
+  const body = view === 'form' ? formView
+    : view === 'stats' ? statsView
+    : (jobs.length === 0 ? empty : (filtered.length ? list : noResults));
+
+  return e('div', null, header, controls, body, menu);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
