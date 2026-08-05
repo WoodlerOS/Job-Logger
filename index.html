@@ -20,20 +20,14 @@
             user-select: text;
         }
         body {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100vh;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #FEF9F3 0%, #F5F0EB 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #F2F2F7;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
         #root {
             width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
+            min-height: 100vh;
         }
     </style>
 </head>
@@ -44,10 +38,10 @@
         const { useState, useEffect } = React;
 
         const SITES = {
-            NX: { label: 'NX', hex: '#FFD4A3', pastel: '#FFF0E6' },
-            WS: { label: 'WS', hex: '#FF9FD2', pastel: '#FFE5F0' },
-            RH: { label: 'RH', hex: '#A8D8FF', pastel: '#E5F2FF' },
-            MMUH: { label: 'MMUH', hex: '#FFB5B5', pastel: '#FFE5E5' }
+            NX: { label: 'NX', hex: '#FFBE0B' },
+            WS: { label: 'WS', hex: '#FF006E' },
+            RH: { label: 'RH', hex: '#06D6A0' },
+            MMUH: { label: 'MMUH', hex: '#F97316' }
         };
 
         function JobLogger() {
@@ -67,12 +61,8 @@
             useEffect(() => {
                 try {
                     const saved = localStorage.getItem('jobsData');
-                    if (saved) {
-                        setJobs(JSON.parse(saved));
-                    }
-                } catch (error) {
-                    console.log('No saved jobs');
-                }
+                    if (saved) setJobs(JSON.parse(saved));
+                } catch (e) {}
             }, []);
 
             const exportToCSV = (jobsToExport) => {
@@ -81,21 +71,14 @@
                 jobsToExport.forEach(job => {
                     const startDate = new Date(job.startDateTime);
                     const finishDate = new Date(job.finishDateTime);
-                    
-                    const partsText = job.parts && job.parts.length > 0
-                        ? job.parts.filter(p => p.partNumber || p.partDescription)
-                            .map(p => `${p.partNumber} - ${p.partDescription}`).join('; ')
-                        : '';
-
+                    const partsText = job.parts?.filter(p => p.partNumber || p.partDescription)
+                        .map(p => `${p.partNumber} - ${p.partDescription}`).join('; ') || '';
                     const dateStr = startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     const startTimeStr = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                     const finishTimeStr = finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    const siteLabel = SITES[job.site] ? SITES[job.site].label : '';
+                    const siteLabel = SITES[job.site]?.label || '';
 
-                    const workDoneEscaped = `"${job.workDone.replace(/"/g, '""')}"`;
-                    const partsEscaped = `"${partsText.replace(/"/g, '""')}"`;
-
-                    csv += `${job.ticketNumber},${dateStr},${siteLabel},${startTimeStr},${finishTimeStr},${workDoneEscaped},${partsEscaped}\n`;
+                    csv += `${job.ticketNumber},${dateStr},${siteLabel},${startTimeStr},${finishTimeStr},"${job.workDone.replace(/"/g, '""')}","${partsText.replace(/"/g, '""')}"\n`;
                 });
 
                 const blob = new Blob([csv], { type: 'text/csv' });
@@ -109,7 +92,7 @@
                 URL.revokeObjectURL(url);
             };
 
-            const initializeForm = () => {
+            const handleNewJob = () => {
                 const now = new Date();
                 const isoDateTime = now.toISOString().slice(0, 16);
                 setFormData({
@@ -120,10 +103,6 @@
                     parts: [{ partNumber: '', partDescription: '' }],
                     site: ''
                 });
-            };
-
-            const handleNewJob = () => {
-                initializeForm();
                 setEditingId(null);
                 setShowNewCard(true);
             };
@@ -151,7 +130,6 @@
                 localStorage.setItem('jobsData', JSON.stringify(updatedJobs));
                 exportToCSV(updatedJobs);
                 setShowNewCard(false);
-                initializeForm();
             };
 
             const handleDelete = (id) => {
@@ -168,18 +146,6 @@
                     newParts.push({ partNumber: '', partDescription: '' });
                 }
                 setFormData({ ...formData, parts: newParts });
-            };
-
-            const handlePartKeyPress = (index, field, e) => {
-                if (e.key === 'Enter' && field === 'partDescription') {
-                    const newParts = [...formData.parts];
-                    if (formData.parts[index].partNumber.trim() && formData.parts[index].partDescription.trim()) {
-                        if (index === newParts.length - 1) {
-                            newParts.push({ partNumber: '', partDescription: '' });
-                            setFormData({ ...formData, parts: newParts });
-                        }
-                    }
-                }
             };
 
             const formatDateTime = (dateTimeString) => {
@@ -206,106 +172,97 @@
             };
 
             const groupedJobs = groupJobsByMonth();
-            const monthKeys = Object.keys(groupedJobs).sort((a, b) => {
-                const dateA = new Date(groupedJobs[a][0].startDateTime);
-                const dateB = new Date(groupedJobs[b][0].startDateTime);
-                return dateB - dateA;
-            });
+            const monthKeys = Object.keys(groupedJobs).sort((a, b) => new Date(groupedJobs[b][0].startDateTime) - new Date(groupedJobs[a][0].startDateTime));
 
-            return React.createElement('div', { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } },
-                React.createElement('div', { style: { padding: '1.25rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 } },
-                    React.createElement('h1', { style: { fontSize: '2rem', fontWeight: '800', margin: 0, color: '#5A4A42', letterSpacing: '-0.5px' } }, 'Logger'),
+            return React.createElement('div', { style: { paddingBottom: '2rem' } },
+                React.createElement('div', { style: { background: '#FFFFFF', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E5E5EA', borderBottomStyle: 'solid' } },
+                    React.createElement('h1', { style: { fontSize: '1.875rem', fontWeight: '700', margin: 0, color: '#000' } }, 'Logger'),
                     React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
                         !showNewCard && React.createElement('button', {
                             onClick: () => jobs.length > 0 && exportToCSV(jobs),
-                            style: { background: '#E8D4C4', color: '#7B5A52', padding: '0.6rem 1rem', borderRadius: '20px', fontWeight: '700', fontSize: '0.9rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }
+                            style: { padding: '0.6rem 0.9rem', background: '#E8E8ED', color: '#000', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }
                         }, '📊'),
                         !showNewCard && React.createElement('button', {
                             onClick: handleNewJob,
-                            style: { background: 'linear-gradient(135deg, #FFD4A3 0%, #FFB5B5 100%)', color: '#FFFFFF', padding: '0.6rem 1.2rem', borderRadius: '20px', fontWeight: '700', fontSize: '0.9rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,212,163,0.4)' }
+                            style: { padding: '0.6rem 1rem', background: '#007AFF', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }
                         }, '+ Add')
                     )
                 ),
 
-                React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '0 0.75rem 1rem' } },
-                    showNewCard && React.createElement('div', { style: { paddingBottom: '2rem' } },
-                        React.createElement('div', { style: { background: '#FFFFFF', borderRadius: '28px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', minHeight: '90vh', justifyContent: 'space-between', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' } },
-                            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1.25rem' } },
-                                React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' } }, 'Ticket'),
-                                    React.createElement('input', { type: 'text', value: formData.ticketNumber, onChange: (e) => setFormData({ ...formData, ticketNumber: e.target.value }), style: { width: '100%', padding: '0.9rem', border: '2px solid #F0E6E0', borderRadius: '14px', outline: 'none', color: '#5A4A42', fontSize: '1rem', background: '#FFFBF8' } })
+                showNewCard && React.createElement('div', { style: { padding: '1rem' } },
+                    React.createElement('div', { style: { background: '#FFFFFF', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' } },
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Ticket Number'),
+                            React.createElement('input', { type: 'text', value: formData.ticketNumber, onChange: (e) => setFormData({ ...formData, ticketNumber: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Start'),
+                            React.createElement('input', { type: 'datetime-local', value: formData.startDateTime, onChange: (e) => setFormData({ ...formData, startDateTime: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Finish'),
+                            React.createElement('input', { type: 'datetime-local', value: formData.finishDateTime, onChange: (e) => setFormData({ ...formData, finishDateTime: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', fontSize: '1rem' } })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Work Done'),
+                            React.createElement('textarea', { value: formData.workDone, onChange: (e) => setFormData({ ...formData, workDone: e.target.value }), style: { width: '100%', boxSizing: 'border-box', padding: '0.75rem', border: '1px solid #E5E5EA', borderRadius: '8px', outline: 'none', minHeight: '8rem', resize: 'none', fontSize: '1rem' } })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' } }, 'Parts Used'),
+                            React.createElement('div', { style: { border: '1px solid #E5E5EA', borderRadius: '8px', overflow: 'hidden' } },
+                                React.createElement('div', { style: { background: '#F2F2F7', display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '0.75rem', fontWeight: '600', fontSize: '0.75rem', borderBottomWidth: 1, borderBottomColor: '#E5E5EA', borderBottomStyle: 'solid' } },
+                                    React.createElement('div', null, 'Part #'),
+                                    React.createElement('div', null, 'Description')
                                 ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' } }, 'Start'),
-                                    React.createElement('input', { type: 'datetime-local', value: formData.startDateTime, onChange: (e) => setFormData({ ...formData, startDateTime: e.target.value }), style: { width: '100%', padding: '0.9rem', border: '2px solid #F0E6E0', borderRadius: '14px', outline: 'none', color: '#5A4A42', fontSize: '1rem', background: '#FFFBF8' } })
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' } }, 'Finish'),
-                                    React.createElement('input', { type: 'datetime-local', value: formData.finishDateTime, onChange: (e) => setFormData({ ...formData, finishDateTime: e.target.value }), style: { width: '100%', padding: '0.9rem', border: '2px solid #F0E6E0', borderRadius: '14px', outline: 'none', color: '#5A4A42', fontSize: '1rem', background: '#FFFBF8' } })
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' } }, 'Work Done'),
-                                    React.createElement('textarea', { value: formData.workDone, onChange: (e) => setFormData({ ...formData, workDone: e.target.value }), style: { width: '100%', padding: '0.9rem', border: '2px solid #F0E6E0', borderRadius: '14px', outline: 'none', minHeight: '9rem', resize: 'none', color: '#5A4A42', fontSize: '1rem', background: '#FFFBF8', fontFamily: 'inherit' } })
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' } }, 'Parts Used'),
-                                    React.createElement('div', { style: { border: '2px solid #F0E6E0', borderRadius: '14px', overflow: 'hidden', background: '#FFFBF8' } },
-                                        React.createElement('div', { style: { background: '#F8F0EC', display: 'grid', gridTemplateColumns: '1fr 1fr', fontWeight: '700', fontSize: '0.75rem', color: '#8B7355', textTransform: 'uppercase' } },
-                                            React.createElement('div', { style: { padding: '0.75rem', borderRight: '1px solid #F0E6E0' } }, 'Part #'),
-                                            React.createElement('div', { style: { padding: '0.75rem' } }, 'Description')
-                                        ),
-                                        formData.parts.map((part, index) => React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #F0E6E0' } },
-                                            React.createElement('input', { type: 'text', value: part.partNumber, onChange: (e) => handlePartChange(index, 'partNumber', e.target.value), style: { padding: '0.75rem', borderRight: '1px solid #F0E6E0', fontSize: '0.95rem', outline: 'none', background: 'transparent', color: '#5A4A42', border: 'none' } }),
-                                            React.createElement('input', { type: 'text', value: part.partDescription, onChange: (e) => handlePartChange(index, 'partDescription', e.target.value), onKeyPress: (e) => handlePartKeyPress(index, 'partDescription', e), style: { padding: '0.75rem', fontSize: '0.95rem', outline: 'none', background: 'transparent', color: '#5A4A42', border: 'none' } })
-                                        ))
-                                    )
-                                )
-                            ),
-
-                            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
-                                React.createElement('div', { style: { background: '#F8F0EC', borderRadius: '16px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
-                                    React.createElement('p', { style: { fontSize: '0.75rem', fontWeight: '700', color: '#8B7355', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0' } }, 'Site'),
-                                    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
-                                        Object.entries(SITES).map(([key, site]) => React.createElement('button', { key, onClick: () => setFormData({ ...formData, site: key }), style: { backgroundColor: formData.site === key ? site.hex : site.pastel, color: formData.site === key ? '#FFFFFF' : '#8B7355', padding: '0.75rem', borderRadius: '12px', fontWeight: '700', border: 'none', cursor: 'pointer', transition: 'all 0.3s', fontSize: '0.9rem' } }, site.label))
-                                    )
-                                ),
-
-                                React.createElement('div', { style: { display: 'flex', gap: '0.75rem' } },
-                                    React.createElement('button', { onClick: handleSave, style: { flex: 1, background: 'linear-gradient(135deg, #FFD4A3 0%, #FFB5B5 100%)', color: '#FFFFFF', padding: '1rem', borderRadius: '14px', fontWeight: '700', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,212,163,0.3)' } }, 'Save'),
-                                    React.createElement('button', { onClick: () => setShowNewCard(false), style: { flex: 1, background: '#F0E6E0', color: '#8B7355', padding: '1rem', borderRadius: '14px', fontWeight: '700', border: 'none', cursor: 'pointer' } }, 'Cancel')
-                                )
+                                formData.parts.map((part, index) => React.createElement('div', { key: index, style: { display: 'grid', gridTemplateColumns: '1fr 1fr', borderTopWidth: 1, borderTopColor: '#E5E5EA', borderTopStyle: 'solid' } },
+                                    React.createElement('input', { type: 'text', value: part.partNumber, onChange: (e) => handlePartChange(index, 'partNumber', e.target.value), style: { padding: '0.75rem', border: 'none', outline: 'none', fontSize: '1rem', borderRightWidth: 1, borderRightColor: '#E5E5EA', borderRightStyle: 'solid' } }),
+                                    React.createElement('input', { type: 'text', value: part.partDescription, onChange: (e) => handlePartChange(index, 'partDescription', e.target.value), style: { padding: '0.75rem', border: 'none', outline: 'none', fontSize: '1rem' } })
+                                ))
                             )
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#666', marginBottom: '0.75rem', textTransform: 'uppercase' } }, 'Site'),
+                            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
+                                Object.entries(SITES).map(([key, site]) => React.createElement('button', { key, onClick: () => setFormData({ ...formData, site: key }), style: { backgroundColor: formData.site === key ? site.hex : '#E8E8ED', color: formData.site === key ? '#FFF' : '#000', padding: '0.75rem', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } }, site.label))
+                            )
+                        ),
+                        React.createElement('div', { style: { display: 'flex', gap: '0.75rem' } },
+                            React.createElement('button', { onClick: handleSave, style: { flex: 1, padding: '0.9rem', background: '#007AFF', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '1rem' } }, 'Save'),
+                            React.createElement('button', { onClick: () => setShowNewCard(false), style: { flex: 1, padding: '0.9rem', background: '#E8E8ED', color: '#000', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '1rem' } }, 'Cancel')
                         )
-                    ),
+                    )
+                ),
 
-                    !showNewCard && React.createElement('div', {},
-                        monthKeys.length === 0 ? React.createElement('div', { style: { textAlign: 'center', paddingTop: '5rem' } },
-                            React.createElement('p', { style: { color: '#A8906B', fontSize: '1.1rem', marginBottom: '1.5rem' } }, 'No jobs yet'),
-                            React.createElement('button', { onClick: handleNewJob, style: { background: 'linear-gradient(135deg, #FFD4A3 0%, #FFB5B5 100%)', color: '#FFFFFF', padding: '0.9rem 1.8rem', borderRadius: '20px', fontWeight: '700', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,212,163,0.4)' } }, 'Log Your First Job')
-                        ) : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
-                            monthKeys.map(monthKey => React.createElement('div', { key: monthKey },
-                                React.createElement('button', { onClick: () => setExpandedMonth(expandedMonth === monthKey ? null : monthKey), style: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#FFFFFF', borderRadius: '14px', fontWeight: '700', color: '#5A4A42', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' } }, monthKey, React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' } }, '▼')),
-                                expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' } },
-                                    groupedJobs[monthKey].map(job => React.createElement('div', { key: job.id, onClick: () => handleEditJob(job), style: { padding: '1.25rem', background: SITES[job.site]?.pastel || '#FFFFFF', borderRadius: '18px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s' } },
-                                        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' } },
-                                            React.createElement('div', { style: { flex: 1 } },
-                                                React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' } },
-                                                    React.createElement('p', { style: { fontWeight: '800', color: SITES[job.site]?.hex || '#FFD4A3', fontSize: '1.15rem', margin: 0 } }, job.ticketNumber),
-                                                    job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: '#FFFFFF', padding: '0.3rem 0.7rem', borderRadius: '8px', fontSize: '0.7rem', fontWeight: '700' } }, SITES[job.site].label)
-                                                ),
-                                                React.createElement('p', { style: { fontSize: '0.85rem', color: '#A8906B', margin: 0 } }, formatDateTime(job.startDateTime) + ' → ' + formatDateTime(job.finishDateTime))
+                !showNewCard && React.createElement('div', { style: { padding: '1rem' } },
+                    monthKeys.length === 0 ? React.createElement('div', { style: { textAlign: 'center', paddingTop: '4rem' } },
+                        React.createElement('p', { style: { color: '#999', marginBottom: '1.5rem' } }, 'No jobs yet'),
+                        React.createElement('button', { onClick: handleNewJob, style: { background: '#007AFF', color: '#FFF', padding: '0.75rem 1.5rem', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } }, 'Log First Job')
+                    ) : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
+                        monthKeys.map(monthKey => React.createElement('div', { key: monthKey },
+                            React.createElement('button', { onClick: () => setExpandedMonth(expandedMonth === monthKey ? null : monthKey), style: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#FFFFFF', border: '1px solid #E5E5EA', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' } },
+                                monthKey,
+                                React.createElement('span', { style: { transform: expandedMonth === monthKey ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' } }, '▼')
+                            ),
+                            expandedMonth === monthKey && React.createElement('div', { style: { marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' } },
+                                groupedJobs[monthKey].map(job => React.createElement('div', { key: job.id, onClick: () => handleEditJob(job), style: { padding: '1rem', background: '#FFFFFF', border: '1px solid #E5E5EA', borderRadius: '8px', cursor: 'pointer' } },
+                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' } },
+                                        React.createElement('div', null,
+                                            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' } },
+                                                React.createElement('p', { style: { fontWeight: '700', fontSize: '1.1rem', margin: 0 } }, job.ticketNumber),
+                                                job.site && React.createElement('span', { style: { backgroundColor: SITES[job.site].hex, color: '#FFF', padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '600' } }, SITES[job.site].label)
                                             ),
-                                            React.createElement('button', { onClick: (e) => { e.stopPropagation(); if (window.confirm('Delete?')) handleDelete(job.id); }, style: { marginLeft: '0.5rem', padding: '0.5rem', color: '#FF9FD2', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.25rem' } }, '✕')
+                                            React.createElement('p', { style: { fontSize: '0.85rem', color: '#999', margin: 0 } }, formatDateTime(job.startDateTime))
                                         ),
-                                        job.workDone && React.createElement('p', { style: { fontSize: '0.95rem', color: '#5A4A42', marginBottom: '0.5rem', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
-                                        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                                            job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('p', { style: { fontSize: '0.8rem', color: '#A8906B', margin: 0 } }, job.parts.filter(p => p.partNumber || p.partDescription).length + ' part' + (job.parts.filter(p => p.partNumber || p.partDescription).length !== 1 ? 's' : '')),
-                                            React.createElement('p', { style: { fontSize: '0.8rem', color: '#D4C4B8', margin: 0, marginLeft: 'auto' } }, formatDateOnly(job.startDateTime))
-                                        )
-                                    ))
-                                )
-                            ))
-                        )
+                                        React.createElement('button', { onClick: (e) => { e.stopPropagation(); if (window.confirm('Delete?')) handleDelete(job.id); }, style: { background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', fontSize: '1.2rem' } }, '✕')
+                                    ),
+                                    job.workDone && React.createElement('p', { style: { fontSize: '0.9rem', color: '#333', margin: '0.5rem 0 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, job.workDone),
+                                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: '#999' } },
+                                        job.parts && job.parts.some(p => p.partNumber || p.partDescription) && React.createElement('span', null, job.parts.filter(p => p.partNumber || p.partDescription).length + ' parts'),
+                                        React.createElement('span', null, formatDateOnly(job.startDateTime))
+                                    )
+                                ))
+                            )
+                        ))
                     )
                 )
             );
