@@ -33,11 +33,23 @@
 </head>
 <body>
 <div id="root"></div>
-<input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
+<input type="file" id="restoreInput" accept="*/*" style="display:none">
 
 <script type="text/babel">
 const { useState, useEffect, useMemo } = React;
 const e = React.createElement;
+
+const SEED = [
+{"equipment":["I"],"parts":[],"extraDays":[],"id":1786027808977,"ticketNumber":"0750790C1836422","site":"NX","startDateTime":"2026-08-06T15:35","finishDateTime":"2026-08-06T16:15","hasTravel":false,"travelDateTime":"2026-08-06T15:35","hasTravel2":false,"travel2DateTime":"2026-08-06T16:15","workDone":"08/06/2026\nRan vacuum diagnostics, failed immediately and unable to create vacuum.\nRemoved all vacuum fittings on the vacuum accumulate and separator. Confirmed elbow fittings secure at the back of the drawer. Found that relief valve in the bottom of filter housing was loose. Tightened. \n\nRan vac diagnostics, passed.\n\nHanded back to lab. "},
+{"equipment":["I"],"parts":[],"extraDays":[],"id":1786026180320,"ticketNumber":"2861889","site":"NX","startDateTime":"2026-08-06T14:10","finishDateTime":"2026-08-06T15:35","hasTravel":false,"travelDateTime":"2026-08-06T14:10","hasTravel2":false,"travel2DateTime":"2026-08-06T15:35","workDone":"06/08/2026\nZ-tensioner completely seized. Removed from R1 pipettor and cleaned. Reinstalled and lubricated guide rail. \n\nReplaced probe and ran probe straightness and calibration.\n\nHanded back to lab. "},
+{"equipment":["GLP"],"parts":[{"partNumber":"G-41304-01","partDescription":"Clutch plate aluminium"}],"extraDays":[],"id":1786022443858,"ticketNumber":"0750790C1835377","site":"NX","startDateTime":"2026-08-06T12:15","finishDateTime":"2026-08-06T14:10","hasTravel":false,"travelDateTime":"2026-08-06T12:15","hasTravel2":false,"travel2DateTime":"2026-08-06T14:10","workDone":"06/08/2026\nRecapper 2 robot not picking caps and when it does it puts them onto the tube incorrectly. \nRemoved robot gripper and disassembled. Found that gripper spinning shaft was loose. Cleaned gripper, tightened grub screw and reinstalled.\n\nRecapper 1 access point seized. Removed motor and found broken clutch plate. Replaced clutch plate.\n\nAligned both robots and tested with cars. \n\nAfter monitoring AP 1 keeps losing connection. Attempted to reprogram in TE but same error occurs. AP board to be replaced."},
+{"equipment":["GLP"],"parts":[{"partNumber":"","partDescription":"From lab stock"}],"extraDays":[],"id":1786012369114,"ticketNumber":"2861433","site":"NX","startDateTime":"2026-08-06T11:30","finishDateTime":"2026-08-06T12:30","hasTravel":false,"travelDateTime":"2026-08-06T11:30","hasTravel2":false,"travel2DateTime":"2026-08-06T12:30","workDone":"06/08/2026\n2.23 cross switch completely lost power.\n\nUnable to restore. Cross switch replaced. Tested and handed back to lab."},
+{"equipment":["GLP"],"parts":[],"extraDays":[],"id":1786012341632,"ticketNumber":"2861429","site":"NX","startDateTime":"2026-08-06T10:30","finishDateTime":"2026-08-06T11:15","hasTravel":false,"travelDateTime":"2026-08-06T10:30","hasTravel2":false,"travel2DateTime":"2026-08-06T11:15","workDone":"06/08/2026\nTAC2 teaching carried out with grey tubes. Both white top and grey top.\nHanded back to lab. \n"},
+{"equipment":["GLP"],"parts":[],"extraDays":[],"id":1786012298043,"ticketNumber":"2861424","site":"NX","startDateTime":"2026-08-06T09:25","finishDateTime":"2026-08-06T10:30","hasTravel":true,"travelDateTime":"2026-08-06T08:55","hasTravel2":false,"travel2DateTime":"2026-08-06T10:30","workDone":"06/08/2026\nTAC1 gold top teaching carried out due to high rate of tube type recognition errors.\n\nHanded back to lab. "},
+{"equipment":["GLP"],"parts":[{"partNumber":"G-41220-01","partDescription":"Basic lane AP"}],"extraDays":[],"id":1785953422190,"ticketNumber":"2859921","site":"NX","startDateTime":"2026-08-05T15:35","finishDateTime":"2026-08-05T16:25","hasTravel":false,"travelDateTime":"2026-08-05T15:35","hasTravel2":false,"travel2DateTime":"2026-08-05T16:25","workDone":"5/8/2026\nReplaced basic lane AP and tested with cars. Handed back to lab. "},
+{"equipment":["GLP"],"parts":[{"partNumber":"G-41378-01","partDescription":"Robot gripper unit"},{"partNumber":"","partDescription":""}],"extraDays":[],"id":1785932484509,"ticketNumber":"0750790C1836272","site":"NX","startDateTime":"2026-08-05T11:05","finishDateTime":"2026-08-05T13:25","hasTravel":false,"travelDateTime":"2026-08-05T12:17","hasTravel2":false,"travel2DateTime":"2026-08-05T13:25","workDone":"Removed gripper and inspected. No signs of wear on movement. Replaced gripper fingers from New Cross stock. \nCrashing mostly into sample tube at AP1. Teaching carried out. Put back into running and monitors. Handed back to lab.\n\n After monitoring and running for several hours gripper stopped working and gave multiple sample detected at gripper errors, release button not working and completely unable to clear error after multiple restarts. \n\nReplaced gripper unit and tested. \nHanded back to lab. "},
+{"equipment":["GLP"],"parts":[{"partNumber":"","partDescription":""}],"extraDays":[],"id":1785929665597,"ticketNumber":"0750790C1836266","site":"NX","startDateTime":"2026-08-05T11:05","finishDateTime":"2026-08-05T11:09","hasTravel":false,"travelDateTime":"2026-08-05T11:09","hasTravel2":false,"travel2DateTime":"2026-08-05T11:09","workDone":"05/08/2026\nLogged into SAL via TE and found that area name had reverted to a default ID. Reset to ALCI-3 and tested with samples. Access point 1 not opening fully to allow cars in. Removed, cleaned and adjusted catch and pass. Tested. \nHanded back to lab "}
+];
 
 const SITES = {
   NX:   { label:'NX',   hex:'#C97A00', tint:'#FBF1DF' },
@@ -49,7 +61,6 @@ const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track'
 
 const INK='#1C1C1E', MID='#6E6E73', GREY='#8E8E93', LINE='#E5E5EA';
 const TRAVEL='#3A6FD8', TRAVELBG='#EEF4FF', GREEN='#34C759', BLUE='#007AFF', RED='#FF3B30';
-const DONE='#1E9E4A';
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.6px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.7rem 0.8rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAFC', color:INK };
@@ -74,15 +85,6 @@ const roundNow = () => { const d=new Date(); d.setMinutes(Math.floor(d.getMinute
   return pad(d.getHours())+':'+pad(d.getMinutes()); };
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
-
-function MiniToggle({ on, onToggle }) {
-  return e('button', { onClick:onToggle, title: on ? 'Ready to sign off' : 'Mark ready to sign off',
-    style:{ width:'38px', height:'22px', borderRadius:'999px', padding:'2px', border:'none', flexShrink:0,
-      background: on ? DONE : '#D6D6DC', display:'flex', alignItems:'center',
-      justifyContent: on ? 'flex-end' : 'flex-start', cursor:'pointer', transition:'background-color .2s ease' } },
-    e('span', { style:{ width:'18px', height:'18px', borderRadius:'999px', background:'#FFF',
-      boxShadow:'0 1px 3px rgba(0,0,0,0.25)', display:'block' } }));
-}
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -109,8 +111,13 @@ function App() {
 
   useEffect(() => { (async () => {
     let data = await dbGet(KEY);
-    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) { data = JSON.parse(s); await dbSet(KEY, data); } } catch (err) {} }
-    if (Array.isArray(data)) setJobs(data.map(j => ({ equipment:[], parts:[], extraDays:[], done:false, ...j })));
+    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) data = JSON.parse(s); } catch (err) {} }
+    if (!Array.isArray(data) || data.length === 0) {
+      data = SEED.slice();
+      await dbSet(KEY, data);
+      try { localStorage.setItem('jobsData', JSON.stringify(data)); } catch (err) {}
+    }
+    setJobs(data.map(j => ({ equipment:[], parts:[], extraDays:[], ...j })));
     setReady(true);
   })(); }, []);
 
@@ -118,8 +125,6 @@ function App() {
     setJobs(next); await dbSet(KEY, next);
     try { localStorage.setItem('jobsData', JSON.stringify(next)); } catch (err) {}
   };
-
-  const toggleDone = (id) => persist(jobs.map(j => j.id === id ? { ...j, done: !j.done } : j));
 
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   const fmtDay   = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
@@ -193,12 +198,11 @@ function App() {
       day.sites.forEach(s => { siteDays[s] = (siteDays[s]||0) + 1; });
       day.equip.forEach(x => { equipDays[x] = (equipDays[x]||0) + 1; });
     });
-    const openCount = src.filter(j => !j.done).length;
-    return { y, m, src, days, daysInMonth, firstDow, siteDays, siteTickets, equipTickets, equipDays, openCount };
+    return { y, m, src, days, daysInMonth, firstDow, siteDays, siteTickets, equipTickets, equipDays };
   }, [jobs, statMonth]);
 
   const buildXlsxBlob = (rowsSrc) => {
-    const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Ready','Work Done','Parts Used']];
+    const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Work Done','Parts Used']];
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
@@ -214,12 +218,12 @@ function App() {
       rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', eqOf(j).map(x=>EQUIP[x]||x).join(', '),
         fmtDate(j.startDateTime),
         j.hasTravel?fmtTime(j.travelDateTime):'', fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
-        j.hasTravel2?fmtTime(j.travel2DateTime):'', on?hm(on):'', tr||'', ex, j.done?'Yes':'',
+        j.hasTravel2?fmtTime(j.travel2DateTime):'', on?hm(on):'', tr||'', ex,
         (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:8},{wch:60},{wch:40}];
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:13} }) };
+    ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:60},{wch:40}];
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:12} }) };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
     return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
@@ -252,9 +256,37 @@ function App() {
   const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
     const name = stamp()+' App tickets backup.json';
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:6, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
     setMenuOpen(false);
+  };
+
+  const doCopyBackup = async () => {
+    if (!jobs.length) { alert('Nothing to back up.'); return; }
+    const txt = JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs });
+    try { await navigator.clipboard.writeText(txt);
+      alert('Backup copied ('+txt.length+' characters).\n\nPaste it into a personal note or email to yourself.'); }
+    catch (err) { alert('Copy failed — clipboard access blocked.'); }
+    setMenuOpen(false);
+  };
+
+  const applyRestore = async (raw) => {
+    try {
+      const parsed = JSON.parse(raw);
+      const list = Array.isArray(parsed) ? parsed : parsed.jobs;
+      if (!Array.isArray(list)) throw new Error('bad');
+      const merged = list.map(j => ({ equipment:[], parts:[], extraDays:[], ...j }));
+      const seen = new Set(merged.map(j=>j.id));
+      jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
+      merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
+      await persist(merged); setMenuOpen(false);
+      alert('Restored. Total now '+merged.length+' tickets.');
+    } catch (err) { alert('That was not readable backup text.'); }
+  };
+
+  const doPasteRestore = () => {
+    const raw = window.prompt('Paste your backup text here:');
+    if (raw && raw.trim()) applyRestore(raw.trim());
   };
 
   const doRestore = () => {
@@ -262,19 +294,8 @@ function App() {
     input.onchange = () => {
       const file = input.files && input.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const list = Array.isArray(parsed) ? parsed : parsed.jobs;
-          if (!Array.isArray(list)) throw new Error('bad');
-          const merged = list.map(j => ({ equipment:[], parts:[], extraDays:[], done:false, ...j }));
-          const seen = new Set(merged.map(j=>j.id));
-          jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
-          merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
-          await persist(merged); setMenuOpen(false);
-          alert('Restored. Total now '+merged.length+' tickets.');
-        } catch (err) { alert('That file could not be read.'); }
-      };
+      reader.onload = () => applyRestore(reader.result);
+      reader.onerror = () => alert('Could not read that file.');
       reader.readAsText(file);
     };
     input.click();
@@ -291,7 +312,7 @@ function App() {
         const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
           .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
         const ex = exOf(j).map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ');
-        return '  • ' + j.ticketNumber + (eqOf(j).length?' ('+eqOf(j).join(', ')+')':'') + (j.done?' [ready]':'') + '  '
+        return '  • ' + j.ticketNumber + (eqOf(j).length?' ('+eqOf(j).join(', ')+')':'') + '  '
           + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)
           + (ex?'\n    Also: '+ex:'')
           + (j.workDone?'\n    '+j.workDone.replace(/\n/g,' '):'')
@@ -317,7 +338,6 @@ function App() {
       ticketNumber: j.ticketNumber || '',
       site: j.site || '',
       equipment: eqOf(j),
-      done: !!j.done,
       date: (j.startDateTime||'').slice(0,10) || todayISO(),
       t1: j.hasTravel && j.travelDateTime ? j.travelDateTime.slice(11,16) : '',
       start: (j.startDateTime||'').slice(11,16),
@@ -337,7 +357,7 @@ function App() {
   };
 
   const duplicate = () => {
-    setForm({ ...form, ticketNumber:'', date: todayISO(), extra:[], done:false });
+    setForm({ ...form, ticketNumber:'', date: todayISO(), extra:[] });
     setEditingId(null); window.scrollTo(0,0);
   };
 
@@ -358,7 +378,6 @@ function App() {
       ticketNumber: form.ticketNumber.trim(),
       site: form.site,
       equipment: form.equipment,
-      done: !!form.done,
       ...pack(form),
       extraDays: (form.extra||[]).filter(d => d.date && d.start).map(pack),
       workDone: form.workDone,
@@ -400,9 +419,11 @@ function App() {
         ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
         : menuRow('Spreadsheet — '+monthShort, ms.src.length+' ticket(s)', ()=>doSpreadsheet('month')),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
+      menuRow('Copy backup to clipboard', 'Paste into a note — no file needed', doCopyBackup),
+      menuRow('Restore from pasted text', 'Paste backup text back in', doPasteRestore),
       menuRow('Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
       menuRow('Create backup file', 'Save a .json restore file', doBackup),
-      menuRow('Restore from backup', 'Load an "App tickets backup" .json file', doRestore),
+      menuRow('Restore from file', 'Load an "App tickets backup" .json file', doRestore),
       menuRow('Clear all tickets', 'Deletes everything on this device', doClear, RED),
       e('button', { onClick:()=>setMenuOpen(false),
         style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
@@ -483,9 +504,6 @@ function App() {
           boxShadow: statMode===mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
         mode === 'calendar' ? 'Calendar' : 'Workdays'))),
 
-    ms.src.length > 0 && e('div', { style:{ fontSize:'0.68rem', color: ms.openCount ? MID : DONE, fontWeight:700, textAlign:'center' } },
-      ms.openCount ? (ms.openCount + ' of ' + ms.src.length + ' still to sign off') : 'All ' + ms.src.length + ' tickets ready to sign off'),
-
     statMode === 'calendar' ? calendarBlock : workdaysBlock,
 
     ms.src.length > 0 && e('div', { style:{ ...LBL, padding:'0.3rem 0.5rem 0' } }, 'Days at each site'),
@@ -540,24 +558,18 @@ function App() {
         const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
         const on = mins(j.startDateTime, j.finishDateTime);
         return e('div', { key:j.id, onClick:()=>openEdit(j),
-          style:{ background: s?s.tint:'#F7F7FA',
-            border: j.done ? '2.5px solid '+DONE : '1.5px solid '+(s?s.hex+'44':LINE),
-            boxShadow: j.done ? '0 0 0 3px rgba(30,158,74,0.12)' : 'none',
+          style:{ background: s?s.tint:'#F7F7FA', border:'1.5px solid '+(s?s.hex+'44':LINE),
             borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer' } },
-          e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.5rem' } },
-            e('div', { style:{ flex:1, minWidth:0 } },
-              e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.3rem' } },
-                e('span', { style:{ background:'#F0F0F4', color:MID, width:'18px', height:'18px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
-                e('span', { style:{ fontWeight:800, fontSize:'0.92rem' } }, j.ticketNumber),
-                s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.16rem 0.5rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800 } }, s.label),
-                eq.map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.07)', color:'#3A3A3C', padding:'0.14rem 0.4rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, x)),
-                ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.14rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, '+'+ex.length+' day')),
-              e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
-                (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
-                fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-                (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : ''))),
-            e('div', { onClick:(ev)=>ev.stopPropagation() },
-              e(MiniToggle, { on: !!j.done, onToggle: ()=>toggleDone(j.id) }))),
+          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.3rem' } },
+            e('span', { style:{ background:'#F0F0F4', color:MID, width:'18px', height:'18px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
+            e('span', { style:{ fontWeight:800, fontSize:'0.92rem' } }, j.ticketNumber),
+            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.16rem 0.5rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800 } }, s.label),
+            eq.map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.07)', color:'#3A3A3C', padding:'0.14rem 0.4rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, x)),
+            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.14rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, '+'+ex.length+' day')),
+          e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
+            (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
+            fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
+            (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
           ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:TRAVEL, fontWeight:700, marginTop:'0.25rem' } },
             'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
           j.workDone && e('p', { style:{ fontSize:'0.8rem', color:'#3A3A3C', margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
@@ -576,12 +588,9 @@ function App() {
   const ticketCard = (j) => {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const on = mins(j.startDateTime, j.finishDateTime);
-    const nParts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length;
     return e('div', { key:j.id, onClick:()=>openEdit(j),
       style:{ padding:'0.95rem 1.05rem', borderRadius:'18px', cursor:'pointer',
-        background: s?s.tint:'#FFF',
-        border: j.done ? '2.5px solid '+DONE : '1.5px solid '+(s?s.hex+'44':LINE),
-        boxShadow: j.done ? '0 0 0 3px rgba(30,158,74,0.12)' : '0 2px 8px rgba(0,0,0,0.035)' } },
+        background: s?s.tint:'#FFF', border:'1.5px solid '+(s?s.hex+'44':LINE), boxShadow:'0 2px 8px rgba(0,0,0,0.035)' } },
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.25rem', flexWrap:'wrap' } },
@@ -591,13 +600,12 @@ function App() {
             ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:800 } }, '+'+ex.length+' day')),
           e('div', { style:{ fontSize:'0.72rem', color:MID } },
             fmtDate(j.startDateTime) + '  ·  ' + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime) + (on ? '  ·  '+hm(on) : ''))),
-        e('div', { onClick:(ev)=>ev.stopPropagation() },
-          e(MiniToggle, { on: !!j.done, onToggle: ()=>toggleDone(j.id) }))),
-      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#3A3A3C', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
-      e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'0.55rem' } },
-        e('span', { style:{ fontSize:'0.68rem', color:GREY } }, nParts ? nParts+' part(s)' : ''),
         e('button', { onClick:(ev)=>{ ev.stopPropagation(); if (window.confirm('Delete this ticket?')) remove(j.id); },
-          style:{ background:'none', border:'none', color:GREY, fontSize:'0.68rem', fontWeight:800, cursor:'pointer', padding:'2px 0' } }, 'Delete')));
+          style:{ background:'none', border:'none', color:GREY, fontSize:'0.68rem', fontWeight:800, cursor:'pointer', flexShrink:0, padding:'2px 0' } }, 'Delete')),
+      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#3A3A3C', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
+      (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length > 0 &&
+        e('div', { style:{ marginTop:'0.5rem', fontSize:'0.68rem', color:GREY } },
+          j.parts.filter(p=>p.partNumber||p.partDescription).length + ' part(s)'));
   };
 
   const listView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.6rem' } },
@@ -629,13 +637,12 @@ function App() {
         style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'#F7F7FA', color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
 
     e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:600, paddingLeft:'0.4rem' } },
-      filtered.length + ' of ' + jobs.length + ' tickets  ·  ' + filtered.filter(j=>!j.done).length + ' to sign off'),
+      filtered.length + ' of ' + jobs.length + ' tickets'),
 
     filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } }, filtered.map(ticketCard)));
 
-  /* ---------- spine builder ---------- */
   const dotEl = (colour, size) => e('span', { style:{ width:size+'px', height:size+'px', borderRadius:'999px',
     background:'#FFF', border:'3px solid '+colour, display:'block', flexShrink:0 } });
 
@@ -713,8 +720,7 @@ function App() {
   };
 
   const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
-    e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem',
-      border: form.done ? '2.5px solid '+DONE : '2.5px solid transparent' } },
+    e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
 
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
         e('span', { style:LBL }, editingId ? 'Edit ticket' : 'New ticket'),
@@ -722,10 +728,8 @@ function App() {
           e('button', { onClick:()=>{ setView('month'); setEditingId(null); setForm(blank()); }, style:TXTBTN }, 'Cancel'),
           e('button', { onClick:save, style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'Save'))),
 
-      e('div', { style:{ display:'flex', gap:'0.6rem', alignItems:'center' } },
-        e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
-          onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:{ ...FIELD, fontWeight:700 } }),
-        e(MiniToggle, { on: !!form.done, onToggle: ()=>setForm({ ...form, done: !form.done }) })),
+      e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
+        onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:{ ...FIELD, fontWeight:700 } }),
 
       e('div', { style:{ display:'flex', gap:'0.5rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem',
