@@ -76,7 +76,6 @@ const roundNow = () => { const d=new Date(); d.setMinutes(Math.floor(d.getMinute
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
 
-/* backup window: morning before 12:00, afternoon from 15:00 */
 const slotNow = () => { const h=new Date().getHours(); if (h < 12) return 'am'; if (h >= 15) return 'pm'; return null; };
 const slotKey = () => { const s=slotNow(); return s ? todayISO()+'-'+s : null; };
 const backupName = () => { const d=new Date();
@@ -181,7 +180,7 @@ function App() {
     const y = statMonth.getFullYear(), m = statMonth.getMonth();
     const src = jobs.filter(j => {
       const d = new Date(j.startDateTime);
-      return d.getFullYear() = y && d.getMonth() = m;
+      return d.getFullYear() === y && d.getMonth() === m;
     });
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
@@ -197,7 +196,7 @@ function App() {
       const day = days[d];
       day.tickets.sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
       const seq = [];
-      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] ! j.site) seq.push(j.site); });
+      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
       day.siteSequence = seq;
       day.sites = new Set(day.tickets.map(j=>j.site).filter(Boolean));
       day.equip = new Set(day.tickets.flatMap(eqOf));
@@ -246,16 +245,16 @@ function App() {
   };
   const shareFiles = async (files) => {
     try { if (navigator.canShare && navigator.canShare({files})) { await navigator.share({files,title:'Tickets'}); return true; } }
-    catch (err) { if (err && err.name='AbortError') return true; }
+    catch (err) { if (err && err.name==='AbortError') return true; }
     return false;
   };
 
   const doSpreadsheet = async (scope) => {
-    const src = scope = 'month' ? ms.src : (scope = 'filtered' ? filtered : jobs);
+    const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
     if (!src.length) { alert('Nothing to export.'); return; }
-    if (typeof XLSX = 'undefined') { alert('Still loading — try again in a moment.'); return; }
-    const suffix = scope = 'month' ? ' ' + statMonth.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
-                 : (scope = 'filtered' ? ' (filtered)' : '');
+    if (typeof XLSX === 'undefined') { alert('Still loading — try again in a moment.'); return; }
+    const suffix = scope === 'month' ? ' ' + statMonth.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
+                 : (scope === 'filtered' ? ' (filtered)' : '');
     const name = stamp()+' App tickets'+suffix+'.xlsx';
     const blob = buildXlsxBlob(src);
     if (!(await shareFiles([new File([blob],name,{type:blob.type})]))) download(blob,name);
@@ -378,7 +377,7 @@ function App() {
   const save = async () => {
     if (!form.ticketNumber.trim()) { alert('Enter a ticket number to save.'); return; }
     if (!form.start) { alert('Set a start time to save.'); return; }
-    const dupe = jobs.find(j => j.id ! editingId && String(j.ticketNumber).trim().toLowerCase() = form.ticketNumber.trim().toLowerCase());
+    const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
     if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
 
     const pack = (d) => {
@@ -397,16 +396,16 @@ function App() {
       workDone: form.workDone,
       parts: form.parts.filter(p => p.partNumber || p.partDescription)
     };
-    await persist(editingId ? jobs.map(j => j.id=editingId ? rec : j) : [rec, ...jobs]);
+    await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
     setView('month'); setEditingId(null); setForm(blank());
   };
 
-  const remove = (id) => { persist(jobs.filter(j => j.id ! id)); setDayDetail(null); };
+  const remove = (id) => { persist(jobs.filter(j => j.id !== id)); setDayDetail(null); };
 
   const setPart = (i, field, val) => {
-    const parts = form.parts.map((p,idx) => idx=i ? { ...p, [field]:val } : p);
-    if (field = 'partNumber') {
-      const known = partHistory.find(([n]) => n.toLowerCase() = val.trim().toLowerCase());
+    const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
+    if (field === 'partNumber') {
+      const known = partHistory.find(([n]) => n.toLowerCase() === val.trim().toLowerCase());
       if (known && !parts[i].partDescription) parts[i].partDescription = known[1];
     }
     setForm({ ...form, parts });
@@ -426,14 +425,14 @@ function App() {
       style:{ width:'100%', background:'#FFF', borderRadius:'26px 26px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
-      view = 'list'
+      view === 'list'
         ? menuRow('Monthly view', 'Calendar and workdays', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
         : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
       menuRow('Copy backup to clipboard', lastBkp ? ago(lastBkp.at) : 'never backed up', doCopyBackup),
       menuRow('Restore from pasted text', 'Paste backup text back in', doPasteRestore),
       menuRow('Save backup file', backupName(), doBackupFile),
       menuRow('Restore from file', 'Load an APPbackup .json file', doRestore),
-      (view = 'list' && (query || siteFilter.length || equipFilter.length))
+      (view === 'list' && (query || siteFilter.length || equipFilter.length))
         ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
         : menuRow('Spreadsheet — '+monthShort, ms.src.length+' ticket(s)', ()=>doSpreadsheet('month')),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
@@ -442,22 +441,21 @@ function App() {
       e('button', { onClick:()=>setMenuOpen(false),
         style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
 
-  const header = view ! 'form' && e('div', { style:{ padding:'0.9rem 1rem 0.6rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
+  const header = view !== 'form' && e('div', { style:{ padding:'0.9rem 1rem 0.6rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
     e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800 } }, 'Menu'),
-    e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, view = 'list' ? 'All tickets' : 'Tickets'),
+    e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(), style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'New'));
 
-  /* ---------- backup banner ---------- */
   const sk = slotKey();
   const dueBackup = ready && jobs.length > 0 && sk
-    && (!lastBkp || lastBkp.key ! sk) && dismissed ! sk;
+    && (!lastBkp || lastBkp.key !== sk) && dismissed !== sk;
 
-  const banner = dueBackup && view ! 'form' && e('div', {
+  const banner = dueBackup && view !== 'form' && e('div', {
     style:{ margin:'0 0.85rem 0.7rem', background:WARNBG, border:'1.5px solid #F0D3AC', borderRadius:'16px',
       padding:'0.75rem 0.9rem', display:'flex', alignItems:'center', gap:'0.7rem', animation:'dropIn .25s ease' } },
     e('div', { style:{ flex:1, minWidth:0 } },
       e('div', { style:{ fontSize:'0.82rem', fontWeight:800, color:WARN } },
-        slotNow() = 'am' ? 'Morning backup' : 'Afternoon backup'),
+        slotNow() === 'am' ? 'Morning backup' : 'Afternoon backup'),
       e('div', { style:{ fontSize:'0.68rem', color:'#8A6B45', fontWeight:600, marginTop:'1px' } },
         ago(lastBkp && lastBkp.at) + '  ·  ' + jobs.length + ' tickets')),
     e('button', { onClick:doCopyBackup,
@@ -470,7 +468,7 @@ function App() {
   const shiftMonth = (n) => { setStatMonth(new Date(ms.y, ms.m + n, 1)); setDayDetail(null); };
 
   const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.25rem', flexWrap:'wrap' } },
-    seq.length = 0
+    seq.length === 0
       ? e('span', { style:{ fontSize:'0.68rem', color:'#C7C7CC', fontWeight:700 } }, 'No site set')
       : seq.map((s,i) => [
           e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
@@ -482,11 +480,11 @@ function App() {
     const sites = d ? [...d.sites] : [];
     const dow = (new Date(ms.y, ms.m, dnum).getDay() + 6) % 7;
     let bg = dow >= 5 ? '#F7F7FA' : '#FFF';
-    if (sites.length = 1) bg = SITES[sites[0]].tint;
+    if (sites.length === 1) bg = SITES[sites[0]].tint;
     else if (sites.length > 1) bg = '#F0F0F4';
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ aspectRatio:'1 / 1', borderRadius:'10px', background:bg, padding:'2px',
-        border:'1px solid '+(sites.length=1 ? SITES[sites[0]].hex+'55' : '#EDEDF0'),
+        border:'1px solid '+(sites.length===1 ? SITES[sites[0]].hex+'55' : '#EDEDF0'),
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px', cursor:'pointer' } },
       e('span', { style:{ fontSize:'0.6rem', fontWeight:700, color: d ? INK : '#C7C7CC' } }, String(dnum)),
       sites.length ? e('div', { style:{ display:'flex', gap:'2px' } },
@@ -504,7 +502,7 @@ function App() {
         e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label))));
 
   const workdaysBlock = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-    Object.keys(ms.days).length = 0
+    Object.keys(ms.days).length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2rem', color:GREY, fontSize:'0.85rem' } }, 'No workdays logged')
       : Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map(dnum => {
           const d = ms.days[dnum];
@@ -521,7 +519,7 @@ function App() {
               e('div', { style:{ fontSize:'0.63rem', color:GREY, fontWeight:600 } },
                 fmtTime(d.first) + '–' + fmtTime(d.last) + (d.equip.size ? '  ·  ' + [...d.equip].join(', ') : ''))),
             e('span', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:800, flexShrink:0 } },
-              d.tickets.length + (d.tickets.length=1?' job':' jobs'))); }));
+              d.tickets.length + (d.tickets.length===1?' job':' jobs'))); }));
 
   const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
@@ -533,15 +531,15 @@ function App() {
     e('div', { style:{ display:'flex', background:'#E9E9EE', borderRadius:'999px', padding:'3px' } },
       ['calendar','list'].map(mode => e('button', { key:mode, onClick:()=>setStatMode(mode),
         style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.8rem', fontWeight:700,
-          background: statMode=mode ? '#FFF' : 'transparent', color: statMode=mode ? INK : GREY,
-          boxShadow: statMode=mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
-        mode = 'calendar' ? 'Calendar' : 'Workdays'))),
+          background: statMode===mode ? '#FFF' : 'transparent', color: statMode===mode ? INK : GREY,
+          boxShadow: statMode===mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
+        mode === 'calendar' ? 'Calendar' : 'Workdays'))),
 
-    statMode = 'calendar' ? calendarBlock : workdaysBlock,
+    statMode === 'calendar' ? calendarBlock : workdaysBlock,
 
     ms.src.length > 0 && e('div', { style:{ ...LBL, padding:'0.3rem 0.5rem 0' } }, 'Days at each site'),
     ms.src.length > 0 && e('div', { style:{ background:'#FFF', borderRadius:'18px', padding:'0.85rem', display:'flex', flexDirection:'column', gap:'0.6rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-      Object.keys(SITES).filter(k => ms.siteDays[k]).length = 0
+      Object.keys(SITES).filter(k => ms.siteDays[k]).length === 0
         ? e('div', { style:{ fontSize:'0.8rem', color:GREY, textAlign:'center' } }, 'No sites recorded')
         : Object.keys(SITES).filter(k => ms.siteDays[k]).sort((a,b)=>ms.siteDays[b]-ms.siteDays[a]).map(k => {
             const s = SITES[k], d = ms.siteDays[k];
@@ -549,7 +547,7 @@ function App() {
             return e('div', { key:k },
               e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.75rem', fontWeight:700, marginBottom:'0.3rem' } },
                 e('span', null, s.label),
-                e('span', { style:{ color:MID } }, d + (d=1?' day':' days') + '  ·  ' + ms.siteTickets[k] + ' ticket' + (ms.siteTickets[k]!1?'s':''))),
+                e('span', { style:{ color:MID } }, d + (d===1?' day':' days') + '  ·  ' + ms.siteTickets[k] + ' ticket' + (ms.siteTickets[k]!==1?'s':''))),
               e('div', { style:{ height:'9px', background:'#F0F0F4', borderRadius:'999px', overflow:'hidden' } },
                 e('div', { style:{ width:(d/maxD*100)+'%', height:'100%', background:s.hex, borderRadius:'999px' } })));
           })),
@@ -561,10 +559,10 @@ function App() {
           e('span', { style:{ minWidth:'40px', background:'#F0F0F4', color:'#3A3A3C', padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.62rem', fontWeight:800, textAlign:'center' } }, k),
           e('div', { style:{ flex:1, minWidth:0 } },
             e('div', { style:{ fontSize:'0.78rem', fontWeight:700 } }, EQUIP[k]),
-            e('div', { style:{ fontSize:'0.62rem', color:GREY } }, ms.equipDays[k] + (ms.equipDays[k]=1?' day':' days'))),
-          e('span', { style:{ fontSize:'0.78rem', fontWeight:800, color:MID } }, ms.equipTickets[k] + (ms.equipTickets[k]=1?' job':' jobs'))))),
+            e('div', { style:{ fontSize:'0.62rem', color:GREY } }, ms.equipDays[k] + (ms.equipDays[k]===1?' day':' days'))),
+          e('span', { style:{ fontSize:'0.78rem', fontWeight:800, color:MID } }, ms.equipTickets[k] + (ms.equipTickets[k]===1?' job':' jobs'))))),
 
-    ms.src.length = 0 &&
+    ms.src.length === 0 &&
       e('div', { style:{ textAlign:'center', padding:'1.5rem 1rem 0', color:GREY, fontSize:'0.82rem' } },
         'Nothing logged this month. Tap a day to add a ticket.'));
 
@@ -580,7 +578,7 @@ function App() {
         e('div', { style:{ fontSize:'1.05rem', fontWeight:800 } },
           new Date(ms.y, ms.m, dayDetail).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long', year:'numeric' })),
         dd && e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
-          dd.tickets.length + (dd.tickets.length=1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
+          dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
 
       dd && e('div', { style:{ background:'#F7F7FA', borderRadius:'14px', padding:'0.7rem 0.85rem' } },
         e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
@@ -655,14 +653,14 @@ function App() {
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(SITES).map(k => {
           const s = SITES[k], on = siteFilter.includes(k);
-          return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!k) : [...siteFilter, k]),
+          return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
             style:{ padding:'0.4rem 0.85rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', flexShrink:0,
               border:'1.5px solid '+(on?s.hex:LINE), background: on?s.hex:'#FFF', color: on?'#FFF':'#3A3A3C' } }, s.label);
         })),
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(EQUIP).map(k => {
           const on = equipFilter.includes(k);
-          return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!k) : [...equipFilter, k]),
+          return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
             style:{ padding:'0.4rem 0.85rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', flexShrink:0,
               border:'1.5px solid '+(on?INK:LINE), background: on?INK:'#FFF', color: on?'#FFF':'#3A3A3C' } }, k);
         })),
@@ -672,7 +670,7 @@ function App() {
     e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:600, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'),
 
-    filtered.length = 0
+    filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } }, filtered.map(ticketCard)));
 
@@ -745,7 +743,7 @@ function App() {
   };
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
-  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx=i ? { ...x, ...patch } : x) });
+  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx===i ? { ...x, ...patch } : x) });
   const addExtraDay = () => {
     const last = form.extra.length ? form.extra[form.extra.length-1] : form;
     setForm({ ...form, extra: [ ...form.extra, {
@@ -790,7 +788,7 @@ function App() {
         borderTop:'1px dashed '+LINE, paddingTop:'0.7rem', marginTop:'0.3rem' } },
         e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' } },
           e('span', { style:{ ...LBL, color:TRAVEL } }, 'Day ' + (i+2)),
-          e('button', { onClick:()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!i) }),
+          e('button', { onClick:()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }),
             style:{ ...TXTBTN, fontSize:'0.68rem', color:'#C7C7CC', padding:0 } }, 'Remove day')),
         buildSpine(d, (patch)=>updateExtra(i, patch), 'e'+i))),
 
@@ -821,7 +819,7 @@ function App() {
               onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
               style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:'#FAFAFC', borderRadius:'11px',
                 padding:'0.5rem 0.6rem', fontSize:'0.8rem', outline:'none' } }),
-            e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!i) }),
+            e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
               style:{ border:'none', background:'none', color:'#C7C7CC', fontSize:'0.8rem', fontWeight:700, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕'))))),
 
       e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
@@ -835,12 +833,11 @@ function App() {
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
-  const body = view = 'form' ? formView : view === 'list' ? listView : monthView;
+  const body = view === 'form' ? formView : view === 'list' ? listView : monthView;
   return e('div', null, header, banner, body, menu, daySheet);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
 </script>
-
 </body>
-</html> 
+</html>
