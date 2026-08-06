@@ -4,37 +4,83 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
+  :root {
+    --bg: #F4F1EC;
+    --bg2: #EDE9E3;
+    --card: #FFFFFF;
+    --ink: #1C1917;
+    --mid: #57534E;
+    --grey: #78716C;
+    --line: #E7E5E4;
+    --soft: #FAFAF9;
+    --shadow: 0 4px 24px rgba(28,25,23,0.07), 0 1px 3px rgba(28,25,23,0.04);
+    --shadow-lg: 0 8px 32px rgba(28,25,23,0.10);
+    --blue: #2563EB;
+    --green: #16A34A;
+    --red: #DC2626;
+    --travel: #3B82F6;
+    --travel-bg: #EFF6FF;
+    --warn: #B45309;
+    --warn-bg: #FEF3C7;
+  }
+  [data-theme="dark"] {
+    --bg: #0C0B0A;
+    --bg2: #161412;
+    --card: #1C1917;
+    --ink: #FAFAF9;
+    --mid: #A8A29E;
+    --grey: #78716C;
+    --line: #292524;
+    --soft: #1C1917;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.45);
+    --blue: #60A5FA;
+    --green: #4ADE80;
+    --red: #F87171;
+    --travel: #60A5FA;
+    --travel-bg: #1E3A5F;
+    --warn: #FBBF24;
+    --warn-bg: #422006;
+  }
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background: linear-gradient(165deg, #F7F4F0 0%, #F0EDE8 45%, #F5F2ED 100%);
-    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-    color:#1C1C1E; -webkit-tap-highlight-color:transparent;
+    background: var(--bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    color: var(--ink); -webkit-tap-highlight-color:transparent;
+    transition: background 0.25s ease, color 0.25s ease;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh; }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
   input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; }
   select { -webkit-appearance:none; appearance:none; }
-  button { font-family:inherit; transition:transform .14s ease, opacity .14s ease, box-shadow .14s ease; }
-  button:active { transform:scale(0.97); opacity:0.75; }
+  button { font-family:inherit; transition:transform .14s ease, opacity .14s ease, box-shadow .14s ease, background .2s ease; }
+  button:active { transform:scale(0.97); opacity:0.8; }
   .card {
-    background:#FFFFFF;
-    border-radius:22px;
-    box-shadow: 0 4px 24px rgba(28,28,30,0.06), 0 1px 3px rgba(28,28,30,0.04);
-    border: 1px solid rgba(255,255,255,0.7);
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
-  input:focus, textarea:focus { border-color:#A8A29E !important; box-shadow:0 0 0 3px rgba(168,162,158,0.15); }
+  input:focus, textarea:focus, select:focus { border-color: var(--mid) !important; box-shadow: 0 0 0 3px rgba(120,113,108,0.15); outline: none; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-  @keyframes dropIn { from { transform:translateY(-10px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  @keyframes dropIn { from { transform:translateY(-8px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  @keyframes fadeScale { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
   .chips::-webkit-scrollbar { display:none; }
+  .day-cell { transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.15s ease; }
+  .day-cell:active { transform: scale(0.94); }
 </style>
 </head>
 <body>
@@ -46,22 +92,14 @@ const { useState, useEffect, useMemo } = React;
 const e = React.createElement;
 
 const SITES = {
-  NX:   { label:'NX',   hex:'#D97706', tint:'#FEF3C7', soft:'#FDE68A' },
-  WS:   { label:'WS',   hex:'#DB2777', tint:'#FCE7F3', soft:'#FBCFE8' },
-  RH:   { label:'RH',   hex:'#0D9488', tint:'#CCFBF1', soft:'#99F6E4' },
-  MMUH: { label:'MMUH', hex:'#7C3AED', tint:'#EDE9FE', soft:'#DDD6FE' }
+  NX:   { label:'NX',   hex:'#F59E0B', tint:'#FEF3C7', soft:'#FDE68A', darkTint:'#422006' },
+  WS:   { label:'WS',   hex:'#EC4899', tint:'#FCE7F3', soft:'#FBCFE8', darkTint:'#500724' },
+  RH:   { label:'RH',   hex:'#14B8A6', tint:'#CCFBF1', soft:'#99F6E4', darkTint:'#134E4A' },
+  MMUH: { label:'MMUH', hex:'#8B5CF6', tint:'#EDE9FE', soft:'#DDD6FE', darkTint:'#2E1065' }
 };
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
-const INK='#1C1917', MID='#57534E', GREY='#78716C', LINE='#E7E5E4';
-const TRAVEL='#3B82F6', TRAVELBG='#EFF6FF', GREEN='#16A34A', BLUE='#2563EB', RED='#DC2626';
-const WARN='#B45309', WARNBG='#FEF3C7';
-
-const LBL   = { display:'block', fontSize:'0.62rem', fontWeight:700, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
-const FIELD = { width:'100%', minWidth:0, padding:'0.75rem 0.9rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAF9', color:INK };
-const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-
-const DB_NAME='ticketsDB', STORE='kv', KEY='jobs', BKP='lastBackup';
+const DB_NAME='ticketsDB', STORE='kv', KEY='jobs', BKP='lastBackup', THEME='theme';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
   r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE);};
   r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
@@ -81,7 +119,6 @@ const roundNow = () => { const d=new Date(); d.setMinutes(Math.floor(d.getMinute
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
 
-/* backup window: morning before 12:00, afternoon from 15:00 */
 const slotNow = () => { const h=new Date().getHours(); if (h < 12) return 'am'; if (h >= 15) return 'pm'; return null; };
 const slotKey = () => { const s=slotNow(); return s ? todayISO()+'-'+s : null; };
 const backupName = () => { const d=new Date();
@@ -103,18 +140,16 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState(blank());
-
   const [lastBkp, setLastBkp] = useState(null);
   const [dismissed, setDismissed] = useState(null);
-
   const [query, setQuery] = useState('');
   const [siteFilter, setSiteFilter] = useState([]);
   const [equipFilter, setEquipFilter] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-
   const [statMonth, setStatMonth] = useState(() => { const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
-  const [statMode, setStatMode] = useState('calendar');
+  const [statMode, setStatMode] = useState('month');
   const [dayDetail, setDayDetail] = useState(null);
+  const [dark, setDark] = useState(false);
 
   function blank(date) {
     const s = roundNow();
@@ -127,8 +162,15 @@ function App() {
     if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) data = JSON.parse(s); } catch (err) {} }
     if (Array.isArray(data)) setJobs(data.map(j => ({ equipment:[], parts:[], extraDays:[], ...j })));
     const b = await dbGet(BKP); if (b) setLastBkp(b);
+    let theme = localStorage.getItem(THEME);
+    if (theme === 'dark') { setDark(true); document.documentElement.setAttribute('data-theme','dark'); }
     setReady(true);
   })(); }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem(THEME, dark ? 'dark' : 'light');
+  }, [dark]);
 
   const persist = async (next) => {
     setJobs(next); await dbSet(KEY, next);
@@ -237,629 +279,4 @@ function App() {
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:60},{wch:40}];
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:12} }) };
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
-    return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
-      { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  };
-
-  const download = (blob, name) => {
-    const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.href=url; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 3000);
-  };
-  const shareFiles = async (files) => {
-    try { if (navigator.canShare && navigator.canShare({files})) { await navigator.share({files,title:'Tickets'}); return true; } }
-    catch (err) { if (err && err.name==='AbortError') return true; }
-    return false;
-  };
-
-  const doSpreadsheet = async (scope) => {
-    const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
-    if (!src.length) { alert('Nothing to export.'); return; }
-    if (typeof XLSX === 'undefined') { alert('Still loading — try again in a moment.'); return; }
-    const suffix = scope === 'month' ? ' ' + statMonth.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
-                 : (scope === 'filtered' ? ' (filtered)' : '');
-    const name = stamp()+' App tickets'+suffix+'.xlsx';
-    const blob = buildXlsxBlob(src);
-    if (!(await shareFiles([new File([blob],name,{type:blob.type})]))) download(blob,name);
-    setMenuOpen(false);
-  };
-
-  const backupText = () => JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs });
-
-  const doBackupFile = async () => {
-    if (!jobs.length) { alert('Nothing to back up.'); return; }
-    const name = backupName();
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
-    if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
-    await markBackedUp();
-    setMenuOpen(false);
-  };
-
-  const doCopyBackup = async () => {
-    if (!jobs.length) { alert('Nothing to back up.'); return; }
-    const txt = backupText();
-    try {
-      await navigator.clipboard.writeText(txt);
-      await markBackedUp();
-      alert('Backup copied ('+txt.length+' characters).\n\nPaste it into a personal note now.');
-    } catch (err) { alert('Copy failed — clipboard access blocked.'); }
-    setMenuOpen(false);
-  };
-
-  const applyRestore = async (raw) => {
-    try {
-      const parsed = JSON.parse(raw);
-      const list = Array.isArray(parsed) ? parsed : parsed.jobs;
-      if (!Array.isArray(list)) throw new Error('bad');
-      const merged = list.map(j => ({ equipment:[], parts:[], extraDays:[], ...j }));
-      const seen = new Set(merged.map(j=>j.id));
-      jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
-      merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
-      await persist(merged); setMenuOpen(false);
-      alert('Restored. Total now '+merged.length+' tickets.');
-    } catch (err) { alert('That was not readable backup text.'); }
-  };
-
-  const doPasteRestore = () => {
-    const raw = window.prompt('Paste your backup text here:');
-    if (raw && raw.trim()) applyRestore(raw.trim());
-  };
-
-  const doRestore = () => {
-    const input = document.getElementById('restoreInput'); input.value='';
-    input.onchange = () => {
-      const file = input.files && input.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => applyRestore(reader.result);
-      reader.onerror = () => alert('Could not read that file.');
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-  const doCopyMonth = async () => {
-    if (!ms.src.length) { alert('Nothing to copy.'); return; }
-    const byDay = Object.keys(ms.days).map(Number).sort((a,b)=>a-b);
-    const text = byDay.map(dnum => {
-      const d = ms.days[dnum];
-      const head = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'})
-        + '  ' + d.siteSequence.map(s=>SITES[s].label).join(' → ');
-      const body = d.tickets.map(j => {
-        const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
-          .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
-        const ex = exOf(j).map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ');
-        return '  • ' + j.ticketNumber + (eqOf(j).length?' ('+eqOf(j).join(', ')+')':'') + '  '
-          + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)
-          + (ex?'\n    Also: '+ex:'')
-          + (j.workDone?'\n    '+j.workDone.replace(/\n/g,' '):'')
-          + (p?'\n    Parts: '+p:'');
-      }).join('\n');
-      return head + '\n' + body;
-    }).join('\n\n');
-    try { await navigator.clipboard.writeText(text); alert('Copied '+ms.src.length+' ticket(s).'); }
-    catch (err) { alert('Copy failed — clipboard access blocked.'); }
-    setMenuOpen(false);
-  };
-
-  const doClear = async () => {
-    if (!window.confirm('Delete ALL tickets? Make a backup first.')) return;
-    if (!window.confirm('Really delete everything?')) return;
-    await persist([]); setMenuOpen(false);
-  };
-
-  const openNew = (date) => { setForm(blank(date)); setEditingId(null); setDayDetail(null); setView('form'); window.scrollTo(0,0); };
-
-  const openEdit = (j) => {
-    setForm({
-      ticketNumber: j.ticketNumber || '',
-      site: j.site || '',
-      equipment: eqOf(j),
-      date: (j.startDateTime||'').slice(0,10) || todayISO(),
-      t1: j.hasTravel && j.travelDateTime ? j.travelDateTime.slice(11,16) : '',
-      start: (j.startDateTime||'').slice(11,16),
-      finish: (j.finishDateTime||'').slice(11,16),
-      t2: j.hasTravel2 && j.travel2DateTime ? j.travel2DateTime.slice(11,16) : '',
-      extra: exOf(j).map(d => ({
-        date: (d.startDateTime||'').slice(0,10),
-        t1: d.hasTravel && d.travelDateTime ? d.travelDateTime.slice(11,16) : '',
-        start: (d.startDateTime||'').slice(11,16),
-        finish: (d.finishDateTime||'').slice(11,16),
-        t2: d.hasTravel2 && d.travel2DateTime ? d.travel2DateTime.slice(11,16) : ''
-      })),
-      workDone: j.workDone || '',
-      parts: (j.parts||[]).filter(p => p.partNumber || p.partDescription)
-    });
-    setEditingId(j.id); setDayDetail(null); setView('form'); window.scrollTo(0,0);
-  };
-
-  const duplicate = () => {
-    setForm({ ...form, ticketNumber:'', date: todayISO(), extra:[] });
-    setEditingId(null); window.scrollTo(0,0);
-  };
-
-  const save = async () => {
-    if (!form.ticketNumber.trim()) { alert('Enter a ticket number to save.'); return; }
-    if (!form.start) { alert('Set a start time to save.'); return; }
-    const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
-    if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
-
-    const pack = (d) => {
-      const c = composeTimes(d.date, [d.t1, d.start, d.finish || d.start, d.t2]);
-      return { startDateTime:c[1], finishDateTime:c[2],
-        hasTravel: !!d.t1, travelDateTime: c[0] || c[1],
-        hasTravel2: !!d.t2, travel2DateTime: c[3] || c[2] };
-    };
-    const rec = {
-      id: editingId || Date.now(),
-      ticketNumber: form.ticketNumber.trim(),
-      site: form.site,
-      equipment: form.equipment,
-      ...pack(form),
-      extraDays: (form.extra||[]).filter(d => d.date && d.start).map(pack),
-      workDone: form.workDone,
-      parts: form.parts.filter(p => p.partNumber || p.partDescription)
-    };
-    await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
-    setView('month'); setEditingId(null); setForm(blank());
-  };
-
-  const remove = (id) => { persist(jobs.filter(j => j.id !== id)); setDayDetail(null); };
-
-  const setPart = (i, field, val) => {
-    const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
-    if (field === 'partNumber') {
-      const known = partHistory.find(([n]) => n.toLowerCase() === val.trim().toLowerCase());
-      if (known && !parts[i].partDescription) parts[i].partDescription = known[1];
-    }
-    setForm({ ...form, parts });
-  };
-
-  const menuRow = (label, sub, onClick, colour) =>
-    e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.9rem 1.05rem', borderRadius:'16px', border:'none',
-      background:'#FAFAF9', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.15rem',
-      boxShadow:'0 1px 2px rgba(28,25,23,0.04)' } },
-      e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || INK } }, label),
-      e('span', { style:{ fontSize:'0.7rem', color:GREY } }, sub));
-
-  const monthShort = statMonth.toLocaleDateString('en-GB',{ month:'long' });
-
-  const menu = menuOpen && e('div', { onClick:()=>setMenuOpen(false),
-    style:{ position:'fixed', inset:0, background:'rgba(28,25,23,0.4)', zIndex:50, display:'flex', alignItems:'flex-end', backdropFilter:'blur(4px)' } },
-    e('div', { onClick:(ev)=>ev.stopPropagation(),
-      style:{ width:'100%', background:'#FFFEFB', borderRadius:'28px 28px 0 0', padding:'1.1rem 1.1rem 2.2rem',
-        display:'flex', flexDirection:'column', gap:'0.5rem', animation:'slideUp .24s ease', maxHeight:'85vh', overflowY:'auto',
-        boxShadow:'0 -8px 40px rgba(28,25,23,0.12)' } },
-      e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'#D6D3D1', margin:'0 auto 0.7rem' } }),
-      view === 'list'
-        ? menuRow('Monthly view', 'Calendar and workdays', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
-        : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
-      menuRow('Copy backup to clipboard', lastBkp ? ago(lastBkp.at) : 'never backed up', doCopyBackup),
-      menuRow('Restore from pasted text', 'Paste backup text back in', doPasteRestore),
-      menuRow('Save backup file', backupName(), doBackupFile),
-      menuRow('Restore from file', 'Load an APPbackup .json file', doRestore),
-      (view === 'list' && (query || siteFilter.length || equipFilter.length))
-        ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
-        : menuRow('Spreadsheet — '+monthShort, ms.src.length+' ticket(s)', ()=>doSpreadsheet('month')),
-      menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
-      menuRow('Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
-      menuRow('Clear all tickets', 'Deletes everything on this device', doClear, RED),
-      e('button', { onClick:()=>setMenuOpen(false),
-        style:{ marginTop:'0.4rem', padding:'0.95rem', borderRadius:'999px', border:'none', background:'#F5F5F4', color:'#44403C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
-
-  const header = view !== 'form' && e('div', { style:{ padding:'1rem 1.1rem 0.7rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
-    e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800, fontSize:'0.9rem' } }, 'Menu'),
-    e('span', { style:{ fontSize:'1.05rem', fontWeight:800, letterSpacing:'-0.02em' } }, view === 'list' ? 'All tickets' : 'Tickets'),
-    e('button', { onClick:()=>openNew(), style:{ ...TXTBTN, color:BLUE, fontWeight:800, fontSize:'0.9rem' } }, 'New'));
-
-  /* ---------- backup banner ---------- */
-  const sk = slotKey();
-  const dueBackup = ready && jobs.length > 0 && sk
-    && (!lastBkp || lastBkp.key !== sk) && dismissed !== sk;
-
-  const banner = dueBackup && view !== 'form' && e('div', {
-    style:{ margin:'0 0.9rem 0.75rem', background:WARNBG, border:'1px solid #FCD34D', borderRadius:'18px',
-      padding:'0.8rem 1rem', display:'flex', alignItems:'center', gap:'0.75rem', animation:'dropIn .28s ease',
-      boxShadow:'0 2px 12px rgba(180,83,9,0.08)' } },
-    e('div', { style:{ flex:1, minWidth:0 } },
-      e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:WARN } },
-        slotNow() === 'am' ? 'Morning backup' : 'Afternoon backup'),
-      e('div', { style:{ fontSize:'0.7rem', color:'#92400E', fontWeight:600, marginTop:'2px', opacity:0.85 } },
-        ago(lastBkp && lastBkp.at) + '  ·  ' + jobs.length + ' tickets')),
-    e('button', { onClick:doCopyBackup,
-      style:{ border:'none', background:WARN, color:'#FFF', borderRadius:'999px',
-        padding:'0.55rem 1rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer', flexShrink:0,
-        boxShadow:'0 2px 8px rgba(180,83,9,0.25)' } }, 'Copy'),
-    e('button', { onClick:()=>setDismissed(sk),
-      style:{ ...TXTBTN, fontSize:'0.74rem', color:'#A16207', flexShrink:0 } }, 'Later'));
-
-  const DOW = ['M','T','W','T','F','S','S'];
-  const shiftMonth = (n) => { setStatMonth(new Date(ms.y, ms.m + n, 1)); setDayDetail(null); };
-
-  const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'wrap' } },
-    seq.length === 0
-      ? e('span', { style:{ fontSize:'0.7rem', color:'#A8A29E', fontWeight:600 } }, 'No site set')
-      : seq.map((s,i) => [
-          e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.22rem 0.65rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:800,
-            boxShadow:'0 1px 3px '+SITES[s].hex+'44' } }, SITES[s].label),
-          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.65rem', color:'#A8A29E', fontWeight:700 } }, '→') : null
-        ]));
-
-  const dayCell = (dnum) => {
-    const d = ms.days[dnum];
-    const sites = d ? [...d.sites] : [];
-    const dow = (new Date(ms.y, ms.m, dnum).getDay() + 6) % 7;
-    let bg = dow >= 5 ? '#F5F5F4' : '#FFFFFF';
-    if (sites.length === 1) bg = SITES[sites[0]].tint;
-    else if (sites.length > 1) bg = '#F5F5F4';
-    const hasJobs = sites.length > 0;
-    return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
-      style:{ aspectRatio:'1 / 1', borderRadius:'14px', background:bg, padding:'3px',
-        border: hasJobs ? '1.5px solid '+(sites.length===1 ? SITES[sites[0]].hex+'66' : '#D6D3D1') : '1px solid #E7E5E4',
-        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'3px', cursor:'pointer',
-        boxShadow: hasJobs ? '0 2px 8px rgba(28,25,23,0.06)' : 'none', transition:'transform .12s ease' } },
-      e('span', { style:{ fontSize:'0.68rem', fontWeight: hasJobs ? 800 : 600, color: d ? INK : '#A8A29E' } }, String(dnum)),
-      sites.length ? e('div', { style:{ display:'flex', gap:'2.5px' } },
-        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5.5px', height:'5.5px', borderRadius:'999px', background:SITES[s].hex } }))) : null);
-  };
-
-  const calendarBlock = e('div', { className:'card', style:{ padding:'1rem', borderRadius:'22px' } },
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px', marginBottom:'8px' } },
-      DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.58rem', fontWeight:700, color:'#A8A29E', letterSpacing:'0.4px' } }, d))),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px' } },
-      [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
-      [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))),
-    e('div', { className:'chips', style:{ display:'flex', gap:'0.7rem', marginTop:'0.9rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.15rem' } },
-      Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.3rem', fontSize:'0.65rem', fontWeight:700, color:MID, flexShrink:0 } },
-        e('span', { style:{ width:'8px', height:'8px', borderRadius:'999px', background:SITES[k].hex, boxShadow:'0 1px 3px '+SITES[k].hex+'55' } }), SITES[k].label))));
-
-  const workdaysBlock = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
-    Object.keys(ms.days).length === 0
-      ? e('div', { style:{ textAlign:'center', padding:'2.2rem', color:GREY, fontSize:'0.88rem' } }, 'No workdays logged')
-      : Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map(dnum => {
-          const d = ms.days[dnum];
-          const date = new Date(ms.y, ms.m, dnum);
-          return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
-            style:{ width:'100%', textAlign:'left', background:'#FFFFFF', border:'1px solid #E7E5E4', borderRadius:'18px', padding:'0.85rem 1rem',
-              display:'flex', alignItems:'center', gap:'0.85rem', cursor:'pointer',
-              boxShadow:'0 3px 14px rgba(28,25,23,0.05)' } },
-            e('div', { style:{ minWidth:'44px', textAlign:'center', flexShrink:0 } },
-              e('div', { style:{ fontSize:'1.15rem', fontWeight:800, lineHeight:1, letterSpacing:'-0.02em' } }, String(dnum)),
-              e('div', { style:{ fontSize:'0.55rem', color:GREY, fontWeight:700, textTransform:'uppercase', marginTop:'3px', letterSpacing:'0.3px' } },
-                date.toLocaleDateString('en-GB',{ weekday:'short' }))),
-            e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.35rem' } },
-              siteSeqRow(d.siteSequence),
-              e('div', { style:{ fontSize:'0.66rem', color:GREY, fontWeight:600 } },
-                fmtTime(d.first) + '–' + fmtTime(d.last) + (d.equip.size ? '  ·  ' + [...d.equip].join(', ') : ''))),
-            e('span', { style:{ fontSize:'0.68rem', color:MID, fontWeight:800, flexShrink:0, background:'#F5F5F4', padding:'0.25rem 0.55rem', borderRadius:'999px' } },
-              d.tickets.length + (d.tickets.length===1?' job':' jobs'))); }));
-
-  const monthView = e('div', { style:{ padding:'0 0.9rem 3.2rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
-
-    e('div', { className:'card', style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.65rem 0.85rem', borderRadius:'20px' } },
-      e('button', { onClick:()=>shiftMonth(-1), style:{ ...TXTBTN, color:INK, fontWeight:800, padding:'7px 12px', fontSize:'0.88rem' } }, 'Prev'),
-      e('span', { style:{ fontSize:'1rem', fontWeight:800, letterSpacing:'-0.02em' } }, statMonth.toLocaleDateString('en-GB',{ month:'long', year:'numeric' })),
-      e('button', { onClick:()=>shiftMonth(1), style:{ ...TXTBTN, color:INK, fontWeight:800, padding:'7px 12px', fontSize:'0.88rem' } }, 'Next')),
-
-    e('div', { style:{ display:'flex', background:'#E7E5E4', borderRadius:'999px', padding:'3.5px' } },
-      ['calendar','list'].map(mode => e('button', { key:mode, onClick:()=>setStatMode(mode),
-        style:{ flex:1, padding:'0.55rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:700,
-          background: statMode===mode ? '#FFFFFF' : 'transparent', color: statMode===mode ? INK : GREY,
-          boxShadow: statMode===mode ? '0 2px 8px rgba(28,25,23,0.1)' : 'none' } },
-        mode === 'calendar' ? 'Calendar' : 'Workdays'))),
-
-    statMode === 'calendar' ? calendarBlock : workdaysBlock,
-
-    ms.src.length > 0 && e('div', { style:{ ...LBL, padding:'0.35rem 0.4rem 0' } }, 'Days at each site'),
-    ms.src.length > 0 && e('div', { className:'card', style:{ padding:'1rem', display:'flex', flexDirection:'column', gap:'0.75rem', borderRadius:'20px' } },
-      Object.keys(SITES).filter(k => ms.siteDays[k]).length === 0
-        ? e('div', { style:{ fontSize:'0.82rem', color:GREY, textAlign:'center' } }, 'No sites recorded')
-        : Object.keys(SITES).filter(k => ms.siteDays[k]).sort((a,b)=>ms.siteDays[b]-ms.siteDays[a]).map(k => {
-            const s = SITES[k], d = ms.siteDays[k];
-            const maxD = Math.max.apply(null, Object.keys(ms.siteDays).map(x=>ms.siteDays[x]));
-            return e('div', { key:k },
-              e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.78rem', fontWeight:700, marginBottom:'0.35rem' } },
-                e('span', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
-                  e('span', { style:{ width:'8px', height:'8px', borderRadius:'999px', background:s.hex } }), s.label),
-                e('span', { style:{ color:MID, fontWeight:600 } }, d + (d===1?' day':' days') + '  ·  ' + ms.siteTickets[k] + ' ticket' + (ms.siteTickets[k]!==1?'s':''))),
-              e('div', { style:{ height:'10px', background:'#F5F5F4', borderRadius:'999px', overflow:'hidden' } },
-                e('div', { style:{ width:(d/maxD*100)+'%', height:'100%', background:'linear-gradient(90deg, '+s.hex+'cc, '+s.hex+')', borderRadius:'999px' } })));
-          })),
-
-    Object.keys(ms.equipTickets).length > 0 && e('div', { style:{ ...LBL, padding:'0.35rem 0.4rem 0' } }, 'Machines worked on'),
-    Object.keys(ms.equipTickets).length > 0 && e('div', { className:'card', style:{ padding:'1rem', display:'flex', flexDirection:'column', gap:'0.6rem', borderRadius:'20px' } },
-      Object.keys(EQUIP).filter(k => ms.equipTickets[k]).sort((a,b)=>ms.equipTickets[b]-ms.equipTickets[a]).map(k =>
-        e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.7rem' } },
-          e('span', { style:{ minWidth:'42px', background:'#F5F5F4', color:INK, padding:'0.25rem 0.55rem', borderRadius:'9px', fontSize:'0.65rem', fontWeight:800, textAlign:'center' } }, k),
-          e('div', { style:{ flex:1, minWidth:0 } },
-            e('div', { style:{ fontSize:'0.82rem', fontWeight:700 } }, EQUIP[k]),
-            e('div', { style:{ fontSize:'0.64rem', color:GREY, marginTop:'1px' } }, ms.equipDays[k] + (ms.equipDays[k]===1?' day':' days'))),
-          e('span', { style:{ fontSize:'0.8rem', fontWeight:800, color:MID } }, ms.equipTickets[k] + (ms.equipTickets[k]===1?' job':' jobs'))))),
-
-    ms.src.length === 0 &&
-      e('div', { style:{ textAlign:'center', padding:'1.8rem 1rem 0', color:GREY, fontSize:'0.85rem' } },
-        'Nothing logged this month. Tap a day to add a ticket.'));
-
-  const dd = dayDetail != null ? ms.days[dayDetail] : null;
-  const daySheet = dayDetail != null && e('div', { onClick:()=>setDayDetail(null),
-    style:{ position:'fixed', inset:0, background:'rgba(28,25,23,0.4)', zIndex:60, display:'flex', alignItems:'flex-end', backdropFilter:'blur(4px)' } },
-    e('div', { onClick:(ev)=>ev.stopPropagation(),
-      style:{ width:'100%', background:'#FFFEFB', borderRadius:'28px 28px 0 0', padding:'1.1rem 1.1rem 2.2rem',
-        display:'flex', flexDirection:'column', gap:'0.75rem', animation:'slideUp .24s ease', maxHeight:'88vh', overflowY:'auto',
-        boxShadow:'0 -8px 40px rgba(28,25,23,0.12)' } },
-      e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'#D6D3D1', margin:'0 auto 0.35rem' } }),
-
-      e('div', null,
-        e('div', { style:{ fontSize:'1.1rem', fontWeight:800, letterSpacing:'-0.02em' } },
-          new Date(ms.y, ms.m, dayDetail).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long', year:'numeric' })),
-        dd && e('div', { style:{ fontSize:'0.74rem', color:GREY, fontWeight:600, marginTop:'0.2rem' } },
-          dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
-
-      dd && e('div', { style:{ background:'#F5F5F4', borderRadius:'16px', padding:'0.8rem 0.95rem' } },
-        e('div', { style:{ ...LBL, marginBottom:'0.45rem' } }, 'Route'),
-        siteSeqRow(dd.siteSequence)),
-
-      dd ? dd.tickets.map((j,i) => {
-        const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
-        const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
-        const on = mins(j.startDateTime, j.finishDateTime);
-        return e('div', { key:j.id, onClick:()=>openEdit(j),
-          style:{ background: s?s.tint:'#FAFAF9', border:'1.5px solid '+(s?s.hex+'55':LINE),
-            borderRadius:'18px', padding:'0.9rem 1rem', cursor:'pointer',
-            boxShadow:'0 2px 10px rgba(28,25,23,0.04)' } },
-          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem', flexWrap:'wrap', marginBottom:'0.35rem' } },
-            e('span', { style:{ background:'#E7E5E4', color:MID, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
-            e('span', { style:{ fontWeight:800, fontSize:'0.95rem' } }, j.ticketNumber),
-            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, boxShadow:'0 1px 3px '+s.hex+'44' } }, s.label),
-            eq.map(x => e('span', { key:x, style:{ background:'rgba(28,25,23,0.07)', color:INK, padding:'0.16rem 0.45rem', borderRadius:'7px', fontSize:'0.56rem', fontWeight:800 } }, x)),
-            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.5rem', borderRadius:'7px', fontSize:'0.56rem', fontWeight:800 } }, '+'+ex.length+' day')),
-          e('div', { style:{ fontSize:'0.7rem', color:MID, fontWeight:600 } },
-            (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
-            fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-            (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
-          ex.length > 0 && e('div', { style:{ fontSize:'0.68rem', color:TRAVEL, fontWeight:700, marginTop:'0.3rem' } },
-            'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-          j.workDone && e('p', { style:{ fontSize:'0.82rem', color:INK, margin:'0.5rem 0 0', whiteSpace:'pre-wrap', opacity:0.9 } }, j.workDone),
-          parts.length > 0 && e('div', { style:{ marginTop:'0.5rem', display:'flex', flexDirection:'column', gap:'0.18rem' } },
-            parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.7rem', color:MID } },
-              '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
-      }) : e('div', { style:{ fontSize:'0.88rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day'),
-
-      e('button', { onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail)),
-        style:{ padding:'0.95rem', borderRadius:'999px', border:'1.5px dashed #D6D3D1', background:'transparent', color:BLUE, fontWeight:800, fontSize:'0.9rem', cursor:'pointer' } },
-        '+ Add ticket for this day'),
-
-      e('button', { onClick:()=>setDayDetail(null),
-        style:{ padding:'0.95rem', borderRadius:'999px', border:'none', background:'#F5F5F4', color:'#44403C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
-
-  const ticketCard = (j) => {
-    const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
-    const on = mins(j.startDateTime, j.finishDateTime);
-    return e('div', { key:j.id, onClick:()=>openEdit(j),
-      style:{ padding:'1.05rem 1.15rem', borderRadius:'20px', cursor:'pointer',
-        background: s?s.tint:'#FFFFFF', border:'1.5px solid '+(s?s.hex+'50':LINE),
-        boxShadow:'0 3px 16px rgba(28,25,23,0.05)' } },
-      e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.65rem' } },
-        e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', marginBottom:'0.3rem', flexWrap:'wrap' } },
-            e('span', { style:{ fontWeight:800, fontSize:'1.05rem', letterSpacing:'-0.01em' } }, j.ticketNumber),
-            s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.64rem', fontWeight:800, boxShadow:'0 1px 3px '+s.hex+'44' } }, s.label),
-            eq.map(x => e('span', { key:x, style:{ background:'rgba(28,25,23,0.07)', color:INK, padding:'0.18rem 0.5rem', borderRadius:'7px', fontSize:'0.6rem', fontWeight:800 } }, x)),
-            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.18rem 0.5rem', borderRadius:'7px', fontSize:'0.6rem', fontWeight:800 } }, '+'+ex.length+' day')),
-          e('div', { style:{ fontSize:'0.74rem', color:MID, fontWeight:600 } },
-            fmtDate(j.startDateTime) + '  ·  ' + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime) + (on ? '  ·  '+hm(on) : ''))),
-        e('button', { onClick:(ev)=>{ ev.stopPropagation(); if (window.confirm('Delete this ticket?')) remove(j.id); },
-          style:{ background:'none', border:'none', color:GREY, fontSize:'0.7rem', fontWeight:700, cursor:'pointer', flexShrink:0, padding:'2px 0' } }, 'Delete')),
-      j.workDone && e('p', { style:{ fontSize:'0.88rem', color:INK, margin:'0.6rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', opacity:0.9 } }, j.workDone),
-      (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length > 0 &&
-        e('div', { style:{ marginTop:'0.55rem', fontSize:'0.7rem', color:GREY, fontWeight:600 } },
-          j.parts.filter(p=>p.partNumber||p.partDescription).length + ' part(s)'));
-  };
-
-  const listView = e('div', { style:{ padding:'0 0.9rem 3.2rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
-    e('div', { style:{ display:'flex', gap:'0.55rem', alignItems:'center' } },
-      e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
-        onChange:(ev)=>setQuery(ev.target.value),
-        style:{ flex:1, padding:'0.75rem 1rem', border:'none', borderRadius:'999px', outline:'none',
-          fontSize:'0.9rem', background:'#FFFFFF', boxShadow:'0 2px 12px rgba(28,25,23,0.06)' } }),
-      e('button', { onClick:()=>setShowFilters(!showFilters),
-        style:{ padding:'0.7rem 1rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.8rem', fontWeight:800,
-          background:'#FFFFFF', color: (siteFilter.length||equipFilter.length) ? BLUE : INK, boxShadow:'0 2px 12px rgba(28,25,23,0.06)' } }, 'Filter')),
-
-    showFilters && e('div', { className:'card', style:{ display:'flex', flexDirection:'column', gap:'0.55rem', padding:'0.9rem', borderRadius:'20px' } },
-      e('div', { className:'chips', style:{ display:'flex', gap:'0.45rem', overflowX:'auto' } },
-        Object.keys(SITES).map(k => {
-          const s = SITES[k], on = siteFilter.includes(k);
-          return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
-            style:{ padding:'0.45rem 0.9rem', borderRadius:'999px', fontSize:'0.8rem', fontWeight:700, cursor:'pointer', flexShrink:0,
-              border:'1.5px solid '+(on?s.hex:LINE), background: on?s.hex:'#FFFFFF', color: on?'#FFF':INK,
-              boxShadow: on ? '0 2px 8px '+s.hex+'33' : 'none' } }, s.label);
-        })),
-      e('div', { className:'chips', style:{ display:'flex', gap:'0.45rem', overflowX:'auto' } },
-        Object.keys(EQUIP).map(k => {
-          const on = equipFilter.includes(k);
-          return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
-            style:{ padding:'0.45rem 0.9rem', borderRadius:'999px', fontSize:'0.8rem', fontWeight:700, cursor:'pointer', flexShrink:0,
-              border:'1.5px solid '+(on?INK:LINE), background: on?INK:'#FFFFFF', color: on?'#FFF':INK } }, k);
-        })),
-      (siteFilter.length || equipFilter.length || query) && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); },
-        style:{ padding:'0.55rem', borderRadius:'999px', border:'none', background:'#F5F5F4', color:RED, fontWeight:800, fontSize:'0.8rem', cursor:'pointer' } }, 'Clear filters')),
-
-    e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, paddingLeft:'0.45rem' } },
-      filtered.length + ' of ' + jobs.length + ' tickets'),
-
-    filtered.length === 0
-      ? e('div', { style:{ textAlign:'center', padding:'2.8rem 1rem', color:GREY, fontSize:'0.92rem' } }, 'Nothing matches')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map(ticketCard)));
-
-  const dotEl = (colour, size) => e('span', { style:{ width:size+'px', height:size+'px', borderRadius:'999px',
-    background:'#FFF', border:'3px solid '+colour, display:'block', flexShrink:0,
-    boxShadow:'0 1px 4px '+colour+'44' } });
-
-  const buildSpine = (d, update, prefix) => {
-    const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
-    const rows = [];
-
-    const bigRow = (key, time, field, label, colour, dateEl) =>
-      e('div', { key:key, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
-        e('div', { style:{ width:'82px', flexShrink:0 } },
-          e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
-            style:{ width:'100%', border:'none', background:'transparent', outline:'none', textAlign:'right',
-              fontSize:'1.25rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0 } })),
-        e('div', { style:{ width:'14px', display:'flex', justifyContent:'center', flexShrink:0 } }, dotEl(colour, 13)),
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', justifyContent:'space-between', alignItems:'center', gap:'0.5rem' } },
-          e('span', { style:{ fontSize:'0.82rem', color:INK, fontWeight:700 } }, label),
-          dateEl || null));
-
-    const smallRow = (key, time, field, label) =>
-      e('div', { key:key, style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
-        e('div', { style:{ width:'82px', flexShrink:0 } },
-          e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
-            style:{ width:'100%', border:'none', background:'transparent', outline:'none', textAlign:'right',
-              fontSize:'0.85rem', fontWeight:700, color:TRAVEL, fontVariantNumeric:'tabular-nums', padding:0 } })),
-        e('div', { style:{ width:'14px', display:'flex', justifyContent:'center', flexShrink:0 } }, dotEl('#60A5FA', 9)),
-        e('div', { style:{ flex:1, display:'flex', justifyContent:'space-between', alignItems:'center' } },
-          e('span', { style:{ fontSize:'0.7rem', color:TRAVEL, fontWeight:700 } }, label),
-          e('button', { onClick:()=>update({ [field]:'' }), style:{ ...TXTBTN, fontSize:'0.65rem', color:'#A8A29E', padding:0 } }, 'Remove')));
-
-    const legEl = (key, text, isTravel) =>
-      e('div', { key:key, style:{ display:'flex', alignItems:'center', gap:'0.6rem', margin:'1px 0' } },
-        e('div', { style:{ width:'82px', flexShrink:0 } }),
-        e('div', { style:{ width:'14px', display:'flex', justifyContent:'center', flexShrink:0 } },
-          e('span', { style:{ width:'2px', height:'20px', background: isTravel ? '#BFDBFE' : LINE, display:'block', borderRadius:'2px' } })),
-        e('span', { style:{ fontSize:'0.62rem', fontWeight:800, borderRadius:'999px', padding:'1px 8px',
-          background: isTravel ? TRAVELBG : '#F5F5F4', color: isTravel ? TRAVEL : MID } }, text));
-
-    const plusEl = (key, onClick) =>
-      e('div', { key:key, style:{ display:'flex', alignItems:'center', gap:'0.6rem', margin:'1px 0' } },
-        e('div', { style:{ width:'82px', flexShrink:0 } }),
-        e('div', { style:{ width:'14px', display:'flex', justifyContent:'center', flexShrink:0 } },
-          e('button', { onClick:onClick, title:'Add travel',
-            style:{ width:'18px', height:'18px', borderRadius:'999px', border:'1.5px dashed #93C5FD',
-              background:'#FFFFFF', color:TRAVEL, fontSize:'0.68rem', fontWeight:800, lineHeight:1,
-              display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', padding:0 } }, '+')));
-
-    const dateEl = e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
-      style:{ border:'1.5px solid '+LINE, background:'#FAFAF9', borderRadius:'10px', outline:'none',
-        fontSize:'0.72rem', fontWeight:700, color:INK, padding:'0.28rem 0.45rem', maxWidth:'128px' } });
-
-    if (d.t1) {
-      rows.push(smallRow(prefix+'t1', d.t1, 't1', 'Travel 1'));
-      rows.push(legEl(prefix+'l1', legMins(d.t1, d.start) ? hm(legMins(d.t1, d.start)) : 'travel', true));
-    } else {
-      rows.push(plusEl(prefix+'p1', ()=>update({ t1: shiftTime(d.start, -1) })));
-    }
-    rows.push(bigRow(prefix+'st', d.start, 'start', 'Start', GREEN, dateEl));
-    rows.push(legEl(prefix+'l2', legMins(d.start, d.finish) ? hm(legMins(d.start, d.finish))+' on site' : 'on site', false));
-    rows.push(bigRow(prefix+'fi', d.finish, 'finish', 'Finish', INK));
-    if (d.t2) {
-      rows.push(legEl(prefix+'l3', legMins(d.finish, d.t2) ? hm(legMins(d.finish, d.t2)) : 'travel', true));
-      rows.push(smallRow(prefix+'t2', d.t2, 't2', 'Travel 2'));
-    } else {
-      rows.push(plusEl(prefix+'p2', ()=>update({ t2: shiftTime(d.finish, 1) })));
-    }
-    return rows;
-  };
-
-  const updateMain  = (patch) => setForm({ ...form, ...patch });
-  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx===i ? { ...x, ...patch } : x) });
-  const addExtraDay = () => {
-    const last = form.extra.length ? form.extra[form.extra.length-1] : form;
-    setForm({ ...form, extra: [ ...form.extra, {
-      date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'' } ] });
-  };
-
-  const formView = e('div', { style:{ padding:'1.1rem 0.9rem 2.8rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
-    e('div', { className:'card', style:{ padding:'1.25rem', display:'flex', flexDirection:'column', gap:'1rem', borderRadius:'24px' } },
-
-      e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
-        e('span', { style:{ ...LBL, fontSize:'0.68rem' } }, editingId ? 'Edit ticket' : 'New ticket'),
-        e('div', { style:{ display:'flex', gap:'1rem', alignItems:'center' } },
-          e('button', { onClick:()=>{ setView('month'); setEditingId(null); setForm(blank()); }, style:TXTBTN }, 'Cancel'),
-          e('button', { onClick:save, style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'Save'))),
-
-      e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
-        onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }), style:{ ...FIELD, fontWeight:700, fontSize:'1rem' } }),
-
-      e('div', { style:{ display:'flex', gap:'0.55rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border:'1.5px solid '+LINE, background:'#FAFAF9', borderRadius:'14px', padding:'0 0.7rem' } },
-          e('span', { style:{ width:'11px', height:'11px', borderRadius:'999px', flexShrink:0,
-            background: SITES[form.site] ? SITES[form.site].hex : '#D6D3D1',
-            boxShadow: SITES[form.site] ? '0 1px 4px '+SITES[form.site].hex+'55' : 'none' } }),
-          e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
-            style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-              fontSize:'0.85rem', fontWeight:700, color: form.site ? INK : GREY } },
-            e('option', { value:'' }, 'Site'),
-            Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border:'1.5px solid '+LINE, background:'#FAFAF9', borderRadius:'14px', padding:'0 0.7rem' } },
-          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-            background: form.equipment.length ? INK : '#D6D3D1' } }),
-          e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
-            style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-              fontSize:'0.85rem', fontWeight:700, color: form.equipment.length ? INK : GREY } },
-            e('option', { value:'' }, 'Machine'),
-            Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))),
-
-      e('div', { style:{ display:'flex', flexDirection:'column' } }, buildSpine(form, updateMain, 'm')),
-
-      form.extra.map((d,i) => e('div', { key:'ex'+i, style:{ display:'flex', flexDirection:'column',
-        borderTop:'1.5px dashed '+LINE, paddingTop:'0.8rem', marginTop:'0.35rem' } },
-        e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.35rem' } },
-          e('span', { style:{ ...LBL, color:TRAVEL } }, 'Day ' + (i+2)),
-          e('button', { onClick:()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }),
-            style:{ ...TXTBTN, fontSize:'0.7rem', color:'#A8A29E', padding:0 } }, 'Remove day')),
-        buildSpine(d, (patch)=>updateExtra(i, patch), 'e'+i))),
-
-      e('button', { onClick:addExtraDay,
-        style:{ alignSelf:'flex-start', border:'1.5px dashed #D6D3D1', background:'transparent', color:GREY,
-          borderRadius:'999px', padding:'0.45rem 1rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } },
-        '+ Another day'),
-
-      e('div', { style:{ height:'1px', background:'#E7E5E4' } }),
-
-      e('div', null,
-        e('label', { style:{ ...LBL, marginBottom:'0.5rem' } }, 'Work done'),
-        e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
-          onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
-          style:{ ...FIELD, minHeight:'7.5rem', resize:'none' } })),
-
-      e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
-
-      form.parts.length > 0 && e('div', null,
-        e('label', { style:{ ...LBL, marginBottom:'0.5rem' } }, 'Parts'),
-        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-          form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.45rem', alignItems:'center' } },
-            e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
-              onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-              style:{ flex:'0 0 38%', minWidth:0, border:'1.5px solid '+LINE, background:'#FAFAF9', borderRadius:'12px',
-                padding:'0.55rem 0.65rem', fontSize:'0.82rem', fontWeight:700, outline:'none' } }),
-            e('input', { type:'text', value:p.partDescription, placeholder:'Description',
-              onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-              style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:'#FAFAF9', borderRadius:'12px',
-                padding:'0.55rem 0.65rem', fontSize:'0.82rem', outline:'none' } }),
-            e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-              style:{ border:'none', background:'none', color:'#A8A29E', fontSize:'0.85rem', fontWeight:700, cursor:'pointer', width:'20px', flexShrink:0 } }, '✕'))))),
-
-      e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
-        style:{ width:'100%', border:'1.5px dashed #D6D3D1', background:'transparent', color:GREY,
-          borderRadius:'14px', padding:'0.8rem', fontSize:'0.8rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'),
-
-      editingId && e('div', { style:{ display:'flex', justifyContent:'space-between', paddingTop:'0.4rem' } },
-        e('button', { onClick:duplicate, style:{ ...TXTBTN, color:BLUE, fontSize:'0.8rem' } }, 'Duplicate'),
-        e('button', { onClick:()=>{ if (window.confirm('Delete this ticket?')) { remove(editingId); setView('month'); setEditingId(null); setForm(blank()); } },
-          style:{ ...TXTBTN, color:RED, fontSize:'0.8rem' } }, 'Delete ticket'))));
-
-  if (!ready) return e('div', { style:{ padding:'4.5rem', textAlign:'center', color:GREY, fontSize:'0.95rem', fontWeight:600 } }, 'Loading…');
-
-  const body = view === 'form' ? formView : view === 'list' ? listView : monthView;
-  return e('div', null, header, banner, body, menu, daySheet);
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(e(App));
-</script>
-</body>
-</html>
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range
