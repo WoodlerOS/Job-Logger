@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restore</title>
+<style>
+ body{font-family:-apple-system,sans-serif;background:#F2F2F7;margin:0;padding:20px;color:#1C1C1E}
+ h1{font-size:1.2rem}
+ button{font-family:inherit;font-size:1rem;font-weight:700;padding:12px 18px;border:none;
+   border-radius:14px;background:#007AFF;color:#fff;width:100%;margin-top:10px}
+ textarea{width:100%;min-height:140px;border:1.5px solid #D8D8DE;border-radius:12px;padding:10px;
+   font-size:0.8rem;font-family:ui-monospace,Menlo,monospace}
+ #log{background:#fff;border-radius:12px;padding:12px;margin-top:14px;font-size:0.85rem;
+   white-space:pre-wrap;line-height:1.5}
+ input[type=file]{margin-top:10px;font-size:0.9rem}
+</style>
+</head>
+<body>
+<h1>Ticket restore</h1>
+<p style="font-size:0.85rem;color:#6E6E73">Pick your backup file, or open it in Files, copy all the text and paste it below.</p>
+
+<input type="file" id="f" accept="*/*">
+<textarea id="t" placeholder="…or paste the JSON text here"></textarea>
+<button onclick="go()">Restore</button>
+<div id="log">Waiting.</div>
+
+<script>
+const log = (m) => { document.getElementById('log').textContent = m; };
+
+document.getElementById('f').addEventListener('change', function(){
+  const file = this.files && this.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => { document.getElementById('t').value = r.result;
+    log('Read '+file.name+'\n'+r.result.length+' characters loaded.\nNow press Restore.'); };
+  r.onerror = () => log('Could not read that file.');
+  r.readAsText(file);
+});
+
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('ticketsDB',1);
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv');};
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+
+async function go(){
+  const raw = document.getElementById('t').value.trim();
+  if (!raw) { log('Nothing to restore — pick a file or paste the text.'); return; }
+  let parsed;
+  try { parsed = JSON.parse(raw); }
+  catch (err) { log('Not valid JSON.\n\nStarts with:\n'+raw.slice(0,120)); return; }
+
+  let list = Array.isArray(parsed) ? parsed
+           : Array.isArray(parsed.jobs) ? parsed.jobs
+           : null;
+  if (!list) { log('Readable JSON, but no ticket list inside.\nTop-level keys: '+Object.keys(parsed).join(', ')); return; }
+
+  try {
+    const db = await openDB();
+    await new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite');
+      tx.objectStore('kv').put(list,'jobs'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    try { localStorage.setItem('jobsData', JSON.stringify(list)); } catch(e){}
+    log('Restored '+list.length+' tickets.\n\nFirst: '+(list[0]&&list[0].ticketNumber)+
+        '\nLast: '+(list[list.length-1]&&list[list.length-1].ticketNumber)+
+        '\n\nNow open the app itself.');
+  } catch (err) { log('Write failed: '+err.message); }
+}
+</script>
+</body>
+</html>
