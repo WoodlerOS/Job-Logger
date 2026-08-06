@@ -36,7 +36,7 @@
 <input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
 
 <script type="text/babel">
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 const e = React.createElement;
 
 const SITES = {
@@ -49,10 +49,27 @@ const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track'
 
 const INK='#1C1C1E', MID='#6E6E73', GREY='#8E8E93', LINE='#E5E5EA';
 const TRAVEL='#3A6FD8', TRAVELBG='#EEF4FF', GREEN='#34C759', BLUE='#007AFF', RED='#FF3B30';
+const LOCKED='#0A84FF', LOCKEDBG='#E8F1FF';
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.6px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.7rem 0.8rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAFC', color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
+
+/* ---------- flat 2D lock icon (SVG, no emoji) ---------- */
+const LockIcon = (locked, size) => {
+  const s = size || 19;
+  const col = locked ? LOCKED : '#B0B0B8';
+  return e('svg', { width:s, height:s, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+    e('path', {
+      d: locked ? 'M7 10V7.5a5 5 0 0 1 10 0V10' : 'M7 10V7.5a5 5 0 0 1 9.5-2.2',
+      fill:'none', stroke:col, strokeWidth:2.1, strokeLinecap:'round' }),
+    e('rect', { x:3.6, y:10, width:16.8, height:11, rx:3.2,
+      fill: locked ? col : 'none', stroke:col, strokeWidth:2.1 }),
+    e('circle', { cx:12, cy:15.6, r:1.7, fill: locked ? '#FFF' : col }));
+};
+
+const ChevronLeft = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24' },
+  e('path', { d:'M15 5 L8 12 L15 19', fill:'none', stroke:col, strokeWidth:2.6, strokeLinecap:'round', strokeLinejoin:'round' }));
 
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
@@ -88,8 +105,13 @@ function App() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [statMonth, setStatMonth] = useState(() => { const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
-  const [calView, setCalView] = useState('month');
+  const [calMode, setCalMode] = useState('month');
   const [dayDetail, setDayDetail] = useState(null);
+
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const touch = useRef({ x:0, y:0, live:false });
+  const SWIPE_TRIGGER = 95;
 
   function blank(date) {
     const s = roundNow();
@@ -159,13 +181,11 @@ function App() {
     });
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
-    const days = {}, siteDays = {}, siteTickets = {}, equipTickets = {}, equipDays = {};
+    const days = {};
 
     src.forEach(j => {
       const dnum = new Date(j.startDateTime).getDate();
       (days[dnum] = days[dnum] || { tickets:[] }).tickets.push(j);
-      if (j.site) siteTickets[j.site] = (siteTickets[j.site]||0) + 1;
-      eqOf(j).forEach(x => { equipTickets[x] = (equipTickets[x]||0) + 1; });
     });
     Object.keys(days).forEach(d => {
       const day = days[d];
@@ -175,17 +195,31 @@ function App() {
       day.siteSequence = seq;
       day.sites = new Set(day.tickets.map(j=>j.site).filter(Boolean));
       day.equip = new Set(day.tickets.flatMap(eqOf));
+      day.allLocked = day.tickets.every(j => j.locked);
       day.first = day.tickets[0].hasTravel && day.tickets[0].travelDateTime ? day.tickets[0].travelDateTime : day.tickets[0].startDateTime;
       const lastJob = day.tickets[day.tickets.length-1];
       day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
-      day.sites.forEach(s => { siteDays[s] = (siteDays[s]||0) + 1; });
-      day.equip.forEach(x => { equipDays[x] = (equipDays[x]||0) + 1; });
     });
-    return { y, m, src, days, daysInMonth, firstDow, siteDays, siteTickets, equipTickets, equipDays };
+    return { y, m, src, days, daysInMonth, firstDow };
+  }, [jobs, statMonth]);
+
+  /* ---------- week model ---------- */
+  const wk = useMemo(() => {
+    const anchor = new Date(statMonth.getFullYear(), statMonth.getMonth(), statMonth.getDate());
+    const dow = (anchor.getDay() + 6) % 7;
+    const monday = new Date(anchor); monday.setDate(anchor.getDate() - dow);
+    const dates = [...Array(7)].map((_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
+    const byDate = {};
+    jobs.forEach(j => {
+      const k = (j.startDateTime||'').slice(0,10);
+      (byDate[k] = byDate[k] || []).push(j);
+    });
+    Object.keys(byDate).forEach(k => byDate[k].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)));
+    return { monday, dates, byDate };
   }, [jobs, statMonth]);
 
   const buildXlsxBlob = (rowsSrc) => {
-    const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Work Done','Parts Used']];
+    const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Signed off','Work Done','Parts Used']];
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
@@ -202,11 +236,12 @@ function App() {
         fmtDate(j.startDateTime),
         j.hasTravel?fmtTime(j.travelDateTime):'', fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
         j.hasTravel2?fmtTime(j.travel2DateTime):'', on?hm(on):'', tr||'', ex,
+        j.locked ? 'Ready' : '',
         (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:60},{wch:40}];
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:12} }) };
+    ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:11},{wch:60},{wch:40}];
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:13} }) };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
     return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
@@ -239,7 +274,7 @@ function App() {
   const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
     const name = stamp()+' App tickets backup.json';
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:6, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
     setMenuOpen(false);
   };
@@ -297,7 +332,9 @@ function App() {
     await persist([]); setMenuOpen(false);
   };
 
-  const openNew = (date) => { setForm(blank(date)); setEditingId(null); setDayDetail(null); setView('form'); window.scrollTo(0,0); };
+  const exitForm = () => { setView('month'); setEditingId(null); setForm(blank()); setSwipeX(0); setSwiping(false); };
+
+  const openNew = (date) => { setForm(blank(date)); setEditingId(null); setDayDetail(null); setSwipeX(0); setView('form'); window.scrollTo(0,0); };
 
   const openEdit = (j) => {
     setForm({
@@ -318,9 +355,9 @@ function App() {
       })),
       workDone: j.workDone || '',
       parts: (j.parts||[]).filter(p => p.partNumber || p.partDescription),
-      locked: j.locked || false
+      locked: !!j.locked
     });
-    setEditingId(j.id); setDayDetail(null); setView('form'); window.scrollTo(0,0);
+    setEditingId(j.id); setDayDetail(null); setSwipeX(0); setView('form'); window.scrollTo(0,0);
   };
 
   const duplicate = () => {
@@ -350,7 +387,7 @@ function App() {
       extraDays: (form.extra||[]).filter(d => d.date && d.start).map(pack),
       workDone: form.workDone,
       parts: form.parts.filter(p => p.partNumber || p.partDescription),
-      locked: form.locked || false
+      locked: !!form.locked
     };
     await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
     setView('month'); setEditingId(null); setForm(blank());
@@ -358,12 +395,7 @@ function App() {
 
   const remove = (id) => { persist(jobs.filter(j => j.id !== id)); setDayDetail(null); };
 
-  const toggleLock = (id) => {
-    const job = jobs.find(j => j.id === id);
-    if (job) {
-      persist(jobs.map(j => j.id === id ? { ...j, locked: !j.locked } : j));
-    }
-  };
+  const toggleLock = (id) => persist(jobs.map(j => j.id === id ? { ...j, locked: !j.locked } : j));
 
   const setPart = (i, field, val) => {
     const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
@@ -373,6 +405,40 @@ function App() {
     }
     setForm({ ...form, parts });
   };
+
+  /* ---------- swipe-right-to-go-back ---------- */
+  const onTouchStart = (ev) => {
+    const tag = ((ev.target && ev.target.tagName) || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { touch.current.live = false; return; }
+    const t = ev.touches[0];
+    touch.current = { x:t.clientX, y:t.clientY, live:true };
+    setSwiping(true);
+  };
+  const onTouchMove = (ev) => {
+    if (!touch.current.live) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - touch.current.x;
+    const dy = t.clientY - touch.current.y;
+    if (Math.abs(dy) > Math.abs(dx) + 8) { touch.current.live = false; setSwiping(false); setSwipeX(0); return; }
+    setSwipeX(dx > 0 ? Math.min(dx * 0.85, 170) : 0);
+  };
+  const onTouchEnd = () => {
+    if (!touch.current.live) { setSwiping(false); setSwipeX(0); return; }
+    touch.current.live = false;
+    setSwiping(false);
+    if (swipeX >= SWIPE_TRIGGER) exitForm(); else setSwipeX(0);
+  };
+
+  const progress = Math.min(swipeX / SWIPE_TRIGGER, 1);
+  const armed = swipeX >= SWIPE_TRIGGER;
+
+  const swipeHint = view === 'form' && swipeX > 4 && e('div', {
+    style:{ position:'fixed', left:'10px', top:'50%', transform:'translateY(-50%) scale('+(0.7+progress*0.5)+')',
+      zIndex:40, width:'46px', height:'46px', borderRadius:'999px',
+      background: armed ? BLUE : '#FFF', boxShadow:'0 3px 12px rgba(0,0,0,0.16)',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      opacity: 0.25 + progress*0.75, transition:'background .12s ease' } },
+    ChevronLeft(24, armed ? '#FFF' : GREY));
 
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
@@ -389,7 +455,7 @@ function App() {
         display:'flex', flexDirection:'column', gap:'0.55rem', animation:'slideUp .22s ease', maxHeight:'85vh', overflowY:'auto' } },
       e('div', { style:{ width:'38px', height:'5px', borderRadius:'999px', background:'#D1D1D6', margin:'0 auto 0.6rem' } }),
       view === 'list'
-        ? menuRow('Monthly view', 'Calendar and workdays', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
+        ? menuRow('Calendar view', 'Month and week planner', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
         : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
       (view === 'list' && (query || siteFilter.length || equipFilter.length))
         ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
@@ -407,9 +473,13 @@ function App() {
     e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(), style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'New'));
 
-  const DOW = ['M','T','W','T','F','S','S'];
-  const shiftMonth = (n) => { setStatMonth(new Date(ms.y, ms.m + n, 1)); setDayDetail(null); };
-  const shiftWeek = (n) => { const d = new Date(); const curr = statMonth; curr.setDate(curr.getDate() + n*7); setStatMonth(new Date(curr)); };
+  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const shift = (n) => {
+    if (calMode === 'month') setStatMonth(new Date(statMonth.getFullYear(), statMonth.getMonth() + n, 1));
+    else { const d = new Date(statMonth); d.setDate(d.getDate() + n*7); setStatMonth(d); }
+    setDayDetail(null);
+  };
+  const goToday = () => { const d = new Date(); setStatMonth(calMode === 'month' ? new Date(d.getFullYear(), d.getMonth(), 1) : d); };
 
   const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.25rem', flexWrap:'wrap' } },
     seq.length === 0
@@ -419,73 +489,103 @@ function App() {
           i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.6rem', color:'#C7C7CC', fontWeight:800 } }, '→') : null
         ]));
 
+  const isToday = (y,m,dnum) => { const t=new Date();
+    return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
+
+  /* ---------- month grid ---------- */
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
     const sites = d ? [...d.sites] : [];
     const dow = (new Date(ms.y, ms.m, dnum).getDay() + 6) % 7;
-    let bg = dow >= 5 ? '#F7F7FA' : '#FFF';
+    const today = isToday(ms.y, ms.m, dnum);
+    let bg = '#FFF';
     if (sites.length === 1) bg = SITES[sites[0]].tint;
-    else if (sites.length > 1) bg = '#F0F0F4';
-    const isLocked = d && d.tickets.some(j => j.locked);
+    else if (sites.length > 1) bg = 'linear-gradient(135deg,'+SITES[sites[0]].tint+' 0%,'+SITES[sites[1]].tint+' 100%)';
+    else if (dow >= 5) bg = '#F4F4F7';
+
+    let border = '1px solid #ECECF1';
+    if (sites.length === 1) border = '1px solid '+SITES[sites[0]].hex+'40';
+    if (d && d.allLocked) border = '2px solid '+LOCKED;
+    if (today) border = '2px solid '+INK;
+
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
-      style:{ aspectRatio:'1 / 1', borderRadius:'14px', background:bg, padding:'4px',
-        border: isLocked ? '2.5px solid '+BLUE : '1.5px solid '+(sites.length===1 ? SITES[sites[0]].hex+'55' : '#EDEDF0'),
-        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'3px', cursor:'pointer',
-        boxShadow: isLocked ? '0 0 0 6px '+BLUE+'15' : 'none' } },
-      e('span', { style:{ fontSize:'0.7rem', fontWeight:800, color: d ? INK : '#C7C7CC' } }, String(dnum)),
-      sites.length ? e('div', { style:{ display:'flex', gap:'2px' } },
-        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px', background:SITES[s].hex } }))) : null);
+      style:{ position:'relative', aspectRatio:'1 / 1', borderRadius:'13px', background:bg, padding:'0',
+        border:border, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'3px',
+        cursor:'pointer', boxShadow: d ? '0 1px 3px rgba(0,0,0,0.06)' : 'none' } },
+      e('span', { style:{ fontSize:'0.72rem', fontWeight: today?900:700, color: d ? INK : '#C3C3C9' } }, String(dnum)),
+      sites.length ? e('div', { style:{ display:'flex', gap:'2.5px' } },
+        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px', background:SITES[s].hex } }))) : null,
+      d && d.allLocked ? e('span', { style:{ position:'absolute', top:'2px', right:'3px', width:'6px', height:'6px', borderRadius:'999px', background:LOCKED } }) : null);
   };
 
-  const calendarBlock = e('div', { style:{ background:'linear-gradient(135deg, #FFF 0%, #F7F7FA 100%)', borderRadius:'26px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' } },
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'6px', marginBottom:'8px' } },
-      DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.65rem', fontWeight:800, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'0.5px' } }, d))),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'6px' } },
+  const monthGrid = e('div', { style:{ background:'#FFF', borderRadius:'24px', padding:'1rem 0.9rem 1.1rem', boxShadow:'0 4px 18px rgba(0,0,0,0.07)' } },
+    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px', marginBottom:'7px' } },
+      DOW.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.56rem', fontWeight:800, color:'#B8B8BE', letterSpacing:'0.4px' } }, d[0]))),
+    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'5px' } },
       [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
-      [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))),
-    e('div', { className:'chips', style:{ display:'flex', gap:'0.5rem', marginTop:'1rem', overflowX:'auto', justifyContent:'center', paddingBottom:'4px' } },
-      Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.28rem', fontSize:'0.63rem', fontWeight:700, color:GREY, flexShrink:0, background:'#F7F7FA', padding:'0.3rem 0.6rem', borderRadius:'999px' } },
-        e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label))));
+      [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))));
 
-  const workdaysBlock = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-    Object.keys(ms.days).length === 0
-      ? e('div', { style:{ textAlign:'center', padding:'2rem', color:GREY, fontSize:'0.85rem' } }, 'No workdays logged')
-      : Object.keys(ms.days).map(Number).sort((a,b)=>a-b).map(dnum => {
-          const d = ms.days[dnum];
-          const date = new Date(ms.y, ms.m, dnum);
-          const isLocked = d.tickets.some(j => j.locked);
-          return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
-            style:{ width:'100%', textAlign:'left', background:'#FFF', border: isLocked ? '2px solid '+BLUE : '1.5px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.85rem',
-              display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer', boxShadow: isLocked ? '0 0 0 4px '+BLUE+'15' : '0 2px 8px rgba(0,0,0,0.04)' } },
-            e('div', { style:{ minWidth:'42px', textAlign:'center', flexShrink:0 } },
-              e('div', { style:{ fontSize:'1.05rem', fontWeight:800, lineHeight:1 } }, String(dnum)),
-              e('div', { style:{ fontSize:'0.53rem', color:GREY, fontWeight:800, textTransform:'uppercase', marginTop:'2px' } },
-                date.toLocaleDateString('en-GB',{ weekday:'short' }))),
-            e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.3rem' } },
-              siteSeqRow(d.siteSequence),
-              e('div', { style:{ fontSize:'0.63rem', color:GREY, fontWeight:600 } },
-                fmtTime(d.first) + '–' + fmtTime(d.last) + (d.equip.size ? '  ·  ' + [...d.equip].join(', ') : ''))),
-            e('span', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:800, flexShrink:0 } },
-              d.tickets.length + (d.tickets.length===1?' job':' jobs'))); }));
+  /* ---------- week strip ---------- */
+  const weekGrid = e('div', { style:{ background:'#FFF', borderRadius:'24px', padding:'0.9rem 0.85rem 1rem', boxShadow:'0 4px 18px rgba(0,0,0,0.07)',
+      display:'flex', flexDirection:'column', gap:'0.5rem' } },
+    wk.dates.map((dt,i) => {
+      const iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+      const list = wk.byDate[iso] || [];
+      const sites = [...new Set(list.map(j=>j.site).filter(Boolean))];
+      const today = isToday(dt.getFullYear(), dt.getMonth(), dt.getDate());
+      const allLocked = list.length > 0 && list.every(j=>j.locked);
+      return e('button', { key:i,
+        onClick:()=>{ setStatMonth(new Date(dt.getFullYear(), dt.getMonth(), 1)); setDayDetail(dt.getDate()); },
+        style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.7rem', cursor:'pointer',
+          background: list.length ? (sites.length===1 ? SITES[sites[0]].tint : '#FAFAFC') : '#FFF',
+          border: allLocked ? '2px solid '+LOCKED : (today ? '2px solid '+INK : '1px solid #ECECF1'),
+          borderRadius:'16px', padding:'0.6rem 0.7rem' } },
+        e('div', { style:{ width:'40px', flexShrink:0, textAlign:'center' } },
+          e('div', { style:{ fontSize:'0.52rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.4px' } }, DOW[i]),
+          e('div', { style:{ fontSize:'1.1rem', fontWeight: today?900:800, lineHeight:1.1, color: list.length?INK:'#C3C3C9' } }, String(dt.getDate()))),
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.25rem' } },
+          list.length === 0
+            ? e('span', { style:{ fontSize:'0.7rem', color:'#C7C7CC', fontWeight:600 } }, '—')
+            : e('div', { style:{ display:'flex', gap:'0.25rem', flexWrap:'wrap' } },
+                sites.map(s => e('span', { key:s, style:{ background:SITES[s].hex, color:'#FFF', padding:'0.14rem 0.45rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:800 } }, SITES[s].label))),
+          list.length > 0 && e('span', { style:{ fontSize:'0.6rem', color:MID, fontWeight:600 } },
+            list.length + (list.length===1?' ticket':' tickets'))),
+        allLocked ? LockIcon(true, 16) : null);
+    }));
 
-  const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
+  const weekLabel = () => {
+    const a = wk.dates[0], b = wk.dates[6];
+    return a.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + b.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  };
 
-    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#FFF', borderRadius:'18px', padding:'0.55rem 0.7rem', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' } },
-      e('button', { onClick:()=>shiftMonth(-1), style:{ ...TXTBTN, color:INK, fontWeight:800, padding:'6px 10px' } }, 'Prev'),
-      e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, statMonth.toLocaleDateString('en-GB',{ month:'long', year:'numeric' })),
-      e('button', { onClick:()=>shiftMonth(1), style:{ ...TXTBTN, color:INK, fontWeight:800, padding:'6px 10px' } }, 'Next')),
+  const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
 
     e('div', { style:{ display:'flex', background:'#E9E9EE', borderRadius:'999px', padding:'3px' } },
-      ['calendar','list'].map(mode => e('button', { key:mode, onClick:()=>setCalView(mode),
-        style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.8rem', fontWeight:700,
-          background: calView===mode ? '#FFF' : 'transparent', color: calView===mode ? INK : GREY,
-          boxShadow: calView===mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
-        mode === 'calendar' ? 'Calendar' : 'Workdays'))),
+      ['month','week'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
+        style:{ flex:1, padding:'0.48rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
+          background: calMode===mode ? '#FFF' : 'transparent', color: calMode===mode ? INK : GREY,
+          boxShadow: calMode===mode ? '0 1px 4px rgba(0,0,0,0.12)' : 'none' } },
+        mode === 'month' ? 'Month' : 'Week'))),
 
-    calView === 'calendar' ? calendarBlock : workdaysBlock,
+    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.2rem' } },
+      e('button', { onClick:()=>shift(-1), style:{ ...TXTBTN, color:INK, padding:'6px 8px', display:'flex', alignItems:'center' } }, ChevronLeft(18, INK)),
+      e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
+        e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.3px' } },
+          calMode === 'month' ? statMonth.toLocaleDateString('en-GB',{ month:'long' }) : weekLabel()),
+        calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
+          String(statMonth.getFullYear()))),
+      e('button', { onClick:()=>shift(1), style:{ ...TXTBTN, color:INK, padding:'6px 8px', display:'flex', alignItems:'center',
+        transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
 
-    ms.src.length === 0 &&
-      e('div', { style:{ textAlign:'center', padding:'1.5rem 1rem 0', color:GREY, fontSize:'0.82rem' } },
+    calMode === 'month' ? monthGrid : weekGrid,
+
+    e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
+      Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.3rem', fontSize:'0.6rem', fontWeight:800,
+        color:MID, flexShrink:0, background:'#FFF', padding:'0.32rem 0.62rem', borderRadius:'999px', boxShadow:'0 1px 3px rgba(0,0,0,0.05)' } },
+        e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:SITES[k].hex } }), SITES[k].label))),
+
+    ms.src.length === 0 && calMode === 'month' &&
+      e('div', { style:{ textAlign:'center', padding:'1rem', color:GREY, fontSize:'0.8rem' } },
         'Nothing logged this month. Tap a day to add a ticket.'));
 
   const dd = dayDetail != null ? ms.days[dayDetail] : null;
@@ -511,14 +611,17 @@ function App() {
         const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
         const on = mins(j.startDateTime, j.finishDateTime);
         return e('div', { key:j.id, onClick:()=>openEdit(j),
-          style:{ background: s?s.tint:'#F7F7FA', border: j.locked ? '2.5px solid '+BLUE : '1.5px solid '+(s?s.hex+'44':LINE),
-            borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer', boxShadow: j.locked ? '0 0 0 4px '+BLUE+'15' : 'none' } },
+          style:{ background: s?s.tint:'#F7F7FA',
+            border: j.locked ? '2px solid '+LOCKED : '1.5px solid '+(s?s.hex+'44':LINE),
+            boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'22' : 'none',
+            borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer' } },
           e('div', { style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.3rem' } },
             e('span', { style:{ background:'#F0F0F4', color:MID, width:'18px', height:'18px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
             e('span', { style:{ fontWeight:800, fontSize:'0.92rem' } }, j.ticketNumber),
             s && e('span', { style:{ background:s.hex, color:'#FFF', padding:'0.16rem 0.5rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:800 } }, s.label),
             eq.map(x => e('span', { key:x, style:{ background:'rgba(28,28,30,0.07)', color:'#3A3A3C', padding:'0.14rem 0.4rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, x)),
-            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.14rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, '+'+ex.length+' day')),
+            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.14rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:800 } }, '+'+ex.length+' day'),
+            j.locked && e('span', { key:'lk', style:{ display:'inline-flex' } }, LockIcon(true, 14))),
           e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
             (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
             fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -543,8 +646,9 @@ function App() {
     const on = mins(j.startDateTime, j.finishDateTime);
     return e('div', { key:j.id, onClick:()=>openEdit(j),
       style:{ padding:'0.95rem 1.05rem', borderRadius:'18px', cursor:'pointer',
-        background: s?s.tint:'#FFF', border: j.locked ? '2.5px solid '+BLUE : '1.5px solid '+(s?s.hex+'44':LINE), 
-        boxShadow: j.locked ? '0 0 0 4px '+BLUE+'15' : '0 2px 8px rgba(0,0,0,0.035)' } },
+        background: s?s.tint:'#FFF',
+        border: j.locked ? '2px solid '+LOCKED : '1.5px solid '+(s?s.hex+'44':LINE),
+        boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'22, 0 2px 8px rgba(0,0,0,0.035)' : '0 2px 8px rgba(0,0,0,0.035)' } },
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.25rem', flexWrap:'wrap' } },
@@ -555,7 +659,10 @@ function App() {
           e('div', { style:{ fontSize:'0.72rem', color:MID } },
             fmtDate(j.startDateTime) + '  ·  ' + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime) + (on ? '  ·  '+hm(on) : ''))),
         e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
-          style:{ background:'none', border:'none', color: j.locked ? BLUE : GREY, fontSize:'1.1rem', cursor:'pointer', flexShrink:0, padding:'2px 6px', fontWeight:800 } }, j.locked ? '🔒' : '🔓')),
+          title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
+          style:{ background: j.locked ? LOCKEDBG : 'transparent', border:'none', borderRadius:'10px',
+            padding:'6px', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
+          LockIcon(!!j.locked, 19))),
       j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#3A3A3C', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
       (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length > 0 &&
         e('div', { style:{ marginTop:'0.5rem', fontSize:'0.68rem', color:GREY } },
@@ -674,13 +781,19 @@ function App() {
       date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'' } ] });
   };
 
-  const formView = e('div', { style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
+  const formView = e('div', {
+    onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
+    style:{ padding:'1rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem',
+      transform:'translateX('+swipeX+'px)',
+      transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
+      borderRadius: swipeX > 4 ? '22px' : '0',
+      boxShadow: swipeX > 4 ? '-8px 0 26px rgba(0,0,0,0.10)' : 'none' } },
     e('div', { className:'card', style:{ padding:'1.1rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
 
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center' } },
         e('span', { style:LBL }, editingId ? 'Edit ticket' : 'New ticket'),
         e('div', { style:{ display:'flex', gap:'0.9rem', alignItems:'center' } },
-          e('button', { onClick:()=>{ setView('month'); setEditingId(null); setForm(blank()); }, style:TXTBTN }, 'Cancel'),
+          e('button', { onClick:exitForm, style:TXTBTN }, 'Cancel'),
           e('button', { onClick:save, style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'Save'))),
 
       e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
@@ -750,15 +863,31 @@ function App() {
         style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:GREY,
           borderRadius:'12px', padding:'0.7rem', fontSize:'0.78rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'),
 
+      e('button', { onClick:()=>setForm({ ...form, locked: !form.locked }),
+        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.6rem', cursor:'pointer',
+          border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
+          background: form.locked ? LOCKEDBG : '#FAFAFC',
+          borderRadius:'14px', padding:'0.7rem 0.8rem', textAlign:'left' } },
+        LockIcon(!!form.locked, 20),
+        e('div', { style:{ flex:1, minWidth:0 } },
+          e('div', { style:{ fontSize:'0.82rem', fontWeight:800, color: form.locked ? LOCKED : INK } },
+            form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off'),
+          e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
+            form.locked ? 'This ticket is highlighted on the home screen' : 'All information has been added')),
+        e('span', { style:{ width:'20px', height:'20px', borderRadius:'999px', flexShrink:0,
+          border: form.locked ? 'none' : '2px solid #D1D1D6', background: form.locked ? LOCKED : 'transparent',
+          display:'flex', alignItems:'center', justifyContent:'center', color:'#FFF', fontSize:'0.7rem', fontWeight:900 } },
+          form.locked ? '✓' : '')),
+
       editingId && e('div', { style:{ display:'flex', justifyContent:'space-between', paddingTop:'0.3rem' } },
         e('button', { onClick:duplicate, style:{ ...TXTBTN, color:BLUE, fontSize:'0.78rem' } }, 'Duplicate'),
-        e('button', { onClick:()=>{ if (window.confirm('Delete this ticket?')) { remove(editingId); setView('month'); setEditingId(null); setForm(blank()); } },
+        e('button', { onClick:()=>{ if (window.confirm('Delete this ticket?')) { remove(editingId); exitForm(); } },
           style:{ ...TXTBTN, color:RED, fontSize:'0.78rem' } }, 'Delete ticket'))));
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
   const body = view === 'form' ? formView : view === 'list' ? listView : monthView;
-  return e('div', null, header, body, menu, daySheet);
+  return e('div', null, header, body, menu, daySheet, swipeHint);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
