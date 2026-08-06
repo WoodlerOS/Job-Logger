@@ -28,13 +28,12 @@
   .card { background:#FFF; border-radius:22px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
   input:focus, textarea:focus { border-color:#8E8E93 !important; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-  @keyframes dropIn { from { transform:translateY(-8px); opacity:0; } to { transform:translateY(0); opacity:1; } }
   .chips::-webkit-scrollbar { display:none; }
 </style>
 </head>
 <body>
 <div id="root"></div>
-<input type="file" id="restoreInput" accept="*/*" style="display:none">
+<input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
 
 <script type="text/babel">
 const { useState, useEffect, useMemo } = React;
@@ -50,13 +49,12 @@ const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track'
 
 const INK='#1C1C1E', MID='#6E6E73', GREY='#8E8E93', LINE='#E5E5EA';
 const TRAVEL='#3A6FD8', TRAVELBG='#EEF4FF', GREEN='#34C759', BLUE='#007AFF', RED='#FF3B30';
-const WARN='#B25000', WARNBG='#FFF4E5';
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.6px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.7rem 0.8rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FAFAFC', color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
 
-const DB_NAME='ticketsDB', STORE='kv', KEY='jobs', BKP='lastBackup';
+const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
   r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE);};
   r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
@@ -76,20 +74,6 @@ const roundNow = () => { const d=new Date(); d.setMinutes(Math.floor(d.getMinute
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
 
-const slotNow = () => { const h=new Date().getHours(); if (h < 12) return 'am'; if (h >= 15) return 'pm'; return null; };
-const slotKey = () => { const s=slotNow(); return s ? todayISO()+'-'+s : null; };
-const backupName = () => { const d=new Date();
-  return 'APPbackup '+pad(d.getDate())+'-'+pad(d.getMonth()+1)+'-'+d.getFullYear()
-    +' - '+pad(d.getHours())+'.'+pad(d.getMinutes())+'.json'; };
-const ago = (iso) => {
-  if (!iso) return 'never backed up';
-  const m = Math.round((Date.now() - new Date(iso)) / 60000);
-  if (m < 60) return 'backed up '+m+'m ago';
-  const h = Math.round(m/60);
-  if (h < 24) return 'backed up '+h+'h ago';
-  return 'backed up '+Math.round(h/24)+'d ago';
-};
-
 function App() {
   const [jobs, setJobs] = useState([]);
   const [ready, setReady] = useState(false);
@@ -97,9 +81,6 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState(blank());
-
-  const [lastBkp, setLastBkp] = useState(null);
-  const [dismissed, setDismissed] = useState(null);
 
   const [query, setQuery] = useState('');
   const [siteFilter, setSiteFilter] = useState([]);
@@ -118,20 +99,14 @@ function App() {
 
   useEffect(() => { (async () => {
     let data = await dbGet(KEY);
-    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) data = JSON.parse(s); } catch (err) {} }
+    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) { data = JSON.parse(s); await dbSet(KEY, data); } } catch (err) {} }
     if (Array.isArray(data)) setJobs(data.map(j => ({ equipment:[], parts:[], extraDays:[], ...j })));
-    const b = await dbGet(BKP); if (b) setLastBkp(b);
     setReady(true);
   })(); }, []);
 
   const persist = async (next) => {
     setJobs(next); await dbSet(KEY, next);
     try { localStorage.setItem('jobsData', JSON.stringify(next)); } catch (err) {}
-  };
-
-  const markBackedUp = async () => {
-    const rec = { key: slotKey(), at: new Date().toISOString() };
-    await dbSet(BKP, rec); setLastBkp(rec);
   };
 
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
@@ -261,45 +236,12 @@ function App() {
     setMenuOpen(false);
   };
 
-  const backupText = () => JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs });
-
-  const doBackupFile = async () => {
+  const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
-    const name = backupName();
+    const name = stamp()+' App tickets backup.json';
     const blob = new Blob([JSON.stringify({ app:'tickets', version:5, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
-    await markBackedUp();
     setMenuOpen(false);
-  };
-
-  const doCopyBackup = async () => {
-    if (!jobs.length) { alert('Nothing to back up.'); return; }
-    const txt = backupText();
-    try {
-      await navigator.clipboard.writeText(txt);
-      await markBackedUp();
-      alert('Backup copied ('+txt.length+' characters).\n\nPaste it into a personal note now.');
-    } catch (err) { alert('Copy failed — clipboard access blocked.'); }
-    setMenuOpen(false);
-  };
-
-  const applyRestore = async (raw) => {
-    try {
-      const parsed = JSON.parse(raw);
-      const list = Array.isArray(parsed) ? parsed : parsed.jobs;
-      if (!Array.isArray(list)) throw new Error('bad');
-      const merged = list.map(j => ({ equipment:[], parts:[], extraDays:[], ...j }));
-      const seen = new Set(merged.map(j=>j.id));
-      jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
-      merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
-      await persist(merged); setMenuOpen(false);
-      alert('Restored. Total now '+merged.length+' tickets.');
-    } catch (err) { alert('That was not readable backup text.'); }
-  };
-
-  const doPasteRestore = () => {
-    const raw = window.prompt('Paste your backup text here:');
-    if (raw && raw.trim()) applyRestore(raw.trim());
   };
 
   const doRestore = () => {
@@ -307,8 +249,19 @@ function App() {
     input.onchange = () => {
       const file = input.files && input.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => applyRestore(reader.result);
-      reader.onerror = () => alert('Could not read that file.');
+      reader.onload = async () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const list = Array.isArray(parsed) ? parsed : parsed.jobs;
+          if (!Array.isArray(list)) throw new Error('bad');
+          const merged = list.map(j => ({ equipment:[], parts:[], extraDays:[], ...j }));
+          const seen = new Set(merged.map(j=>j.id));
+          jobs.forEach(j => { if (!seen.has(j.id)) merged.push(j); });
+          merged.sort((a,b)=>new Date(b.startDateTime)-new Date(a.startDateTime));
+          await persist(merged); setMenuOpen(false);
+          alert('Restored. Total now '+merged.length+' tickets.');
+        } catch (err) { alert('That file could not be read.'); }
+      };
       reader.readAsText(file);
     };
     input.click();
@@ -386,12 +339,13 @@ function App() {
         hasTravel: !!d.t1, travelDateTime: c[0] || c[1],
         hasTravel2: !!d.t2, travel2DateTime: c[3] || c[2] };
     };
+    const main = pack(form);
     const rec = {
       id: editingId || Date.now(),
       ticketNumber: form.ticketNumber.trim(),
       site: form.site,
       equipment: form.equipment,
-      ...pack(form),
+      ...main,
       extraDays: (form.extra||[]).filter(d => d.date && d.start).map(pack),
       workDone: form.workDone,
       parts: form.parts.filter(p => p.partNumber || p.partDescription)
@@ -428,15 +382,13 @@ function App() {
       view === 'list'
         ? menuRow('Monthly view', 'Calendar and workdays', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
         : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
-      menuRow('Copy backup to clipboard', lastBkp ? ago(lastBkp.at) : 'never backed up', doCopyBackup),
-      menuRow('Restore from pasted text', 'Paste backup text back in', doPasteRestore),
-      menuRow('Save backup file', backupName(), doBackupFile),
-      menuRow('Restore from file', 'Load an APPbackup .json file', doRestore),
       (view === 'list' && (query || siteFilter.length || equipFilter.length))
         ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
         : menuRow('Spreadsheet — '+monthShort, ms.src.length+' ticket(s)', ()=>doSpreadsheet('month')),
       menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
       menuRow('Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
+      menuRow('Create backup file', 'Save a .json restore file', doBackup),
+      menuRow('Restore from backup', 'Load an "App tickets backup" .json file', doRestore),
       menuRow('Clear all tickets', 'Deletes everything on this device', doClear, RED),
       e('button', { onClick:()=>setMenuOpen(false),
         style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EFEFF4', color:'#3A3A3C', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close')));
@@ -445,24 +397,6 @@ function App() {
     e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800 } }, 'Menu'),
     e('span', { style:{ fontSize:'0.95rem', fontWeight:800 } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(), style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'New'));
-
-  const sk = slotKey();
-  const dueBackup = ready && jobs.length > 0 && sk
-    && (!lastBkp || lastBkp.key !== sk) && dismissed !== sk;
-
-  const banner = dueBackup && view !== 'form' && e('div', {
-    style:{ margin:'0 0.85rem 0.7rem', background:WARNBG, border:'1.5px solid #F0D3AC', borderRadius:'16px',
-      padding:'0.75rem 0.9rem', display:'flex', alignItems:'center', gap:'0.7rem', animation:'dropIn .25s ease' } },
-    e('div', { style:{ flex:1, minWidth:0 } },
-      e('div', { style:{ fontSize:'0.82rem', fontWeight:800, color:WARN } },
-        slotNow() === 'am' ? 'Morning backup' : 'Afternoon backup'),
-      e('div', { style:{ fontSize:'0.68rem', color:'#8A6B45', fontWeight:600, marginTop:'1px' } },
-        ago(lastBkp && lastBkp.at) + '  ·  ' + jobs.length + ' tickets')),
-    e('button', { onClick:doCopyBackup,
-      style:{ border:'none', background:WARN, color:'#FFF', borderRadius:'999px',
-        padding:'0.5rem 0.9rem', fontSize:'0.75rem', fontWeight:800, cursor:'pointer', flexShrink:0 } }, 'Copy'),
-    e('button', { onClick:()=>setDismissed(sk),
-      style:{ ...TXTBTN, fontSize:'0.72rem', color:'#A98A64', flexShrink:0 } }, 'Later'));
 
   const DOW = ['M','T','W','T','F','S','S'];
   const shiftMonth = (n) => { setStatMonth(new Date(ms.y, ms.m + n, 1)); setDayDetail(null); };
@@ -674,6 +608,7 @@ function App() {
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } }, filtered.map(ticketCard)));
 
+  /* ---------- spine builder ---------- */
   const dotEl = (colour, size) => e('span', { style:{ width:size+'px', height:size+'px', borderRadius:'999px',
     background:'#FFF', border:'3px solid '+colour, display:'block', flexShrink:0 } });
 
@@ -834,7 +769,7 @@ function App() {
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
   const body = view === 'form' ? formView : view === 'list' ? listView : monthView;
-  return e('div', null, header, banner, body, menu, daySheet);
+  return e('div', null, header, body, menu, daySheet);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
