@@ -131,36 +131,45 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
 /* ---------- iOS-Mail-style swipe-to-reveal row: swipe left for Lock / Delete ---------- */
-function SwipeCard({ locked, onLock, onDelete, radius, children }) {
+function SwipeCard({ locked, onLock, onDelete, onTap, radius, children }) {
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const touchRef = useRef({ x:0, y:0, live:false });
+  const touchRef = useRef({ x:0, y:0, live:false, active:false, startDx:0 });
   const ACTION_W = 132, TRIGGER = 66;
 
+  /* Only note the touch start position — don't touch React state yet.
+     A plain tap or a vertical scroll should cost nothing and never
+     interrupt native scrolling; we only "claim" the gesture once real
+     horizontal movement is seen. */
   const onStart = (ev) => {
     const t = ev.touches[0];
-    touchRef.current = { x:t.clientX, y:t.clientY, live:true };
-    setDragging(true);
+    touchRef.current = { x:t.clientX, y:t.clientY, live:true, active:false, startDx:dx };
   };
   const onMove = (ev) => {
     if (!touchRef.current.live) return;
     const t = ev.touches[0];
     const rawDx = t.clientX - touchRef.current.x;
     const dy = t.clientY - touchRef.current.y;
-    if (Math.abs(dy) > Math.abs(rawDx) + 8) { touchRef.current.live = false; setDragging(false); return; }
-    const base = dx <= -ACTION_W + 1 ? -ACTION_W : 0;
-    setDx(Math.max(-ACTION_W - 14, Math.min(0, base + rawDx)));
+    if (!touchRef.current.active) {
+      if (Math.abs(dy) > Math.abs(rawDx) + 6) { touchRef.current.live = false; return; }
+      if (Math.abs(rawDx) < 8) return;
+      touchRef.current.active = true;
+      setDragging(true);
+    }
+    setDx(Math.max(-ACTION_W - 14, Math.min(0, touchRef.current.startDx + rawDx)));
   };
   const onEnd = () => {
-    if (!touchRef.current.live) { setDragging(false); return; }
+    const wasActive = touchRef.current.active;
     touchRef.current.live = false;
+    touchRef.current.active = false;
+    if (!wasActive) return;
     setDragging(false);
-    setDx(dx <= -TRIGGER ? -ACTION_W : 0);
+    setDx(cur => (cur <= -TRIGGER ? -ACTION_W : 0));
   };
-  const onTap = () => { if (dx !== 0) setDx(0); };
+  const handleTap = () => { if (dx !== 0) { setDx(0); } else if (onTap) onTap(); };
 
-  return e('div', { style:{ position:'relative', borderRadius:radius, overflow:'hidden' } },
-    e('div', { style:{ position:'absolute', inset:0, display:'flex', justifyContent:'flex-end' } },
+  return e('div', { style:{ position:'relative', borderRadius:radius } },
+    e('div', { style:{ position:'absolute', inset:0, display:'flex', justifyContent:'flex-end', borderRadius:radius, overflow:'hidden' } },
       e('button', { onClick:()=>{ onLock(); setDx(0); },
         style:{ width:'66px', border:'none', cursor:'pointer', background: locked ? '#3A4257' : LOCKED,
           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
@@ -171,8 +180,9 @@ function SwipeCard({ locked, onLock, onDelete, radius, children }) {
           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
         TrashIcon(19, '#FFF'),
         e('span', { style:{ fontSize:'0.56rem', fontWeight:800, color:'#FFF' } }, 'Delete'))),
-    e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:onTap,
+    e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:handleTap,
       style:{ transform:'translateX('+dx+'px)', transition: dragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
+        touchAction:'pan-y',
         position:'relative' } },
       children));
 }
@@ -654,7 +664,7 @@ function App() {
           boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
         e('div', { onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
-          style:{ padding:'0.85rem 0 0.5rem', cursor:'grab' } },
+          style:{ padding:'0.85rem 0 0.5rem', cursor:'grab', touchAction:'none' } },
           e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.22)', margin:'0 auto' } })),
         children));
   };
@@ -750,8 +760,9 @@ function App() {
 
   const swipeCard = (j, i, ret) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
       onLock:()=>toggleLock(j.id),
-      onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); } },
-    e('div', { onClick:()=>openEdit(j, ret) }, ticketDetailCard(j, i)));
+      onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); },
+      onTap:()=>openEdit(j, ret) },
+    ticketDetailCard(j, i));
 
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
