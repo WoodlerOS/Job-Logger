@@ -754,7 +754,7 @@ function App() {
     return e('div', {
       style:{ background: s ? siteGrad(j.site) : SURF3,
         border: s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE,
-        boxShadow: j.locked ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
+        boxShadow: j.locked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
@@ -801,7 +801,7 @@ function App() {
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
-    const doneRing = (d && d.allLocked) ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : null;
+    const doneRing = (d && d.allLocked) ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : null;
     const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
@@ -838,10 +838,10 @@ function App() {
         .filter(dnum => ((new Date(ms.y, ms.m, dnum).getDay()+6)%7) < 5);
       const blanks = weekdayNums.length ? ((new Date(ms.y, ms.m, weekdayNums[0]).getDay()+6)%7) : 0;
       return [
-        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'10px', marginBottom:'10px' } },
+        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'10px' } },
           DOWF.slice(0,5).map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.6rem',
             fontWeight:900, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
-        e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'10px' } },
+        e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px' } },
           [...Array(blanks)].map((_,i) => e('div', { key:'b'+i })),
           weekdayNums.map(dnum => dayCell(dnum)))
       ];
@@ -860,7 +860,7 @@ function App() {
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : null;
-    const doneRing = allLocked ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : null;
+    const doneRing = allLocked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : null;
     const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
@@ -886,7 +886,7 @@ function App() {
       allLocked ? TickIcon(true, 16, APRICOT) : null);
   };
 
-  const weekGrid = e('div', { style:{ ...PANEL, padding:'0.9rem 0.85rem 1rem', display:'flex', flexDirection:'column', gap:'0.6rem' } },
+  const weekGrid = e('div', { style:{ ...PANEL, padding:'0.9rem 0.85rem 1rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
     (showWeekends ? wk.dates : wk.dates.slice(0,5)).map((dt,i) => weekRow(dt,i)));
 
   const weekLabel = () => {
@@ -905,7 +905,7 @@ function App() {
       siteSeqRow(dv.siteSequence)),
     dv.list.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } },
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
           dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
       style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
@@ -1014,7 +1014,7 @@ function App() {
 
     filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j,i)=>swipeCard(j, null, {view:'list'}, i))));
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } }, filtered.map((j,i)=>swipeCard(j, null, {view:'list'}, i))));
 
   /* ---------- times section ---------- */
   const travelBlock = (time, field, label, update) =>
