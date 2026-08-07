@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F6F2EA">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,8 +20,8 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:#F8E7C9;
-    background-image:linear-gradient(180deg,#FDF3E4 0%,#F8E7C9 45%,#F1DBB4 100%);
+    background:#F6F2EA;
+    background-image:linear-gradient(180deg,#FBF8F2 0%,#F6F2EA 45%,#EFE8D8 100%);
     background-attachment:fixed;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color:#064E3B; -webkit-tap-highlight-color:transparent;
@@ -46,12 +51,25 @@
   @keyframes burstFly { 0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(30px) scale(0.4); } }
   .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#064E3B;
     animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
+
+  /* ---------- animated launch splash (standalone home-screen launches only) ---------- */
+  #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #17A374 0%, #064E3B 100%);
+    transition:opacity .42s ease, visibility .42s ease; }
+  #splash.splash-hide { opacity:0; visibility:hidden; pointer-events:none; }
+  #splash svg { width:168px; height:168px; overflow:visible; }
+  .splash-ticket { transform-origin:150px 150px; animation:splashPop .55s cubic-bezier(.22,.9,.3,1) both; }
+  .splash-check { stroke-dasharray:260; stroke-dashoffset:260; animation:splashDraw .35s ease-out .4s forwards; }
+  .splash-dot { opacity:0; transform:scale(0.4); transform-origin:235px 70px; animation:splashDotPop .3s cubic-bezier(.34,1.56,.64,1) .65s forwards; }
+  @keyframes splashPop { 0% { opacity:0; transform:scale(0.75) rotate(-14deg); } 70% { opacity:1; transform:scale(1.04) rotate(-7deg); } 100% { opacity:1; transform:scale(1) rotate(-7deg); } }
+  @keyframes splashDraw { to { stroke-dashoffset:0; } }
+  @keyframes splashDotPop { to { opacity:1; transform:scale(1); } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#F8E7C9; color:#064E3B; flex-direction:column;
+      background:#F6F2EA; color:#064E3B; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
@@ -60,6 +78,30 @@
 </style>
 </head>
 <body>
+<div id="splash">
+  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <circle class="splash-dot" cx="235" cy="70" r="14" fill="#D9A542"/>
+    <g class="splash-ticket">
+      <rect x="70" y="90" width="160" height="120" rx="16" fill="#F7F1E2"/>
+      <circle cx="70" cy="150" r="11" fill="#0A6146"/>
+      <circle cx="230" cy="150" r="11" fill="#0A6146"/>
+      <line x1="98" y1="150" x2="202" y2="150" stroke="#D8CDB0" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/>
+      <path class="splash-check" d="M 108 152 L 138 182 L 196 118" fill="none" stroke="#064E3B" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>
+</div>
+<script>
+(function(){
+  var s = document.getElementById('splash');
+  if (!s) return;
+  var standalone = window.navigator && window.navigator.standalone === true;
+  if (!standalone) { s.remove(); return; }
+  setTimeout(function(){
+    s.classList.add('splash-hide');
+    setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); }, 450);
+  }, 1100);
+})();
+</script>
 <div class="landscape-lock">
   <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#8A9A90" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#064E3B" stroke-width="1.8" fill="none"/></svg>
   <div style="font-weight:800; font-size:1.05rem;">Rotate back to portrait</div>
@@ -83,12 +125,12 @@ const SITES = {
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
 const INK='#064E3B', MID='#4A6B5C', GREY='#8A9A90', LINE='rgba(6,78,59,0.16)';
-const VIOLET='#064E3B', APRICOT='#F8E7C9';
+const VIOLET='#064E3B', APRICOT='#F7F1E2';
 const TRAVEL='#0E7C5A', TRAVELBG='rgba(6,78,59,0.09)', GREEN=VIOLET, BLUE=VIOLET, RED='#B3261E';
 const LOCKED='#064E3B', LOCKEDBG='rgba(6,78,59,0.07)';
 
-const SURF='#FEF7EA', SURF2='#F2E1BE', SURF3='#F7EBD4';
-const FIELDBG='#FFFDF7', EMPTY='#FDF6E7';
+const SURF='#FBF9F4', SURF2='#EFE7D6', SURF3='#F5F0E4';
+const FIELDBG='#FFFFFF', EMPTY='#F7F3E9';
 
 const SHADOW    = '0 14px 34px rgba(16,58,43,0.16), 0 3px 8px rgba(16,58,43,0.10)';
 const SHADOW_SM = '0 5px 14px rgba(16,58,43,0.13), 0 1px 3px rgba(16,58,43,0.09)';
@@ -98,7 +140,7 @@ const sheen = 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,2
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:FIELDBG, color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-const PANEL = { background:sheen+', '+SURF, boxShadow:SHADOW, borderRadius:'24px', border:'1px solid rgba(6,78,59,0.08)' };
+const PANEL = { background:sheen+', '+SURF, boxShadow:SHADOW+', inset 0 3px 0 0 '+VIOLET, borderRadius:'24px', border:'1px solid rgba(6,78,59,0.08)' };
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
@@ -741,8 +783,8 @@ function App() {
     e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.2px' } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(null, view==='list'?{view:'list'}:null),
       style:{ border:'none', cursor:'pointer', color:APRICOT, fontWeight:800, fontSize:'0.78rem',
-        background:sheen+', '+grad(VIOLET,'#0A6146',140), padding:'0.42rem 0.85rem', borderRadius:'999px',
-        boxShadow:SHADOW_BTN } }, 'New'));
+        background:SITES.NX.hex, padding:'0.42rem 0.85rem', borderRadius:'999px',
+        boxShadow:SHADOW_SM } }, 'New'));
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -769,7 +811,8 @@ function App() {
     return e('div', {
       style:{ background: s ? sheen+', '+siteGrad(j.site) : sheen+', '+SURF3,
         border: s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE,
-        boxShadow: j.locked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK+', '+SHADOW_SM : (s ? '0 10px 22px '+hexToRgba(s.hex,0.34)+', 0 2px 6px '+hexToRgba(s.hex,0.2) : SHADOW_SM),
+        boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK+', '+SHADOW_SM
+          : (s ? '0 10px 22px '+hexToRgba(s.hex,0.34)+', 0 2px 6px '+hexToRgba(s.hex,0.2) : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
@@ -816,7 +859,7 @@ function App() {
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
-    const doneRing = (d && d.allLocked) ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : null;
+    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK : null;
     const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
@@ -875,7 +918,7 @@ function App() {
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : null;
-    const doneRing = allLocked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : null;
+    const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK : null;
     const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
@@ -941,21 +984,21 @@ function App() {
       e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(16,58,43,0.12)' } },
         ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
           style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-            background: calMode===mode ? sheen+', '+grad(VIOLET,'#0A6146',140) : 'transparent',
+            background: calMode===mode ? SITES.NX.hex : 'transparent',
             color: calMode===mode ? APRICOT : MID,
-            boxShadow: calMode===mode ? SHADOW_BTN : 'none',
+            boxShadow: calMode===mode ? SHADOW_SM : 'none',
             transition:'background .2s ease, box-shadow .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:sheen+', '+SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
-          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_BTN } }, ChevronLeft(17, INK)),
+        e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid rgba(6,78,59,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
         e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
           e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
           calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
             String(anchorDate.getFullYear()))),
-        e('button', { onClick:()=>shift(1), style:{ background:sheen+', '+SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
-          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_BTN,
+        e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid rgba(6,78,59,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
           transform:'rotate(180deg)' } }, ChevronLeft(17, INK)))),
 
     e('div', {
