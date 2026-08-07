@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,19 +15,19 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:#E8EBF3;
-    background-image:linear-gradient(180deg,#F0F2F8 0%,#E4E8F2 55%,#DDE2EE 100%);
+    background:#0C0E15;
+    background-image:linear-gradient(180deg,#12141E 0%,#0D0F17 55%,#0A0B11 100%);
     background-attachment:fixed;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    color:#171A24; -webkit-tap-highlight-color:transparent;
+    color:#EDEEF3; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh; }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
-  input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; }
-  select { -webkit-appearance:none; appearance:none; }
+  input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:dark; }
+  select { -webkit-appearance:none; appearance:none; color-scheme:dark; }
   button { font-family:inherit; transition:transform .12s ease, opacity .12s ease; }
   button:active { transform:scale(0.965); opacity:0.75; }
-  input:focus, textarea:focus { border-color:#8A90A2 !important; }
+  input:focus, textarea:focus { border-color:#565C74 !important; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
   .chips::-webkit-scrollbar { display:none; }
 </style>
@@ -41,31 +41,35 @@ const { useState, useEffect, useMemo, useRef } = React;
 const e = React.createElement;
 
 const SITES = {
-  NX:   { label:'NX',   hex:'#FF7A00', hex2:'#E04E00', tint:'#FFEEDC', tint2:'#FFDDBC' },
-  WS:   { label:'WS',   hex:'#FF1D6C', hex2:'#C1005F', tint:'#FFE4EF', tint2:'#FFCBE1' },
-  RH:   { label:'RH',   hex:'#00C9A7', hex2:'#00887A', tint:'#DDF7F1', tint2:'#C0EFE5' },
-  MMUH: { label:'MMUH', hex:'#41597E', hex2:'#232F44', tint:'#E5EAF3', tint2:'#CFD8E8' }
+  NX:   { label:'NX',   hex:'#FF7A00', hex2:'#E04E00' },
+  WS:   { label:'WS',   hex:'#FF1D6C', hex2:'#C1005F' },
+  RH:   { label:'RH',   hex:'#00C9A7', hex2:'#00887A' },
+  MMUH: { label:'MMUH', hex:'#41597E', hex2:'#232F44' }
 };
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
-const INK='#171A24', MID='#5C6274', GREY='#868DA0', LINE='#DFE3EC';
-const TRAVEL='#3A6FD8', TRAVELBG='#EAF1FF', GREEN='#12B76A', BLUE='#0A6CFF', RED='#F0433A';
-const LOCKED='#0A6CFF', LOCKEDBG='#E6F0FF';
+const INK='#EDEEF3', MID='#9CA1B4', GREY='#6E7386', LINE='rgba(255,255,255,0.10)';
+const TRAVEL='#6C93F0', TRAVELBG='rgba(108,147,240,0.15)', GREEN='#22D482', BLUE='#2F8CFF', RED='#FF5A54';
+const LOCKED='#2F8CFF', LOCKEDBG='rgba(47,140,255,0.16)';
 
-const SHADOW    = '0 12px 28px rgba(20,26,50,0.12), 0 3px 8px rgba(20,26,50,0.06)';
-const SHADOW_SM = '0 6px 16px rgba(20,26,50,0.09), 0 1px 3px rgba(20,26,50,0.05)';
+const SURF='#181B26', SURF2='#20232F', SURF3='#1C1F2A';
+
+const SHADOW    = '0 16px 34px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.32)';
+const SHADOW_SM = '0 7px 18px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.25)';
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
-const FIELD = { width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#FBFCFE', color:INK };
+const FIELD = { width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:'#12141D', color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-const PANEL = { background:'#FFFFFF', borderRadius:'24px', boxShadow:SHADOW };
+const PANEL = { background:SURF, borderRadius:'24px', boxShadow:SHADOW, border:'1px solid rgba(255,255,255,0.05)' };
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
+const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
+const siteCardBg = (k) => grad(hexToRgba(SITES[k].hex,0.26), hexToRgba(SITES[k].hex2,0.15), 150);
 
 const LockIcon = (locked, size, colour) => {
   const s = size || 19;
-  const col = colour || (locked ? LOCKED : '#AEB4C2');
+  const col = colour || (locked ? LOCKED : '#565C74');
   return e('svg', { width:s, height:s, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
     e('path', { d: locked ? 'M7 10V7.5a5 5 0 0 1 10 0V10' : 'M7 10V7.5a5 5 0 0 1 9.5-2.2',
       fill:'none', stroke:col, strokeWidth:2.1, strokeLinecap:'round' }),
@@ -77,6 +81,10 @@ const ChevronLeft = (size, col) => e('svg', { width:size, height:size, viewBox:'
   e('path', { d:'M15 5 L8 12 L15 19', fill:'none', stroke:col, strokeWidth:2.6, strokeLinecap:'round', strokeLinejoin:'round' }));
 const DotsIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   [5,12,19].map(cy => e('circle', { key:cy, cx:12, cy:cy, r:2, fill:col })));
+const XIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('path', { d:'M6 6 L18 18 M18 6 L6 18', stroke:col, strokeWidth:2.2, strokeLinecap:'round' }));
+const PlusIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('path', { d:'M12 5 V19 M5 12 H19', stroke:col, strokeWidth:2.3, strokeLinecap:'round' }));
 
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
@@ -114,14 +122,20 @@ function App() {
   const [equipFilter, setEquipFilter] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [statMonth, setStatMonth] = useState(() => { const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [anchorDate, setAnchorDate] = useState(() => new Date());
   const [calMode, setCalMode] = useState('month');
   const [dayDetail, setDayDetail] = useState(null);
+  const [showWeekends, setShowWeekends] = useState(false);
 
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touch = useRef({ x:0, y:0, live:false });
   const SWIPE_TRIGGER = 95;
+
+  const [calDX, setCalDX] = useState(0);
+  const [calDragging, setCalDragging] = useState(false);
+  const calTouch = useRef({ x:0, y:0, live:false });
+  const CAL_TRIGGER = 55;
 
   function blank(date) {
     const s = roundNow();
@@ -185,8 +199,9 @@ function App() {
     return [...set.entries()];
   }, [jobs]);
 
+  /* ---------- month data ---------- */
   const ms = useMemo(() => {
-    const y = statMonth.getFullYear(), m = statMonth.getMonth();
+    const y = anchorDate.getFullYear(), m = anchorDate.getMonth();
     const src = jobs.filter(j => {
       const d = new Date(j.startDateTime);
       return d.getFullYear() === y && d.getMonth() === m;
@@ -212,18 +227,28 @@ function App() {
       day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
     });
     return { y, m, src, days, daysInMonth, firstDow };
-  }, [jobs, statMonth]);
+  }, [jobs, anchorDate]);
 
+  /* ---------- week data — anchored on the real selected date, not day-of-month ---------- */
   const wk = useMemo(() => {
-    const anchor = new Date(statMonth.getFullYear(), statMonth.getMonth(), statMonth.getDate());
-    const dow = (anchor.getDay() + 6) % 7;
-    const monday = new Date(anchor); monday.setDate(anchor.getDate() - dow);
+    const dow = (anchorDate.getDay() + 6) % 7;
+    const monday = new Date(anchorDate); monday.setDate(anchorDate.getDate() - dow);
     const dates = [...Array(7)].map((_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
     const byDate = {};
     jobs.forEach(j => { const k = (j.startDateTime||'').slice(0,10); (byDate[k] = byDate[k] || []).push(j); });
     Object.keys(byDate).forEach(k => byDate[k].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)));
     return { monday, dates, byDate };
-  }, [jobs, statMonth]);
+  }, [jobs, anchorDate]);
+
+  /* ---------- single-day data ---------- */
+  const dv = useMemo(() => {
+    const iso = anchorDate.getFullYear()+'-'+pad(anchorDate.getMonth()+1)+'-'+pad(anchorDate.getDate());
+    const list = jobs.filter(j => (j.startDateTime||'').slice(0,10) === iso)
+      .sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
+    const seq = [];
+    list.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+    return { iso, list, siteSequence:seq };
+  }, [jobs, anchorDate]);
 
   const buildXlsxBlob = (rowsSrc) => {
     const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Signed off','Work Done','Parts Used']];
@@ -270,7 +295,7 @@ function App() {
     const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
     if (!src.length) { alert('Nothing to export.'); return; }
     if (typeof XLSX === 'undefined') { alert('Still loading — try again in a moment.'); return; }
-    const suffix = scope === 'month' ? ' ' + statMonth.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
+    const suffix = scope === 'month' ? ' ' + anchorDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
                  : (scope === 'filtered' ? ' (filtered)' : '');
     const name = stamp()+' App tickets'+suffix+'.xlsx';
     const blob = buildXlsxBlob(src);
@@ -281,7 +306,7 @@ function App() {
   const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
     const name = stamp()+' App tickets backup.json';
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:7, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:8, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
     setMenuOpen(false);
   };
@@ -339,6 +364,7 @@ function App() {
     await persist([]); setMenuOpen(false);
   };
 
+  /* ---------- navigation ---------- */
   const goBack = () => {
     const r = returnTo;
     setSwipeX(0); setSwiping(false); setFormMenu(false);
@@ -434,6 +460,7 @@ function App() {
     setForm({ ...form, parts });
   };
 
+  /* ---------- swipe-back on the ticket form ---------- */
   const onTouchStart = (ev) => {
     const tag = ((ev.target && ev.target.tagName) || '').toUpperCase();
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { touch.current.live = false; return; }
@@ -462,35 +489,72 @@ function App() {
   const swipeHint = view === 'form' && swipeX > 4 && e('div', {
     style:{ position:'fixed', left:'10px', top:'50%', transform:'translateY(-50%) scale('+(0.7+progress*0.5)+')',
       zIndex:40, width:'48px', height:'48px', borderRadius:'999px',
-      background: armed ? grad(BLUE,'#0047C2',140) : '#FFF', boxShadow:'0 6px 18px rgba(20,26,50,0.22)',
+      background: armed ? grad(BLUE,'#0047C2',140) : SURF2, boxShadow:'0 6px 18px rgba(0,0,0,0.4)',
       display:'flex', alignItems:'center', justifyContent:'center',
       opacity: 0.3 + progress*0.7, transition:'background .12s ease' } },
     ChevronLeft(24, armed ? '#FFF' : GREY));
 
+  /* ---------- swipe left/right on calendar to change period ---------- */
+  const shift = (n) => {
+    if (calMode === 'month') {
+      const y = anchorDate.getFullYear(), targetM = anchorDate.getMonth() + n;
+      const daysInTarget = new Date(y, targetM+1, 0).getDate();
+      setAnchorDate(new Date(y, targetM, Math.min(anchorDate.getDate(), daysInTarget)));
+    } else if (calMode === 'week') {
+      const d = new Date(anchorDate); d.setDate(d.getDate() + n*7); setAnchorDate(d);
+    } else {
+      const d = new Date(anchorDate); d.setDate(d.getDate() + n); setAnchorDate(d);
+    }
+    setDayDetail(null);
+  };
+  const goToday = () => setAnchorDate(new Date());
+
+  const onCalTouchStart = (ev) => {
+    const t = ev.touches[0];
+    calTouch.current = { x:t.clientX, y:t.clientY, live:true };
+    setCalDragging(true);
+  };
+  const onCalTouchMove = (ev) => {
+    if (!calTouch.current.live) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - calTouch.current.x;
+    const dy = t.clientY - calTouch.current.y;
+    if (Math.abs(dy) > Math.abs(dx) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
+    setCalDX(Math.max(-70, Math.min(70, dx * 0.5)));
+  };
+  const onCalTouchEnd = () => {
+    if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
+    calTouch.current.live = false;
+    setCalDragging(false);
+    if (calDX <= -CAL_TRIGGER) shift(1);
+    else if (calDX >= CAL_TRIGGER) shift(-1);
+    setCalDX(0);
+  };
+
   const sheet = (children, onClose) => e('div', { onClick:onClose,
-    style:{ position:'fixed', inset:0, background:'rgba(12,16,32,0.42)', zIndex:60, display:'flex', alignItems:'flex-end' } },
+    style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:60, display:'flex', alignItems:'flex-end' } },
     e('div', { onClick:(ev)=>ev.stopPropagation(),
-      style:{ width:'100%', background:'#FFF', borderRadius:'28px 28px 0 0', padding:'1rem 1rem 2rem',
+      style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'1rem 1rem 2rem',
         display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
-        boxShadow:'0 -8px 40px rgba(12,16,32,0.28)' } },
-      e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'#D6DAE4', margin:'0 auto 0.5rem' } }),
+        boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none' } },
+      e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.16)', margin:'0 auto 0.5rem' } }),
       children));
 
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
-      background:'#F4F6FA', cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
+      background:SURF3, cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
       e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || INK } }, label),
       e('span', { style:{ fontSize:'0.7rem', color:GREY } }, sub));
 
   const closeBtn = (onClick) => e('button', { key:'close', onClick,
-    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'#EDEFF5',
-      color:'#3A3F4E', fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
+    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:SURF2,
+      color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
-  const monthShort = statMonth.toLocaleDateString('en-GB',{ month:'long' });
+  const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
 
   const menu = menuOpen && sheet([
     view === 'list'
-      ? menuRow('Calendar view', 'Month and week planner', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
+      ? menuRow('Calendar view', 'Month, week and day planner', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
       : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
     (view === 'list' && (query || siteFilter.length || equipFilter.length))
       ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
@@ -519,24 +583,55 @@ function App() {
       style:{ ...TXTBTN, color:BLUE, fontWeight:800 } }, 'New'));
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const shift = (n) => {
-    if (calMode === 'month') setStatMonth(new Date(statMonth.getFullYear(), statMonth.getMonth() + n, 1));
-    else { const d = new Date(statMonth); d.setDate(d.getDate() + n*7); setStatMonth(d); }
-    setDayDetail(null);
-  };
-  const goToday = () => { const d = new Date(); setStatMonth(calMode === 'month' ? new Date(d.getFullYear(), d.getMonth(), 1) : d); };
 
   const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.25rem', flexWrap:'wrap' } },
     seq.length === 0
-      ? e('span', { style:{ fontSize:'0.68rem', color:'#B9BECC', fontWeight:700 } }, 'No site set')
+      ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
       : seq.map((s,i) => [
           e('span', { key:'s'+i, style:{ background:siteGrad(s), color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
-          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.6rem', color:'#C2C7D4', fontWeight:800 } }, '→') : null
+          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.6rem', color:GREY, fontWeight:800 } }, '→') : null
         ]));
 
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
+  /* ---------- ticket detail card (shared by day sheet + day view) ---------- */
+  const ticketDetailCard = (j, i, ret) => {
+    const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
+    const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
+    const on = mins(j.startDateTime, j.finishDateTime);
+    return e('div', { key:j.id, onClick:()=>openEdit(j, ret),
+      style:{ background: s ? siteCardBg(j.site) : SURF3,
+        border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?hexToRgba(s.hex,0.4):LINE),
+        boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'26, '+SHADOW_SM : SHADOW_SM,
+        borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
+      e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
+          i != null ? e('span', { style:{ background:'rgba(255,255,255,0.1)', color:MID, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
+          e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:INK } }, j.ticketNumber),
+          s && e('span', { style:{ background:siteGrad(j.site), color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
+          eq.map(x => e('span', { key:x, style:{ background:'rgba(255,255,255,0.1)', color:MID, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
+          ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
+        e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
+          title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
+          style:{ flexShrink:0, width:'30px', height:'30px', borderRadius:'999px', cursor:'pointer',
+            border: j.locked ? 'none' : '1.5px solid '+LINE,
+            background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.06)',
+            display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
+          LockIcon(!!j.locked, 16))),
+      e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
+        (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
+        fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
+        (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
+      ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:TRAVEL, fontWeight:700, marginTop:'0.25rem' } },
+        'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
+      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:'#C7CAD8', margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
+      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
+        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:MID } },
+          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
+  };
+
+  /* ---------- month grid ---------- */
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
     const sites = d ? d.sites : [];
@@ -545,28 +640,28 @@ function App() {
     const today = isToday(ms.y, ms.m, dnum);
     const has = sites.length > 0;
 
-    let bg = weekend ? 'rgba(238,240,246,0.75)' : '#FFFFFF';
+    let bg = weekend ? SURF3 : '#14161F';
     if (sites.length === 1) bg = siteGrad(sites[0]);
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
 
-    let border = '1px solid rgba(23,26,36,0.07)';
-    if (has) border = '1px solid rgba(0,0,0,0.10)';
+    let border = '1px solid rgba(255,255,255,0.06)';
+    if (has) border = '1px solid rgba(0,0,0,0.18)';
     if (today) border = '2.5px solid '+INK;
     if (d && d.allLocked) border = '2.5px solid '+LOCKED;
 
-    const fg = has ? '#FFFFFF' : (weekend ? '#A7ADBC' : INK);
+    const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '54px' : '74px', borderRadius: weekend ? '11px' : '15px',
         background:bg, border:border, padding: weekend ? '4px 2px' : '7px 5px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden',
-        boxShadow: has ? '0 5px 14px '+SITES[sites[0]].hex+'4D' : (weekend ? 'none' : '0 2px 6px rgba(20,26,50,0.05)') } },
+        boxShadow: has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.35) : 'none' } },
       e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'1px' } },
         sites.slice(0,2).map(s => e('span', { key:s, style:{ fontSize:'0.5rem', fontWeight:900, color:'#FFF',
-          background:'rgba(0,0,0,0.22)', borderRadius:'5px', padding:'1px 4px', letterSpacing:'0.2px' } }, SITES[s].label)),
+          background:'rgba(0,0,0,0.28)', borderRadius:'5px', padding:'1px 4px', letterSpacing:'0.2px' } }, SITES[s].label)),
         d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.46rem', fontWeight:800, color:'rgba(255,255,255,0.85)' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
@@ -574,80 +669,128 @@ function App() {
   };
 
   const monthGrid = e('div', { style:{ ...PANEL, padding:'1rem 0.8rem 1.1rem' } },
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px', marginBottom:'8px' } },
-      DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
-        fontWeight:900, color: i<5 ? MID : '#B9BECC', letterSpacing:'0.5px' } },
-        i<5 ? d.toUpperCase() : d[0]))),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px' } },
-      [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
-      [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1))));
+    showWeekends ? [
+      e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px', marginBottom:'8px' } },
+        DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
+          fontWeight:900, color: i<5 ? MID : GREY, letterSpacing:'0.5px' } }, i<5 ? d.toUpperCase() : d[0]))),
+      e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px' } },
+        [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
+        [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1)))
+    ] : (() => {
+      const weekdayNums = [...Array(ms.daysInMonth)].map((_,i)=>i+1)
+        .filter(dnum => ((new Date(ms.y, ms.m, dnum).getDay()+6)%7) < 5);
+      const blanks = weekdayNums.length ? ((new Date(ms.y, ms.m, weekdayNums[0]).getDay()+6)%7) : 0;
+      return [
+        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'6px', marginBottom:'8px' } },
+          DOWF.slice(0,5).map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.6rem',
+            fontWeight:900, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
+        e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'6px' } },
+          [...Array(blanks)].map((_,i) => e('div', { key:'b'+i })),
+          weekdayNums.map(dnum => dayCell(dnum)))
+      ];
+    })());
+
+  /* ---------- week strip ---------- */
+  const weekRow = (dt, i) => {
+    const iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+    const list = wk.byDate[iso] || [];
+    const sites = [...new Set(list.map(j=>j.site).filter(Boolean))];
+    const today = isToday(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    const allLocked = list.length > 0 && list.every(j=>j.locked);
+    const weekend = i >= 5;
+    const has = sites.length > 0;
+    let bg = weekend ? SURF3 : '#14161F';
+    if (sites.length === 1) bg = siteGrad(sites[0]);
+    else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
+    const fg = has ? '#FFF' : (weekend ? GREY : INK);
+    return e('button', { key:i,
+      onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
+      style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
+        background:bg, minHeight: weekend ? '46px' : '64px',
+        border: allLocked ? '2.5px solid '+LOCKED : (today ? '2.5px solid '+INK : '1px solid rgba(255,255,255,0.06)'),
+        borderRadius:'17px', padding:'0.5rem 0.75rem',
+        boxShadow: has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.32) : 'none' } },
+      e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
+        e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
+        e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate()))),
+      e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
+        list.length === 0
+          ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700 } }, '—')
+          : [ e('div', { key:'s', style:{ display:'flex', gap:'0.25rem', flexWrap:'wrap' } },
+                sites.map(s => e('span', { key:s, style:{ background:'rgba(0,0,0,0.28)', color:'#FFF',
+                  padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s].label))),
+              e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:700 } },
+                list.length + (list.length===1?' ticket':' tickets')) ]),
+      allLocked ? LockIcon(true, 16, '#FFF') : null);
+  };
 
   const weekGrid = e('div', { style:{ ...PANEL, padding:'0.9rem 0.8rem 1rem', display:'flex', flexDirection:'column', gap:'0.5rem' } },
-    wk.dates.map((dt,i) => {
-      const iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
-      const list = wk.byDate[iso] || [];
-      const sites = [...new Set(list.map(j=>j.site).filter(Boolean))];
-      const today = isToday(dt.getFullYear(), dt.getMonth(), dt.getDate());
-      const allLocked = list.length > 0 && list.every(j=>j.locked);
-      const weekend = i >= 5;
-      const has = sites.length > 0;
-      let bg = weekend ? 'rgba(238,240,246,0.7)' : '#FFFFFF';
-      if (sites.length === 1) bg = siteGrad(sites[0]);
-      else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
-      const fg = has ? '#FFF' : (weekend ? '#A7ADBC' : INK);
-      return e('button', { key:i,
-        onClick:()=>{ setStatMonth(new Date(dt.getFullYear(), dt.getMonth(), 1)); setDayDetail(dt.getDate()); },
-        style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
-          background:bg, minHeight: weekend ? '46px' : '64px',
-          border: allLocked ? '2.5px solid '+LOCKED : (today ? '2.5px solid '+INK : '1px solid rgba(23,26,36,0.07)'),
-          borderRadius:'17px', padding:'0.5rem 0.75rem',
-          boxShadow: has ? '0 5px 14px '+SITES[sites[0]].hex+'40' : 'none' } },
-        e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
-          e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
-          e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate()))),
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
-          list.length === 0
-            ? e('span', { style:{ fontSize:'0.7rem', color: weekend?'#B9BECC':'#C2C7D4', fontWeight:700 } }, '—')
-            : [ e('div', { key:'s', style:{ display:'flex', gap:'0.25rem', flexWrap:'wrap' } },
-                  sites.map(s => e('span', { key:s, style:{ background:'rgba(0,0,0,0.22)', color:'#FFF',
-                    padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s].label))),
-                e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:700 } },
-                  list.length + (list.length===1?' ticket':' tickets')) ]),
-        allLocked ? LockIcon(true, 16, '#FFF') : null);
-    }));
+    (showWeekends ? wk.dates : wk.dates.slice(0,5)).map((dt,i) => weekRow(dt,i)));
 
   const weekLabel = () => {
     const a = wk.dates[0], b = wk.dates[6];
     return a.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + b.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   };
 
+  /* ---------- day view ---------- */
+  const dayView = e('div', { style:{ ...PANEL, padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
+    e('div', null,
+      e('div', { style:{ fontSize:'1.1rem', fontWeight:900, letterSpacing:'-0.3px' } },
+        anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
+      e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
+        dv.list.length + (dv.list.length===1?' job logged':' jobs logged'))),
+    dv.list.length > 0 && e('div', { style:{ background:SURF3, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
+      e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
+      siteSeqRow(dv.siteSequence)),
+    dv.list.length === 0
+      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } },
+          dv.list.map((j,i) => ticketDetailCard(j, i, { view:'month', day:anchorDate.getDate() }))),
+    e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
+      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:BLUE, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
+      '+ Add ticket for this day'));
+
+  const periodLabel = () => {
+    if (calMode === 'month') return anchorDate.toLocaleDateString('en-GB',{ month:'long' });
+    if (calMode === 'week') return weekLabel();
+    return anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' });
+  };
+
   const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
 
-    e('div', { style:{ display:'flex', background:'rgba(214,219,232,0.75)', borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 3px rgba(20,26,50,0.08)' } },
-      ['month','week'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
+    e('div', { style:{ display:'flex', background:'rgba(255,255,255,0.06)', borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 3px rgba(0,0,0,0.3)' } },
+      ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
         style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-          background: calMode===mode ? '#FFF' : 'transparent', color: calMode===mode ? INK : MID,
-          boxShadow: calMode===mode ? '0 2px 8px rgba(20,26,50,0.16)' : 'none' } },
-        mode === 'month' ? 'Month' : 'Week'))),
+          background: calMode===mode ? SURF2 : 'transparent', color: calMode===mode ? INK : MID,
+          boxShadow: calMode===mode ? '0 2px 8px rgba(0,0,0,0.35)' : 'none' } },
+        mode[0].toUpperCase()+mode.slice(1)))),
 
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem' } },
-      e('button', { onClick:()=>shift(-1), style:{ background:'#FFF', border:'none', borderRadius:'999px', width:'34px', height:'34px',
+      e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
       e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
-        e('span', { style:{ fontSize:'1.2rem', fontWeight:900, letterSpacing:'-0.4px' } },
-          calMode === 'month' ? statMonth.toLocaleDateString('en-GB',{ month:'long' }) : weekLabel()),
-        calMode === 'month' && e('span', { style:{ fontSize:'1.2rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
-          String(statMonth.getFullYear()))),
-      e('button', { onClick:()=>shift(1), style:{ background:'#FFF', border:'none', borderRadius:'999px', width:'34px', height:'34px',
+        e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px' } }, periodLabel()),
+        calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
+          String(anchorDate.getFullYear()))),
+      e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
         transform:'rotate(180deg)' } }, ChevronLeft(17, INK))),
 
-    calMode === 'month' ? monthGrid : weekGrid,
+    e('div', {
+      onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
+      style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)',
+        opacity: 1 - Math.abs(calDX)/260 } },
+      calMode === 'month' ? monthGrid : calMode === 'week' ? weekGrid : dayView),
 
     e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
       Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.6rem', fontWeight:800,
-        color:MID, flexShrink:0, background:'#FFF', padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
+        color:MID, flexShrink:0, background:SURF2, padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
         e('span', { style:{ width:'9px', height:'9px', borderRadius:'999px', background:siteGrad(k) } }), SITES[k].label))),
+
+    calMode !== 'day' && e('button', { onClick:()=>setShowWeekends(!showWeekends),
+      style:{ background:'none', border:'none', color:GREY, fontSize:'0.66rem', fontWeight:700, cursor:'pointer',
+        padding:'0.3rem', textAlign:'center', opacity:0.7 } },
+      showWeekends ? 'Hide weekends' : 'Show weekends'),
 
     ms.src.length === 0 && calMode === 'month' &&
       e('div', { style:{ textAlign:'center', padding:'1rem', color:GREY, fontSize:'0.8rem' } },
@@ -663,44 +806,12 @@ function App() {
       dd && e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
         dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
 
-    dd ? e('div', { key:'rt', style:{ background:'#F4F6FA', borderRadius:'14px', padding:'0.7rem 0.85rem' } },
+    dd ? e('div', { key:'rt', style:{ background:SURF3, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dd.siteSequence)) : null,
 
-    dd ? dd.tickets.map((j,i) => {
-      const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
-      const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
-      const on = mins(j.startDateTime, j.finishDateTime);
-      return e('div', { key:j.id, onClick:()=>openEdit(j, dayRet),
-        style:{ background: s ? grad(s.tint, s.tint2, 150) : '#F7F8FB',
-          border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?s.hex+'3D':LINE),
-          boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'26, '+SHADOW_SM : SHADOW_SM,
-          borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
-        e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
-          e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
-            e('span', { style:{ background:'rgba(23,26,36,0.09)', color:MID, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)),
-            e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px' } }, j.ticketNumber),
-            s && e('span', { style:{ background:siteGrad(j.site), color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
-            eq.map(x => e('span', { key:x, style:{ background:'rgba(23,26,36,0.09)', color:'#3A3F4E', padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
-            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
-            title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
-            style:{ flexShrink:0, width:'30px', height:'30px', borderRadius:'999px', cursor:'pointer',
-              border: j.locked ? 'none' : '1.5px solid '+LINE,
-              background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.75)',
-              display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
-            LockIcon(!!j.locked, 16))),
-        e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
-          (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
-          fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-          (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
-        ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:TRAVEL, fontWeight:700, marginTop:'0.25rem' } },
-          'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-        j.workDone && e('p', { style:{ fontSize:'0.8rem', color:'#333846', margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
-        parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
-          parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:MID } },
-            '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
-    }) : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
+    dd ? dd.tickets.map((j,i) => ticketDetailCard(j, i, dayRet))
+       : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
       style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:BLUE, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
@@ -714,15 +825,15 @@ function App() {
     const on = mins(j.startDateTime, j.finishDateTime);
     return e('div', { key:j.id, onClick:()=>openEdit(j, {view:'list'}),
       style:{ padding:'1rem 1.05rem', borderRadius:'20px', cursor:'pointer',
-        background: s ? grad(s.tint, s.tint2, 150) : '#FFF',
-        border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?s.hex+'3D':LINE),
+        background: s ? siteCardBg(j.site) : SURF3,
+        border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?hexToRgba(s.hex,0.4):LINE),
         boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'26, '+SHADOW_SM : SHADOW_SM } },
       e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.3rem', flexWrap:'wrap' } },
-            e('span', { style:{ fontWeight:900, fontSize:'1rem', letterSpacing:'-0.2px' } }, j.ticketNumber),
+            e('span', { style:{ fontWeight:900, fontSize:'1rem', letterSpacing:'-0.2px', color:INK } }, j.ticketNumber),
             s && e('span', { style:{ background:siteGrad(j.site), color:'#FFF', padding:'0.2rem 0.58rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900 } }, s.label),
-            eq.map(x => e('span', { key:x, style:{ background:'rgba(23,26,36,0.09)', color:'#3A3F4E', padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:900 } }, x)),
+            eq.map(x => e('span', { key:x, style:{ background:'rgba(255,255,255,0.1)', color:MID, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:900 } }, x)),
             ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:900 } }, '+'+ex.length+' day')),
           e('div', { style:{ fontSize:'0.72rem', color:MID, fontWeight:600 } },
             fmtDate(j.startDateTime) + '  ·  ' + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime) + (on ? '  ·  '+hm(on) : ''))),
@@ -730,10 +841,10 @@ function App() {
           title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
           style:{ flexShrink:0, width:'32px', height:'32px', borderRadius:'999px', cursor:'pointer',
             border: j.locked ? 'none' : '1.5px solid '+LINE,
-            background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.75)',
+            background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.06)',
             display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
           LockIcon(!!j.locked, 18))),
-      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#333846', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
+      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#C7CAD8', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
       (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length > 0 &&
         e('div', { style:{ marginTop:'0.5rem', fontSize:'0.68rem', color:GREY, fontWeight:700 } },
           j.parts.filter(p=>p.partNumber||p.partDescription).length + ' part(s)'));
@@ -744,28 +855,28 @@ function App() {
       e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
         onChange:(ev)=>setQuery(ev.target.value),
         style:{ flex:1, padding:'0.68rem 0.95rem', border:'none', borderRadius:'999px', outline:'none',
-          fontSize:'0.88rem', background:'#FFF', boxShadow:SHADOW_SM } }),
+          fontSize:'0.88rem', background:SURF2, color:INK, boxShadow:SHADOW_SM } }),
       e('button', { onClick:()=>setShowFilters(!showFilters),
         style:{ padding:'0.62rem 0.95rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-          background:'#FFF', color: (siteFilter.length||equipFilter.length) ? BLUE : INK, boxShadow:SHADOW_SM } }, 'Filter')),
+          background:SURF2, color: (siteFilter.length||equipFilter.length) ? BLUE : INK, boxShadow:SHADOW_SM } }, 'Filter')),
 
-    showFilters && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:'#FFF', borderRadius:'20px', padding:'0.8rem', boxShadow:SHADOW_SM } },
+    showFilters && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:SURF, borderRadius:'20px', padding:'0.8rem', boxShadow:SHADOW_SM } },
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(SITES).map(k => {
           const s = SITES[k], on = siteFilter.includes(k);
           return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
             style:{ padding:'0.42rem 0.9rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
-              border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):'#FFF', color: on?'#FFF':'#3A3F4E' } }, s.label);
+              border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):SURF2, color: on?'#FFF':INK } }, s.label);
         })),
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(EQUIP).map(k => {
           const on = equipFilter.includes(k);
           return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
             style:{ padding:'0.42rem 0.9rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
-              border: on ? 'none' : '1.5px solid '+LINE, background: on?INK:'#FFF', color: on?'#FFF':'#3A3F4E' } }, k);
+              border: on ? 'none' : '1.5px solid '+LINE, background: on?INK:SURF2, color: on?'#0B0D13':INK } }, k);
         })),
       (siteFilter.length || equipFilter.length || query) && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); },
-        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'#F4F6FA', color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
+        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:SURF3, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
 
     e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'),
@@ -774,8 +885,9 @@ function App() {
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map(ticketCard)));
 
+  /* ---------- redesigned journey spine: no floating buttons, tap-to-add ghost rails ---------- */
   const dotEl = (colour, size) => e('span', { style:{ width:size+'px', height:size+'px', borderRadius:'999px',
-    background:'#FFF', border:'3px solid '+colour, display:'block', flexShrink:0 } });
+    background:SURF, border:'3px solid '+colour, display:'block', flexShrink:0 } });
 
   const ROW = { display:'flex', alignItems:'center', gap:'0.75rem', width:'100%', maxWidth:'268px' };
   const TIMECOL = { width:'78px', flexShrink:0 };
@@ -794,63 +906,69 @@ function App() {
         e('div', { style:DOTCOL }, dotEl(colour, 14)),
         e('span', { style:{ flex:1, fontSize:'0.83rem', color:INK, fontWeight:800 } }, label));
 
-    const smallRow = (key, time, field, label) =>
-      e('div', { key:key, style:{ ...ROW, margin:'2px 0' } },
+    /* travel time present: quiet inline row, small × sits at the far edge instead of a separate "Remove" button */
+    const travelRow = (key, time, field, label) =>
+      e('div', { key:key, style:{ ...ROW, margin:'2px 0', position:'relative' } },
         e('div', { style:TIMECOL },
           e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
             style:{ width:'100%', border:'none', background:'transparent', outline:'none', textAlign:'right',
               fontSize:'0.9rem', fontWeight:800, color:TRAVEL, fontVariantNumeric:'tabular-nums', padding:0 } })),
-        e('div', { style:DOTCOL }, dotEl('#8FB4F0', 10)),
-        e('div', { style:{ flex:1, display:'flex', justifyContent:'space-between', alignItems:'center' } },
-          e('span', { style:{ fontSize:'0.72rem', color:TRAVEL, fontWeight:800 } }, label),
-          e('button', { onClick:()=>update({ [field]:'' }), style:{ ...TXTBTN, fontSize:'0.65rem', color:'#BFC5D2', padding:0 } }, 'Remove')));
+        e('div', { style:DOTCOL }, dotEl(TRAVEL, 10)),
+        e('span', { style:{ flex:1, fontSize:'0.72rem', color:TRAVEL, fontWeight:800 } }, label),
+        e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
+          style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:'rgba(255,255,255,0.06)',
+            display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
+          XIcon(11, GREY)));
 
-    const legEl = (key, text, isTravel) =>
+    /* on-site leg between start/finish — unchanged rail chip */
+    const legEl = (key, text) =>
       e('div', { key:key, style:{ ...ROW, margin:'1px 0' } },
         e('div', { style:TIMECOL }),
         e('div', { style:DOTCOL },
-          e('span', { style:{ width:'2px', height:'24px', background: isTravel ? '#C9D9F5' : LINE, display:'block', borderRadius:'2px' } })),
+          e('span', { style:{ width:'2px', height:'24px', background:LINE, display:'block', borderRadius:'2px' } })),
         e('span', { style:{ fontSize:'0.63rem', fontWeight:800, borderRadius:'999px', padding:'2px 9px',
-          background: isTravel ? TRAVELBG : '#F0F2F7', color: isTravel ? TRAVEL : MID } }, text));
+          background:'rgba(255,255,255,0.06)', color:MID } }, text));
 
-    const plusEl = (key, onClick) =>
-      e('div', { key:key, style:{ ...ROW, margin:'1px 0' } },
+    /* no travel yet: the whole rail segment is one quiet tappable "ghost" row, no separate button floating in the dot column */
+    const ghostRow = (key, label, onClick) =>
+      e('button', { key:key, onClick:onClick,
+        style:{ ...ROW, margin:'1px 0', background:'none', border:'none', cursor:'pointer', padding:'3px 0' } },
         e('div', { style:TIMECOL }),
         e('div', { style:DOTCOL },
-          e('button', { onClick:onClick, title:'Add travel',
-            style:{ width:'20px', height:'20px', borderRadius:'999px', border:'1.5px dashed #A8C4EE',
-              background:'#FFF', color:TRAVEL, fontSize:'0.7rem', fontWeight:900, lineHeight:1,
-              display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', padding:0 } }, '+')),
-        e('span', { style:{ flex:1, fontSize:'0.63rem', color:'#BFC5D2', fontWeight:700 } }, 'Add travel'));
+          e('span', { style:{ width:'2px', height:'24px', background:'repeating-linear-gradient(180deg, rgba(255,255,255,0.22) 0 4px, transparent 4px 8px)', display:'block', borderRadius:'2px' } })),
+        e('span', { style:{ flex:1, display:'flex', alignItems:'center', gap:'0.35rem' } },
+          e('span', { style:{ width:'15px', height:'15px', borderRadius:'999px', border:'1.5px dashed rgba(255,255,255,0.3)',
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, PlusIcon(9, GREY)),
+          e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, label)));
 
     if (d.t1) {
-      rows.push(smallRow(prefix+'t1', d.t1, 't1', 'Travel 1'));
-      rows.push(legEl(prefix+'l1', legMins(d.t1, d.start) ? hm(legMins(d.t1, d.start)) : 'travel', true));
+      rows.push(travelRow(prefix+'t1', d.t1, 't1', 'Travel 1'));
+      rows.push(legEl(prefix+'l1', legMins(d.t1, d.start) ? hm(legMins(d.t1, d.start)) : 'travel'));
     } else {
-      rows.push(plusEl(prefix+'p1', ()=>update({ t1: shiftTime(d.start, -1) })));
+      rows.push(ghostRow(prefix+'p1', 'Add travel before', ()=>update({ t1: shiftTime(d.start, -1) })));
     }
     rows.push(bigRow(prefix+'st', d.start, 'start', 'Start', GREEN));
-    rows.push(legEl(prefix+'l2', legMins(d.start, d.finish) ? hm(legMins(d.start, d.finish))+' on site' : 'on site', false));
+    rows.push(legEl(prefix+'l2', legMins(d.start, d.finish) ? hm(legMins(d.start, d.finish))+' on site' : 'on site'));
     rows.push(bigRow(prefix+'fi', d.finish, 'finish', 'Finish', INK));
     if (d.t2) {
-      rows.push(legEl(prefix+'l3', legMins(d.finish, d.t2) ? hm(legMins(d.finish, d.t2)) : 'travel', true));
-      rows.push(smallRow(prefix+'t2', d.t2, 't2', 'Travel 2'));
+      rows.push(legEl(prefix+'l3', legMins(d.finish, d.t2) ? hm(legMins(d.finish, d.t2)) : 'travel'));
+      rows.push(travelRow(prefix+'t2', d.t2, 't2', 'Travel 2'));
     } else {
-      rows.push(plusEl(prefix+'p2', ()=>update({ t2: shiftTime(d.finish, 1) })));
+      rows.push(ghostRow(prefix+'p2', 'Add travel after', ()=>update({ t2: shiftTime(d.finish, 1) })));
     }
     return rows;
   };
 
   const dayPanel = (d, update, prefix, title, onRemove) =>
-    e('div', { key:prefix, style:{ background:'#F8F9FC', border:'1px solid '+LINE, borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
+    e('div', { key:prefix, style:{ background:'#12141D', border:'1px solid '+LINE, borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
       display:'flex', flexDirection:'column', gap:'0.75rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('span', { style:{ ...LBL, color: onRemove ? TRAVEL : GREY } }, title),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
-            style:{ border:'1.5px solid '+LINE, background:'#FFF', borderRadius:'10px', outline:'none',
+            style:{ border:'1.5px solid '+LINE, background:SURF2, borderRadius:'10px', outline:'none',
               fontSize:'0.74rem', fontWeight:800, color:INK, padding:'0.3rem 0.45rem', maxWidth:'132px' } }),
-          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#BFC5D2', padding:0 } }, 'Remove') : null)),
+          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:GREY, padding:0 } }, 'Remove') : null)),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center' } },
         buildSpine(d, update, prefix)));
 
@@ -868,13 +986,13 @@ function App() {
       transform:'translateX('+swipeX+'px)',
       transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
       borderRadius: swipeX > 4 ? '24px' : '0',
-      boxShadow: swipeX > 4 ? '-10px 0 32px rgba(20,26,50,0.16)' : 'none' } },
+      boxShadow: swipeX > 4 ? '-10px 0 32px rgba(0,0,0,0.45)' : 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
-      e('button', { onClick:backOut, style:{ background:'#FFF', border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
-      e('button', { onClick:()=>setFormMenu(true), style:{ background:'#FFF', border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
 
     e('div', { style:{ ...PANEL, padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem' } },
@@ -885,18 +1003,18 @@ function App() {
 
       e('div', { style:{ display:'flex', gap:'0.5rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border:'1.5px solid '+LINE, background:'#FBFCFE', borderRadius:'13px', padding:'0 0.65rem' } },
+          border:'1.5px solid '+LINE, background:'#12141D', borderRadius:'13px', padding:'0 0.65rem' } },
           e('span', { style:{ width:'12px', height:'12px', borderRadius:'999px', flexShrink:0,
-            background: SITES[form.site] ? siteGrad(form.site) : '#D3D8E4' } }),
+            background: SITES[form.site] ? siteGrad(form.site) : '#333748' } }),
           e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
               fontSize:'0.84rem', fontWeight:800, color: form.site ? INK : GREY } },
             e('option', { value:'' }, 'Site'),
             Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border:'1.5px solid '+LINE, background:'#FBFCFE', borderRadius:'13px', padding:'0 0.65rem' } },
+          border:'1.5px solid '+LINE, background:'#12141D', borderRadius:'13px', padding:'0 0.65rem' } },
           e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-            background: form.equipment.length ? INK : '#D3D8E4' } }),
+            background: form.equipment.length ? INK : '#333748' } }),
           e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
               fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
@@ -927,14 +1045,14 @@ function App() {
           form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.4rem', alignItems:'center' } },
             e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
               onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-              style:{ flex:'0 0 38%', minWidth:0, border:'1.5px solid '+LINE, background:'#FBFCFE', borderRadius:'11px',
-                padding:'0.55rem 0.65rem', fontSize:'0.8rem', fontWeight:800, outline:'none' } }),
+              style:{ flex:'0 0 38%', minWidth:0, border:'1.5px solid '+LINE, background:'#12141D', borderRadius:'11px',
+                padding:'0.55rem 0.65rem', fontSize:'0.8rem', fontWeight:800, outline:'none', color:INK } }),
             e('input', { type:'text', value:p.partDescription, placeholder:'Description',
               onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-              style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:'#FBFCFE', borderRadius:'11px',
-                padding:'0.55rem 0.65rem', fontSize:'0.8rem', outline:'none' } }),
+              style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:'#12141D', borderRadius:'11px',
+                padding:'0.55rem 0.65rem', fontSize:'0.8rem', outline:'none', color:INK } }),
             e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-              style:{ border:'none', background:'none', color:'#BFC5D2', fontSize:'0.8rem', fontWeight:800, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕'))))),
+              style:{ border:'none', background:'none', color:GREY, fontSize:'0.8rem', fontWeight:800, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕'))))),
 
       e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
         style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
@@ -943,7 +1061,7 @@ function App() {
       e('button', { onClick:()=>setForm({ ...form, locked: !form.locked }),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer',
           border: form.locked ? '2.5px solid '+LOCKED : '1.5px solid '+LINE,
-          background: form.locked ? LOCKEDBG : '#FBFCFE',
+          background: form.locked ? LOCKEDBG : '#12141D',
           borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left' } },
         LockIcon(!!form.locked, 21),
         e('div', { style:{ flex:1, minWidth:0 } },
@@ -952,7 +1070,7 @@ function App() {
           e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
             form.locked ? 'Highlighted on the calendar' : 'All information has been added')),
         e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
-          border: form.locked ? 'none' : '2px solid #CBD1DE', background: form.locked ? LOCKED : 'transparent',
+          border: form.locked ? 'none' : '2px solid #454A5E', background: form.locked ? LOCKED : 'transparent',
           display:'flex', alignItems:'center', justifyContent:'center', color:'#FFF', fontSize:'0.72rem', fontWeight:900 } },
           form.locked ? '✓' : ''))));
 
