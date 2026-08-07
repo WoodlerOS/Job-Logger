@@ -61,9 +61,9 @@ const e = React.createElement;
    Site coding is four tones of the same violet rather than four hues. */
 const SITES = {
   NX:   { label:'NX',   hex:'#0E7C5A', hex2:'#0A6146' },
-  WS:   { label:'WS',   hex:'#064E3B', hex2:'#04372A' },
-  RH:   { label:'RH',   hex:'#5C7F3A', hex2:'#48652C' },
-  MMUH: { label:'MMUH', hex:'#A85F2B', hex2:'#8A4A1E' }
+  WS:   { label:'WS',   hex:'#1B6E7C', hex2:'#125460' },
+  RH:   { label:'RH',   hex:'#C08A2E', hex2:'#A06F1E' },
+  MMUH: { label:'MMUH', hex:'#A8451F', hex2:'#873415' }
 };
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
@@ -748,8 +748,8 @@ function App() {
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(6,78,59,0.10)';
     return e('div', {
       style:{ background: s ? siteGrad(j.site) : SURF3,
-        border: j.locked ? '3px solid '+APRICOT : (s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE),
-        boxShadow: j.locked ? '0 0 0 2px '+INK+', '+SHADOW_SM : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
+        border: j.locked ? '5px solid '+INK : (s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE),
+        boxShadow: j.locked ? SHADOW_SM : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
@@ -791,7 +791,7 @@ function App() {
 
     let border = '1px solid rgba(6,78,59,0.10)';
     if (has) border = '1px solid rgba(255,255,255,0.14)';
-    if (d && d.allLocked) border = '2px solid '+APRICOT;
+    if (d && d.allLocked) border = '4px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : 'none';
@@ -856,7 +856,7 @@ function App() {
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px',
-        border: allLocked ? '2px solid '+APRICOT : '1px solid rgba(6,78,59,0.10)',
+        border: allLocked ? '4px solid '+INK : '1px solid rgba(6,78,59,0.10)',
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         boxShadow:weekShadow } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
