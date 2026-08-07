@@ -31,6 +31,11 @@
   button:active { transform:scale(0.965); opacity:0.7; }
   input:focus, textarea:focus { border-color:rgba(6,78,59,0.55) !important; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes popIn { 0% { opacity:0; transform:scale(0.92); } 60% { opacity:1; transform:scale(1.03); } 100% { transform:scale(1); } }
+  @keyframes dotPulseAbs { 0%,100% { opacity:1; transform:translateX(-50%) scale(1); } 50% { opacity:0.4; transform:translateX(-50%) scale(1.5); } }
+  @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.5); } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) {
@@ -60,10 +65,10 @@ const e = React.createElement;
 /* ---------- palette: apricot surface, violet accent ----------
    Site coding is four tones of the same violet rather than four hues. */
 const SITES = {
-  NX:   { label:'NX',   hex:'#0E7C5A', hex2:'#0A6146' },
-  WS:   { label:'WS',   hex:'#1B6E7C', hex2:'#125460' },
-  RH:   { label:'RH',   hex:'#C08A2E', hex2:'#A06F1E' },
-  MMUH: { label:'MMUH', hex:'#A8451F', hex2:'#873415' }
+  NX:   { label:'NX',   hex:'#17A374', hex2:'#0F7F5C' },
+  WS:   { label:'WS',   hex:'#2790A0', hex2:'#1B6E7C' },
+  RH:   { label:'RH',   hex:'#D9A542', hex2:'#C08A2E' },
+  MMUH: { label:'MMUH', hex:'#C25A2E', hex2:'#A8451F' }
 };
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
@@ -87,15 +92,12 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 
-const LockIcon = (locked, size, colour) => {
+const TickIcon = (done, size, colour) => {
   const s = size || 19;
-  const col = colour || (locked ? LOCKED : GREY);
+  const col = colour || (done ? LOCKED : GREY);
   return e('svg', { width:s, height:s, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-    e('path', { d: locked ? 'M7 10V7.5a5 5 0 0 1 10 0V10' : 'M7 10V7.5a5 5 0 0 1 9.5-2.2',
-      fill:'none', stroke:col, strokeWidth:2.1, strokeLinecap:'round' }),
-    e('rect', { x:3.6, y:10, width:16.8, height:11, rx:3.2,
-      fill: locked ? col : 'none', stroke:col, strokeWidth:2.1 }),
-    e('circle', { cx:12, cy:15.6, r:1.7, fill: locked ? APRICOT : col }));
+    e('circle', { cx:12, cy:12, r:9, fill:'none', stroke:col, strokeWidth: done?2.3:1.7, opacity: done?1:0.5 }),
+    done ? e('path', { d:'M7.6 12.3 L10.4 15 L16.4 8.8', fill:'none', stroke:col, strokeWidth:2.3, strokeLinecap:'round', strokeLinejoin:'round' }) : null);
 };
 const ChevronLeft = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('path', { d:'M15 5 L8 12 L15 19', fill:'none', stroke:col, strokeWidth:2.6, strokeLinecap:'round', strokeLinejoin:'round' }));
@@ -134,8 +136,8 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
   e('path', { d:'M4 7 H20 M9 7 V5a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 V7 M6 7 L7 20 a1 1 0 0 0 1 1 h8 a1 1 0 0 0 1-1 L18 7',
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
-/* ---------- iOS-Mail-style swipe-to-reveal row: swipe left for Lock / Delete ---------- */
-function SwipeCard({ locked, onLock, onDelete, onTap, radius, children }) {
+/* ---------- iOS-Mail-style swipe-to-reveal row: swipe left for Done / Delete ---------- */
+function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, children }) {
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const touchRef = useRef({ x:0, y:0, live:false, active:false, startDx:0 });
@@ -172,13 +174,15 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, children }) {
   };
   const handleTap = () => { if (dx !== 0) { setDx(0); } else if (onTap) onTap(); };
 
-  return e('div', { style:{ position:'relative', borderRadius:radius } },
+  return e('div', { style:{ position:'relative', borderRadius:radius,
+      animation: entryDelay != null ? 'fadeInUp .34s cubic-bezier(.22,.9,.3,1) both' : 'none',
+      animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
     e('div', { style:{ position:'absolute', inset:0, display:'flex', justifyContent:'flex-end', borderRadius:radius, overflow:'hidden' } },
       e('button', { onClick:()=>{ onLock(); setDx(0); },
         style:{ width:'66px', border:'none', cursor:'pointer', background: locked ? GREY : LOCKED,
           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
-        LockIcon(true, 20, APRICOT),
-        e('span', { style:{ fontSize:'0.56rem', fontWeight:800, color:APRICOT } }, locked ? 'Unlock' : 'Lock')),
+        TickIcon(true, 20, APRICOT),
+        e('span', { style:{ fontSize:'0.56rem', fontWeight:800, color:APRICOT } }, locked ? 'Undo' : 'Done')),
       e('button', { onClick:()=>{ setDx(0); onDelete(); },
         style:{ width:'66px', border:'none', cursor:'pointer', background:RED,
           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
@@ -670,11 +674,12 @@ function App() {
       if (sheetDY >= SHEET_TRIGGER) { setSheetDY(0); onClose(); } else setSheetDY(0);
     };
     return e('div', { onClick:onClose,
-      style:{ position:'fixed', inset:0, background:'rgba(6,45,34,0.34)', zIndex:60, display:'flex', alignItems:'flex-end' } },
+      style:{ position:'fixed', inset:0, background:'rgba(6,45,34,0.34)', zIndex:60, display:'flex', alignItems:'flex-end',
+        animation:'fadeIn .18s ease' } },
       e('div', { ref:sheetPanelRef, onClick:(ev)=>ev.stopPropagation(),
         onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
         style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
-          display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
+          display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .28s cubic-bezier(.22,.9,.3,1)', maxHeight:'88vh', overflowY:'auto',
           boxShadow:'0 -10px 34px rgba(16,58,43,0.16)', border:'1px solid rgba(6,78,59,0.10)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
         e('div', { style:{ padding:'0.85rem 0 0.5rem' } },
@@ -748,9 +753,10 @@ function App() {
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(6,78,59,0.10)';
     return e('div', {
       style:{ background: s ? siteGrad(j.site) : SURF3,
-        border: j.locked ? '5px solid '+INK : (s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE),
-        boxShadow: j.locked ? SHADOW_SM : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
-        borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
+        border: s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE,
+        boxShadow: j.locked ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
+        borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
+        transition:'box-shadow .25s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
           i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
@@ -758,7 +764,7 @@ function App() {
           s && e('span', { style:{ background:'rgba(255,255,255,0.22)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', style:{ display:'inline-flex' } }, LockIcon(true, 14, s ? APRICOT : INK))),
+          j.locked && e('span', { key:'lk', style:{ display:'inline-flex' } }, TickIcon(true, 14, s ? APRICOT : INK))),
       e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -771,10 +777,11 @@ function App() {
           '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
   };
 
-  const swipeCard = (j, i, ret) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
+  const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
       onLock:()=>toggleLock(j.id),
       onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); },
-      onTap:()=>openEdit(j, ret) },
+      onTap:()=>openEdit(j, ret),
+      entryDelay: stagger != null ? Math.min(stagger,8)*28 : null },
     ticketDetailCard(j, i));
 
   const dayCell = (dnum) => {
@@ -791,18 +798,18 @@ function App() {
 
     let border = '1px solid rgba(6,78,59,0.10)';
     if (has) border = '1px solid rgba(255,255,255,0.14)';
-    if (d && d.allLocked) border = '4px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
-    const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : 'none';
-    const todayRing = today ? '0 0 0 2px '+INK : '';
-    const boxShadow = [glow !== 'none' ? glow : null, todayRing || null].filter(Boolean).join(', ') || 'none';
+    const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
+    const doneRing = (d && d.allLocked) ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : null;
+    const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
-        gap:'3px', cursor:'pointer', overflow:'hidden',
+        gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
+        transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:boxShadow } },
       e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px' } }, String(dnum)),
@@ -812,7 +819,10 @@ function App() {
         d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.46rem', fontWeight:800, color:'rgba(255,255,255,0.85)' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
-        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null);
+        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null,
+      today ? e('span', { key:'td', style:{ position:'absolute', bottom: weekend?'4px':'6px', left:'50%',
+        width:'5px', height:'5px', borderRadius:'999px', background: has ? '#FFFFFF' : INK,
+        animation:'dotPulseAbs 2.4s ease-in-out infinite' } }) : null);
   };
 
   const monthGrid = e('div', { style:{ ...PANEL, padding:'1rem 0.85rem 1.15rem' } },
@@ -849,19 +859,22 @@ function App() {
     if (sites.length === 1) bg = siteGrad(sites[0]);
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
-    const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : 'none';
-    const weekTodayRing = today ? '0 0 0 2px '+INK : '';
-    const weekShadow = [weekGlow !== 'none' ? weekGlow : null, weekTodayRing || null].filter(Boolean).join(', ') || 'none';
+    const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : null;
+    const doneRing = allLocked ? '0 0 0 3px '+SURF+', 0 0 0 7px '+INK : null;
+    const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px',
-        border: allLocked ? '4px solid '+INK : '1px solid rgba(6,78,59,0.10)',
+        border: '1px solid rgba(6,78,59,0.10)',
         borderRadius:'17px', padding:'0.5rem 0.75rem',
+        transition:'box-shadow .25s ease',
         boxShadow:weekShadow } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
         e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
-        e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate()))),
+        e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate())),
+        today ? e('span', { key:'td', style:{ display:'block', width:'5px', height:'5px', borderRadius:'999px',
+          background: has ? '#FFFFFF' : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
       e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
         list.length === 0
           ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700 } }, '—')
@@ -870,7 +883,7 @@ function App() {
                   padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s].label))),
               e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:700 } },
                 list.length + (list.length===1?' ticket':' tickets')) ]),
-      allLocked ? LockIcon(true, 16, APRICOT) : null);
+      allLocked ? TickIcon(true, 16, APRICOT) : null);
   };
 
   const weekGrid = e('div', { style:{ ...PANEL, padding:'0.9rem 0.85rem 1rem', display:'flex', flexDirection:'column', gap:'0.6rem' } },
@@ -893,7 +906,7 @@ function App() {
     dv.list.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } },
-          dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }))),
+          dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
       style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
       '+ Add ticket for this day'));
@@ -957,7 +970,7 @@ function App() {
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dd.siteSequence)) : null,
 
-    dd ? dd.tickets.map((j,i) => swipeCard(j, i, dayRet))
+    dd ? dd.tickets.map((j,i) => swipeCard(j, i, dayRet, i))
        : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
@@ -1001,7 +1014,7 @@ function App() {
 
     filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j)=>swipeCard(j, null, {view:'list'}))));
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j,i)=>swipeCard(j, null, {view:'list'}, i))));
 
   /* ---------- times section ---------- */
   const travelBlock = (time, field, label, update) =>
@@ -1162,8 +1175,9 @@ function App() {
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer',
           border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
           background: form.locked ? LOCKEDBG : FIELDBG,
-          borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left' } },
-        LockIcon(!!form.locked, 21),
+          borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left',
+          transition:'background .25s ease, border-color .25s ease' } },
+        TickIcon(!!form.locked, 21),
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ fontSize:'0.84rem', fontWeight:900, color:INK } },
             form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off'),
@@ -1171,12 +1185,15 @@ function App() {
             form.locked ? 'Highlighted on the calendar' : 'All information has been added')),
         e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
           border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
-          display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900 } },
+          display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
+          transition:'background .25s ease, border-color .25s ease',
+          animation: form.locked ? 'popIn .3s cubic-bezier(.34,1.56,.64,1)' : 'none' } },
           form.locked ? '✓' : ''))));
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
-  const body = view === 'form' ? formView : view === 'list' ? listView : monthView;
+  const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
+  const body = e('div', { key:view, style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
   return e('div', null, header, body, menu, daySheet, formSheet, swipeHint);
 }
 
