@@ -65,7 +65,6 @@ const PANEL = { background:SURF, borderRadius:'24px', boxShadow:SHADOW, border:'
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
-const siteCardBg = (k) => grad(hexToRgba(SITES[k].hex,0.26), hexToRgba(SITES[k].hex2,0.15), 150);
 
 const LockIcon = (locked, size, colour) => {
   const s = size || 19;
@@ -84,7 +83,9 @@ const DotsIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0
 const XIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('path', { d:'M6 6 L18 18 M18 6 L6 18', stroke:col, strokeWidth:2.2, strokeLinecap:'round' }));
 const PlusIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('path', { d:'M12 5 V19 M5 12 H19', stroke:col, strokeWidth:2.3, strokeLinecap:'round' }));
+  e('path', { d:'M12 5 V19 M5 12 H19', stroke:col, strokeWidth:2.4, strokeLinecap:'round' }));
+const PlaneIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('path', { d:'M3 13 L21 6 L14 13.5 L15.5 20 L12.5 18.5 L11 14.5 L3 13Z', fill:col, opacity:0.9 }));
 
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
@@ -106,6 +107,8 @@ const roundNow = () => { const d=new Date(); d.setMinutes(Math.floor(d.getMinute
   return pad(d.getHours())+':'+pad(d.getMinutes()); };
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
+
+const AUTO_BACKUP_KEY = 'autoBackupDate';
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -135,7 +138,10 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 55;
+  const CAL_TRIGGER = 26;
+
+  const jobsRef = useRef(jobs);
+  useEffect(() => { jobsRef.current = jobs; }, [jobs]);
 
   function blank(date) {
     const s = roundNow();
@@ -178,78 +184,6 @@ function App() {
     });
   };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return jobs.filter(j => {
-      if (siteFilter.length && !siteFilter.includes(j.site)) return false;
-      if (equipFilter.length && !eqOf(j).some(x => equipFilter.includes(x))) return false;
-      if (!q) return true;
-      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
-        ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x]+' '+x : x),
-        ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
-      return hay.includes(q);
-    }).sort((a,b) => new Date(b.startDateTime) - new Date(a.startDateTime));
-  }, [jobs, query, siteFilter, equipFilter]);
-
-  const partHistory = useMemo(() => {
-    const set = new Map();
-    jobs.forEach(j => (j.parts||[]).forEach(p => {
-      if (p.partNumber && p.partNumber.trim()) set.set(p.partNumber.trim(), p.partDescription||'');
-    }));
-    return [...set.entries()];
-  }, [jobs]);
-
-  /* ---------- month data ---------- */
-  const ms = useMemo(() => {
-    const y = anchorDate.getFullYear(), m = anchorDate.getMonth();
-    const src = jobs.filter(j => {
-      const d = new Date(j.startDateTime);
-      return d.getFullYear() === y && d.getMonth() === m;
-    });
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-    const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
-    const days = {};
-    src.forEach(j => {
-      const dnum = new Date(j.startDateTime).getDate();
-      (days[dnum] = days[dnum] || { tickets:[] }).tickets.push(j);
-    });
-    Object.keys(days).forEach(d => {
-      const day = days[d];
-      day.tickets.sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
-      const seq = [];
-      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
-      day.siteSequence = seq;
-      day.sites = [...new Set(day.tickets.map(j=>j.site).filter(Boolean))];
-      day.equip = [...new Set(day.tickets.flatMap(eqOf))];
-      day.allLocked = day.tickets.every(j => j.locked);
-      day.first = day.tickets[0].hasTravel && day.tickets[0].travelDateTime ? day.tickets[0].travelDateTime : day.tickets[0].startDateTime;
-      const lastJob = day.tickets[day.tickets.length-1];
-      day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
-    });
-    return { y, m, src, days, daysInMonth, firstDow };
-  }, [jobs, anchorDate]);
-
-  /* ---------- week data — anchored on the real selected date, not day-of-month ---------- */
-  const wk = useMemo(() => {
-    const dow = (anchorDate.getDay() + 6) % 7;
-    const monday = new Date(anchorDate); monday.setDate(anchorDate.getDate() - dow);
-    const dates = [...Array(7)].map((_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
-    const byDate = {};
-    jobs.forEach(j => { const k = (j.startDateTime||'').slice(0,10); (byDate[k] = byDate[k] || []).push(j); });
-    Object.keys(byDate).forEach(k => byDate[k].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)));
-    return { monday, dates, byDate };
-  }, [jobs, anchorDate]);
-
-  /* ---------- single-day data ---------- */
-  const dv = useMemo(() => {
-    const iso = anchorDate.getFullYear()+'-'+pad(anchorDate.getMonth()+1)+'-'+pad(anchorDate.getDate());
-    const list = jobs.filter(j => (j.startDateTime||'').slice(0,10) === iso)
-      .sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
-    const seq = [];
-    list.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
-    return { iso, list, siteSequence:seq };
-  }, [jobs, anchorDate]);
-
   const buildXlsxBlob = (rowsSrc) => {
     const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Signed off','Work Done','Parts Used']];
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
@@ -291,6 +225,34 @@ function App() {
     return false;
   };
 
+  /* ---------- automatic daily JSON backup ----------
+     There's no way for a plain home-screen web app to run at the exact
+     stroke of midnight while your phone is locked — iOS won't wake it.
+     Instead this checks on every app open, and every few minutes while
+     the app stays open, whether the calendar date has moved on since the
+     last backup; the first time that happens it silently drops a dated
+     JSON backup file (same format as "Create backup file" in the menu). */
+  const doAutoBackup = (label) => {
+    if (!jobsRef.current.length) return;
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:9, exported:new Date().toISOString(), auto:true, jobs:jobsRef.current }, null, 2)], { type:'application/json' });
+    download(blob, label+' Auto backup.json');
+  };
+  useEffect(() => {
+    if (!ready) return;
+    const check = () => {
+      const t = todayISO();
+      let last = null;
+      try { last = localStorage.getItem(AUTO_BACKUP_KEY); } catch (err) {}
+      if (last !== t) {
+        doAutoBackup(last || t);
+        try { localStorage.setItem(AUTO_BACKUP_KEY, t); } catch (err) {}
+      }
+    };
+    check();
+    const iv = setInterval(check, 5*60*1000);
+    return () => clearInterval(iv);
+  }, [ready]);
+
   const doSpreadsheet = async (scope) => {
     const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
     if (!src.length) { alert('Nothing to export.'); return; }
@@ -306,7 +268,7 @@ function App() {
   const doBackup = async () => {
     if (!jobs.length) { alert('Nothing to back up.'); return; }
     const name = stamp()+' App tickets backup.json';
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:8, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify({ app:'tickets', version:9, exported:new Date().toISOString(), jobs }, null, 2)], { type:'application/json' });
     if (!(await shareFiles([new File([blob],name,{type:'application/json'})]))) download(blob,name);
     setMenuOpen(false);
   };
@@ -364,7 +326,75 @@ function App() {
     await persist([]); setMenuOpen(false);
   };
 
-  /* ---------- navigation ---------- */
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return jobs.filter(j => {
+      if (siteFilter.length && !siteFilter.includes(j.site)) return false;
+      if (equipFilter.length && !eqOf(j).some(x => equipFilter.includes(x))) return false;
+      if (!q) return true;
+      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+        ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x]+' '+x : x),
+        ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a,b) => new Date(b.startDateTime) - new Date(a.startDateTime));
+  }, [jobs, query, siteFilter, equipFilter]);
+
+  const partHistory = useMemo(() => {
+    const set = new Map();
+    jobs.forEach(j => (j.parts||[]).forEach(p => {
+      if (p.partNumber && p.partNumber.trim()) set.set(p.partNumber.trim(), p.partDescription||'');
+    }));
+    return [...set.entries()];
+  }, [jobs]);
+
+  const ms = useMemo(() => {
+    const y = anchorDate.getFullYear(), m = anchorDate.getMonth();
+    const src = jobs.filter(j => {
+      const d = new Date(j.startDateTime);
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
+    const days = {};
+    src.forEach(j => {
+      const dnum = new Date(j.startDateTime).getDate();
+      (days[dnum] = days[dnum] || { tickets:[] }).tickets.push(j);
+    });
+    Object.keys(days).forEach(d => {
+      const day = days[d];
+      day.tickets.sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+      const seq = [];
+      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+      day.siteSequence = seq;
+      day.sites = [...new Set(day.tickets.map(j=>j.site).filter(Boolean))];
+      day.equip = [...new Set(day.tickets.flatMap(eqOf))];
+      day.allLocked = day.tickets.every(j => j.locked);
+      day.first = day.tickets[0].hasTravel && day.tickets[0].travelDateTime ? day.tickets[0].travelDateTime : day.tickets[0].startDateTime;
+      const lastJob = day.tickets[day.tickets.length-1];
+      day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
+    });
+    return { y, m, src, days, daysInMonth, firstDow };
+  }, [jobs, anchorDate]);
+
+  const wk = useMemo(() => {
+    const dow = (anchorDate.getDay() + 6) % 7;
+    const monday = new Date(anchorDate); monday.setDate(anchorDate.getDate() - dow);
+    const dates = [...Array(7)].map((_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
+    const byDate = {};
+    jobs.forEach(j => { const k = (j.startDateTime||'').slice(0,10); (byDate[k] = byDate[k] || []).push(j); });
+    Object.keys(byDate).forEach(k => byDate[k].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)));
+    return { monday, dates, byDate };
+  }, [jobs, anchorDate]);
+
+  const dv = useMemo(() => {
+    const iso = anchorDate.getFullYear()+'-'+pad(anchorDate.getMonth()+1)+'-'+pad(anchorDate.getDate());
+    const list = jobs.filter(j => (j.startDateTime||'').slice(0,10) === iso)
+      .sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
+    const seq = [];
+    list.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+    return { iso, list, siteSequence:seq };
+  }, [jobs, anchorDate]);
+
   const goBack = () => {
     const r = returnTo;
     setSwipeX(0); setSwiping(false); setFormMenu(false);
@@ -460,7 +490,6 @@ function App() {
     setForm({ ...form, parts });
   };
 
-  /* ---------- swipe-back on the ticket form ---------- */
   const onTouchStart = (ev) => {
     const tag = ((ev.target && ev.target.tagName) || '').toUpperCase();
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { touch.current.live = false; return; }
@@ -494,7 +523,7 @@ function App() {
       opacity: 0.3 + progress*0.7, transition:'background .12s ease' } },
     ChevronLeft(24, armed ? '#FFF' : GREY));
 
-  /* ---------- swipe left/right on calendar to change period ---------- */
+  /* ---------- calendar swipe: lighter drag now flips the period ---------- */
   const shift = (n) => {
     if (calMode === 'month') {
       const y = anchorDate.getFullYear(), targetM = anchorDate.getMonth() + n;
@@ -520,7 +549,7 @@ function App() {
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
     if (Math.abs(dy) > Math.abs(dx) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
-    setCalDX(Math.max(-70, Math.min(70, dx * 0.5)));
+    setCalDX(Math.max(-80, Math.min(80, dx)));
   };
   const onCalTouchEnd = () => {
     if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
@@ -595,43 +624,46 @@ function App() {
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
-  /* ---------- ticket detail card (shared by day sheet + day view) ---------- */
+  /* ---------- ticket detail card — bright solid gradient, punchy again ---------- */
   const ticketDetailCard = (j, i, ret) => {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
+    const onC = s ? '#FFFFFF' : INK;
+    const subC = s ? 'rgba(255,255,255,0.86)' : MID;
+    const bodyC = s ? 'rgba(255,255,255,0.93)' : '#C7CAD8';
+    const chipBg = s ? 'rgba(0,0,0,0.24)' : 'rgba(255,255,255,0.1)';
     return e('div', { key:j.id, onClick:()=>openEdit(j, ret),
-      style:{ background: s ? siteCardBg(j.site) : SURF3,
-        border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?hexToRgba(s.hex,0.4):LINE),
-        boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'26, '+SHADOW_SM : SHADOW_SM,
+      style:{ background: s ? siteGrad(j.site) : SURF3,
+        border: j.locked ? '2.5px solid '+LOCKED : (s ? '1.5px solid rgba(255,255,255,0.28)' : '1.5px solid '+LINE),
+        boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'33, '+SHADOW_SM : (s ? '0 10px 24px '+hexToRgba(s.hex,0.4) : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
-          i != null ? e('span', { style:{ background:'rgba(255,255,255,0.1)', color:MID, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
-          e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:INK } }, j.ticketNumber),
-          s && e('span', { style:{ background:siteGrad(j.site), color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
-          eq.map(x => e('span', { key:x, style:{ background:'rgba(255,255,255,0.1)', color:MID, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
-          ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
+          i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
+          e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
+          s && e('span', { style:{ background:'rgba(0,0,0,0.24)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
+          eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
+          ex.length > 0 && e('span', { style:{ background:'rgba(0,0,0,0.24)', color:'#FFF', padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
         e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
           title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
           style:{ flexShrink:0, width:'30px', height:'30px', borderRadius:'999px', cursor:'pointer',
-            border: j.locked ? 'none' : '1.5px solid '+LINE,
-            background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.06)',
+            border: j.locked ? 'none' : (s ? 'none' : '1.5px solid '+LINE),
+            background: j.locked ? '#FFF' : (s ? 'rgba(0,0,0,0.24)' : 'rgba(255,255,255,0.06)'),
             display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
-          LockIcon(!!j.locked, 16))),
-      e('div', { style:{ fontSize:'0.68rem', color:MID, fontWeight:600 } },
+          LockIcon(!!j.locked, 16, j.locked ? LOCKED : (s?'#FFF':undefined)))),
+      e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
         (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
-      ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:TRAVEL, fontWeight:700, marginTop:'0.25rem' } },
+      ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:subC, fontWeight:700, marginTop:'0.25rem' } },
         'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:'#C7CAD8', margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
+      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
       parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
-        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:MID } },
+        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
           '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
   };
 
-  /* ---------- month grid ---------- */
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
     const sites = d ? d.sites : [];
@@ -690,7 +722,6 @@ function App() {
       ];
     })());
 
-  /* ---------- week strip ---------- */
   const weekRow = (dt, i) => {
     const iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
     const list = wk.byDate[iso] || [];
@@ -732,7 +763,6 @@ function App() {
     return a.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + b.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   };
 
-  /* ---------- day view ---------- */
   const dayView = e('div', { style:{ ...PANEL, padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
     e('div', null,
       e('div', { style:{ fontSize:'1.1rem', fontWeight:900, letterSpacing:'-0.3px' } },
@@ -778,8 +808,8 @@ function App() {
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
-      style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)',
-        opacity: 1 - Math.abs(calDX)/260 } },
+      style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
+        opacity: 1 - Math.abs(calDX)/220 } },
       calMode === 'month' ? monthGrid : calMode === 'week' ? weekGrid : dayView),
 
     e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
@@ -820,36 +850,6 @@ function App() {
     closeBtn(()=>setDayDetail(null))
   ], ()=>setDayDetail(null));
 
-  const ticketCard = (j) => {
-    const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
-    const on = mins(j.startDateTime, j.finishDateTime);
-    return e('div', { key:j.id, onClick:()=>openEdit(j, {view:'list'}),
-      style:{ padding:'1rem 1.05rem', borderRadius:'20px', cursor:'pointer',
-        background: s ? siteCardBg(j.site) : SURF3,
-        border: j.locked ? '2.5px solid '+LOCKED : '1.5px solid '+(s?hexToRgba(s.hex,0.4):LINE),
-        boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'26, '+SHADOW_SM : SHADOW_SM } },
-      e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'0.6rem' } },
-        e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.3rem', flexWrap:'wrap' } },
-            e('span', { style:{ fontWeight:900, fontSize:'1rem', letterSpacing:'-0.2px', color:INK } }, j.ticketNumber),
-            s && e('span', { style:{ background:siteGrad(j.site), color:'#FFF', padding:'0.2rem 0.58rem', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900 } }, s.label),
-            eq.map(x => e('span', { key:x, style:{ background:'rgba(255,255,255,0.1)', color:MID, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:900 } }, x)),
-            ex.length > 0 && e('span', { style:{ background:TRAVELBG, color:TRAVEL, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.58rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          e('div', { style:{ fontSize:'0.72rem', color:MID, fontWeight:600 } },
-            fmtDate(j.startDateTime) + '  ·  ' + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime) + (on ? '  ·  '+hm(on) : ''))),
-        e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
-          title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
-          style:{ flexShrink:0, width:'32px', height:'32px', borderRadius:'999px', cursor:'pointer',
-            border: j.locked ? 'none' : '1.5px solid '+LINE,
-            background: j.locked ? LOCKEDBG : 'rgba(255,255,255,0.06)',
-            display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
-          LockIcon(!!j.locked, 18))),
-      j.workDone && e('p', { style:{ fontSize:'0.85rem', color:'#C7CAD8', margin:'0.55rem 0 0', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' } }, j.workDone),
-      (j.parts||[]).filter(p=>p.partNumber||p.partDescription).length > 0 &&
-        e('div', { style:{ marginTop:'0.5rem', fontSize:'0.68rem', color:GREY, fontWeight:700 } },
-          j.parts.filter(p=>p.partNumber||p.partDescription).length + ' part(s)'));
-  };
-
   const listView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
@@ -883,85 +883,68 @@ function App() {
 
     filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map(ticketCard)));
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j)=>ticketDetailCard(j, null, {view:'list'}))));
 
-  /* ---------- redesigned journey spine: no floating buttons, tap-to-add ghost rails ---------- */
-  const dotEl = (colour, size) => e('span', { style:{ width:size+'px', height:size+'px', borderRadius:'999px',
-    background:SURF, border:'3px solid '+colour, display:'block', flexShrink:0 } });
+  /* ---------- redesigned times section: no train lines, roomy stacked blocks ---------- */
+  const travelBlock = (time, field, label, update) =>
+    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem', background:TRAVELBG, borderRadius:'14px', padding:'0.55rem 0.7rem 0.55rem 0.8rem' } },
+      PlaneIcon(14, TRAVEL),
+      e('span', { style:{ flex:1, fontSize:'0.74rem', color:TRAVEL, fontWeight:800 } }, label),
+      e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
+        style:{ width:'70px', border:'none', background:'transparent', outline:'none', textAlign:'right',
+          fontSize:'0.95rem', fontWeight:800, color:TRAVEL, fontVariantNumeric:'tabular-nums', padding:0 } }),
+      e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
+        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:'rgba(108,147,240,0.22)',
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
+        XIcon(11, TRAVEL)));
 
-  const ROW = { display:'flex', alignItems:'center', gap:'0.75rem', width:'100%', maxWidth:'268px' };
-  const TIMECOL = { width:'78px', flexShrink:0 };
-  const DOTCOL = { width:'16px', display:'flex', justifyContent:'center', flexShrink:0 };
+  const addTravelBtn = (label, onClick) =>
+    e('button', { onClick,
+      style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.4rem', width:'100%',
+        border:'1.5px dashed rgba(255,255,255,0.16)', background:'transparent', borderRadius:'14px',
+        padding:'0.5rem', cursor:'pointer' } },
+      e('span', { style:{ width:'16px', height:'16px', borderRadius:'999px', border:'1.5px solid rgba(255,255,255,0.22)',
+        display:'flex', alignItems:'center', justifyContent:'center' } }, PlusIcon(9, GREY)),
+      e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, label));
 
-  const buildSpine = (d, update, prefix) => {
+  const bigTimeBlock = (time, field, label, accent, update) =>
+    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.7rem', background:'#12141D', borderRadius:'16px', padding:'0.7rem 0.9rem' } },
+      e('span', { style:{ width:'8px', height:'8px', borderRadius:'999px', background:accent, flexShrink:0 } }),
+      e('span', { style:{ flex:1, fontSize:'0.86rem', color:INK, fontWeight:800 } }, label),
+      e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
+        style:{ width:'92px', border:'none', background:'transparent', outline:'none', textAlign:'right',
+          fontSize:'1.4rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.5px' } }));
+
+  const durationCaption = (text) =>
+    e('div', { style:{ textAlign:'center', fontSize:'0.65rem', fontWeight:800, color:GREY, padding:'1px 0' } }, text);
+
+  const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
     const rows = [];
-
-    const bigRow = (key, time, field, label, colour) =>
-      e('div', { key:key, style:{ ...ROW, margin:'2px 0' } },
-        e('div', { style:TIMECOL },
-          e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
-            style:{ width:'100%', border:'none', background:'transparent', outline:'none', textAlign:'right',
-              fontSize:'1.32rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.5px' } })),
-        e('div', { style:DOTCOL }, dotEl(colour, 14)),
-        e('span', { style:{ flex:1, fontSize:'0.83rem', color:INK, fontWeight:800 } }, label));
-
-    /* travel time present: quiet inline row, small × sits at the far edge instead of a separate "Remove" button */
-    const travelRow = (key, time, field, label) =>
-      e('div', { key:key, style:{ ...ROW, margin:'2px 0', position:'relative' } },
-        e('div', { style:TIMECOL },
-          e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
-            style:{ width:'100%', border:'none', background:'transparent', outline:'none', textAlign:'right',
-              fontSize:'0.9rem', fontWeight:800, color:TRAVEL, fontVariantNumeric:'tabular-nums', padding:0 } })),
-        e('div', { style:DOTCOL }, dotEl(TRAVEL, 10)),
-        e('span', { style:{ flex:1, fontSize:'0.72rem', color:TRAVEL, fontWeight:800 } }, label),
-        e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-          style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:'rgba(255,255,255,0.06)',
-            display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
-          XIcon(11, GREY)));
-
-    /* on-site leg between start/finish — unchanged rail chip */
-    const legEl = (key, text) =>
-      e('div', { key:key, style:{ ...ROW, margin:'1px 0' } },
-        e('div', { style:TIMECOL }),
-        e('div', { style:DOTCOL },
-          e('span', { style:{ width:'2px', height:'24px', background:LINE, display:'block', borderRadius:'2px' } })),
-        e('span', { style:{ fontSize:'0.63rem', fontWeight:800, borderRadius:'999px', padding:'2px 9px',
-          background:'rgba(255,255,255,0.06)', color:MID } }, text));
-
-    /* no travel yet: the whole rail segment is one quiet tappable "ghost" row, no separate button floating in the dot column */
-    const ghostRow = (key, label, onClick) =>
-      e('button', { key:key, onClick:onClick,
-        style:{ ...ROW, margin:'1px 0', background:'none', border:'none', cursor:'pointer', padding:'3px 0' } },
-        e('div', { style:TIMECOL }),
-        e('div', { style:DOTCOL },
-          e('span', { style:{ width:'2px', height:'24px', background:'repeating-linear-gradient(180deg, rgba(255,255,255,0.22) 0 4px, transparent 4px 8px)', display:'block', borderRadius:'2px' } })),
-        e('span', { style:{ flex:1, display:'flex', alignItems:'center', gap:'0.35rem' } },
-          e('span', { style:{ width:'15px', height:'15px', borderRadius:'999px', border:'1.5px dashed rgba(255,255,255,0.3)',
-            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, PlusIcon(9, GREY)),
-          e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, label)));
-
     if (d.t1) {
-      rows.push(travelRow(prefix+'t1', d.t1, 't1', 'Travel 1'));
-      rows.push(legEl(prefix+'l1', legMins(d.t1, d.start) ? hm(legMins(d.t1, d.start)) : 'travel'));
+      rows.push(e('div', { key:prefix+'t1' }, travelBlock(d.t1, 't1', 'Travel before', update)));
+      const tm = legMins(d.t1, d.start);
+      if (tm) rows.push(durationCaption(hm(tm)+' travelling', prefix+'c1'));
     } else {
-      rows.push(ghostRow(prefix+'p1', 'Add travel before', ()=>update({ t1: shiftTime(d.start, -1) })));
+      rows.push(e('div', { key:prefix+'p1' }, addTravelBtn('Add travel before start', ()=>update({ t1: shiftTime(d.start, -1) }))));
     }
-    rows.push(bigRow(prefix+'st', d.start, 'start', 'Start', GREEN));
-    rows.push(legEl(prefix+'l2', legMins(d.start, d.finish) ? hm(legMins(d.start, d.finish))+' on site' : 'on site'));
-    rows.push(bigRow(prefix+'fi', d.finish, 'finish', 'Finish', INK));
+    rows.push(e('div', { key:prefix+'st' }, bigTimeBlock(d.start, 'start', 'Start', GREEN, update)));
+    const onm = legMins(d.start, d.finish);
+    rows.push(e('div', { key:prefix+'onc' }, durationCaption(onm ? hm(onm)+' on site' : 'On site')));
+    rows.push(e('div', { key:prefix+'fi' }, bigTimeBlock(d.finish, 'finish', 'Finish', '#8B90A6', update)));
     if (d.t2) {
-      rows.push(legEl(prefix+'l3', legMins(d.finish, d.t2) ? hm(legMins(d.finish, d.t2)) : 'travel'));
-      rows.push(travelRow(prefix+'t2', d.t2, 't2', 'Travel 2'));
+      const tm2 = legMins(d.finish, d.t2);
+      if (tm2) rows.push(durationCaption(hm(tm2)+' travelling', prefix+'c2'));
+      rows.push(e('div', { key:prefix+'t2' }, travelBlock(d.t2, 't2', 'Travel after', update)));
     } else {
-      rows.push(ghostRow(prefix+'p2', 'Add travel after', ()=>update({ t2: shiftTime(d.finish, 1) })));
+      rows.push(e('div', { key:prefix+'p2' }, addTravelBtn('Add travel after finish', ()=>update({ t2: shiftTime(d.finish, 1) }))));
     }
     return rows;
   };
 
   const dayPanel = (d, update, prefix, title, onRemove) =>
     e('div', { key:prefix, style:{ background:'#12141D', border:'1px solid '+LINE, borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
-      display:'flex', flexDirection:'column', gap:'0.75rem' } },
+      display:'flex', flexDirection:'column', gap:'0.6rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('span', { style:{ ...LBL, color: onRemove ? TRAVEL : GREY } }, title),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
@@ -969,8 +952,7 @@ function App() {
             style:{ border:'1.5px solid '+LINE, background:SURF2, borderRadius:'10px', outline:'none',
               fontSize:'0.74rem', fontWeight:800, color:INK, padding:'0.3rem 0.45rem', maxWidth:'132px' } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:GREY, padding:0 } }, 'Remove') : null)),
-      e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center' } },
-        buildSpine(d, update, prefix)));
+      e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } }, buildTimes(d, update, prefix)));
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
   const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx===i ? { ...x, ...patch } : x) });
