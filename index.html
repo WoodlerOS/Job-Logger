@@ -805,16 +805,16 @@ function App() {
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
     const onC = s ? '#FFFFFF' : INK;
-    const subC = s ? 'rgba(255,255,255,0.85)' : MID;
+    const subC = s ? 'rgba(255,255,255,0.62)' : MID;
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(6,78,59,0.10)';
     return e('div', {
       style:{ background: s ? sheen+', '+siteGrad(j.site) : sheen+', '+SURF3,
-        border: s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE,
-        boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK+', '+SHADOW_SM
+        border: j.locked ? '3px solid '+INK : (s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE),
+        boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM
           : (s ? '0 10px 22px '+hexToRgba(s.hex,0.34)+', 0 2px 6px '+hexToRgba(s.hex,0.2) : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
-        transition:'box-shadow .25s ease, transform .15s ease' } },
+        transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
           i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
@@ -856,10 +856,11 @@ function App() {
 
     let border = '1px solid rgba(6,78,59,0.10)';
     if (has) border = '1px solid rgba(255,255,255,0.14)';
+    if (d && d.allLocked) border = '3px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
-    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK : null;
+    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 2px '+SURF : null;
     const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
@@ -918,15 +919,15 @@ function App() {
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : null;
-    const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF+', inset 0 0 0 4px '+INK : null;
+    const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF : null;
     const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px',
-        border: '1px solid rgba(6,78,59,0.10)',
+        border: allLocked ? '3px solid '+INK : '1px solid rgba(6,78,59,0.10)',
         borderRadius:'17px', padding:'0.5rem 0.75rem',
-        transition:'box-shadow .25s ease',
+        transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
         e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
@@ -1269,4 +1270,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(e(App));
 </script>
 </body>
 </html>
-
