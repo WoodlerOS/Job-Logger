@@ -21,7 +21,9 @@
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color:#EDEEF3; -webkit-tap-highlight-color:transparent;
   }
-  #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh; }
+  #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
   input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:dark; }
   select { -webkit-appearance:none; appearance:none; color-scheme:dark; }
@@ -563,7 +565,7 @@ function App() {
   const sheet = (children, onClose) => e('div', { onClick:onClose,
     style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:60, display:'flex', alignItems:'flex-end' } },
     e('div', { onClick:(ev)=>ev.stopPropagation(),
-      style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'1rem 1rem 2rem',
+      style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'1rem 1rem calc(2rem + env(safe-area-inset-bottom))',
         display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
         boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none' } },
       e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.16)', margin:'0 auto 0.5rem' } }),
