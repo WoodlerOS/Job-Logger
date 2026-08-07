@@ -32,9 +32,24 @@
   input:focus, textarea:focus { border-color:#565C74 !important; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
   .chips::-webkit-scrollbar { display:none; }
+  .landscape-lock { display:none; }
+  @media (orientation:landscape) {
+    .landscape-lock {
+      display:flex; position:fixed; inset:0; z-index:9999;
+      background:#0A0B11; color:#EDEEF3; flex-direction:column;
+      align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
+      font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+    #root { display:none; }
+  }
 </style>
 </head>
 <body>
+<div class="landscape-lock">
+  <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#6E7386" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#EDEEF3" stroke-width="1.8" fill="none"/></svg>
+  <div style="font-weight:800; font-size:1.05rem;">Rotate back to portrait</div>
+  <div style="font-size:0.8rem; color:#9CA1B4; max-width:260px;">Tickets is designed for portrait use only.</div>
+</div>
 <div id="root"></div>
 <input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
 
@@ -111,6 +126,56 @@ const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
 
 const AUTO_BACKUP_KEY = 'autoBackupDate';
+const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('path', { d:'M4 7 H20 M9 7 V5a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 V7 M6 7 L7 20 a1 1 0 0 0 1 1 h8 a1 1 0 0 0 1-1 L18 7',
+    fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
+
+/* ---------- iOS-Mail-style swipe-to-reveal row: swipe left for Lock / Delete ---------- */
+function SwipeCard({ locked, onLock, onDelete, radius, children }) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const touchRef = useRef({ x:0, y:0, live:false });
+  const ACTION_W = 132, TRIGGER = 66;
+
+  const onStart = (ev) => {
+    const t = ev.touches[0];
+    touchRef.current = { x:t.clientX, y:t.clientY, live:true };
+    setDragging(true);
+  };
+  const onMove = (ev) => {
+    if (!touchRef.current.live) return;
+    const t = ev.touches[0];
+    const rawDx = t.clientX - touchRef.current.x;
+    const dy = t.clientY - touchRef.current.y;
+    if (Math.abs(dy) > Math.abs(rawDx) + 8) { touchRef.current.live = false; setDragging(false); return; }
+    const base = dx <= -ACTION_W + 1 ? -ACTION_W : 0;
+    setDx(Math.max(-ACTION_W - 14, Math.min(0, base + rawDx)));
+  };
+  const onEnd = () => {
+    if (!touchRef.current.live) { setDragging(false); return; }
+    touchRef.current.live = false;
+    setDragging(false);
+    setDx(dx <= -TRIGGER ? -ACTION_W : 0);
+  };
+  const onTap = () => { if (dx !== 0) setDx(0); };
+
+  return e('div', { style:{ position:'relative', borderRadius:radius, overflow:'hidden' } },
+    e('div', { style:{ position:'absolute', inset:0, display:'flex', justifyContent:'flex-end' } },
+      e('button', { onClick:()=>{ onLock(); setDx(0); },
+        style:{ width:'66px', border:'none', cursor:'pointer', background: locked ? '#3A4257' : LOCKED,
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
+        LockIcon(true, 20, '#FFF'),
+        e('span', { style:{ fontSize:'0.56rem', fontWeight:800, color:'#FFF' } }, locked ? 'Unlock' : 'Lock')),
+      e('button', { onClick:()=>{ setDx(0); onDelete(); },
+        style:{ width:'66px', border:'none', cursor:'pointer', background:RED,
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px' } },
+        TrashIcon(19, '#FFF'),
+        e('span', { style:{ fontSize:'0.56rem', fontWeight:800, color:'#FFF' } }, 'Delete'))),
+    e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:onTap,
+      style:{ transform:'translateX('+dx+'px)', transition: dragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
+        position:'relative' } },
+      children));
+}
 
 function App() {
   const [jobs, setJobs] = useState([]);
@@ -562,14 +627,37 @@ function App() {
     setCalDX(0);
   };
 
-  const sheet = (children, onClose) => e('div', { onClick:onClose,
-    style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:60, display:'flex', alignItems:'flex-end' } },
-    e('div', { onClick:(ev)=>ev.stopPropagation(),
-      style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'1rem 1rem calc(2rem + env(safe-area-inset-bottom))',
-        display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
-        boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none' } },
-      e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.16)', margin:'0 auto 0.5rem' } }),
-      children));
+  /* ---------- pull-down-to-dismiss on bottom sheets, iOS style ---------- */
+  const [sheetDY, setSheetDY] = useState(0);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const sheetTouch = useRef({ y:0, live:false });
+  const SHEET_TRIGGER = 90;
+
+  const sheet = (children, onClose) => {
+    const handleStart = (ev) => { sheetTouch.current = { y:ev.touches[0].clientY, live:true }; setSheetDragging(true); };
+    const handleMove = (ev) => {
+      if (!sheetTouch.current.live) return;
+      const dy = ev.touches[0].clientY - sheetTouch.current.y;
+      setSheetDY(Math.max(0, dy));
+    };
+    const handleEnd = () => {
+      if (!sheetTouch.current.live) return;
+      sheetTouch.current.live = false;
+      setSheetDragging(false);
+      if (sheetDY >= SHEET_TRIGGER) { setSheetDY(0); onClose(); } else setSheetDY(0);
+    };
+    return e('div', { onClick:onClose,
+      style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:60, display:'flex', alignItems:'flex-end' } },
+      e('div', { onClick:(ev)=>ev.stopPropagation(),
+        style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
+          display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
+          boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none',
+          transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
+        e('div', { onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
+          style:{ padding:'0.85rem 0 0.5rem', cursor:'grab' } },
+          e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.22)', margin:'0 auto' } })),
+        children));
+  };
 
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
@@ -626,8 +714,8 @@ function App() {
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
-  /* ---------- ticket detail card — bright solid gradient, punchy again ---------- */
-  const ticketDetailCard = (j, i, ret) => {
+  /* ---------- ticket detail card — bright solid gradient; presentational only, wrapped by SwipeCard for tap/lock/delete ---------- */
+  const ticketDetailCard = (j, i) => {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
@@ -635,9 +723,9 @@ function App() {
     const subC = s ? 'rgba(255,255,255,0.86)' : MID;
     const bodyC = s ? 'rgba(255,255,255,0.93)' : '#C7CAD8';
     const chipBg = s ? 'rgba(0,0,0,0.24)' : 'rgba(255,255,255,0.1)';
-    return e('div', { key:j.id, onClick:()=>openEdit(j, ret),
+    return e('div', {
       style:{ background: s ? siteGrad(j.site) : SURF3,
-        border: j.locked ? '2.5px solid '+LOCKED : (s ? '1.5px solid rgba(255,255,255,0.28)' : '1.5px solid '+LINE),
+        border: j.locked ? '3.5px solid '+LOCKED : (s ? '1.5px solid rgba(255,255,255,0.28)' : '1.5px solid '+LINE),
         boxShadow: j.locked ? '0 0 0 3px '+LOCKED+'33, '+SHADOW_SM : (s ? '0 10px 24px '+hexToRgba(s.hex,0.4) : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
@@ -647,13 +735,7 @@ function App() {
           s && e('span', { style:{ background:'rgba(0,0,0,0.24)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:'rgba(0,0,0,0.24)', color:'#FFF', padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-        e('button', { onClick:(ev)=>{ ev.stopPropagation(); toggleLock(j.id); },
-          title: j.locked ? 'Ready for sign-off — tap to unlock' : 'Mark ready for sign-off',
-          style:{ flexShrink:0, width:'30px', height:'30px', borderRadius:'999px', cursor:'pointer',
-            border: j.locked ? 'none' : (s ? 'none' : '1.5px solid '+LINE),
-            background: j.locked ? '#FFF' : (s ? 'rgba(0,0,0,0.24)' : 'rgba(255,255,255,0.06)'),
-            display:'flex', alignItems:'center', justifyContent:'center', padding:0 } },
-          LockIcon(!!j.locked, 16, j.locked ? LOCKED : (s?'#FFF':undefined)))),
+          j.locked && e('span', { key:'lk', style:{ display:'inline-flex' } }, LockIcon(true, 14, onC))),
       e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -665,6 +747,11 @@ function App() {
         parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
           '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
   };
+
+  const swipeCard = (j, i, ret) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
+      onLock:()=>toggleLock(j.id),
+      onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); } },
+    e('div', { onClick:()=>openEdit(j, ret) }, ticketDetailCard(j, i)));
 
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
@@ -777,7 +864,7 @@ function App() {
     dv.list.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } },
-          dv.list.map((j,i) => ticketDetailCard(j, i, { view:'month', day:anchorDate.getDate() }))),
+          dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
       style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:BLUE, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
       '+ Add ticket for this day'));
@@ -842,7 +929,7 @@ function App() {
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dd.siteSequence)) : null,
 
-    dd ? dd.tickets.map((j,i) => ticketDetailCard(j, i, dayRet))
+    dd ? dd.tickets.map((j,i) => swipeCard(j, i, dayRet))
        : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
@@ -885,7 +972,7 @@ function App() {
 
     filtered.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j)=>ticketDetailCard(j, null, {view:'list'}))));
+      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.6rem' } }, filtered.map((j)=>swipeCard(j, null, {view:'list'}))));
 
   /* ---------- redesigned times section: no train lines, roomy stacked blocks ---------- */
   const travelBlock = (time, field, label, update) =>
