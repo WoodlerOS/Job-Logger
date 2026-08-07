@@ -36,6 +36,16 @@
   @keyframes popIn { 0% { opacity:0; transform:scale(0.92); } 60% { opacity:1; transform:scale(1.03); } 100% { transform:scale(1); } }
   @keyframes dotPulseAbs { 0%,100% { opacity:1; transform:translateX(-50%) scale(1); } 50% { opacity:0.4; transform:translateX(-50%) scale(1.5); } }
   @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.5); } }
+  @keyframes blobDrift1 { 0%,100% { transform:translate(-10%,-15%) scale(1); } 50% { transform:translate(8%,10%) scale(1.15); } }
+  @keyframes blobDrift2 { 0%,100% { transform:translate(10%,10%) scale(1); } 50% { transform:translate(-8%,-12%) scale(1.1); } }
+  .ambient-wrap { position:relative; }
+  .ambient-blob { position:absolute; border-radius:999px; filter:blur(28px); pointer-events:none; z-index:0; opacity:0.55; }
+  .ambient-blob.b1 { width:150px; height:150px; top:-50px; left:-30px; background:radial-gradient(circle, rgba(23,163,116,0.35), rgba(23,163,116,0) 70%); animation:blobDrift1 9s ease-in-out infinite; }
+  .ambient-blob.b2 { width:130px; height:130px; top:-30px; right:-30px; background:radial-gradient(circle, rgba(217,165,66,0.32), rgba(217,165,66,0) 70%); animation:blobDrift2 11s ease-in-out infinite; }
+  .ambient-wrap > *:not(.ambient-blob) { position:relative; z-index:1; }
+  @keyframes burstFly { 0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(30px) scale(0.4); } }
+  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#064E3B;
+    animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) {
@@ -80,13 +90,15 @@ const LOCKED='#064E3B', LOCKEDBG='rgba(6,78,59,0.07)';
 const SURF='#FEF7EA', SURF2='#F2E1BE', SURF3='#F7EBD4';
 const FIELDBG='#FFFDF7', EMPTY='#FDF6E7';
 
-const SHADOW    = '0 10px 26px rgba(16,58,43,0.10)';
-const SHADOW_SM = '0 3px 10px rgba(16,58,43,0.08)';
+const SHADOW    = '0 14px 34px rgba(16,58,43,0.16), 0 3px 8px rgba(16,58,43,0.10)';
+const SHADOW_SM = '0 5px 14px rgba(16,58,43,0.13), 0 1px 3px rgba(16,58,43,0.09)';
+const SHADOW_BTN = '0 6px 16px rgba(16,58,43,0.16), 0 1px 3px rgba(16,58,43,0.10)';
+const sheen = 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%)';
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:FIELDBG, color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-const PANEL = { background:SURF, borderRadius:'24px', boxShadow:SHADOW, border:'1px solid rgba(6,78,59,0.08)' };
+const PANEL = { background:sheen+', '+SURF, boxShadow:SHADOW, borderRadius:'24px', border:'1px solid rgba(6,78,59,0.08)' };
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
@@ -216,6 +228,7 @@ function App() {
   const [showWeekends, setShowWeekends] = useState(false);
 
   const [swipeX, setSwipeX] = useState(0);
+  const [burst, setBurst] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touch = useRef({ x:0, y:0, live:false });
   const SWIPE_TRIGGER = 95;
@@ -727,7 +740,9 @@ function App() {
     e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800 } }, 'Menu'),
     e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.2px' } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(null, view==='list'?{view:'list'}:null),
-      style:{ ...TXTBTN, color:VIOLET, fontWeight:800 } }, 'New'));
+      style:{ border:'none', cursor:'pointer', color:APRICOT, fontWeight:800, fontSize:'0.78rem',
+        background:sheen+', '+grad(VIOLET,'#0A6146',140), padding:'0.42rem 0.85rem', borderRadius:'999px',
+        boxShadow:SHADOW_BTN } }, 'New'));
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -752,11 +767,11 @@ function App() {
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(6,78,59,0.10)';
     return e('div', {
-      style:{ background: s ? siteGrad(j.site) : SURF3,
-        border: s ? '1px solid rgba(255,255,255,0.16)' : '1px solid '+LINE,
-        boxShadow: j.locked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK : (s ? '0 6px 16px '+hexToRgba(s.hex,0.24) : SHADOW_SM),
+      style:{ background: s ? sheen+', '+siteGrad(j.site) : sheen+', '+SURF3,
+        border: s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE,
+        boxShadow: j.locked ? '0 0 0 2px '+SURF+', 0 0 0 4px '+INK+', '+SHADOW_SM : (s ? '0 10px 22px '+hexToRgba(s.hex,0.34)+', 0 2px 6px '+hexToRgba(s.hex,0.2) : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
-        transition:'box-shadow .25s ease' } },
+        transition:'box-shadow .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
           i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
@@ -908,7 +923,7 @@ function App() {
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
           dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
-      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
+      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed rgba(6,78,59,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
       '+ Add ticket for this day'));
 
   const periodLabel = () => {
@@ -919,22 +934,29 @@ function App() {
 
   const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
 
-    e('div', { style:{ display:'flex', background:'rgba(6,78,59,0.08)', borderRadius:'999px', padding:'3px' } },
-      ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-        style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-          background: calMode===mode ? VIOLET : 'transparent', color: calMode===mode ? APRICOT : MID } },
-        mode[0].toUpperCase()+mode.slice(1)))),
+    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
+      e('span', { key:'b1', className:'ambient-blob b1' }),
+      e('span', { key:'b2', className:'ambient-blob b2' }),
 
-    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem' } },
-      e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
-      e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
-        e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
-        calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
-          String(anchorDate.getFullYear()))),
-      e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
-        transform:'rotate(180deg)' } }, ChevronLeft(17, INK))),
+      e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(16,58,43,0.12)' } },
+        ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
+          style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
+            background: calMode===mode ? sheen+', '+grad(VIOLET,'#0A6146',140) : 'transparent',
+            color: calMode===mode ? APRICOT : MID,
+            boxShadow: calMode===mode ? SHADOW_BTN : 'none',
+            transition:'background .2s ease, box-shadow .2s ease' } },
+          mode[0].toUpperCase()+mode.slice(1)))),
+
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem' } },
+        e('button', { onClick:()=>shift(-1), style:{ background:sheen+', '+SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_BTN } }, ChevronLeft(17, INK)),
+        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
+          e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
+          calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
+            String(anchorDate.getFullYear()))),
+        e('button', { onClick:()=>shift(1), style:{ background:sheen+', '+SURF2, border:'none', borderRadius:'999px', width:'34px', height:'34px',
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_BTN,
+          transform:'rotate(180deg)' } }, ChevronLeft(17, INK)))),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -944,7 +966,7 @@ function App() {
 
     e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
       Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.6rem', fontWeight:800,
-        color:MID, flexShrink:0, background:SURF2, padding:'0.35rem 0.68rem', borderRadius:'999px' } },
+        color:MID, flexShrink:0, background:SURF, padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
         e('span', { style:{ width:'9px', height:'9px', borderRadius:'999px', background:siteGrad(k) } }), SITES[k].label))),
 
     calMode !== 'day' && e('button', { onClick:()=>setShowWeekends(!showWeekends),
@@ -974,7 +996,7 @@ function App() {
        : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
-      style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed '+LINE, background:'transparent', color:VIOLET, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
+      style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed rgba(6,78,59,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
       '+ Add ticket for this day'),
 
     closeBtn(()=>setDayDetail(null))
@@ -1171,8 +1193,8 @@ function App() {
         style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
           borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'),
 
-      e('button', { onClick:()=>setForm({ ...form, locked: !form.locked }),
-        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer',
+      e('button', { onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
+        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
           border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
           background: form.locked ? LOCKEDBG : FIELDBG,
           borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left',
@@ -1183,6 +1205,9 @@ function App() {
             form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off'),
           e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
             form.locked ? 'Highlighted on the calendar' : 'All information has been added')),
+        burst > 0 ? e('div', { key:'burst'+burst, style:{ position:'absolute', right:'32px', top:'50%', width:0, height:0, pointerEvents:'none' } },
+          [...Array(8)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
+            style:{ '--ang': (bi*45)+'deg', background: bi%2 ? SITES.RH.hex : LOCKED } }))) : null,
         e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
           border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
           display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
