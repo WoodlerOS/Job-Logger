@@ -637,34 +637,53 @@ function App() {
     setCalDX(0);
   };
 
-  /* ---------- pull-down-to-dismiss on bottom sheets, iOS style ---------- */
+  /* ---------- pull-down-to-dismiss on bottom sheets, iOS style ----------
+     The whole sheet is the drag surface, not just the handle — but a
+     downward drag only takes over once the content is scrolled to the
+     top, exactly like a native iOS sheet, so it never fights normal
+     scrolling of the ticket list underneath. */
   const [sheetDY, setSheetDY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
-  const sheetTouch = useRef({ y:0, live:false });
+  const sheetTouch = useRef({ x:0, y:0, live:false, active:false });
+  const sheetPanelRef = useRef(null);
   const SHEET_TRIGGER = 90;
 
   const sheet = (children, onClose) => {
-    const handleStart = (ev) => { sheetTouch.current = { y:ev.touches[0].clientY, live:true }; setSheetDragging(true); };
+    const handleStart = (ev) => {
+      const t = ev.touches[0];
+      sheetTouch.current = { x:t.clientX, y:t.clientY, live:true, active:false };
+    };
     const handleMove = (ev) => {
       if (!sheetTouch.current.live) return;
-      const dy = ev.touches[0].clientY - sheetTouch.current.y;
+      const t = ev.touches[0];
+      const dy = t.clientY - sheetTouch.current.y;
+      const dx = t.clientX - sheetTouch.current.x;
+      if (!sheetTouch.current.active) {
+        const atTop = !sheetPanelRef.current || sheetPanelRef.current.scrollTop <= 0;
+        if (!atTop || dy <= 8 || Math.abs(dx) > dy) return;
+        sheetTouch.current.active = true;
+        setSheetDragging(true);
+      }
+      ev.preventDefault();
       setSheetDY(Math.max(0, dy));
     };
     const handleEnd = () => {
-      if (!sheetTouch.current.live) return;
+      const wasActive = sheetTouch.current.active;
       sheetTouch.current.live = false;
+      sheetTouch.current.active = false;
+      if (!wasActive) return;
       setSheetDragging(false);
       if (sheetDY >= SHEET_TRIGGER) { setSheetDY(0); onClose(); } else setSheetDY(0);
     };
     return e('div', { onClick:onClose,
       style:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:60, display:'flex', alignItems:'flex-end' } },
-      e('div', { onClick:(ev)=>ev.stopPropagation(),
+      e('div', { ref:sheetPanelRef, onClick:(ev)=>ev.stopPropagation(),
+        onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
         style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .22s ease', maxHeight:'88vh', overflowY:'auto',
           boxShadow:'0 -10px 40px rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.06)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
-        e('div', { onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
-          style:{ padding:'0.85rem 0 0.5rem', cursor:'grab', touchAction:'none' } },
+        e('div', { style:{ padding:'0.85rem 0 0.5rem' } },
           e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(255,255,255,0.22)', margin:'0 auto' } })),
         children));
   };
@@ -778,17 +797,19 @@ function App() {
 
     let border = '1px solid rgba(255,255,255,0.06)';
     if (has) border = '1px solid rgba(0,0,0,0.18)';
-    if (today) border = '2.5px solid '+INK;
     if (d && d.allLocked) border = '2.5px solid '+LOCKED;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
+    const glow = has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.35) : 'none';
+    const todayRing = today ? '0 0 0 2px rgba(255,255,255,0.5)' : '';
+    const boxShadow = [glow !== 'none' ? glow : null, todayRing || null].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '54px' : '74px', borderRadius: weekend ? '11px' : '15px',
         background:bg, border:border, padding: weekend ? '4px 2px' : '7px 5px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden',
-        boxShadow: has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.35) : 'none' } },
+        boxShadow:boxShadow } },
       e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'1px' } },
@@ -834,13 +855,16 @@ function App() {
     if (sites.length === 1) bg = siteGrad(sites[0]);
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
+    const weekGlow = has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.32) : 'none';
+    const weekTodayRing = today ? '0 0 0 2px rgba(255,255,255,0.5)' : '';
+    const weekShadow = [weekGlow !== 'none' ? weekGlow : null, weekTodayRing || null].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '46px' : '64px',
-        border: allLocked ? '2.5px solid '+LOCKED : (today ? '2.5px solid '+INK : '1px solid rgba(255,255,255,0.06)'),
+        border: allLocked ? '2.5px solid '+LOCKED : '1px solid rgba(255,255,255,0.06)',
         borderRadius:'17px', padding:'0.5rem 0.75rem',
-        boxShadow: has ? '0 6px 16px '+hexToRgba(SITES[sites[0]].hex,0.32) : 'none' } },
+        boxShadow:weekShadow } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
         e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
         e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate()))),
