@@ -165,6 +165,25 @@ const SITES = {
 };
 /* extra hues auto-assigned to any site added beyond the original four, cycling as needed */
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
+
+/* ---------- preset themes: pick one instead of choosing every colour by hand ----------
+   Each sets the accent plus the first four site colours in one go (any sites beyond
+   the fourth keep their own colour). Ordered roughly from strong contrast to subtle. */
+const THEME_PRESETS = [
+  { name:'Embers',        accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
+  { name:'Neon Nights',   accent:'#1B1B3A', sites:['#FF2E9F','#00C2D6','#FFC400','#6C2BFF'] },
+  { name:'Tropical Pop',  accent:'#00695C', sites:['#00695C','#F9A825','#E14D4D','#26A69A'] },
+  { name:'Jewel Tones',   accent:'#1A1A40', sites:['#1A1A40','#7A1128','#0B6E4F','#B8860B'] },
+  { name:'Sunset Blaze',  accent:'#7A2048', sites:['#7A2048','#C1121F','#E8703A','#E3A62F'] },
+  { name:'Berry Mix',     accent:'#5C2A63', sites:['#5C2A63','#9B3E92','#C6579E','#E28FBE'] },
+  { name:'Ocean Depths',  accent:'#0B4F6C', sites:['#0B4F6C','#137A7F','#1CA3C9','#6FCFD2'] },
+  { name:'Autumn Harvest',accent:'#6E2C1E', sites:['#6E2C1E','#A6531F','#C98A34','#8C6A45'] },
+  { name:'Forest Trail',  accent:'#2D4A2B', sites:['#2D4A2B','#4E7A4C','#7FA779','#B8A24A'] },
+  { name:'Slate Minimal', accent:'#3A3F4B', sites:['#3A3F4B','#5C6472','#818A97','#AEB5BE'] },
+  { name:'Mono Blue',     accent:'#1E3A5F', sites:['#1E3A5F','#33608E','#5991BE','#8FBAE0'] },
+  { name:'Pastel Dream',  accent:'#7C6A93', sites:['#8FA6C9','#A6C9A8','#E3A6A0','#C7A6D9'] }
+];
+
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
 const shade = (hex, amt) => { const h=hex.replace('#',''); let r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16);
@@ -236,27 +255,63 @@ const glossyBg = (hexA, hexB) => grad(hexA, hexB, 150);
 const GLOSS_BLUR = 'none';
 const glossShadow = (hex) => '0 8px 16px '+hexToRgba(hex,0.28)+', 0 2px 5px '+hexToRgba(hex,0.22);
 
-/* ---------- contained glow: a bright floating light within the card itself ----------
-   Several shades of the SAME site hue (a light tint, the base colour, and two
-   deeper shades) arranged as a radial "light source" in one corner. Because it's
-   the card's own background — not a box-shadow — it never spills past the card's
-   edge, so the border stays crisp and sharp while the inside reads as glowing. */
-const glowBg = (hex) => {
-  const hi = shade(hex, 0.42), hi2 = shade(hex, 0.18), lo = shade(hex, -0.24), lo2 = shade(hex, -0.42);
-  return 'radial-gradient(135% 150% at 18% 12%, '+hi+' 0%, '+hi2+' 28%, '+hex+' 52%, '+lo+' 78%, '+lo2+' 100%)';
+/* ---------- complementary partner colour + a stable "random" seed per card ----------
+   HSL hue-rotation gives a second colour that contrasts with the site's own colour
+   while staying harmonious (not a jarring 180° opposite). hashStr turns a ticket's
+   id/date into a stable number, so each card's gradient looks a little different
+   from its neighbours but never changes between renders or reloads. */
+const hexToHsl = (hex) => {
+  const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16)/255, g=parseInt(h.substring(2,4),16)/255, b=parseInt(h.substring(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b); let hh=0, s=0; const l=(max+min)/2;
+  if (max !== min) {
+    const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    if (max===r) hh=(g-b)/d+(g<b?6:0); else if (max===g) hh=(b-r)/d+2; else hh=(r-g)/d+4;
+    hh *= 60;
+  }
+  return [hh,s,l];
+};
+const hslToHex = (h,s,l) => {
+  h=((h%360)+360)%360; s=Math.max(0,Math.min(1,s)); l=Math.max(0,Math.min(1,l));
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if (h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;} else if(h<180){r=0;g=c;b=x;}
+  else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
+  const to255=(v)=>Math.round((v+m)*255);
+  return '#'+[to255(r),to255(g),to255(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+};
+const partnerColour = (hex) => {
+  const [h,s,l] = hexToHsl(hex);
+  const newS = Math.max(0.5, Math.min(0.88, s+0.1));
+  const newL = l > 0.55 ? Math.max(0.28, l-0.22) : Math.min(0.78, l+0.22);
+  return hslToHex(h+150, newS, newL);
+};
+const hashStr = (str) => { let h=0; const s=String(str==null?'x':str); for (let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h); };
+
+/* ---------- job-card gradient: two circular areas of two contrasting-but-complementary ----------
+   colours (the site's own hue, and a hue-rotated partner), positioned from a per-ticket
+   hash so cards feel varied rather than identical, all contained within the card's own
+   sharp edge (this is a background, not a box-shadow, so nothing bleeds past the border). */
+const glowBg = (hex, seed) => {
+  const partner = partnerColour(hex);
+  const hsh = hashStr(seed);
+  const x1 = 12 + (hsh % 45), y1 = 8 + ((hsh >> 3) % 40);
+  const x2 = 50 + ((hsh >> 6) % 45), y2 = 42 + ((hsh >> 9) % 50);
+  return 'radial-gradient(60% 60% at '+x1+'% '+y1+'%, '+shade(hex,0.28)+' 0%, '+hex+' 55%, transparent 100%), '
+    + 'radial-gradient(65% 65% at '+x2+'% '+y2+'%, '+shade(partner,0.22)+' 0%, '+partner+' 55%, transparent 100%), '
+    + 'linear-gradient(135deg, '+shade(hex,-0.1)+' 0%, '+shade(partner,-0.15)+' 100%)';
 };
 const glowBorder = (hex) => '1.5px solid '+shade(hex, 0.3);
 const glowShadow = () => '0 3px 8px rgba(22,23,50,0.14), 0 1px 3px rgba(22,23,50,0.10)';
 
 /* ---------- ambient halo for completed tickets: a soft, bleeding glow made of ----------
-   two shades of the SAME site hue — the colour itself, plus a much lighter or much
-   darker shade of it (whichever direction gives more contrast against the base tone).
-   Unlike the card's own contained glow, this one is deliberately soft and allowed to
-   spill past the edges, like the ticket is glowing from within. */
+   two contrasting-but-complementary colours (the site's own hue plus its hue-rotated
+   partner) — matching the same two-colour language as the card's own gradient. Unlike
+   the card's own contained glow, this one is deliberately soft and allowed to spill
+   past the edges, like the ticket is glowing from within. */
 const luminance = (hex) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return (0.299*r+0.587*g+0.114*b)/255; };
 const ambientCardGlow = (hex) => {
-  const other = luminance(hex) > 0.55 ? shade(hex, -0.55) : shade(hex, 0.55);
-  return '0 -14px 38px -6px '+hexToRgba(hex,0.55)+', 0 18px 44px -8px '+hexToRgba(other,0.6)+', 0 0 26px '+hexToRgba(hex,0.28);
+  const partner = partnerColour(hex);
+  return '0 -14px 38px -6px '+hexToRgba(hex,0.5)+', 0 18px 44px -8px '+hexToRgba(partner,0.55)+', 0 0 26px '+hexToRgba(hex,0.22);
 };
 
 const TickIcon = (done, size, colour) => {
@@ -281,8 +336,9 @@ const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0
   e('line', { x1:15.3, y1:15.3, x2:20.5, y2:20.5, stroke:col, strokeWidth:2, strokeLinecap:'round' }));
 
 /* ---------- menu tool icons: flat rounded tiles, ivory glyph on emerald ---------- */
+const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
-    background: bg || VIOLET, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_SM } },
+    background: bg || NEUTRAL_TILE, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_SM } },
   e('svg', { width:21, height:21, viewBox:'0 0 24 24', fill:'none' }, svgChildren));
 
 const SpreadsheetTile = () => iconTile([
@@ -1196,7 +1252,7 @@ function App() {
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.10)';
     return e('div', {
-      style:{ background: s ? glowBg(s.hex) : sheen+', '+SURF3,
+      style:{ background: s ? glowBg(s.hex, j.id || j.ticketNumber) : sheen+', '+SURF3,
         overflow:'hidden',
         border: j.locked ? '3px solid '+INK : (s ? glowBorder(s.hex) : '1px solid '+LINE),
         boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM
@@ -1305,8 +1361,8 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = glowBg(SITES[sites[0]].hex);
-    else if (sites.length > 1) bg = glowBg(SITES[sites[0]].hex);
+    if (sites.length === 1) bg = glowBg(SITES[sites[0]].hex, iso);
+    else if (sites.length > 1) bg = glowBg(SITES[sites[0]].hex, iso);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const weekGlow = has ? glowShadow() : null;
     const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF : null;
@@ -1480,16 +1536,16 @@ function App() {
 
   /* ---------- times section ---------- */
   const travelBlock = (time, field, label, update) =>
-    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem', background:hexToRgba(SITES.WS.hex,0.12), borderRadius:'14px', padding:'0.55rem 0.7rem 0.55rem 0.8rem' } },
-      PlaneIcon(14, SITES.WS.hex),
-      e('span', { style:{ flex:1, fontSize:'0.74rem', color:SITES.WS.hex, fontWeight:800 } }, label),
+    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem', background:SURF2, borderRadius:'14px', padding:'0.55rem 0.7rem 0.55rem 0.8rem' } },
+      PlaneIcon(14, MID),
+      e('span', { style:{ flex:1, fontSize:'0.74rem', color:MID, fontWeight:800 } }, label),
       e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
         style:{ width:'70px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'0.95rem', fontWeight:800, color:SITES.WS.hex, fontVariantNumeric:'tabular-nums', padding:0 } }),
+          fontSize:'0.95rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0 } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:hexToRgba(SITES.WS.hex,0.16),
+        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:SURF3,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
-        XIcon(11, SITES.WS.hex)));
+        XIcon(11, MID)));
 
   const addTravelBtn = (label, onClick) =>
     e('button', { onClick,
@@ -1501,12 +1557,11 @@ function App() {
       e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, label));
 
   const bigTimeBlock = (time, field, label, accent, update) =>
-    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.7rem', background:hexToRgba(accent,0.08), borderRadius:'16px', padding:'0.7rem 0.9rem', border:'1px solid '+hexToRgba(accent,0.28) } },
-      e('span', { style:{ width:'8px', height:'8px', borderRadius:'999px', background:accent, flexShrink:0 } }),
-      e('span', { style:{ flex:1, fontSize:'0.86rem', color:INK, fontWeight:800 } }, label),
+    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.7rem', background:SURF, borderRadius:'16px', padding:'0.7rem 0.9rem', border:'1px solid '+LINE } },
+      e('span', { style:{ flex:1, fontSize:'0.86rem', color:MID, fontWeight:800 } }, label),
       e('input', { type:'time', value:time, onChange:(ev)=>update({ [field]:ev.target.value }),
         style:{ width:'92px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'1.4rem', fontWeight:800, color:accent, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.5px' } }));
+          fontSize:'1.4rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.5px' } }));
 
   const durationCaption = (text) =>
     e('div', { style:{ textAlign:'center', fontSize:'0.65rem', fontWeight:800, color:GREY, padding:'1px 0' } }, text);
@@ -1521,10 +1576,10 @@ function App() {
     } else {
       rows.push(e('div', { key:prefix+'p1' }, addTravelBtn('Add travel before start', ()=>update({ t1: shiftTime(d.start, -1) }))));
     }
-    rows.push(e('div', { key:prefix+'st' }, bigTimeBlock(d.start, 'start', 'Start', SITES.RH.hex, update)));
+    rows.push(e('div', { key:prefix+'st' }, bigTimeBlock(d.start, 'start', 'Start', null, update)));
     const onm = legMins(d.start, d.finish);
     rows.push(e('div', { key:prefix+'onc' }, durationCaption(onm ? hm(onm)+' on site' : 'On site')));
-    rows.push(e('div', { key:prefix+'fi' }, bigTimeBlock(d.finish, 'finish', 'Finish', SITES.MMUH.hex, update)));
+    rows.push(e('div', { key:prefix+'fi' }, bigTimeBlock(d.finish, 'finish', 'Finish', null, update)));
     if (d.t2) {
       const tm2 = legMins(d.finish, d.t2);
       if (tm2) rows.push(durationCaption(hm(tm2)+' travelling', prefix+'c2'));
@@ -1537,17 +1592,13 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: site ? hexToRgba(site.hex,0.16) : SURF,
-        backdropFilter: site ? 'blur(18px) saturate(180%)' : 'none',
-        WebkitBackdropFilter: site ? 'blur(18px) saturate(180%)' : 'none',
-        border: site ? '1.5px solid '+hexToRgba(site.hex,0.55) : '1px solid '+LINE,
-        boxShadow: site ? 'inset 0 4px 0 0 '+site.hex : 'none',
+        background: SURF, border:'1px solid '+LINE,
         borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
       display:'flex', flexDirection:'column', gap:'0.6rem', transition:'background .3s ease, border-color .3s ease, box-shadow .3s ease' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
-          site && e('span', { style:{ width:'8px', height:'8px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ ...LBL, color: onRemove ? SITES.WS.hex : (site ? site.hex : GREY) } }, title)),
+          site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
+          e('span', { style:{ ...LBL } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             style:{ border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'10px', outline:'none',
@@ -1563,58 +1614,34 @@ function App() {
       date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'' } ] });
   };
 
-  const formGlowBlobs = SITES[form.site] ? (() => {
-    const hex = SITES[form.site].hex;
-    const other = luminance(hex) > 0.55 ? shade(hex, -0.55) : shade(hex, 0.55);
-    return e('div', { key:'glow', style:{ position:'absolute', inset:0, overflow:'hidden', zIndex:0, pointerEvents:'none', borderRadius: swipeX > 4 ? '24px' : '0' } },
-      e('div', { style:{ position:'absolute', width:'80vw', height:'80vw', maxWidth:'520px', maxHeight:'520px', borderRadius:'999px',
-        top:'-18%', left:'-22%', background:hex, filter:'blur(64px)', opacity:0.5 } }),
-      e('div', { style:{ position:'absolute', width:'70vw', height:'70vw', maxWidth:'460px', maxHeight:'460px', borderRadius:'999px',
-        top:'22%', right:'-24%', background:other, filter:'blur(70px)', opacity:0.45 } }),
-      e('div', { style:{ position:'absolute', width:'60vw', height:'60vw', maxWidth:'420px', maxHeight:'420px', borderRadius:'999px',
-        bottom:'-12%', left:'8%', background:hex, filter:'blur(66px)', opacity:0.38 } }));
-  })() : null;
-
   const formView = e('div', {
     onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
-    style:{ position:'relative', padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem',
-      background: SITES[form.site] ? SURF2 : 'transparent',
-      transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1), background .4s ease',
+    style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem',
+      transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
       transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 4 ? '24px' : '0',
       boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
 
-    formGlowBlobs,
-
-    e('div', { style:{ position:'relative', zIndex:1, display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
       e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
       e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
 
-    e('div', { style:{ position:'relative', zIndex:1, ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
-      background: SITES[form.site] ? 'rgba(255,255,255,0.55)' : SURF,
-      backdropFilter: SITES[form.site] ? 'blur(22px) saturate(180%)' : 'none',
-      WebkitBackdropFilter: SITES[form.site] ? 'blur(22px) saturate(180%)' : 'none',
-      border: SITES[form.site] ? '1px solid rgba(255,255,255,0.6)' : '1px solid '+LINE,
-      boxShadow: SHADOW+', inset 0 4px 0 0 '+(SITES[form.site] ? SITES[form.site].hex : VIOLET),
+    e('div', { style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
       pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto', opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
-      transition:'opacity .25s ease, box-shadow .3s ease, background .4s ease' } },
+      transition:'opacity .25s ease' } },
 
       e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
         onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-        style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem',
-          background: SITES[form.site] ? hexToRgba(SITES[form.site].hex,0.12) : FIELDBG,
-          borderLeft: SITES[form.site] ? '6px solid '+SITES[form.site].hex : FIELD().border,
-          transition:'background .3s ease, border-color .3s ease' } }),
+        style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem' } }),
 
       e('div', { style:{ display:'flex', gap:'0.5rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem', overflow:'hidden',
-          border: SITES[form.site] ? glowBorder(SITES[form.site].hex) : '1.5px solid '+LINE,
-          background: SITES[form.site] ? glowBg(SITES[form.site].hex) : FIELDBG,
-          boxShadow: SITES[form.site] ? glowShadow() : 'none',
-          borderRadius:'13px', padding:'0 0.65rem', transition:'background .25s ease, border-color .25s ease' } },
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
+          border: '1.5px solid '+LINE,
+          background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
+          borderRadius:'13px', padding:'0 0.65rem', transition:'background .2s ease' } },
           e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
               fontSize:'0.84rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
@@ -1708,6 +1735,16 @@ function App() {
 
   const updateAccent = (hex) => { applyAccent(hex); setThemeTick(t=>t+1); saveSettings({ accent:hex }); };
 
+  const applyTheme = (theme) => {
+    applyAccent(theme.accent);
+    const currentKeys = siteEdits.map(s=>s.key);
+    const nextSites = siteEdits.map((s,idx) => ({ ...s, hex: theme.sites[idx % theme.sites.length] }));
+    setSiteEdits(nextSites);
+    applySites(nextSites);
+    setThemeTick(t=>t+1);
+    saveSettings({ accent:theme.accent, sites:nextSites });
+  };
+
   const toggleRow = (label, sub, value, onToggle) =>
     e('button', { key:label, onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem', textAlign:'left',
       background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer' } },
@@ -1737,6 +1774,19 @@ function App() {
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
+
+    settingsSection('Theme'),
+    e('div', { key:'themes', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
+      THEME_PRESETS.map(theme => e('button', { key:theme.name, onClick:()=>applyTheme(theme),
+        style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'16px',
+          border: settings.accent===theme.accent ? '2px solid '+theme.accent : '1px solid '+LINE,
+          background:SURF, cursor:'pointer', textAlign:'left' } },
+        e('div', { style:{ display:'flex', gap:'4px' } },
+          theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'20px', borderRadius:'6px', background:hex,
+            borderTopLeftRadius: hi===0?'6px':0, borderBottomLeftRadius: hi===0?'6px':0,
+            borderTopRightRadius: hi===theme.sites.length-1?'6px':0, borderBottomRightRadius: hi===theme.sites.length-1?'6px':0 } }))),
+        e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name))),
+    ),
 
     settingsSection('Accent colour'),
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.8rem', background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
