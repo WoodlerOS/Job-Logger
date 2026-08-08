@@ -209,20 +209,10 @@ const shade = (hex, amt) => { const h=hex.replace('#',''); let r=parseInt(h.subs
   r=Math.round(r+(t-r)*p); g=Math.round(g+(t-g)*p); b=Math.round(b+(t-b)*p);
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); };
 
-let INK='#131318', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(19,19,24,0.13)';
-let VIOLET='#41436A', APRICOT='#FFFFFF';
-let TRAVEL='#6B6EB0', TRAVELBG='rgba(65,67,106,0.09)', RED='#B3261E';
-let LOCKED='#41436A', LOCKEDBG='rgba(65,67,106,0.07)';
-const DEFAULT_ACCENT = '#41436A';
-function applyAccent(hex) {
-  // INK (general UI text) and LINE (chrome borders) stay fixed neutral black/grey —
-  // only the accent-driven interactive bits (buttons, the locked ring, travel highlight)
-  // pick up the chosen colour, so body text always reads as strong, plain black.
-  VIOLET = hex; LOCKED = hex;
-  LOCKEDBG = hexToRgba(hex, 0.07);
-  TRAVEL = shade(hex, 0.3);
-  TRAVELBG = hexToRgba(hex, 0.09);
-}
+let INK='#0A0A0C', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(10,10,12,0.13)';
+let VIOLET='#0A0A0C', APRICOT='#FFFFFF';
+let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
+let LOCKED='#0A0A0C', LOCKEDBG='rgba(10,10,12,0.06)';
 
 /* ---------- runtime-editable sites & equipment ----------
    SITES/EQUIP are mutated in place (not reassigned) so every part of the app that
@@ -257,11 +247,15 @@ function applyDarkMode(on) {
   DARK_MODE = on;
   if (on) {
     INK='#F2F2F5'; MID='#B7B9C2'; GREY='#83858F'; LINE='rgba(255,255,255,0.14)';
+    VIOLET='#F2F2F5'; LOCKED='#F2F2F5'; LOCKEDBG='rgba(255,255,255,0.08)';
+    TRAVEL='#B7B9C2'; TRAVELBG='rgba(255,255,255,0.06)';
     SURF='#1C1C22'; SURF2='#262631'; SURF3='#232330';
     FIELDBG='#232330'; EMPTY='#1F1F27'; PAGE_BG='#101014';
     APRICOT='#FFFFFF';
   } else {
-    INK='#131318'; MID='#5B5D66'; GREY='#8C8E96'; LINE='rgba(19,19,24,0.13)';
+    INK='#0A0A0C'; MID='#5B5D66'; GREY='#8C8E96'; LINE='rgba(10,10,12,0.13)';
+    VIOLET='#0A0A0C'; LOCKED='#0A0A0C'; LOCKEDBG='rgba(10,10,12,0.06)';
+    TRAVEL='#5B5D66'; TRAVELBG='rgba(10,10,12,0.06)';
     SURF='#FFFFFF'; SURF2='#F1F1F5'; SURF3='#F5F5F8';
     FIELDBG='#FFFFFF'; EMPTY='#F7F7FA'; PAGE_BG='#FAFAFC';
     APRICOT='#FFFFFF';
@@ -406,7 +400,6 @@ async function dbSet(k,v){try{const db=await openDB();await new Promise((res,rej
   tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);});return true;}catch(err){return false;}}
 
 const DEFAULT_SETTINGS = {
-  accent: DEFAULT_ACCENT,
   darkMode: false,
   lockReadOnly: true,
   defaultExportScope: 'month',
@@ -613,7 +606,6 @@ function App() {
 
         const merged = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
         setSettings(merged);
-        applyAccent(merged.accent || DEFAULT_ACCENT);
         applyDarkMode(!!merged.darkMode);
         if (merged.sites && merged.sites.length) applySites(merged.sites);
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
@@ -1267,27 +1259,25 @@ function App() {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
-    const vivid = !!(j.locked && s);
-    const onC = vivid ? '#FFFFFF' : INK;
-    const subC = vivid ? 'rgba(255,255,255,0.62)' : MID;
-    const bodyC = vivid ? 'rgba(255,255,255,0.94)' : INK;
-    const chipBg = vivid ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.08)';
+    const onC = s ? '#FFFFFF' : INK;
+    const subC = s ? 'rgba(255,255,255,0.62)' : MID;
+    const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
+    const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.08)';
     return e('div', {
-      style:{ background: vivid ? glowBg(s.hex, j.id || j.ticketNumber) : SURF,
+      style:{ background: s ? s.hex : SURF,
         overflow:'hidden',
-        border: vivid ? '3px solid '+INK : '1px solid '+LINE,
-        borderLeft: (!vivid && s) ? '4px solid '+s.hex : undefined,
-        boxShadow: vivid ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM : SHADOW_SM,
+        border: j.locked ? '3px solid '+INK : (s ? 'none' : '1px solid '+LINE),
+        boxShadow: j.locked ? 'inset 0 0 0 1px '+SURF : (s ? 'none' : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
           i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
           e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
-          s && e('span', { style:{ background: vivid ? 'rgba(255,255,255,0.22)' : s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
+          s && e('span', { style:{ background:'rgba(255,255,255,0.22)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, vivid ? APRICOT : INK))),
+          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK))),
       e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -1301,7 +1291,7 @@ function App() {
   };
 
   const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
-      glow: (j.locked && SITES[j.site]) ? ambientCardGlow(SITES[j.site].hex) : null,
+      glow: null,
       onLock:()=>toggleLock(j.id),
       onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); },
       onTap:()=>openEdit(j, ret),
@@ -1317,22 +1307,20 @@ function App() {
     const has = sites.length > 0;
 
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[0]].hex2);
-    else if (sites.length > 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[1]].hex2);
+    if (sites.length === 1) bg = SITES[sites[0]].hex;
+    else if (sites.length > 1) bg = SITES[sites[0]].hex;
 
-    let border = '1px solid rgba(65,67,106,0.10)';
-    if (has) border = '1.5px solid rgba(255,255,255,0.45)';
+    let border = '1px solid rgba(10,10,12,0.10)';
+    if (has) border = 'none';
     if (d && d.allLocked) border = '2px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
-    const glow = has ? glossShadow(SITES[sites[0]].hex) : null;
     const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
-    const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
+    const boxShadow = doneRing || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
-        backdropFilter: has ? GLOSS_BLUR : GLASS_BLUR, WebkitBackdropFilter: has ? GLOSS_BLUR : GLASS_BLUR,
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease',
@@ -1382,17 +1370,16 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = glowBg(SITES[sites[0]].hex, iso);
-    else if (sites.length > 1) bg = glowBg(SITES[sites[0]].hex, iso);
+    if (sites.length === 1) bg = SITES[sites[0]].hex;
+    else if (sites.length > 1) bg = SITES[sites[0]].hex;
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
-    const weekGlow = has ? glowShadow() : null;
-    const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF : null;
-    const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
+    const doneRing = allLocked ? 'inset 0 0 0 1px '+SURF : null;
+    const weekShadow = doneRing || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden',
-        border: allLocked ? '3px solid '+INK : (has ? glowBorder(SITES[sites[0]].hex) : '1px solid rgba(65,67,106,0.10)'),
+        border: allLocked ? '3px solid '+INK : (has ? 'none' : '1px solid rgba(10,10,12,0.10)'),
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
@@ -1447,33 +1434,27 @@ function App() {
 
     e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
 
-      e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'14px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
-        e('div', { style:{ position:'absolute', top:'3px', left:'3px', bottom:'3px', width:'calc((100% - 6px) / 3)',
-          borderRadius:'10px', background:SURF, backdropFilter:'none', WebkitBackdropFilter:'none',
-          border:'1.5px solid '+INK, boxShadow:'0 2px 8px rgba(22,23,50,0.14)',
-          transform:'translateX('+(['day','week','month'].indexOf(calMode)*100)+'%)',
-          transition:'transform .32s cubic-bezier(.22,.9,.3,1)', pointerEvents:'none' } }),
+      e('div', { style:{ display:'flex', borderBottom:'1px solid '+LINE } },
         ['day','week','month'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-          style:{ flex:1, padding:'0.5rem', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-            position:'relative', zIndex:1, background:'transparent',
-            color: calMode===mode ? INK : MID,
-            transition:'color .2s ease' } },
+          style:{ flex:1, padding:'0.55rem 0', border:'none', cursor:'pointer', background:'transparent',
+            fontSize:'0.8rem', fontWeight: calMode===mode ? 900 : 700,
+            color: calMode===mode ? INK : GREY,
+            borderBottom: calMode===mode ? '2px solid '+INK : '2px solid transparent',
+            marginBottom:'-1px', transition:'color .2s ease, border-color .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem', gap:'0.4rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'11px', width:'34px', height:'34px',
-          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
+        e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px',
+          display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(19, INK)),
         e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px', flex:1, textAlign:'center' } },
           e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
           calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
             String(anchorDate.getFullYear()))),
-        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ width:'26px', height:'26px', borderRadius:'9px',
-          background:SURF2, border:'1px solid rgba(65,67,106,0.14)', boxShadow:SHADOW_SM, cursor:'pointer', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } },
-          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:INK } })),
-        e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'11px', width:'34px', height:'34px',
-          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
-          transform:'rotate(180deg)' } }, ChevronLeft(17, INK)))),
+        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
+          padding:'6px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
+          e('span', { style:{ width:'6px', height:'6px', borderRadius:'999px', background:INK } })),
+        e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px',
+          display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(19, INK)))),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -1644,11 +1625,11 @@ function App() {
       boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
-      e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
+      e('button', { onClick:backOut, style:{ background:'none', border:'none', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
-      e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
+      e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(17, INK))),
 
     e('div', { style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
       pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto', opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
@@ -1754,16 +1735,12 @@ function App() {
   const removeEquip = (idx) => commitEquip(equipEdits.filter((_,i)=>i!==idx));
   const addEquip = () => commitEquip([...equipEdits, { key:slugKey('EQ', equipEdits.map(x=>x.key)), label:'New equipment' }]);
 
-  const updateAccent = (hex) => { applyAccent(hex); setThemeTick(t=>t+1); saveSettings({ accent:hex }); };
-
   const applyTheme = (theme) => {
-    applyAccent(theme.accent);
-    const currentKeys = siteEdits.map(s=>s.key);
     const nextSites = siteEdits.map((s,idx) => ({ ...s, hex: theme.sites[idx % theme.sites.length] }));
     setSiteEdits(nextSites);
     applySites(nextSites);
     setThemeTick(t=>t+1);
-    saveSettings({ accent:theme.accent, sites:nextSites });
+    saveSettings({ sites:nextSites });
   };
 
   const toggleRow = (label, sub, value, onToggle) =>
@@ -1791,8 +1768,8 @@ function App() {
 
   const settingsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
-      e('button', { onClick:()=>setSettingsOpen(false), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
+      e('button', { onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
@@ -1804,17 +1781,9 @@ function App() {
         e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' preset palettes')),
       e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
         e('div', { style:{ display:'flex', gap:'2px' } },
-          (THEME_PRESETS.find(t=>t.accent===settings.accent) || THEME_PRESETS[0]).sites.slice(0,4).map((hex,hi) =>
-            e('span', { key:hi, style:{ width:'13px', height:'13px', borderRadius:'4px', background:hex } }))),
+          sitesToList().slice(0,4).map((s,hi) =>
+            e('span', { key:hi, style:{ width:'13px', height:'13px', borderRadius:'4px', background:s.hex } }))),
         e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
-
-    settingsSection('Accent colour'),
-    e('div', { style:{ display:'flex', alignItems:'center', gap:'0.8rem', background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-      e('input', { type:'color', value:settings.accent || DEFAULT_ACCENT, onChange:(ev)=>updateAccent(ev.target.value),
-        style:{ width:'44px', height:'44px', border:'none', borderRadius:'12px', padding:0, background:'none', cursor:'pointer' } }),
-      e('div', { style:{ flex:1 } },
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Main app colour'),
-        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, 'Buttons, text, borders and accents'))),
 
     settingsSection('Sites & colours'),
     e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
@@ -1870,14 +1839,14 @@ function App() {
 
   const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
-      e('button', { onClick:()=>setThemesOpen(false), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
+      e('button', { onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Themes'),
       e('span', { style:{ width:'36px' } })),
     e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
       THEME_PRESETS.map(theme => e('button', { key:theme.name, onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
         style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'14px',
-          border: settings.accent===theme.accent ? '2px solid '+theme.accent : '1px solid '+LINE,
+          border: '1px solid '+LINE,
           background:SURF, cursor:'pointer', textAlign:'left' } },
         e('div', { style:{ display:'flex', gap:'4px' } },
           theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'20px', borderRadius:'5px', background:hex } }))),
