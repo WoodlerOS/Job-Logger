@@ -364,10 +364,10 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 
-/* ---------- multi-site background (OKLCH linear) --------------------------------
-   Perceptually smooth diagonal gradient using the oklch colour space so blends
-   stay natural and avoid muddy mid-tones. First site still anchors the card so
-   white text remains readable. Works cleanly with 2, 3 or 4+ sites. */
+/* ---------- multi-site background (OKLAB linear) --------------------------------
+   Perceptually smooth diagonal gradient using the oklab colour space so blends
+   stay natural without the hue-arc stripe artefact of oklch. First site still
+   anchors the card so white text remains readable. Works with 2, 3 or 4+ sites. */
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
   if (keys.length === 0) return null;
@@ -375,17 +375,18 @@ const multiSiteBg = (siteKeys) => {
 
   const colors = keys.map(k => SITES[k].hex);
 
-  // Continuous OKLCH blend — no long plateaus (those caused the centre stripe).
-  // Slight bias keeps the first colour a bit stronger for text readability.
+  // OKLAB (not OKLCH) — perceptually smooth without the hue-arc artefact
+  // that produced the thin green/cyan stripe when blending distant colours
+  // (e.g. orange → purple). Slight first-colour bias for text readability.
   if (colors.length === 2) {
-    return 'linear-gradient(145deg in oklch, ' +
+    return 'linear-gradient(145deg in oklab, ' +
       colors[0] + ' 0%, ' +
       colors[0] + ' 18%, ' +
       colors[1] + ' 100%)';
   }
 
   if (colors.length === 3) {
-    return 'linear-gradient(145deg in oklch, ' +
+    return 'linear-gradient(145deg in oklab, ' +
       colors[0] + ' 0%, ' +
       colors[1] + ' 50%, ' +
       colors[2] + ' 100%)';
@@ -396,7 +397,7 @@ const multiSiteBg = (siteKeys) => {
     const pos = Math.round((i / (colors.length - 1)) * 100);
     return c + ' ' + pos + '%';
   });
-  return 'linear-gradient(145deg in oklch, ' + stops.join(', ') + ')';
+  return 'linear-gradient(145deg in oklab, ' + stops.join(', ') + ')';
 };
 
 /* ---------- flat, sharp, saturated fill for the colour-coded site cards ----------
