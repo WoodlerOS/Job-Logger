@@ -14,6 +14,9 @@
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
@@ -133,6 +136,21 @@
 <script type="text/babel">
 const { useState, useEffect, useMemo, useRef } = React;
 const e = React.createElement;
+
+/* ---------- Firebase: live cloud sync so tickets stay in sync across every device ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDOEV5SibzSkTWKixplvApQG137cculetQ",
+  authDomain: "job-logger-app-e2fc1.firebaseapp.com",
+  projectId: "job-logger-app-e2fc1",
+  storageBucket: "job-logger-app-e2fc1.firebasestorage.app",
+  messagingSenderId: "799037065308",
+  appId: "1:799037065308:web:eec9a7a388599ff5ce3e99"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const dbFS = firebase.firestore();
+try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (err) {}
+
 
 /* ---------- palette: clean white surface, Embers site colours, blue accent ---------- */
 const SITES = {
@@ -377,9 +395,40 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, childr
       children));
 }
 
+/* ---------- sign-in screen: shown whenever there's no active Firebase session ---------- */
+function SignInScreen({ onSignIn, busy, error }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const submit = (ev) => { ev.preventDefault(); if (email && password && !busy) onSignIn(email, password); };
+  return e('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' } },
+    e('form', { onSubmit:submit, style:{ width:'100%', maxWidth:'340px', display:'flex', flexDirection:'column', gap:'1rem' } },
+      e('div', { style:{ textAlign:'center', marginBottom:'0.5rem' } },
+        e('div', { style:{ width:'56px', height:'56px', borderRadius:'16px', background:grad(VIOLET, shade(VIOLET,-0.22), 150),
+          display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 0.75rem', boxShadow:SHADOW_SM } },
+          e('span', { style:{ color:'#FFFFFF', fontWeight:900, fontSize:'1.6rem' } }, 'T')),
+        e('div', { style:{ fontSize:'1.15rem', fontWeight:900, color:INK } }, 'Tickets'),
+        e('div', { style:{ fontSize:'0.78rem', color:GREY, marginTop:'2px' } }, 'Sign in to sync your tickets')),
+      e('div', null,
+        e('label', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Email'),
+        e('input', { type:'email', value:email, autoCapitalize:'none', autoCorrect:'off', autoComplete:'username',
+          onChange:(ev)=>setEmail(ev.target.value), style:{ ...FIELD() } })),
+      e('div', null,
+        e('label', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Password'),
+        e('input', { type:'password', value:password, autoComplete:'current-password',
+          onChange:(ev)=>setPassword(ev.target.value), style:{ ...FIELD() } })),
+      error && e('div', { style:{ fontSize:'0.75rem', color:RED, fontWeight:700, textAlign:'center' } }, error),
+      e('button', { type:'submit', disabled:busy, style:{ padding:'0.85rem', borderRadius:'999px', border:'none',
+        background:VIOLET, color:'#FFFFFF', fontWeight:800, fontSize:'0.92rem', cursor: busy?'default':'pointer', opacity: busy?0.6:1 } },
+        busy ? 'Signing in…' : 'Sign in')));
+}
+
 function App() {
   const [jobs, setJobs] = useState([]);
   const [ready, setReady] = useState(false);
+  const [user, setUser] = useState(undefined); // undefined = checking, null = signed out, object = signed in
+  const [authError, setAuthError] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+  const appliedDefaultsRef = useRef(false);
   const [view, setView] = useState('month');
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -426,35 +475,77 @@ function App() {
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
 
-  useEffect(() => { (async () => {
-    let data = await dbGet(KEY);
-    if (!data) { try { const s = localStorage.getItem('jobsData'); if (s) { data = JSON.parse(s); await dbSet(KEY, data); } } catch (err) {} }
-    if (Array.isArray(data)) setJobs(data.map(j => ({ equipment:[], parts:[], extraDays:[], locked:false, ...j })));
+  /* sign-in state: Firebase persists the session itself, so returning to the
+     app (even after fully closing it) signs you straight back in automatically */
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(u => setUser(u));
+    return unsub;
+  }, []);
 
-    const storedSettings = await dbGet(SETTINGS_KEY);
-    const merged = { ...DEFAULT_SETTINGS, ...(storedSettings || {}) };
-    setSettings(merged);
-    applyAccent(merged.accent || DEFAULT_ACCENT);
-    if (merged.sites && merged.sites.length) applySites(merged.sites);
-    if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
-    TIME_ROUNDING = merged.timeRounding || 5;
-    setCalMode(merged.defaultCalMode || 'day');
-    setShowWeekends(!(merged.hideWeekendsDefault !== false));
-    setThemeTick(t => t+1);
+  /* live Firestore sync: one document per account holds both jobs and settings.
+     onSnapshot means any change made on another signed-in device — or by this
+     device while offline, once it reconnects — appears here automatically,
+     with no manual refresh or backup/restore step needed. */
+  useEffect(() => {
+    if (!user) { setReady(false); return; }
+    const ref = dbFS.collection('users').doc(user.uid);
+    let unsub = null;
+    (async () => {
+      try {
+        const snap = await ref.get();
+        if (!snap.exists) {
+          // first sign-in on this account: seed the cloud from whatever is
+          // already on this device, so nothing gets lost switching over
+          let localJobs = await dbGet(KEY);
+          if (!Array.isArray(localJobs)) localJobs = [];
+          const localSettings = await dbGet(SETTINGS_KEY);
+          await ref.set({ jobs:localJobs, settings: localSettings || {} });
+        }
+      } catch (err) {}
 
-    setReady(true);
-  })(); }, []);
+      unsub = ref.onSnapshot(doc => {
+        const data = doc.data() || {};
+        const jobsData = Array.isArray(data.jobs) ? data.jobs : [];
+        setJobs(jobsData.map(j => ({ equipment:[], parts:[], extraDays:[], locked:false, ...j })));
+
+        const merged = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
+        setSettings(merged);
+        applyAccent(merged.accent || DEFAULT_ACCENT);
+        if (merged.sites && merged.sites.length) applySites(merged.sites);
+        if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
+        TIME_ROUNDING = merged.timeRounding || 5;
+        if (!appliedDefaultsRef.current) {
+          setCalMode(merged.defaultCalMode || 'day');
+          setShowWeekends(!(merged.hideWeekendsDefault !== false));
+          appliedDefaultsRef.current = true;
+        }
+        setThemeTick(t => t+1);
+        setReady(true);
+      }, () => setReady(true));
+    })();
+    return () => { if (unsub) unsub(); };
+  }, [user]);
 
   const saveSettings = async (patch) => {
     const next = { ...settings, ...patch };
     setSettings(next);
-    await dbSet(SETTINGS_KEY, next);
+    if (!user) return;
+    try { await dbFS.collection('users').doc(user.uid).set({ settings: next }, { merge:true }); } catch (err) {}
   };
 
   const persist = async (next) => {
-    setJobs(next); await dbSet(KEY, next);
-    try { localStorage.setItem('jobsData', JSON.stringify(next)); } catch (err) {}
+    setJobs(next);
+    if (!user) return;
+    try { await dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
   };
+
+  const signIn = async (email, password) => {
+    setAuthError(''); setAuthBusy(true);
+    try { await auth.signInWithEmailAndPassword(email, password); }
+    catch (err) { setAuthError(err && err.message ? err.message : 'Could not sign in.'); }
+    setAuthBusy(false);
+  };
+  const signOutUser = () => auth.signOut();
 
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   const fmtDay   = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
@@ -1646,8 +1737,23 @@ function App() {
     chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'Everything'}],
       settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v })),
     chipSelect('Round new ticket times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
-      settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }));
+      settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
 
+    settingsSection('Account'),
+    e('div', { key:'acct', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem',
+      display:'flex', alignItems:'center', gap:'0.7rem' } },
+      e('div', { style:{ flex:1, minWidth:0 } },
+        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Signed in'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
+      e('button', { onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'999px', border:'1px solid '+LINE,
+        background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out')));
+
+
+  if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
+
+  if (user === null) {
+    return e(SignInScreen, { onSignIn:signIn, busy:authBusy, error:authError });
+  }
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
