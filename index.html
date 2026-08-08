@@ -161,41 +161,86 @@ const SITES = {
 /* extra hues auto-assigned to any site added beyond the original four, cycling as needed */
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
-/* ---------- preset themes: pick one instead of choosing every colour by hand ----------
-   Each sets the accent plus the first four site colours in one go (any sites beyond
-   the fourth keep their own colour). Ordered roughly from strong contrast to subtle. */
-const THEME_PRESETS = [
-  { name:'Embers',        accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
-  { name:'Neon Nights',   accent:'#1B1B3A', sites:['#FF2E9F','#00C2D6','#FFC400','#6C2BFF'] },
-  { name:'Tropical Pop',  accent:'#00695C', sites:['#00695C','#F9A825','#E14D4D','#26A69A'] },
-  { name:'Jewel Tones',   accent:'#1A1A40', sites:['#1A1A40','#7A1128','#0B6E4F','#B8860B'] },
-  { name:'Sunset Blaze',  accent:'#7A2048', sites:['#7A2048','#C1121F','#E8703A','#E3A62F'] },
-  { name:'Berry Mix',     accent:'#5C2A63', sites:['#5C2A63','#9B3E92','#C6579E','#E28FBE'] },
-  { name:'Ocean Depths',  accent:'#0B4F6C', sites:['#0B4F6C','#137A7F','#1CA3C9','#6FCFD2'] },
-  { name:'Autumn Harvest',accent:'#6E2C1E', sites:['#6E2C1E','#A6531F','#C98A34','#8C6A45'] },
-  { name:'Forest Trail',  accent:'#2D4A2B', sites:['#2D4A2B','#4E7A4C','#7FA779','#B8A24A'] },
-  { name:'Slate Minimal', accent:'#3A3F4B', sites:['#3A3F4B','#5C6472','#818A97','#AEB5BE'] },
-  { name:'Mono Blue',     accent:'#1E3A5F', sites:['#1E3A5F','#33608E','#5991BE','#8FBAE0'] },
-  { name:'Pastel Dream',  accent:'#7C6A93', sites:['#8FA6C9','#A6C9A8','#E3A6A0','#C7A6D9'] },
-  { name:'Midnight Purple',accent:'#241943', sites:['#241943','#4B2E83','#7A4FC4','#B497F0'] },
-  { name:'Rose Gold',     accent:'#7A4B4F', sites:['#7A4B4F','#B98B8F','#D9B8A3','#E8CBAE'] },
-  { name:'Cyber Punk',    accent:'#0D0221', sites:['#FF00A0','#00F0FF','#FFEA00','#8000FF'] },
-  { name:'Desert Sand',   accent:'#6B4F3A', sites:['#6B4F3A','#A67C52','#D9B48F','#EAD7BB'] },
-  { name:'Arctic Ice',    accent:'#1B3A4B', sites:['#1B3A4B','#4A7A96','#8FC1D4','#C9E4EC'] },
-  { name:'Cherry Blossom',accent:'#7A2E43', sites:['#7A2E43','#C2185B','#F06292','#FFC1E3'] },
-  { name:'Volcanic',      accent:'#2B1B17', sites:['#2B1B17','#8B2500','#D2691E','#FF7A33'] },
-  { name:'Emerald City',  accent:'#013220', sites:['#013220','#0B6E4F','#2E8B57','#66C99F'] },
-  { name:'Royal & Gold',  accent:'#2E1A47', sites:['#2E1A47','#6A3FA0','#C6A15B','#E8C874'] },
-  { name:'Coral Reef',    accent:'#004E64', sites:['#004E64','#00A5CF','#F79256','#FBD1A2'] },
-  { name:'Charcoal Mono', accent:'#232323', sites:['#232323','#4A4A4A','#787878','#ACACAC'] },
-  { name:'Blush & Navy',  accent:'#16264D', sites:['#16264D','#3A5A8C','#D98C9E','#F4C6D0'] },
-  { name:'Lavender Fields',accent:'#4B3F72', sites:['#4B3F72','#7C6FA6','#B3A6D6','#DCD3F0'] },
-  { name:'Fire & Ice',    accent:'#14213D', sites:['#14213D','#1CA3C9','#E63946','#FCA311'] },
-  { name:'Olive Grove',   accent:'#3D3D29', sites:['#3D3D29','#6B6B3A','#A3A35C','#D4CB92'] },
-  { name:'Hot Pink Punch',accent:'#3A0CA3', sites:['#3A0CA3','#7209B7','#F72585','#4CC9F0'] },
-  { name:'Sepia Tone',    accent:'#4A3728', sites:['#4A3728','#7A5C42','#A98467','#D4B896'] },
-  { name:'Deep Sea',      accent:'#03045E', sites:['#03045E','#0077B6','#00B4D8','#90E0EF'] }
+/* ---------- preset themes organised into groups ---------- */
+/* All themes are balanced (similar intensity) so multi-site gradients stay cohesive.
+   Colours stay mid-to-dark for reliable white-text readability. */
+const THEME_GROUPS = [
+  { name: 'Warm', themes: [
+    { name:'Ember Vein',    accent:'#5C2E2E', sites:['#5C2E2E','#7A3A3A','#9B4A4A','#B85A4A'] },
+    { name:'Copper Vein',   accent:'#5A3A20', sites:['#5A3A20','#7A4A28','#9A5A30','#BA6A38'] },
+    { name:'Canyon',        accent:'#5A3A2A', sites:['#5A3A2A','#7A4A3A','#9A5A4A','#BA6A4A'] },
+    { name:'Rustfield',     accent:'#5A2A18', sites:['#5A2A18','#7A3A20','#9A4A28','#BA5A30'] },
+    { name:'Solar Rust',    accent:'#5A2008', sites:['#5A2008','#8A300C','#BA4010','#E05018'] },
+    { name:'Terracotta',    accent:'#6B2E1A', sites:['#6B2E1A','#8A3E2A','#A9523A','#C8684A'] },
+    { name:'Amber Depth',   accent:'#5A3808', sites:['#5A3808','#7A4C10','#9A6018','#BA7420'] },
+    { name:'Brick Lane',    accent:'#5A2820', sites:['#5A2820','#7A3830','#9A4840','#BA5850'] },
+  ]},
+  { name: 'Cool & Ocean', themes: [
+    { name:'Harbor',        accent:'#2A3A4A', sites:['#2A3A4A','#3A5A6A','#4A7A7A','#5A8A8A'] },
+    { name:'Lagoon',        accent:'#2A4A5A', sites:['#2A4A5A','#3A6A6B','#4A8A7A','#5AAA7A'] },
+    { name:'Abyss Teal',    accent:'#1A3A3A', sites:['#1A3A3A','#2A5A5A','#3A7A7A','#4A9A9A'] },
+    { name:'Storm',         accent:'#2E3A4A', sites:['#2E3A4A','#3A5A6B','#4A7A7A','#5A8A6B'] },
+    { name:'Azure Forge',   accent:'#083050', sites:['#083050','#0C4878','#1060A0','#1878C8'] },
+    { name:'Hot Cobalt',    accent:'#102050', sites:['#102050','#183078','#2040A0','#3050C8'] },
+    { name:'Cobalt Clay',   accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#3A4A8A','#4A5AAA'] },
+    { name:'Steel Tide',    accent:'#1A2A3A', sites:['#1A2A3A','#2A3A5A','#3A4A7A','#4A5A9A'] },
+  ]},
+  { name: 'Nature', themes: [
+    { name:'Moss Stone',    accent:'#3A4A3A', sites:['#3A4A3A','#5A6A4A','#7A7A5A','#9A8A5A'] },
+    { name:'Pine Ridge',    accent:'#2A3A28', sites:['#2A3A28','#3A5A38','#4A7A48','#5A9A58'] },
+    { name:'Midnight Sage', accent:'#2A3A32', sites:['#2A3A32','#3A5A48','#4A7A5E','#5A9A74'] },
+    { name:'Electric Moss', accent:'#104020', sites:['#104020','#186030','#208040','#30A050'] },
+    { name:'Jade Pulse',    accent:'#084030', sites:['#084030','#0C6048','#108060','#18A078'] },
+    { name:'Lime Depth',    accent:'#284008', sites:['#284008','#3C600C','#508010','#64A018'] },
+    { name:'Fern Hollow',   accent:'#2A4028', sites:['#2A4028','#3A5A38','#4A7A48','#5A9A58'] },
+    { name:'Olive Depth',   accent:'#3A4020', sites:['#3A4020','#5A5A30','#7A7A40','#9A9A50'] },
+  ]},
+  { name: 'Berry & Floral', themes: [
+    { name:'Twilight',      accent:'#3D3A5C', sites:['#3D3A5C','#6B4E71','#9B6B8A','#C48B7A'] },
+    { name:'Dusk',          accent:'#4A3F5C', sites:['#4A3F5C','#6B5A7A','#8A6B7A','#A87A6B'] },
+    { name:'Heather',       accent:'#4A3A5A', sites:['#4A3A5A','#6B4A6B','#8A5A7A','#A86A6B'] },
+    { name:'Wine Grove',    accent:'#4A2A3A', sites:['#4A2A3A','#6B3A4A','#8A4A5A','#A85A6A'] },
+    { name:'Plum Iron',     accent:'#3A2A3A', sites:['#3A2A3A','#5A3A5A','#7A4A7A','#9A5A9A'] },
+    { name:'Vivid Plum',    accent:'#401050', sites:['#401050','#601878','#8020A0','#A030C8'] },
+    { name:'Magenta Depth', accent:'#500830', sites:['#500830','#780C48','#A01060','#C81878'] },
+    { name:'Neon Ember',    accent:'#5A1030', sites:['#5A1030','#8A1838','#BA2040','#E03050'] },
+    { name:'Crimson Tide',  accent:'#500818', sites:['#500818','#780C24','#A01030','#C81840'] },
+    { name:'Rose Iron',     accent:'#4A2030', sites:['#4A2030','#6A3040','#8A4050','#AA5060'] },
+  ]},
+  { name: 'Jewel', themes: [
+    { name:'Steel Orchid',  accent:'#3A2A4A', sites:['#3A2A4A','#5A3A6A','#7A4A8A','#9A5AAA'] },
+    { name:'Indigo Clay',   accent:'#2A2A4A', sites:['#2A2A4A','#4A3A5A','#6A4A5A','#8A5A4A'] },
+    { name:'Slate Rose',    accent:'#3A3A4A', sites:['#3A3A4A','#5A4A5A','#7A5A6A','#9A6A6A'] },
+    { name:'Royal Vein',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#6A3A8A','#8A4AAA'] },
+    { name:'Amethyst Depth',accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#7A3A8A','#9A4AAA'] },
+    { name:'Sapphire Ore',  accent:'#1A1A4A', sites:['#1A1A4A','#2A2A6A','#3A3A8A','#4A4AAA'] },
+    { name:'Garnet Path',   accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#8A3A4A','#AA4A5A'] },
+    { name:'Topaz Vein',    accent:'#4A3A08', sites:['#4A3A08','#6A5A10','#8A7A18','#AA9A20'] },
+  ]},
+  { name: 'Neutral', themes: [
+    { name:'Charcoal Step', accent:'#2A2A2A', sites:['#2A2A2A','#3A3A3A','#4A4A4A','#5A5A5A'] },
+    { name:'Graphite',      accent:'#2A2E32', sites:['#2A2E32','#3A3E42','#4A4E52','#5A5E62'] },
+    { name:'Stone Path',    accent:'#3A3834', sites:['#3A3834','#4A4844','#5A5854','#6A6864'] },
+    { name:'Iron Dust',     accent:'#3A3230', sites:['#3A3230','#4A4240','#5A5250','#6A6260'] },
+    { name:'Smoke',         accent:'#2E2E32', sites:['#2E2E32','#3E3E42','#4E4E52','#5E5E62'] },
+    { name:'Pewter',        accent:'#32363A', sites:['#32363A','#42464A','#52565A','#62666A'] },
+    { name:'Ash Ridge',     accent:'#3A3632', sites:['#3A3632','#4A4642','#5A5652','#6A6662'] },
+    { name:'Lead',          accent:'#2A2A2E', sites:['#2A2A2E','#3A3A3E','#4A4A4E','#5A5A5E'] },
+  ]},
+  { name: 'Vibrant', themes: [
+    { name:'Pulse Magenta', accent:'#4A0840', sites:['#4A0840','#6A0C60','#8A1080','#AA14A0'] },
+    { name:'Forge Orange',  accent:'#5A2000', sites:['#5A2000','#7A3000','#9A4000','#BA5000'] },
+    { name:'Neon Forest',   accent:'#084020', sites:['#084020','#0C6030','#108040','#14A050'] },
+    { name:'Electric Indigo',accent:'#200850', sites:['#200850','#300C78','#4010A0','#5014C8'] },
+    { name:'Crimson Forge', accent:'#500010', sites:['#500010','#780018','#A00020','#C80028'] },
+    { name:'Teal Charge',   accent:'#004040', sites:['#004040','#006060','#008080','#00A0A0'] },
+    { name:'Violet Strike', accent:'#300850', sites:['#300850','#480C78','#6010A0','#7814C8'] },
+    { name:'Amber Strike',  accent:'#502000', sites:['#502000','#783000','#A04000','#C85000'] },
+  ]}
 ];
+
+// Flat list kept for any code that still expects THEME_PRESETS
+const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
@@ -278,6 +323,44 @@ const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHAD
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
+
+/* ---------- clean multi-site background -----------------------------------------
+   Professional soft diagonal gradient. First site dominates most of the card
+   (keeps white text readable). Extra colours arrive as a controlled, elegant
+   sweep from the lower-right. Works cleanly with 2, 3 or 4 sites. */
+const multiSiteBg = (siteKeys) => {
+  const keys = (siteKeys || []).filter(k => SITES[k]);
+  if (keys.length === 0) return null;
+  if (keys.length === 1) return SITES[keys[0]].hex;
+
+  const colors = keys.map(k => SITES[k].hex);
+
+  if (colors.length === 2) {
+    // Longer, smoother transition between the two colours
+    return 'linear-gradient(145deg, ' +
+      colors[0] + ' 0%, ' +
+      colors[0] + ' 28%, ' +
+      colors[1] + ' 72%, ' +
+      colors[1] + ' 100%)';
+  }
+
+  if (colors.length === 3) {
+    return 'linear-gradient(145deg, ' +
+      colors[0] + ' 0%, ' +
+      colors[0] + ' 22%, ' +
+      colors[1] + ' 50%, ' +
+      colors[2] + ' 78%, ' +
+      colors[2] + ' 100%)';
+  }
+
+  // 4+ colours – even distribution with slight bias toward the first
+  const stops = [];
+  const step = 100 / (colors.length - 0.35);
+  colors.forEach((c, i) => {
+    stops.push(c + ' ' + Math.min(100, Math.round(i * step)) + '%');
+  });
+  return 'linear-gradient(145deg, ' + stops.join(', ') + ')';
+};
 
 /* ---------- flat, sharp, saturated fill for the colour-coded site cards ----------
    A crisp two-tone gradient in the site's own colour — no translucency, no blur,
@@ -402,7 +485,7 @@ const DEFAULT_SETTINGS = {
   defaultCalMode: 'day',
   hideWeekendsDefault: true,
   timeRounding: 5,
-  autoBackupEnabled: true
+  autoBackupEnabled: false
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -567,17 +650,13 @@ function App() {
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
 
-  /* sign-in state: Firebase persists the session itself, so returning to the
-     app (even after fully closing it) signs you straight back in automatically */
+  /* sign-in state: Firebase persists the session itself */
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(u => setUser(u));
     return unsub;
   }, []);
 
-  /* live Firestore sync: one document per account holds both jobs and settings.
-     onSnapshot means any change made on another signed-in device — or by this
-     device while offline, once it reconnects — appears here automatically,
-     with no manual refresh or backup/restore step needed. */
+  /* live Firestore sync: one document per account holds both jobs and settings */
   useEffect(() => {
     if (!user) { setReady(false); return; }
     const ref = dbFS.collection('users').doc(user.uid);
@@ -586,8 +665,7 @@ function App() {
       try {
         const snap = await ref.get();
         if (!snap.exists) {
-          // first sign-in on this account: seed the cloud from whatever is
-          // already on this device, so nothing gets lost switching over
+          // first sign-in on this account: seed the cloud from local data if any
           let localJobs = await dbGet(KEY);
           if (!Array.isArray(localJobs)) localJobs = [];
           const localSettings = await dbGet(SETTINGS_KEY);
@@ -1197,9 +1275,7 @@ function App() {
             : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
           iconRow(SpreadsheetTile(), 'Export to Excel', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('excel'); }),
           iconRow(ClipboardTile(), 'Copy as text', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('text'); }),
-          iconRow(BackupTile(), 'Create backup', 'Save all your data as a .json file', doBackup),
-          iconRow(RestoreTile(), 'Restore from backup', 'Load a previous .json backup', doRestore),
-          iconRow(SettingsTile(), 'Settings', 'Sites, colours, equipment and app behaviour', ()=>openSettings())
+          iconRow(SettingsTile(), 'Settings', 'Themes, equipment and app behaviour', ()=>openSettings())
         ),
 
     closeBtn(closeMenu)
@@ -1303,8 +1379,12 @@ function App() {
     const has = sites.length > 0;
 
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = SITES[sites[0]].hex;
-    else if (sites.length > 1) bg = SITES[sites[0]].hex;
+    if (sites.length === 1 && SITES[sites[0]]) {
+      bg = SITES[sites[0]].hex;
+    } else if (sites.length > 1) {
+      // Organic floating multi-colour gradient (works with 2, 3, 4+ sites)
+      bg = multiSiteBg(sites);
+    }
 
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
@@ -1322,7 +1402,8 @@ function App() {
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:boxShadow } },
       e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
-        lineHeight:1, letterSpacing:'-0.2px' } }, String(dnum)),
+        lineHeight:1, letterSpacing:'-0.2px',
+        textShadow: has ? '0 1px 2px rgba(0,0,0,0.45), 0 0 8px rgba(0,0,0,0.25)' : 'none' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'2px' } },
         sites.slice(0,2).map(s => e('span', { key:s, style:{ fontSize:'0.5rem', fontWeight:900, color:'#FFF',
           background:'rgba(255,255,255,0.22)', borderRadius:'5px', padding:'1px 4px', letterSpacing:'0.2px' } }, SITES[s].label)),
@@ -1365,23 +1446,31 @@ function App() {
     const allLocked = list.length > 0 && list.every(j=>j.locked);
     const weekend = i >= 5;
     const has = sites.length > 0;
+
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = SITES[sites[0]].hex;
-    else if (sites.length > 1) bg = SITES[sites[0]].hex;
+    if (sites.length === 1 && SITES[sites[0]]) {
+      bg = SITES[sites[0]].hex;
+    } else if (sites.length > 1) {
+      // Organic floating multi-colour gradient (works with 2, 3, 4+ sites)
+      bg = multiSiteBg(sites);
+    }
+
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const doneRing = allLocked ? 'inset 0 0 0 1px '+SURF : null;
     const weekShadow = doneRing || 'none';
+
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
-        background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden',
+        background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden', position:'relative',
         border: allLocked ? '3px solid '+INK : (has ? 'none' : '1px solid rgba(10,10,12,0.10)'),
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
         e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
-        e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg } }, String(dt.getDate())),
+        e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg,
+          textShadow: has ? '0 1px 2px rgba(0,0,0,0.45), 0 0 8px rgba(0,0,0,0.25)' : 'none' } }, String(dt.getDate())),
         today ? e('span', { key:'td', style:{ display:'block', width:'5px', height:'5px', borderRadius:'999px',
           background: has ? '#FFFFFF' : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
       e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
@@ -1404,11 +1493,8 @@ function App() {
   };
 
   const dayView = e('div', { style:{ ...PANEL(), padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    e('div', null,
-      e('div', { style:{ fontSize:'1.1rem', fontWeight:900, letterSpacing:'-0.3px' } },
-        anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
-      e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
-        dv.list.length + (dv.list.length===1?' job logged':' jobs logged'))),
+    e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700 } },
+      dv.list.length + (dv.list.length===1?' job logged':' jobs logged')),
     dv.list.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dv.siteSequence)),
@@ -1732,11 +1818,16 @@ function App() {
   const addEquip = () => commitEquip([...equipEdits, { key:slugKey('EQ', equipEdits.map(x=>x.key)), label:'New equipment' }]);
 
   const applyTheme = (theme) => {
-    const nextSites = siteEdits.map((s,idx) => ({ ...s, hex: theme.sites[idx % theme.sites.length] }));
+    // Always read the live site list so themes work even if siteEdits is empty
+    const base = (siteEdits && siteEdits.length) ? siteEdits : sitesToList();
+    const nextSites = base.map((s, idx) => ({
+      ...s,
+      hex: theme.sites[idx % theme.sites.length]
+    }));
     setSiteEdits(nextSites);
     applySites(nextSites);
-    setThemeTick(t=>t+1);
-    saveSettings({ sites:nextSites });
+    setThemeTick(t => t + 1);
+    saveSettings({ sites: nextSites });
   };
 
   const toggleRow = (label, sub, value, onToggle) =>
@@ -1781,20 +1872,6 @@ function App() {
             e('span', { key:hi, style:{ width:'13px', height:'13px', borderRadius:'4px', background:s.hex } }))),
         e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
 
-    settingsSection('Sites & colours'),
-    e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-      siteEdits.map((s,idx) => e('div', { key:s.key, style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.5rem 0.6rem' } },
-        e('input', { type:'color', value:s.hex, onChange:(ev)=>updateSiteColour(idx, ev.target.value),
-          style:{ width:'34px', height:'34px', border:'none', borderRadius:'9px', padding:0, background:'none', cursor:'pointer', flexShrink:0 } }),
-        e('input', { type:'text', value:s.label, onChange:(ev)=>updateSiteLabel(idx, ev.target.value),
-          onBlur:()=>commitSites(siteEdits),
-          style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:800, color:INK } }),
-        e('button', { onClick:()=>removeSite(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
-          TrashIcon(16, GREY)))),
-      e('button', { onClick:addSite, style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-        borderRadius:'14px', padding:'0.65rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add site')),
-
     settingsSection('Equipment'),
     e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
       equipEdits.map((x,idx) => e('div', { key:x.key, style:{ display:'flex', alignItems:'center', gap:'0.5rem',
@@ -1814,8 +1891,6 @@ function App() {
       settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
     toggleRow('Hide weekends by default', 'Weekend columns start collapsed on the calendar',
       settings.hideWeekendsDefault, ()=>saveSettings({ hideWeekendsDefault: !settings.hideWeekendsDefault })),
-    toggleRow('Automatic daily backup', 'Drops a dated .json backup file once a day while the app is open',
-      settings.autoBackupEnabled, ()=>saveSettings({ autoBackupEnabled: !settings.autoBackupEnabled })),
 
     chipSelect('Calendar opens to', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'}],
       settings.defaultCalMode, (v)=>saveSettings({ defaultCalMode:v })),
@@ -1833,20 +1908,24 @@ function App() {
       e('button', { onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'10px', border:'1px solid '+LINE,
         background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out')));
 
-  const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+  const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
       e('button', { onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Themes'),
       e('span', { style:{ width:'36px' } })),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
-      THEME_PRESETS.map(theme => e('button', { key:theme.name, onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
-        style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'14px',
-          border: '1px solid '+LINE,
-          background:SURF, cursor:'pointer', textAlign:'left' } },
-        e('div', { style:{ display:'flex', gap:'4px' } },
-          theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'20px', borderRadius:'5px', background:hex } }))),
-        e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name)))));
+    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
+      e('div', { style:{ ...LBL, marginBottom:'0.15rem' } }, group.name),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.45rem' } },
+        group.themes.map(theme => e('button', { key:theme.name, onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
+          style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.65rem', borderRadius:'14px',
+            border: '1px solid '+LINE,
+            background:SURF, cursor:'pointer', textAlign:'left' } },
+          e('div', { style:{ display:'flex', gap:'3px' } },
+            theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'18px', borderRadius:'4px', background:hex } }))),
+          e('span', { style:{ fontSize:'0.7rem', fontWeight:800, color:INK } }, theme.name)))
+      )
+    )));
 
 
   if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
