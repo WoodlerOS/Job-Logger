@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#FAFAFC">
+<meta name="theme-color" content="#D8DAE2">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
 <link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="icon" type="image/png" href="icon-180.png">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -23,12 +24,13 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:#FAFAFC;
+    background:#D8DAE2;
     background-attachment:fixed;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
+    background:#D8DAE2;
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -110,9 +112,10 @@
 
   /* ---------- Desktop full-app layout (Layout 1) ---------- */
   .desktop-only { display: none !important; }
-  .mobile-only { display: block; }
+  .desktop-only-inline { display: none !important; }
   @media (min-width: 900px) {
     .desktop-only { display: flex !important; }
+    .desktop-only-inline { display: inline-flex !important; }
     .mobile-only { display: none !important; }
     .mobile-only-inline { display: none !important; }
 
@@ -509,7 +512,7 @@ function slugKey(label, existingKeys) {
 
 let SURF='#FFFFFF', SURF2='#F1F1F5', SURF3='#F5F5F8';
 let FIELDBG='#FFFFFF', EMPTY='#F7F7FA';
-let PAGE_BG='#FAFAFC';
+let PAGE_BG='#D8DAE2';
 let DARK_MODE = false;
 function applyDarkMode(on) {
   DARK_MODE = on;
@@ -525,19 +528,15 @@ function applyDarkMode(on) {
     VIOLET='#0A0A0C'; LOCKED='#0A0A0C'; LOCKEDBG='rgba(10,10,12,0.06)';
     TRAVEL='#5B5D66'; TRAVELBG='rgba(10,10,12,0.06)';
     SURF='#FFFFFF'; SURF2='#F1F1F5'; SURF3='#F5F5F8';
-    FIELDBG='#FFFFFF'; EMPTY='#F7F7FA'; PAGE_BG='#FAFAFC';
+    FIELDBG='#FFFFFF'; EMPTY='#F7F7FA'; PAGE_BG='#D8DAE2';
     APRICOT='#FFFFFF';
   }
   try {
-    const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
-    if (isDesktop) {
-      document.body.style.background = on ? '#0C0C10' : '#D8DAE2';
-      document.body.style.backgroundImage = 'none';
-      const root = document.getElementById('root');
-      if (root) root.style.background = on ? '#0C0C10' : '#D8DAE2';
-    } else {
-      document.body.style.background = PAGE_BG;
-      document.body.style.backgroundImage = 'none';
+    document.body.style.background = PAGE_BG;
+    document.body.style.backgroundImage = 'none';
+    const root = document.getElementById('root');
+    if (root && window.matchMedia && window.matchMedia('(min-width: 900px)').matches) {
+      root.style.background = PAGE_BG;
     }
     document.body.style.color = INK;
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -545,9 +544,9 @@ function applyDarkMode(on) {
   } catch (err) {}
 }
 
-const SHADOW    = '0 8px 20px rgba(22,23,50,0.10), 0 2px 5px rgba(22,23,50,0.07)';
-const SHADOW_SM = '0 3px 9px rgba(22,23,50,0.09), 0 1px 2px rgba(22,23,50,0.06)';
-const SHADOW_BTN = '0 4px 10px rgba(22,23,50,0.10)';
+const SHADOW    = '0 6px 22px rgba(22,23,50,0.14), 0 2px 6px rgba(22,23,50,0.08)';
+const SHADOW_SM = '0 4px 14px rgba(22,23,50,0.12), 0 1px 3px rgba(22,23,50,0.07)';
+const SHADOW_BTN = '0 4px 12px rgba(22,23,50,0.12)';
 const sheen = 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%)';
 const GLASS_BLUR = 'none';
 const glassPanel = (alpha) => ({ background:SURF, border:'1px solid '+LINE });
@@ -723,16 +722,17 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
   const timerRef = useRef(null);
   const autoHideRef = useRef(null);
   const startRef = useRef({ x:0, y:0 });
+  const movedRef = useRef(false);
 
   const clearTimers = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     if (autoHideRef.current) { clearTimeout(autoHideRef.current); autoHideRef.current = null; }
   };
 
-  const onStart = (ev) => {
+  const beginHold = (x, y) => {
     if (pressed) return;
-    const t = ev.touches[0];
-    startRef.current = { x:t.clientX, y:t.clientY };
+    movedRef.current = false;
+    startRef.current = { x, y };
     setHolding(true);
     timerRef.current = setTimeout(() => {
       timerRef.current = null;
@@ -741,20 +741,39 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
       autoHideRef.current = setTimeout(() => setPressed(false), 3500);
     }, 450);
   };
-  const onMove = (ev) => {
+  const moveHold = (x, y) => {
     if (!timerRef.current) return;
-    const t = ev.touches[0];
-    if (Math.abs(t.clientX - startRef.current.x) > 10 || Math.abs(t.clientY - startRef.current.y) > 10) {
+    if (Math.abs(x - startRef.current.x) > 10 || Math.abs(y - startRef.current.y) > 10) {
       clearTimeout(timerRef.current); timerRef.current = null;
       setHolding(false);
+      movedRef.current = true;
     }
   };
-  const onEnd = () => {
+  const endHold = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     setHolding(false);
   };
+
+  const onStart = (ev) => { const t = ev.touches[0]; beginHold(t.clientX, t.clientY); };
+  const onMove = (ev) => { const t = ev.touches[0]; moveHold(t.clientX, t.clientY); };
+  const onEnd = () => endHold();
+
+  const onMouseDown = (ev) => {
+    if (ev.button !== 0) return;
+    beginHold(ev.clientX, ev.clientY);
+    const onMoveWin = (e) => moveHold(e.clientX, e.clientY);
+    const onUpWin = () => {
+      endHold();
+      window.removeEventListener('mousemove', onMoveWin);
+      window.removeEventListener('mouseup', onUpWin);
+    };
+    window.addEventListener('mousemove', onMoveWin);
+    window.addEventListener('mouseup', onUpWin);
+  };
+
   const handleTap = () => {
     if (pressed) { setPressed(false); clearTimers(); return; }
+    if (movedRef.current) return;
     if (onTap) onTap();
   };
 
@@ -777,8 +796,10 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
           boxShadow:'0 8px 20px rgba(179,38,30,0.35), 0 2px 6px rgba(179,38,30,0.2)' } },
         TrashIcon(17, '#FFF'),
         e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
-    e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:handleTap,
-      style:{ transform: (holding || pressed) ? 'scale(0.965)' : 'scale(1)', transition:'transform .2s cubic-bezier(.22,.9,.3,1)', position:'relative' } },
+    e('div', {
+      onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd,
+      onMouseDown:onMouseDown, onClick:handleTap,
+      style:{ transform: (holding || pressed) ? 'scale(0.965)' : 'scale(1)', transition:'transform .2s cubic-bezier(.22,.9,.3,1)', position:'relative', userSelect:'none' } },
       children));
 }
 
@@ -789,9 +810,8 @@ function SignInScreen({ onSignIn, busy, error }) {
   return e('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' } },
     e('form', { onSubmit:submit, style:{ width:'100%', maxWidth:'340px', display:'flex', flexDirection:'column', gap:'1rem' } },
       e('div', { style:{ textAlign:'center', marginBottom:'0.5rem' } },
-        e('div', { style:{ width:'56px', height:'56px', borderRadius:'16px', background:grad(VIOLET, shade(VIOLET,-0.22), 150),
-          display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 0.75rem', boxShadow:SHADOW_SM } },
-          e('span', { style:{ color:'#FFFFFF', fontWeight:900, fontSize:'1.6rem' } }, 'T')),
+        e('img', { src:'icon-180.png', alt:'Tickets', width:64, height:64,
+          style:{ width:'64px', height:'64px', borderRadius:'16px', margin:'0 auto 0.75rem', display:'block', boxShadow:SHADOW_SM } }),
         e('div', { style:{ fontSize:'1.15rem', fontWeight:900, color:INK } }, 'Tickets'),
         e('div', { style:{ fontSize:'0.78rem', color:GREY, marginTop:'2px' } }, 'Sign in to sync your tickets')),
       e('div', null,
@@ -2079,7 +2099,7 @@ function App() {
         )
       ),
 
-      /* RIGHT: large work-done notes */
+      /* RIGHT: large work-done notes + compact sign-off on desktop */
       e('div', { className: 'form-desktop-right form-card', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.55rem', minHeight:'280px' } },
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between' } },
           e('label', { style:{ ...LBL, marginBottom:0 } }, 'Work done'),
@@ -2087,11 +2107,26 @@ function App() {
         e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
           onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
           className: 'work-done-field',
-          style:{ ...FIELD(), flex:1, minHeight:'12rem', resize:'vertical', lineHeight:1.55, fontSize:'0.92rem' } })
+          style:{ ...FIELD(), flex:1, minHeight:'12rem', resize:'vertical', lineHeight:1.55, fontSize:'0.92rem' } }),
+        e('button', {
+          className: 'desktop-only-inline',
+          onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
+          style:{
+            alignSelf:'flex-start', marginTop:'0.35rem',
+            alignItems:'center', gap:'0.4rem',
+            padding:'0.45rem 0.85rem', borderRadius:'10px', cursor:'pointer',
+            border: form.locked ? '1.5px solid '+LOCKED : '1.5px solid '+LINE,
+            background: form.locked ? LOCKEDBG : SURF2,
+            color: INK, fontWeight:800, fontSize:'0.78rem'
+          }
+        }, TickIcon(!!form.locked, 16), form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off')
       )
     ),
 
-    e('button', { onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
+    /* Mobile full-width sign-off control */
+    e('button', {
+      className: 'mobile-only',
+      onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
       style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
         border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
         background: form.locked ? LOCKEDBG : FIELDBG,
@@ -2282,8 +2317,8 @@ function App() {
 
   const desktopSidebar = e('div', { className: 'desktop-only desktop-sidebar' },
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.55rem', padding:'0.35rem 0.85rem 1.25rem' } },
-      e('div', { style:{ width:'32px', height:'32px', borderRadius:'9px', background:'linear-gradient(135deg,#41436A,#2E2F52)', display:'flex', alignItems:'center', justifyContent:'center' } },
-        e('span', { style:{ color:'#fff', fontWeight:900, fontSize:'1rem' } }, 'T')),
+      e('img', { src:'icon-180.png', alt:'', width:32, height:32,
+        style:{ width:'32px', height:'32px', borderRadius:'9px', display:'block' } }),
       e('span', { style:{ fontWeight:900, fontSize:'1.05rem', letterSpacing:'-0.3px' } }, 'Tickets')),
     e('button', { className: 'nav-item' + (view !== 'list' && view !== 'form' && !settingsOpen ? ' active' : ''),
       onClick: () => navTo('calendar') },
