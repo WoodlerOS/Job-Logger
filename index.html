@@ -34,26 +34,56 @@
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
   input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:light; }
   select { -webkit-appearance:none; appearance:none; color-scheme:light; }
-  button { font-family:inherit; transition:transform .12s ease, opacity .12s ease; }
-  button:active { transform:scale(0.965); opacity:0.7; }
+  button { 
+    font-family:inherit; 
+    transition: transform .14s cubic-bezier(.22,.9,.3,1), opacity .12s ease, filter .12s ease, box-shadow .14s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { 
+    transform: scale(0.94); 
+    opacity: 0.82; 
+    filter: brightness(0.92);
+  }
+  .fab-btn:active {
+    transform: scale(0.88) !important;
+    opacity: 0.9;
+    filter: brightness(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1) !important;
+  }
   input:focus, textarea:focus { border-color:rgba(65,67,106,0.55) !important; }
-  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  @keyframes slideUp { 
+    from { transform:translateY(100%); } 
+    70% { transform:translateY(-6px); }
+    to { transform:translateY(0); } 
+  }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-  @keyframes fadeInUp { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes popIn { 0% { opacity:0; transform:scale(0.92); } 60% { opacity:1; transform:scale(1.03); } 100% { transform:scale(1); } }
-  @keyframes bubblePop { 0% { opacity:0; transform:scale(0.3) translateY(8px); } 60% { opacity:1; transform:scale(1.14) translateY(-3px); } 100% { opacity:1; transform:scale(1) translateY(0); } }
-  .bubble-pop { animation: bubblePop .32s cubic-bezier(.34,1.56,.64,1) both; }
-  @keyframes tickBreathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.14); } }
+  @keyframes fadeInUp { 
+    from { opacity:0; transform:translateY(16px) scale(0.96); } 
+    60% { opacity:1; transform:translateY(-3px) scale(1.015); }
+    to { opacity:1; transform:translateY(0) scale(1); } 
+  }
+  @keyframes popIn { 0% { opacity:0; transform:scale(0.88); } 55% { opacity:1; transform:scale(1.08); } 80% { transform:scale(0.97); } 100% { transform:scale(1); } }
+  @keyframes bubblePop { 
+    0% { opacity:0; transform:scale(0.25) translateY(14px); } 
+    55% { opacity:1; transform:scale(1.18) translateY(-5px); } 
+    80% { transform:scale(0.96) translateY(1px); }
+    100% { opacity:1; transform:scale(1) translateY(0); } 
+  }
+  .bubble-pop { animation: bubblePop .42s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes tickBreathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
   .tick-complete { animation:tickBreathe 1.8s ease-in-out infinite; transform-origin:center; }
-  @keyframes dotPulseAbs { 0%,100% { opacity:1; transform:translateX(-50%) scale(1); } 50% { opacity:0.4; transform:translateX(-50%) scale(1.5); } }
-  @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.5); } }
+  @keyframes dotPulseAbs { 0%,100% { opacity:1; transform:translateX(-50%) scale(1); } 50% { opacity:0.35; transform:translateX(-50%) scale(1.65); } }
+  @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(1.65); } }
   @keyframes blobDrift1 { 0%,100% { transform:translate(-10%,-15%) scale(1); } 50% { transform:translate(8%,10%) scale(1.15); } }
   @keyframes blobDrift2 { 0%,100% { transform:translate(10%,10%) scale(1); } 50% { transform:translate(-8%,-12%) scale(1.1); } }
   .ambient-wrap { position:relative; }
   .ambient-wrap > *:not(.ambient-blob) { position:relative; z-index:1; }
-  @keyframes burstFly { 0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(30px) scale(0.4); } }
-  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#0A0A0C;
-    animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
+  @keyframes burstFly { 
+    0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1.1); } 
+    100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(42px) scale(0.25); } 
+  }
+  .burst-dot { position:absolute; top:50%; left:50%; width:7px; height:7px; border-radius:999px; background:#0A0A0C;
+    animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
     background:#FFFFFF; }
@@ -262,6 +292,61 @@ const THEME_GROUPS = [
 const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
+
+/* ---------- PREVIEW MODE (no login required) ---------- */
+const PREVIEW_MODE = true;
+
+function makePreviewJobs() {
+  const today = todayISO();
+  const yest = addDayISO(today, -1);
+  const tom  = addDayISO(today, 1);
+  const d2   = addDayISO(today, 2);
+  return [
+    {
+      id: 1001, ticketNumber: 'JT-4821', site: 'NX', equipment: ['C'],
+      startDateTime: today + 'T09:15', finishDateTime: today + 'T11:40',
+      hasTravel: true, travelDateTime: today + 'T08:40',
+      hasTravel2: true, travel2DateTime: today + 'T12:10',
+      workDone: 'Replaced reagent pack and ran calibration.\nChecked sample probe alignment.',
+      parts: [{ partNumber: '07D60-01', partDescription: 'Reagent pack' }],
+      locked: false, extraDays: []
+    },
+    {
+      id: 1002, ticketNumber: 'JT-4833', site: 'WS', equipment: ['I'],
+      startDateTime: today + 'T13:00', finishDateTime: today + 'T15:20',
+      hasTravel: true, travelDateTime: today + 'T12:25',
+      hasTravel2: false, travel2DateTime: null,
+      workDone: 'Preventive maintenance – cleaned optics and verified wash station.',
+      parts: [], locked: true, extraDays: []
+    },
+    {
+      id: 1003, ticketNumber: 'JT-4790', site: 'RH', equipment: ['SCM'],
+      startDateTime: yest + 'T10:00', finishDateTime: yest + 'T12:30',
+      hasTravel: false, travelDateTime: null,
+      hasTravel2: true, travel2DateTime: yest + 'T13:00',
+      workDone: 'Resolved communication error with track.\nUpdated firmware to latest build.',
+      parts: [{ partNumber: 'FW-SCM-2.4', partDescription: 'Firmware update' }],
+      locked: true, extraDays: []
+    },
+    {
+      id: 1004, ticketNumber: 'JT-4855', site: 'MMUH', equipment: ['C', 'I'],
+      startDateTime: tom + 'T08:30', finishDateTime: tom + 'T10:45',
+      hasTravel: true, travelDateTime: tom + 'T07:50',
+      hasTravel2: true, travel2DateTime: tom + 'T11:15',
+      workDone: 'Scheduled service visit – full system check.',
+      parts: [], locked: false, extraDays: []
+    },
+    {
+      id: 1005, ticketNumber: 'JT-4810', site: 'NX', equipment: ['GLP'],
+      startDateTime: d2 + 'T14:00', finishDateTime: d2 + 'T16:00',
+      hasTravel: true, travelDateTime: d2 + 'T13:20',
+      hasTravel2: false, travel2DateTime: null,
+      workDone: 'Track sensor replacement and alignment.',
+      parts: [{ partNumber: 'SEN-GLP-12', partDescription: 'Optical sensor' }],
+      locked: false, extraDays: []
+    }
+  ];
+}
 
 const shade = (hex, amt) => { const h=hex.replace('#',''); let r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16);
   const t = amt<0 ? 0 : 255, p = Math.abs(amt);
@@ -538,19 +623,23 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
 
   return e('div', { style:{ position:'relative', borderRadius:radius,
       boxShadow: glow || 'none', transition:'box-shadow .4s ease',
-      animation: entryDelay != null ? 'fadeInUp .34s cubic-bezier(.22,.9,.3,1) both' : 'none',
+      animation: entryDelay != null ? 'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' : 'none',
       animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
-    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-14px', right:'10px', display:'flex', gap:'6px', zIndex:5 } },
+    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-58px', right:'6px', display:'flex', gap:'10px', zIndex:5 } },
       e('button', { key:'lk', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onLock(); }, className:'bubble-pop',
-        style:{ height:'34px', padding:'0 12px', borderRadius:'9px', border:'none', cursor:'pointer', animationDelay:'0s',
-          background: locked ? GREY : INK, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_BTN } },
-        TickIcon(true, 15, APRICOT)),
+        style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'0s',
+          background: locked ? GREY : INK, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
+          boxShadow:'0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)' } },
+        TickIcon(true, 18, APRICOT),
+        e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
       e('button', { key:'del', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onDelete(); }, className:'bubble-pop',
-        style:{ height:'34px', padding:'0 12px', borderRadius:'9px', border:'none', cursor:'pointer', animationDelay:'.06s',
-          background:RED, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_BTN } },
-        TrashIcon(15, '#FFF'))),
+        style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'.07s',
+          background:RED, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
+          boxShadow:'0 8px 20px rgba(179,38,30,0.35), 0 2px 6px rgba(179,38,30,0.2)' } },
+        TrashIcon(17, '#FFF'),
+        e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
     e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:handleTap,
-      style:{ transform: (holding || pressed) ? 'scale(0.97)' : 'scale(1)', transition:'transform .18s ease', position:'relative' } },
+      style:{ transform: (holding || pressed) ? 'scale(0.965)' : 'scale(1)', transition:'transform .2s cubic-bezier(.22,.9,.3,1)', position:'relative' } },
       children));
 }
 
@@ -581,9 +670,9 @@ function SignInScreen({ onSignIn, busy, error }) {
 }
 
 function App() {
-  const [jobs, setJobs] = useState([]);
-  const [ready, setReady] = useState(false);
-  const [user, setUser] = useState(undefined);
+  const [jobs, setJobs] = useState(() => PREVIEW_MODE ? makePreviewJobs() : []);
+  const [ready, setReady] = useState(PREVIEW_MODE);
+  const [user, setUser] = useState(PREVIEW_MODE ? { uid: 'preview', email: 'preview@local' } : undefined);
   const [authError, setAuthError] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
   const appliedDefaultsRef = useRef(false);
@@ -635,11 +724,13 @@ function App() {
   }
 
   useEffect(() => {
+    if (PREVIEW_MODE) return;
     const unsub = auth.onAuthStateChanged(u => setUser(u));
     return unsub;
   }, []);
 
   useEffect(() => {
+    if (PREVIEW_MODE) return;
     if (!user) { setReady(false); return; }
     const ref = dbFS.collection('users').doc(user.uid);
     let unsub = null;
@@ -680,13 +771,13 @@ function App() {
   const saveSettings = async (patch) => {
     const next = { ...settings, ...patch };
     setSettings(next);
-    if (!user) return;
+    if (PREVIEW_MODE || !user) return;
     try { await dbFS.collection('users').doc(user.uid).set({ settings: next }, { merge:true }); } catch (err) {}
   };
 
   const persist = async (next) => {
     setJobs(next);
-    if (!user) return;
+    if (PREVIEW_MODE || !user) return;
     try { await dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
   };
 
@@ -701,7 +792,7 @@ function App() {
   const BACKUP_RETENTION = 14;
 
   const snapshotToCloud = async () => {
-    if (!user || !jobsRef.current.length) return false;
+    if (PREVIEW_MODE || !user || !jobsRef.current.length) return false;
     try {
       await dbFS.collection('users').doc(user.uid).collection('backups').doc(todayISO())
         .set({ jobs: jobsRef.current, savedAt: new Date().toISOString(), count: jobsRef.current.length });
@@ -710,7 +801,7 @@ function App() {
   };
 
   const pruneOldBackups = async () => {
-    if (!user) return;
+    if (PREVIEW_MODE || !user) return;
     try {
       const snap = await dbFS.collection('users').doc(user.uid).collection('backups').orderBy('savedAt', 'desc').get();
       const extra = snap.docs.slice(BACKUP_RETENTION);
@@ -719,7 +810,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (!ready || !user) return;
+    if (PREVIEW_MODE || !ready || !user) return;
     (async () => {
       const t = todayISO();
       let last = null;
@@ -735,6 +826,7 @@ function App() {
   }, [ready, user]);
 
   const backupNow = async () => {
+    if (PREVIEW_MODE) { alert('Cloud backup is disabled in preview mode.'); return; }
     const ok = await snapshotToCloud();
     alert(ok ? 'Backup saved to the cloud.' : 'Could not save a backup — check your connection.');
   };
@@ -745,6 +837,11 @@ function App() {
 
   const openBackups = async () => {
     setMenuOpen(false); setBackupsOpen(true); setBackupsLoading(true);
+    if (PREVIEW_MODE) {
+      setBackupsList([]);
+      setBackupsLoading(false);
+      return;
+    }
     try {
       const snap = await dbFS.collection('users').doc(user.uid).collection('backups').orderBy('savedAt', 'desc').get();
       setBackupsList(snap.docs.map(d => ({ id:d.id, ...d.data() })));
@@ -765,7 +862,7 @@ function App() {
     catch (err) { setAuthError(err && err.message ? err.message : 'Could not sign in.'); }
     setAuthBusy(false);
   };
-  const signOutUser = () => auth.signOut();
+  const signOutUser = () => { if (!PREVIEW_MODE) auth.signOut(); };
 
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   const fmtDay   = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
@@ -1260,7 +1357,7 @@ function App() {
         onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
         style:{ width:'100%', background:SURF2,
           borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
-          display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .28s cubic-bezier(.22,.9,.3,1)', maxHeight:'88vh', overflowY:'auto',
+          display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .38s cubic-bezier(.22,.9,.3,1)', maxHeight:'88vh', overflowY:'auto',
           boxShadow:'0 -10px 34px rgba(22,23,50,0.16)', border:'1px solid rgba(255,255,255,0.7)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
         e('div', { style:{ padding:'0.85rem 0 0.5rem' } },
@@ -1321,8 +1418,6 @@ function App() {
             : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
           iconRow(SpreadsheetTile(), 'Export to Excel', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('excel'); }),
           iconRow(ClipboardTile(), 'Copy as text', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('text'); }),
-          iconRow(BackupTile(), 'Back up now', 'Save an extra dated copy to the cloud', backupNow),
-          iconRow(RestoreTile(), 'Restore from backup', 'Browse and recover a previous day\'s data', openBackups),
           iconRow(SettingsTile(), 'Settings', 'Themes, equipment and app behaviour', ()=>openSettings())
         ),
 
@@ -1355,20 +1450,31 @@ function App() {
     closeBtn(()=>setFormMenu(false))
   ].filter(Boolean), ()=>setFormMenu(false));
 
-  const header = (view !== 'form' && !settingsOpen) && e('div', { style:{ padding:'0.9rem 1rem 0.7rem', display:'flex', justifyContent:'space-between', alignItems:'center' } },
-    e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800 } }, 'Menu'),
-    e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.2px' } }, view === 'list' ? 'All tickets' : 'Tickets'),
-    e('button', { onClick:()=>openNew(null, view==='list'?{view:'list'}:null),
-      style:{ ...TXTBTN, color:INK, fontWeight:900, fontSize:'0.9rem' } }, 'New'));
+  const header = (view !== 'form' && !settingsOpen) && e('div', { style:{ padding:'0.35rem 0.75rem 0.15rem', display:'flex', justifyContent:'flex-start', alignItems:'center' } },
+    e('button', { onClick:()=>setMenuOpen(true), style:{ background:'none', border:'none', width:'38px', height:'38px',
+      display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', padding:0 } }, DotsIcon(19, INK)));
+
+  const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('button', {
+    className: 'fab-btn',
+    onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
+    style: {
+      position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
+      width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer', zIndex:35,
+      background: INK, color: APRICOT,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      boxShadow:'0 10px 28px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.12)',
+      transition:'transform .15s cubic-bezier(.22,.9,.3,1), opacity .12s ease, box-shadow .15s ease, filter .12s ease'
+    }
+  }, PlusIcon(26, APRICOT));
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-  const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.25rem', flexWrap:'wrap' } },
+  const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'wrap' } },
     seq.length === 0
       ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
       : seq.map((s,i) => [
           e('span', { key:'s'+i, style:{ background:siteGrad(s), color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
-          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.6rem', color:GREY, fontWeight:800 } }, '→') : null
+          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7 } }, '›') : null
         ]));
 
   const isToday = (y,m,dnum) => { const t=new Date();
@@ -1440,7 +1546,11 @@ function App() {
     const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
     const boxShadow = doneRing || 'none';
 
-    return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
+    return e('button', { key:dnum, onClick:()=>{
+        setAnchorDate(new Date(ms.y, ms.m, dnum));
+        setCalMode('day');
+        setDayDetail(null);
+      },
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
@@ -1505,7 +1615,7 @@ function App() {
     const weekShadow = doneRing || 'none';
 
     return e('button', { key:i,
-      onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
+      onClick:()=>{ setAnchorDate(dt); setCalMode('day'); setDayDetail(null); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden', position:'relative',
         border: allLocked ? '3px solid '+INK : (has ? 'none' : '1px solid rgba(10,10,12,0.10)'),
@@ -1540,16 +1650,12 @@ function App() {
   const dayView = e('div', { style:{ ...PANEL(), padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
     e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700 } },
       dv.list.length + (dv.list.length===1?' job logged':' jobs logged')),
-    dv.list.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
-      e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
-      siteSeqRow(dv.siteSequence)),
     dv.list.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
           dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
-    e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
-      style:{ padding:'0.85rem', borderRadius:'14px', border:'1.5px dashed '+LINE, background:SURF2, color:INK, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
-      '+ Add ticket for this day'));
+    dv.list.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem' } },
+      siteSeqRow(dv.siteSequence)));
 
   const periodLabel = () => {
     if (calMode === 'month') return anchorDate.toLocaleDateString('en-GB',{ month:'long' });
@@ -1557,31 +1663,31 @@ function App() {
     return anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' });
   };
 
-  const monthView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
+  const monthView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
+    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.35rem' } },
 
       e('div', { style:{ display:'flex', borderBottom:'1px solid '+LINE } },
         ['day','week','month'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-          style:{ flex:1, padding:'0.55rem 0', border:'none', cursor:'pointer', background:'transparent',
-            fontSize:'0.8rem', fontWeight: calMode===mode ? 900 : 700,
+          style:{ flex:1, padding:'0.32rem 0', border:'none', cursor:'pointer', background:'transparent',
+            fontSize:'0.7rem', fontWeight: calMode===mode ? 900 : 700,
             color: calMode===mode ? INK : GREY,
             borderBottom: calMode===mode ? '2px solid '+INK : '2px solid transparent',
             marginBottom:'-1px', transition:'color .2s ease, border-color .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem', gap:'0.4rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px',
-          display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(19, INK)),
-        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
-          calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.05rem', gap:'0.25rem', marginTop:'0.05rem' } },
+        e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
+          display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
+        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', flex:1, textAlign:'center' } },
+          e('span', { style:{ fontSize:'0.92rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } }, periodLabel()),
+          calMode === 'month' && e('span', { style:{ fontSize:'0.92rem', fontWeight:400, color:GREY, marginLeft:'0.28rem' } },
             String(anchorDate.getFullYear()))),
         e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
-          padding:'6px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
-          e('span', { style:{ width:'6px', height:'6px', borderRadius:'999px', background:INK } })),
-        e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px',
-          display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(19, INK)))),
+          padding:'3px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
+          e('span', { style:{ width:'5px', height:'5px', borderRadius:'999px', background:INK } })),
+        e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
+          display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK)))),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -1601,33 +1707,11 @@ function App() {
 
     ms.src.length === 0 && calMode === 'month' &&
       e('div', { style:{ textAlign:'center', padding:'1rem', color:GREY, fontSize:'0.8rem' } },
-        'Nothing logged this month. Tap a day to add a ticket.'));
+        'Nothing logged this month. Tap a day or use the + button.'));
 
-  const dd = dayDetail != null ? ms.days[dayDetail] : null;
-  const dayRet = { view:'month', day:dayDetail };
+  // daySheet popup removed — tapping a day now switches to Day mode
 
-  const daySheet = dayDetail != null && sheet([
-    e('div', { key:'hd' },
-      e('div', { style:{ fontSize:'1.08rem', fontWeight:900, letterSpacing:'-0.3px' } },
-        new Date(ms.y, ms.m, dayDetail).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long', year:'numeric' })),
-      dd && e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
-        dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
-
-    dd ? e('div', { key:'rt', style:{ background:SURF2, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
-      e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
-      siteSeqRow(dd.siteSequence)) : null,
-
-    dd ? dd.tickets.map((j,i) => swipeCard(j, i, dayRet, i))
-       : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
-
-    e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
-      style:{ padding:'0.9rem', borderRadius:'14px', border:'1.5px dashed '+LINE, background:SURF2, color:INK, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
-      '+ Add ticket for this day'),
-
-    closeBtn(()=>setDayDetail(null))
-  ], ()=>setDayDetail(null));
-
-  const listView = e('div', { style:{ padding:'0 0.85rem 3rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
+  const listView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
         onChange:(ev)=>setQuery(ev.target.value),
@@ -1835,8 +1919,9 @@ function App() {
         e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
           form.locked ? 'Locked — tap to unlock and edit' : 'All information has been added')),
       burst > 0 ? e('div', { key:'burst'+burst, style:{ position:'absolute', right:'32px', top:'50%', width:0, height:0, pointerEvents:'none' } },
-        [...Array(8)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
-          style:{ '--ang': (bi*45)+'deg', background: bi%2 ? SITES.RH.hex : LOCKED } }))) : null,
+        [...Array(12)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
+          style:{ '--ang': (bi*30)+'deg', background: bi%3===0 ? (SITES.RH ? SITES.RH.hex : '#F64668') : (bi%3===1 ? LOCKED : '#FE9677'),
+            width: (5 + (bi%3)) + 'px', height: (5 + (bi%3)) + 'px' } }))) : null,
       e('span', { style:{ width:'22px', height:'22px', borderRadius:'7px', flexShrink:0,
         border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
         display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
@@ -2000,13 +2085,13 @@ function App() {
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
-  if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
-  if (settingsOpen && themesOpen) return e('div', { key:'themes', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, themesView);
-  if (settingsOpen) return e('div', { key:'settings', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, settingsView);
+  if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
+  if (settingsOpen && themesOpen) return e('div', { key:'themes', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, themesView);
+  if (settingsOpen) return e('div', { key:'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, settingsView);
 
   const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
-  const body = e('div', { key:view, style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
-  return e('div', null, header, body, menu, chooserSheet, daySheet, formSheet, swipeHint);
+  const body = e('div', { key:view, style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
+  return e('div', null, header, body, menu, chooserSheet, formSheet, swipeHint, fab);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
