@@ -14,7 +14,7 @@
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js"></script>
+<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
@@ -505,20 +505,25 @@ function App() {
     const byDay = Object.keys(ms.days).map(Number).sort((a,b)=>a-b);
     const text = byDay.map(dnum => {
       const d = ms.days[dnum];
-      const head = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'})
-        + '  ' + d.siteSequence.map(s=>SITES[s].label).join(' → ');
+      const head = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})
+        + (d.siteSequence.length ? '\nRoute: ' + d.siteSequence.map(s=>SITES[s].label).join(' → ') : '');
       const body = d.tickets.map(j => {
         const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
           .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
         const ex = exOf(j).map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ');
-        return '  • ' + j.ticketNumber + (eqOf(j).length?' ('+eqOf(j).join(', ')+')':'') + '  '
-          + fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)
-          + (ex?'\n    Also: '+ex:'')
-          + (j.workDone?'\n    '+j.workDone.replace(/\n/g,' '):'')
-          + (p?'\n    Parts: '+p:'');
-      }).join('\n');
-      return head + '\n' + body;
-    }).join('\n\n');
+        const lines = [
+          'Ticket: ' + j.ticketNumber,
+          SITES[j.site] ? 'Site: ' + SITES[j.site].label : null,
+          eqOf(j).length ? 'Machine: ' + eqOf(j).join(', ') : null,
+          'Time: ' + fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime),
+          ex ? 'Also: ' + ex : null,
+          j.workDone ? 'Work done: ' + j.workDone.replace(/\n/g,' ') : null,
+          p ? 'Parts: ' + p : null
+        ].filter(Boolean);
+        return lines.join('\n');
+      }).join('\n\n');
+      return head + '\n\n' + body;
+    }).join('\n\n\n');
     try { await navigator.clipboard.writeText(text); alert('Copied '+ms.src.length+' ticket(s).'); }
     catch (err) { alert('Copy failed — clipboard access blocked.'); }
     setMenuOpen(false);
