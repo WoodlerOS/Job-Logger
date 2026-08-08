@@ -236,6 +236,35 @@ const THEME_GROUPS = [
     { name:'Teal Charge',   accent:'#004040', sites:['#004040','#006060','#008080','#00A0A0'] },
     { name:'Violet Strike', accent:'#300850', sites:['#300850','#480C78','#6010A0','#7814C8'] },
     { name:'Amber Strike',  accent:'#502000', sites:['#502000','#783000','#A04000','#C85000'] },
+  ]},
+  /* Distinct hues, matched intensity — classy modern multi-colour gradients */
+  { name: 'Colour Mix', themes: [
+    { name:'Embers Classic', accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
+    { name:'Twilight Market',accent:'#3D2A5C', sites:['#3D2A5C','#6B3A5A','#A05A4A','#C87A3A'] },
+    { name:'Harbor Lights',  accent:'#1A3A5A', sites:['#1A3A5A','#2A6A6A','#8A5A3A','#C04A4A'] },
+    { name:'Studio Night',   accent:'#2A1A4A', sites:['#2A1A4A','#5A2A6A','#8A4A5A','#C06A3A'] },
+    { name:'Coral Depth',    accent:'#1A3A4A', sites:['#1A3A4A','#2A6A5A','#8A4A4A','#C06A3A'] },
+    { name:'Indigo Copper',  accent:'#2A2A5A', sites:['#2A2A5A','#4A3A7A','#8A5A3A','#C07A2A'] },
+    { name:'Plum Citrus',    accent:'#4A1A4A', sites:['#4A1A4A','#6A2A6A','#8A5A2A','#B07A2A'] },
+    { name:'Teal Rose',      accent:'#1A4A4A', sites:['#1A4A4A','#2A6A5A','#8A4A5A','#C06A5A'] },
+    { name:'Forest Ember',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#8A4A2A','#C05A2A'] },
+    { name:'Navy Amber',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#8A5A2A','#C07A2A'] },
+    { name:'Berry Sage',     accent:'#4A1A3A', sites:['#4A1A3A','#6A2A4A','#3A5A4A','#5A7A4A'] },
+    { name:'Cobalt Coral',   accent:'#1A2A5A', sites:['#1A2A5A','#2A3A7A','#A04A4A','#C06A3A'] },
+    { name:'Violet Gold',    accent:'#3A1A5A', sites:['#3A1A5A','#5A2A7A','#8A5A2A','#B07A2A'] },
+    { name:'Jade Magenta',   accent:'#1A4A3A', sites:['#1A4A3A','#2A6A4A','#8A2A5A','#B03A6A'] },
+    { name:'Slate Citrus',   accent:'#2A3A4A', sites:['#2A3A4A','#3A5A5A','#8A6A2A','#B08A2A'] },
+    { name:'Wine Teal',      accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A5A5A','#2A7A6A'] },
+    { name:'Royal Peach',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#A05A4A','#C07A4A'] },
+    { name:'Moss Blush',     accent:'#2A3A2A', sites:['#2A3A2A','#3A5A3A','#8A4A5A','#B05A6A'] },
+    { name:'Midnight Mango', accent:'#1A1A3A', sites:['#1A1A3A','#2A2A5A','#8A5A2A','#C07A2A'] },
+    { name:'Orchid Steel',   accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#3A4A5A','#5A6A7A'] },
+    { name:'Crimson Tide',   accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A4A5A','#2A6A7A'] },
+    { name:'Emerald Dust',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#6A4A3A','#8A5A3A'] },
+    { name:'Purple Haze',    accent:'#2A1A3A', sites:['#2A1A3A','#4A2A5A','#6A3A6A','#3A5A5A'] },
+    { name:'Saffron Night',  accent:'#2A1A2A', sites:['#2A1A2A','#4A2A3A','#8A5A1A','#B07A1A'] },
+    { name:'Aqua Berry',     accent:'#1A3A4A', sites:['#1A3A4A','#2A5A6A','#7A2A4A','#A03A5A'] },
+    { name:'Copper Sky',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#7A4A2A','#A05A2A'] },
   ]}
 ];
 
@@ -324,10 +353,10 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 
-/* ---------- clean multi-site background -----------------------------------------
-   Professional soft diagonal gradient. First site dominates most of the card
-   (keeps white text readable). Extra colours arrive as a controlled, elegant
-   sweep from the lower-right. Works cleanly with 2, 3 or 4 sites. */
+/* ---------- multi-site background (OKLCH linear) --------------------------------
+   Perceptually smooth diagonal gradient using the oklch colour space so blends
+   stay natural and avoid muddy mid-tones. First site still anchors the card so
+   white text remains readable. Works cleanly with 2, 3 or 4+ sites. */
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
   if (keys.length === 0) return null;
@@ -336,8 +365,7 @@ const multiSiteBg = (siteKeys) => {
   const colors = keys.map(k => SITES[k].hex);
 
   if (colors.length === 2) {
-    // Longer, smoother transition between the two colours
-    return 'linear-gradient(145deg, ' +
+    return 'linear-gradient(145deg in oklch, ' +
       colors[0] + ' 0%, ' +
       colors[0] + ' 28%, ' +
       colors[1] + ' 72%, ' +
@@ -345,7 +373,7 @@ const multiSiteBg = (siteKeys) => {
   }
 
   if (colors.length === 3) {
-    return 'linear-gradient(145deg, ' +
+    return 'linear-gradient(145deg in oklch, ' +
       colors[0] + ' 0%, ' +
       colors[0] + ' 22%, ' +
       colors[1] + ' 50%, ' +
@@ -359,7 +387,7 @@ const multiSiteBg = (siteKeys) => {
   colors.forEach((c, i) => {
     stops.push(c + ' ' + Math.min(100, Math.round(i * step)) + '%');
   });
-  return 'linear-gradient(145deg, ' + stops.join(', ') + ')';
+  return 'linear-gradient(145deg in oklch, ' + stops.join(', ') + ')';
 };
 
 /* ---------- flat, sharp, saturated fill for the colour-coded site cards ----------
