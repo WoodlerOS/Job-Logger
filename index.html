@@ -1614,7 +1614,7 @@ function App() {
       j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
       parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
         parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
-          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : ''))));
+          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
   };
 
   const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
