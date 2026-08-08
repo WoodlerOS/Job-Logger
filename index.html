@@ -13,7 +13,8 @@
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
@@ -163,6 +164,51 @@ const PlusIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0
   e('path', { d:'M12 5 V19 M5 12 H19', stroke:col, strokeWidth:2.4, strokeLinecap:'round' }));
 const PlaneIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('path', { d:'M3 13 L21 6 L14 13.5 L15.5 20 L12.5 18.5 L11 14.5 L3 13Z', fill:col, opacity:0.9 }));
+const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('circle', { cx:10.5, cy:10.5, r:6.5, stroke:col, strokeWidth:2, fill:'none' }),
+  e('line', { x1:15.3, y1:15.3, x2:20.5, y2:20.5, stroke:col, strokeWidth:2, strokeLinecap:'round' }));
+
+/* ---------- menu tool icons: flat rounded tiles, ivory glyph on emerald ---------- */
+const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
+    background: bg || VIOLET, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_SM } },
+  e('svg', { width:21, height:21, viewBox:'0 0 24 24', fill:'none' }, svgChildren));
+
+const SpreadsheetTile = () => iconTile([
+  e('rect', { key:'r', x:4, y:4, width:16, height:16, rx:2.5, stroke:APRICOT, strokeWidth:1.8 }),
+  e('line', { key:'h', x1:4, y1:10.2, x2:20, y2:10.2, stroke:APRICOT, strokeWidth:1.8 }),
+  e('line', { key:'h2', x1:4, y1:15, x2:20, y2:15, stroke:APRICOT, strokeWidth:1.8 }),
+  e('line', { key:'v', x1:11, y1:4, x2:11, y2:20, stroke:APRICOT, strokeWidth:1.8 }) ]);
+
+const BackupTile = () => iconTile([
+  e('path', { key:'a', d:'M12 3.5 V14.5 M7.2 9.5 L12 14.3 L16.8 9.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }),
+  e('path', { key:'t', d:'M5 16.5 V19 A2 2 0 0 0 7 21 H17 A2 2 0 0 0 19 19 V16.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }) ]);
+
+const RestoreTile = () => iconTile([
+  e('path', { key:'a', d:'M12 20.5 V9.5 M7.2 14.5 L12 9.7 L16.8 14.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }),
+  e('path', { key:'t', d:'M5 7.5 V5 A2 2 0 0 1 7 3 H17 A2 2 0 0 1 19 5 V7.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }) ]);
+
+const ReportTile = () => iconTile([
+  e('rect', { key:'r', x:4, y:5, width:16, height:14, rx:2.2, stroke:APRICOT, strokeWidth:1.7, fill:'none' }),
+  e('line', { key:'l1', x1:7, y1:9, x2:17, y2:9, stroke:APRICOT, strokeWidth:1.8, strokeLinecap:'round' }),
+  e('line', { key:'l2', x1:7, y1:13, x2:14.5, y2:13, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.7 }),
+  e('line', { key:'l3', x1:7, y1:16, x2:12, y2:16, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.5 }) ], grad(SITES.RH.hex, SITES.RH.hex2, 140));
+
+const ClipboardTile = () => iconTile([
+  e('rect', { key:'r', x:6, y:5, width:12, height:16, rx:2.2, stroke:APRICOT, strokeWidth:1.8, fill:'none' }),
+  e('rect', { key:'c', x:9, y:3, width:6, height:3, rx:1, fill:APRICOT }),
+  e('line', { key:'l1', x1:8.6, y1:11, x2:15.4, y2:11, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.8 }),
+  e('line', { key:'l2', x1:8.6, y1:14.4, x2:15.4, y2:14.4, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.6 }) ]);
+
+const CalendarTile = () => iconTile([
+  e('rect', { key:'r', x:4, y:5.5, width:16, height:14.5, rx:2.5, stroke:APRICOT, strokeWidth:1.8, fill:'none' }),
+  e('line', { key:'top', x1:4, y1:9.5, x2:20, y2:9.5, stroke:APRICOT, strokeWidth:1.8 }),
+  e('line', { key:'t1', x1:8, y1:3.5, x2:8, y2:6.5, stroke:APRICOT, strokeWidth:1.8, strokeLinecap:'round' }),
+  e('line', { key:'t2', x1:16, y1:3.5, x2:16, y2:6.5, stroke:APRICOT, strokeWidth:1.8, strokeLinecap:'round' }) ]);
+
+const ListTile = () => iconTile([
+  e('line', { key:'l1', x1:5, y1:7, x2:19, y2:7, stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }),
+  e('line', { key:'l2', x1:5, y1:12, x2:19, y2:12, stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }),
+  e('line', { key:'l3', x1:5, y1:17, x2:14, y2:17, stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }) ]);
 
 const DB_NAME='ticketsDB', STORE='kv', KEY='jobs';
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
@@ -255,6 +301,7 @@ function App() {
   const [view, setView] = useState('month');
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuSearch, setMenuSearch] = useState('');
   const [formMenu, setFormMenu] = useState(false);
   const [form, setForm] = useState(blank());
   const [returnTo, setReturnTo] = useState(null);
@@ -324,8 +371,20 @@ function App() {
     });
   };
 
-  const buildXlsxBlob = (rowsSrc) => {
-    const rows = [['Ticket','Site','Machine','Date','Travel 1','Start','Finish','Travel 2','On site','Travel mins','Extra days','Signed off','Work Done','Parts Used']];
+  const buildXlsxBlob = async (rowsSrc) => {
+    const cols = [
+      { header:'Ticket', key:'ticket', width:16 }, { header:'Site', key:'site', width:9 },
+      { header:'Machine', key:'machine', width:15 }, { header:'Date', key:'date', width:12 },
+      { header:'Travel 1', key:'t1', width:9 }, { header:'Start', key:'start', width:8 },
+      { header:'Finish', key:'finish', width:8 }, { header:'Travel 2', key:'t2', width:9 },
+      { header:'On site', key:'onsite', width:10 }, { header:'Travel mins', key:'travelmins', width:11 },
+      { header:'Extra days', key:'extra', width:30 }, { header:'Signed off', key:'signed', width:11 },
+      { header:'Work Done', key:'workdone', width:52 }, { header:'Parts Used', key:'parts', width:36 } ];
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Tickets', { views:[{ state:'frozen', ySplit:1 }] });
+    ws.columns = cols;
+
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
@@ -338,20 +397,31 @@ function App() {
             + (d.hasTravel2 ? mins(d.finishDateTime, d.travel2DateTime) : 0);
         return fmtDay(d.startDateTime)+' '+fmtTime(d.startDateTime)+'–'+fmtTime(d.finishDateTime);
       }).join(' | ');
-      rows.push([ j.ticketNumber, SITES[j.site]?SITES[j.site].label:'', eqOf(j).map(x=>EQUIP[x]||x).join(', '),
-        fmtDate(j.startDateTime),
-        j.hasTravel?fmtTime(j.travelDateTime):'', fmtTime(j.startDateTime), fmtTime(j.finishDateTime),
-        j.hasTravel2?fmtTime(j.travel2DateTime):'', on?hm(on):'', tr||'', ex,
-        j.locked ? 'Ready' : '',
-        (j.workDone||'').replace(/\r?\n/g,' '), parts ]);
+      const workdone = (j.workDone||'').trim();
+      const row = ws.addRow({
+        ticket:j.ticketNumber, site: SITES[j.site]?SITES[j.site].label:'', machine: eqOf(j).map(x=>EQUIP[x]||x).join(', '),
+        date: fmtDate(j.startDateTime), t1: j.hasTravel?fmtTime(j.travelDateTime):'', start: fmtTime(j.startDateTime),
+        finish: fmtTime(j.finishDateTime), t2: j.hasTravel2?fmtTime(j.travel2DateTime):'', onsite: on?hm(on):'',
+        travelmins: tr||'', extra: ex, signed: j.locked ? 'Ready' : '', workdone, parts });
+      row.getCell('workdone').alignment = { wrapText:true, vertical:'top' };
+      row.getCell('parts').alignment = { wrapText:true, vertical:'top' };
+      row.getCell('extra').alignment = { wrapText:true, vertical:'top' };
+      // rough row-height estimate so wrapped text isn't clipped when opened
+      const longest = Math.max(workdone.length / 58, parts.length / 42, ex.length / 45, 1);
+      row.height = Math.max(16, Math.ceil(longest) * 14 + 4);
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:12},{wch:9},{wch:8},{wch:8},{wch:9},{wch:10},{wch:11},{wch:26},{wch:11},{wch:60},{wch:40}];
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rowsSrc.length,c:13} }) };
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
-    return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],
-      { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const header = ws.getRow(1);
+    header.height = 22;
+    header.eachCell(cell => {
+      cell.font = { bold:true, color:{ argb:'FFF7F1E2' } };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF064E3B' } };
+      cell.alignment = { vertical:'middle' };
+    });
+    ws.autoFilter = { from:{ row:1, column:1 }, to:{ row:1, column:cols.length } };
+
+    const buf = await wb.xlsx.writeBuffer();
+    return new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   };
 
   const download = (blob, name) => {
@@ -390,11 +460,11 @@ function App() {
   const doSpreadsheet = async (scope) => {
     const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
     if (!src.length) { alert('Nothing to export.'); return; }
-    if (typeof XLSX === 'undefined') { alert('Still loading — try again in a moment.'); return; }
+    if (typeof ExcelJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
     const suffix = scope === 'month' ? ' ' + anchorDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
                  : (scope === 'filtered' ? ' (filtered)' : '');
     const name = stamp()+' App tickets'+suffix+'.xlsx';
-    const blob = buildXlsxBlob(src);
+    const blob = await buildXlsxBlob(src);
     if (!(await shareFiles([new File([blob],name,{type:blob.type})]))) download(blob,name);
     setMenuOpen(false);
   };
@@ -454,10 +524,59 @@ function App() {
     setMenuOpen(false);
   };
 
-  const doClear = async () => {
-    if (!window.confirm('Delete ALL tickets? Make a backup first.')) return;
-    if (!window.confirm('Really delete everything?')) return;
-    await persist([]); setMenuOpen(false);
+  /* ---------- shareable PowerPoint report, styled like the app's own ticket cards ---------- */
+  const doReport = async () => {
+    if (!ms.src.length) { alert('Nothing to export.'); return; }
+    if (typeof PptxGenJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
+
+    const pptx = new PptxGenJS();
+    pptx.defineLayout({ name:'TICKETS', width:10, height:5.63 });
+    pptx.layout = 'TICKETS';
+
+    const title = pptx.addSlide();
+    title.background = { color:'064E3B' };
+    title.addShape(pptx.ShapeType.ellipse, { x:8.55, y:0.55, w:0.5, h:0.5, fill:{ color:'D9A542' }, line:{ type:'none' } });
+    title.addText('Tickets', { x:0.6, y:1.9, w:8.8, h:1, fontSize:44, bold:true, color:'F7F1E2', fontFace:'Helvetica' });
+    title.addText(monthShort+' '+anchorDate.getFullYear(), { x:0.6, y:2.8, w:8.8, h:0.5, fontSize:18, color:'D9A542', fontFace:'Helvetica', bold:true });
+    title.addText(ms.src.length+' ticket'+(ms.src.length===1?'':'s')+' logged', { x:0.6, y:3.25, w:8.8, h:0.4, fontSize:12, color:'CFE3D8', fontFace:'Helvetica' });
+
+    const byDay = Object.keys(ms.days).map(Number).sort((a,b)=>a-b);
+    byDay.forEach(dnum => {
+      const day = ms.days[dnum];
+      const slide = pptx.addSlide();
+      slide.background = { color:'F7F3E9' };
+      const dateLabel = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' });
+      slide.addText(dateLabel, { x:0.4, y:0.28, w:7.5, h:0.5, fontSize:20, bold:true, color:'064E3B', fontFace:'Helvetica' });
+      slide.addText(day.tickets.length+(day.tickets.length===1?' ticket':' tickets'), { x:0.4, y:0.68, w:7.5, h:0.3, fontSize:11, color:'4A6B5C', fontFace:'Helvetica' });
+
+      const cardW = 4.4, cardH = 1.95, gapX = 0.28, gapY = 0.24, startX = 0.4, startY = 1.15;
+      day.tickets.slice(0,4).forEach((j, idx) => {
+        const col = idx % 2, row = Math.floor(idx/2);
+        const x = startX + col*(cardW+gapX), y = startY + row*(cardH+gapY);
+        const site = SITES[j.site];
+        const fillColor = site ? site.hex.replace('#','') : 'F5F0E4';
+        const textColor = site ? 'FFFFFF' : '064E3B';
+        slide.addShape(pptx.ShapeType.roundRect, { x, y, w:cardW, h:cardH, rectRadius:0.12,
+          fill:{ color:fillColor }, line: j.locked ? { color:'064E3B', width:2.5 } : { type:'none' } });
+        slide.addText(j.ticketNumber, { x:x+0.22, y:y+0.14, w:cardW-1.1, h:0.32, fontSize:14, bold:true, color:textColor, fontFace:'Helvetica' });
+        if (site) slide.addText(site.label, { x:x+cardW-0.85, y:y+0.16, w:0.65, h:0.28, fontSize:9, bold:true, color:textColor,
+          fill:{ color:'FFFFFF', transparency:78 }, align:'center', fontFace:'Helvetica' });
+        const on = mins(j.startDateTime, j.finishDateTime);
+        const timeStr = fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)+(on?'  ·  '+hm(on):'');
+        slide.addText(timeStr, { x:x+0.22, y:y+0.56, w:cardW-0.44, h:0.28, fontSize:10.5, color:textColor, fontFace:'Helvetica' });
+        if (j.workDone) slide.addText(j.workDone.replace(/\n/g,' ').slice(0,150), { x:x+0.22, y:y+0.92, w:cardW-0.44, h:0.9,
+          fontSize:9, color:textColor, fontFace:'Helvetica', valign:'top' });
+      });
+      if (day.tickets.length > 4) {
+        slide.addText('+ '+(day.tickets.length-4)+' more ticket(s) logged this day', { x:0.4, y:startY+2*(cardH+gapY)+0.05, w:9, h:0.3,
+          fontSize:10, italic:true, color:'4A6B5C', fontFace:'Helvetica' });
+      }
+    });
+
+    const name = stamp()+' Tickets report '+monthShort+'.pptx';
+    const blob = await pptx.write({ outputType:'blob' });
+    if (!(await shareFiles([new File([blob],name,{type:blob.type||'application/vnd.openxmlformats-officedocument.presentationml.presentation'})]))) download(blob,name);
+    setMenuOpen(false);
   };
 
   const filtered = useMemo(() => {
@@ -472,6 +591,17 @@ function App() {
       return hay.includes(q);
     }).sort((a,b) => new Date(b.startDateTime) - new Date(a.startDateTime));
   }, [jobs, query, siteFilter, equipFilter]);
+
+  const menuSearchResults = useMemo(() => {
+    const q = menuSearch.trim().toLowerCase();
+    if (!q) return [];
+    return jobs.filter(j => {
+      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+        ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x]+' '+x : x),
+        ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a,b) => new Date(b.startDateTime) - new Date(a.startDateTime)).slice(0,6);
+  }, [jobs, menuSearch]);
 
   const partHistory = useMemo(() => {
     const set = new Map();
@@ -748,26 +878,64 @@ function App() {
       e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || INK } }, label),
       e('span', { style:{ fontSize:'0.7rem', color:GREY } }, sub));
 
+  const iconRow = (icon, label, sub, onClick) =>
+    e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.65rem 0.75rem', borderRadius:'16px', border:'none',
+      background:SURF3, cursor:'pointer', display:'flex', alignItems:'center', gap:'0.75rem' } },
+      icon,
+      e('div', { style:{ flex:1, minWidth:0 } },
+        e('div', { style:{ fontSize:'0.87rem', fontWeight:800, color:INK } }, label),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, sub)));
+
+  const menuResultRow = (j) => e('button', { key:j.id,
+    onClick:()=>{ setMenuOpen(false); setMenuSearch(''); openEdit(j, view==='list' ? {view:'list'} : {view:'month', day: new Date(j.startDateTime).getDate()}); },
+    style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.6rem', padding:'0.6rem 0.75rem',
+      borderRadius:'14px', border:'none', background:SURF3, cursor:'pointer' } },
+    e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', flexShrink:0,
+      background: SITES[j.site] ? siteGrad(j.site) : GREY } }),
+    e('div', { style:{ flex:1, minWidth:0 } },
+      e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, j.ticketNumber),
+      e('div', { style:{ fontSize:'0.67rem', color:GREY, marginTop:'1px' } },
+        fmtDate(j.startDateTime) + (SITES[j.site] ? '  ·  '+SITES[j.site].label : ''))));
+
   const closeBtn = (onClick) => e('button', { key:'close', onClick,
     style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:SURF2,
       color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
+  const closeMenu = () => { setMenuOpen(false); setMenuSearch(''); };
 
   const menu = menuOpen && sheet([
-    view === 'list'
-      ? menuRow('Calendar view', 'Month, week and day planner', ()=>{ setMenuOpen(false); setView('month'); window.scrollTo(0,0); })
-      : menuRow('All tickets', 'Search everything you have logged', ()=>{ setMenuOpen(false); setView('list'); window.scrollTo(0,0); }),
-    (view === 'list' && (query || siteFilter.length || equipFilter.length))
-      ? menuRow('Spreadsheet — current view', filtered.length+' ticket(s)', ()=>doSpreadsheet('filtered'))
-      : menuRow('Spreadsheet — '+monthShort, ms.src.length+' ticket(s)', ()=>doSpreadsheet('month')),
-    menuRow('Spreadsheet — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
-    menuRow('Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
-    menuRow('Create backup file', 'Save a .json restore file', doBackup),
-    menuRow('Restore from backup', 'Load an "App tickets backup" .json file', doRestore),
-    menuRow('Clear all tickets', 'Deletes everything on this device', doClear, RED),
-    closeBtn(()=>setMenuOpen(false))
-  ], ()=>setMenuOpen(false));
+    e('div', { key:'hd', style:{ fontSize:'1.05rem', fontWeight:900, letterSpacing:'-0.2px', padding:'0 0.1rem' } }, 'Menu'),
+
+    e('div', { key:'search', style:{ position:'relative' } },
+      e('div', { style:{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' } },
+        SearchIcon(17, GREY)),
+      e('input', { type:'search', value:menuSearch, placeholder:'Search all tickets…',
+        onChange:(ev)=>setMenuSearch(ev.target.value),
+        style:{ width:'100%', padding:'0.7rem 0.9rem 0.7rem 2.5rem', border:'1px solid '+LINE, borderRadius:'999px',
+          outline:'none', fontSize:'0.85rem', background:FIELDBG, color:INK } })),
+
+    menuSearch.trim()
+      ? (menuSearchResults.length
+          ? e('div', { key:'results', style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, menuSearchResults.map(menuResultRow))
+          : e('div', { key:'noresults', style:{ fontSize:'0.8rem', color:GREY, textAlign:'center', padding:'0.9rem 0' } }, 'No tickets match'))
+      : e('div', { key:'tools', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+          view === 'list'
+            ? iconRow(CalendarTile(), 'Calendar view', 'Month, week and day planner', ()=>{ closeMenu(); setView('month'); window.scrollTo(0,0); })
+            : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
+          (view === 'list' && (query || siteFilter.length || equipFilter.length))
+            ? iconRow(SpreadsheetTile(), 'Export to Excel', filtered.length+' ticket(s), current view — wrapped text', ()=>doSpreadsheet('filtered'))
+            : iconRow(SpreadsheetTile(), 'Export to Excel', ms.src.length+' ticket(s), '+monthShort+' — wrapped text', ()=>doSpreadsheet('month')),
+          iconRow(SpreadsheetTile(), 'Export to Excel — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
+          iconRow(ReportTile(), 'Share report', monthShort+' as PowerPoint slides, styled like your tickets', doReport),
+          iconRow(ClipboardTile(), 'Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
+          iconRow(BackupTile(), 'Create backup', 'Save all your data as a .json file', doBackup),
+          iconRow(RestoreTile(), 'Restore from backup', 'Load a previous .json backup', doRestore)
+        ),
+
+    closeBtn(closeMenu)
+  ], closeMenu);
+
 
   const formSheet = formMenu && sheet([
     menuRow('Save and close', 'Store this ticket and go back', ()=>{ setFormMenu(false); saveAndClose(); }),
@@ -856,12 +1024,11 @@ function App() {
 
     let border = '1px solid rgba(6,78,59,0.10)';
     if (has) border = '1px solid rgba(255,255,255,0.14)';
-    if (d && d.allLocked) border = '3px solid '+INK;
+    if (d && d.allLocked) border = '2px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
-    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 2px '+SURF : null;
-    const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
+    const boxShadow = glow || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
