@@ -162,9 +162,49 @@ const SITES = {
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
 /* ---------- preset themes organised into groups ---------- */
-/* All themes are balanced (similar intensity) so multi-site gradients stay cohesive.
-   Colours stay mid-to-dark for reliable white-text readability. */
+/* Multi-colour themes first. All keep similar intensity for clean OKLCH gradients. */
 const THEME_GROUPS = [
+  { name: 'Colour Mix', themes: [
+    { name:'Embers Classic', accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
+    { name:'Twilight Market',accent:'#3D2A5C', sites:['#3D2A5C','#6B3A5A','#A05A4A','#C87A3A'] },
+    { name:'Harbor Lights',  accent:'#1A3A5A', sites:['#1A3A5A','#2A6A6A','#8A5A3A','#C04A4A'] },
+    { name:'Studio Night',   accent:'#2A1A4A', sites:['#2A1A4A','#5A2A6A','#8A4A5A','#C06A3A'] },
+    { name:'Coral Depth',    accent:'#1A3A4A', sites:['#1A3A4A','#2A6A5A','#8A4A4A','#C06A3A'] },
+    { name:'Indigo Copper',  accent:'#2A2A5A', sites:['#2A2A5A','#4A3A7A','#8A5A3A','#C07A2A'] },
+    { name:'Plum Citrus',    accent:'#4A1A4A', sites:['#4A1A4A','#6A2A6A','#8A5A2A','#B07A2A'] },
+    { name:'Teal Rose',      accent:'#1A4A4A', sites:['#1A4A4A','#2A6A5A','#8A4A5A','#C06A5A'] },
+    { name:'Forest Ember',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#8A4A2A','#C05A2A'] },
+    { name:'Navy Amber',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#8A5A2A','#C07A2A'] },
+    { name:'Berry Sage',     accent:'#4A1A3A', sites:['#4A1A3A','#6A2A4A','#3A5A4A','#5A7A4A'] },
+    { name:'Cobalt Coral',   accent:'#1A2A5A', sites:['#1A2A5A','#2A3A7A','#A04A4A','#C06A3A'] },
+    { name:'Violet Gold',    accent:'#3A1A5A', sites:['#3A1A5A','#5A2A7A','#8A5A2A','#B07A2A'] },
+    { name:'Jade Magenta',   accent:'#1A4A3A', sites:['#1A4A3A','#2A6A4A','#8A2A5A','#B03A6A'] },
+    { name:'Slate Citrus',   accent:'#2A3A4A', sites:['#2A3A4A','#3A5A5A','#8A6A2A','#B08A2A'] },
+    { name:'Wine Teal',      accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A5A5A','#2A7A6A'] },
+    { name:'Royal Peach',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#A05A4A','#C07A4A'] },
+    { name:'Moss Blush',     accent:'#2A3A2A', sites:['#2A3A2A','#3A5A3A','#8A4A5A','#B05A6A'] },
+    { name:'Midnight Mango', accent:'#1A1A3A', sites:['#1A1A3A','#2A2A5A','#8A5A2A','#C07A2A'] },
+    { name:'Orchid Steel',   accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#3A4A5A','#5A6A7A'] },
+    { name:'Crimson Ocean',  accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A4A5A','#2A6A7A'] },
+    { name:'Emerald Dust',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#6A4A3A','#8A5A3A'] },
+    { name:'Purple Haze',    accent:'#2A1A3A', sites:['#2A1A3A','#4A2A5A','#6A3A6A','#3A5A5A'] },
+    { name:'Saffron Night',  accent:'#2A1A2A', sites:['#2A1A2A','#4A2A3A','#8A5A1A','#B07A1A'] },
+    { name:'Aqua Berry',     accent:'#1A3A4A', sites:['#1A3A4A','#2A5A6A','#7A2A4A','#A03A5A'] },
+    { name:'Copper Sky',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#7A4A2A','#A05A2A'] },
+    // extra vibrant multi-hue sets
+    { name:'Neon Market',    accent:'#1A0A4A', sites:['#1A0A4A','#C01A6A','#E05A1A','#F0A010'] },
+    { name:'Electric Garden',accent:'#0A2A4A', sites:['#0A2A4A','#1A8A4A','#C04A8A','#E08A1A'] },
+    { name:'Fuchsia Flame',  accent:'#4A0A3A', sites:['#4A0A3A','#A01A6A','#E04A2A','#F08A10'] },
+    { name:'Cyan Punch',     accent:'#0A2A5A', sites:['#0A2A5A','#0A8AAA','#C02A6A','#E06A2A'] },
+    { name:'Limeberry',      accent:'#1A3A1A', sites:['#1A3A1A','#4AAA2A','#C02A6A','#E05A2A'] },
+    { name:'Ultraviolet',    accent:'#2A0A5A', sites:['#2A0A5A','#6A1AAA','#C02A8A','#E05A4A'] },
+    { name:'Tropic Storm',   accent:'#0A3A3A', sites:['#0A3A3A','#1A8A6A','#C04A3A','#E08A1A'] },
+    { name:'Ruby Teal',      accent:'#5A0A2A', sites:['#5A0A2A','#A01A3A','#1A6A6A','#2A9A8A'] },
+    { name:'Mango Night',    accent:'#1A1A4A', sites:['#1A1A4A','#3A2A7A','#E06A1A','#F0A020'] },
+    { name:'Pink Horizon',   accent:'#3A0A4A', sites:['#3A0A4A','#8A1A7A','#E04A5A','#F08A3A'] },
+    { name:'Jade Fire',      accent:'#0A3A2A', sites:['#0A3A2A','#1A8A4A','#C03A2A','#E06A1A'] },
+    { name:'Vivid Orchid',   accent:'#3A0A5A', sites:['#3A0A5A','#7A1A9A','#C04A6A','#E08A3A'] },
+  ]},
   { name: 'Warm', themes: [
     { name:'Ember Vein',    accent:'#5C2E2E', sites:['#5C2E2E','#7A3A3A','#9B4A4A','#B85A4A'] },
     { name:'Copper Vein',   accent:'#5A3A20', sites:['#5A3A20','#7A4A28','#9A5A30','#BA6A38'] },
@@ -237,35 +277,6 @@ const THEME_GROUPS = [
     { name:'Violet Strike', accent:'#300850', sites:['#300850','#480C78','#6010A0','#7814C8'] },
     { name:'Amber Strike',  accent:'#502000', sites:['#502000','#783000','#A04000','#C85000'] },
   ]},
-  /* Distinct hues, matched intensity — classy modern multi-colour gradients */
-  { name: 'Colour Mix', themes: [
-    { name:'Embers Classic', accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
-    { name:'Twilight Market',accent:'#3D2A5C', sites:['#3D2A5C','#6B3A5A','#A05A4A','#C87A3A'] },
-    { name:'Harbor Lights',  accent:'#1A3A5A', sites:['#1A3A5A','#2A6A6A','#8A5A3A','#C04A4A'] },
-    { name:'Studio Night',   accent:'#2A1A4A', sites:['#2A1A4A','#5A2A6A','#8A4A5A','#C06A3A'] },
-    { name:'Coral Depth',    accent:'#1A3A4A', sites:['#1A3A4A','#2A6A5A','#8A4A4A','#C06A3A'] },
-    { name:'Indigo Copper',  accent:'#2A2A5A', sites:['#2A2A5A','#4A3A7A','#8A5A3A','#C07A2A'] },
-    { name:'Plum Citrus',    accent:'#4A1A4A', sites:['#4A1A4A','#6A2A6A','#8A5A2A','#B07A2A'] },
-    { name:'Teal Rose',      accent:'#1A4A4A', sites:['#1A4A4A','#2A6A5A','#8A4A5A','#C06A5A'] },
-    { name:'Forest Ember',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#8A4A2A','#C05A2A'] },
-    { name:'Navy Amber',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#8A5A2A','#C07A2A'] },
-    { name:'Berry Sage',     accent:'#4A1A3A', sites:['#4A1A3A','#6A2A4A','#3A5A4A','#5A7A4A'] },
-    { name:'Cobalt Coral',   accent:'#1A2A5A', sites:['#1A2A5A','#2A3A7A','#A04A4A','#C06A3A'] },
-    { name:'Violet Gold',    accent:'#3A1A5A', sites:['#3A1A5A','#5A2A7A','#8A5A2A','#B07A2A'] },
-    { name:'Jade Magenta',   accent:'#1A4A3A', sites:['#1A4A3A','#2A6A4A','#8A2A5A','#B03A6A'] },
-    { name:'Slate Citrus',   accent:'#2A3A4A', sites:['#2A3A4A','#3A5A5A','#8A6A2A','#B08A2A'] },
-    { name:'Wine Teal',      accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A5A5A','#2A7A6A'] },
-    { name:'Royal Peach',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#A05A4A','#C07A4A'] },
-    { name:'Moss Blush',     accent:'#2A3A2A', sites:['#2A3A2A','#3A5A3A','#8A4A5A','#B05A6A'] },
-    { name:'Midnight Mango', accent:'#1A1A3A', sites:['#1A1A3A','#2A2A5A','#8A5A2A','#C07A2A'] },
-    { name:'Orchid Steel',   accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#3A4A5A','#5A6A7A'] },
-    { name:'Crimson Tide',   accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A4A5A','#2A6A7A'] },
-    { name:'Emerald Dust',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#6A4A3A','#8A5A3A'] },
-    { name:'Purple Haze',    accent:'#2A1A3A', sites:['#2A1A3A','#4A2A5A','#6A3A6A','#3A5A5A'] },
-    { name:'Saffron Night',  accent:'#2A1A2A', sites:['#2A1A2A','#4A2A3A','#8A5A1A','#B07A1A'] },
-    { name:'Aqua Berry',     accent:'#1A3A4A', sites:['#1A3A4A','#2A5A6A','#7A2A4A','#A03A5A'] },
-    { name:'Copper Sky',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#7A4A2A','#A05A2A'] },
-  ]}
 ];
 
 // Flat list kept for any code that still expects THEME_PRESETS
@@ -364,28 +375,26 @@ const multiSiteBg = (siteKeys) => {
 
   const colors = keys.map(k => SITES[k].hex);
 
+  // Continuous OKLCH blend — no long plateaus (those caused the centre stripe).
+  // Slight bias keeps the first colour a bit stronger for text readability.
   if (colors.length === 2) {
     return 'linear-gradient(145deg in oklch, ' +
       colors[0] + ' 0%, ' +
-      colors[0] + ' 28%, ' +
-      colors[1] + ' 72%, ' +
+      colors[0] + ' 18%, ' +
       colors[1] + ' 100%)';
   }
 
   if (colors.length === 3) {
     return 'linear-gradient(145deg in oklch, ' +
       colors[0] + ' 0%, ' +
-      colors[0] + ' 22%, ' +
       colors[1] + ' 50%, ' +
-      colors[2] + ' 78%, ' +
       colors[2] + ' 100%)';
   }
 
-  // 4+ colours – even distribution with slight bias toward the first
-  const stops = [];
-  const step = 100 / (colors.length - 0.35);
-  colors.forEach((c, i) => {
-    stops.push(c + ' ' + Math.min(100, Math.round(i * step)) + '%');
+  // 4+ colours — even continuous distribution
+  const stops = colors.map((c, i) => {
+    const pos = Math.round((i / (colors.length - 1)) * 100);
+    return c + ' ' + pos + '%';
   });
   return 'linear-gradient(145deg in oklch, ' + stops.join(', ') + ')';
 };
