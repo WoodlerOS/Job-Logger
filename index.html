@@ -117,7 +117,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: #F4F5F8;
+      background: #D8DAE2;
       overflow: hidden;
     }
     #root {
@@ -125,7 +125,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: #F4F5F8;
+      background: #D8DAE2;
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -174,21 +174,23 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: #FAFAFC;
+      background: #D8DAE2;
     }
     .desktop-topbar {
       display: flex;
       align-items: center;
       gap: 0.85rem;
       padding: 0.9rem 1.35rem;
-      border-bottom: 1px solid rgba(10,10,12,0.08);
+      border-bottom: 1px solid rgba(10,10,12,0.1);
       background: #fff;
       flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(22,23,50,0.08);
     }
     .desktop-content {
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
+      background: #D8DAE2;
     }
     .desktop-split {
       display: grid;
@@ -199,14 +201,34 @@
     }
     .desktop-panel {
       background: #fff;
-      border: 1px solid rgba(10,10,12,0.08);
+      border: 1px solid rgba(10,10,12,0.06);
       border-radius: 16px;
       padding: 1rem 1.1rem;
-      box-shadow: 0 2px 10px rgba(22,23,50,0.04);
+      box-shadow: 0 4px 18px rgba(22,23,50,0.12), 0 1px 4px rgba(22,23,50,0.06);
     }
     .fab-btn { display: none !important; }
-    .sheet-overlay {
-      /* keep full-viewport sheets on desktop for menus that still use them */
+    .form-desktop-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 1.15rem;
+      align-items: start;
+    }
+    .form-desktop-left {
+      display: flex !important;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .form-desktop-right {
+      min-height: 420px !important;
+    }
+    .form-desktop-right .work-done-field {
+      min-height: 360px !important;
+      height: 100%;
+    }
+    .form-card {
+      background: #fff !important;
+      box-shadow: 0 4px 18px rgba(22,23,50,0.12), 0 1px 4px rgba(22,23,50,0.06) !important;
+      border: 1px solid rgba(10,10,12,0.06) !important;
     }
   }
   @media (max-width: 899px) {
@@ -509,10 +531,10 @@ function applyDarkMode(on) {
   try {
     const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
     if (isDesktop) {
-      document.body.style.background = on ? '#0C0C10' : '#F4F5F8';
+      document.body.style.background = on ? '#0C0C10' : '#D8DAE2';
       document.body.style.backgroundImage = 'none';
       const root = document.getElementById('root');
-      if (root) root.style.background = on ? '#0C0C10' : '#F4F5F8';
+      if (root) root.style.background = on ? '#0C0C10' : '#D8DAE2';
     } else {
       document.body.style.background = PAGE_BG;
       document.body.style.backgroundImage = 'none';
@@ -1007,16 +1029,17 @@ function App() {
       onClick: (ev) => { ev.stopPropagation(); copyText(text, key); },
       style: {
         border: 'none',
-        background: done ? (light ? 'rgba(255,255,255,0.9)' : INK) : (light ? 'rgba(255,255,255,0.18)' : SURF2),
-        width: '30px', height: '30px', borderRadius: '8px', padding: 0,
+        background: 'transparent',
+        width: '28px', height: '28px', borderRadius: '6px', padding: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', flexShrink: 0,
-        transition: 'background .15s ease, transform .12s ease'
+        opacity: done ? 1 : 0.55,
+        transition: 'opacity .15s ease, transform .12s ease'
       }
     }, done
-      ? e('svg', { width:15, height:15, viewBox:'0 0 24 24', style:{ display:'block' } },
-          e('path', { d:'M6.5 12.5 L10.2 16 L17.5 8.2', fill:'none', stroke: light ? '#0A0A0C' : APRICOT, strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' }))
-      : CopyIcon(15, light ? '#FFFFFF' : MID));
+      ? e('svg', { width:16, height:16, viewBox:'0 0 24 24', style:{ display:'block' } },
+          e('path', { d:'M6.5 12.5 L10.2 16 L17.5 8.2', fill:'none', stroke: light ? '#FFFFFF' : INK, strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' }))
+      : CopyIcon(16, light ? 'rgba(255,255,255,0.85)' : MID));
   };
 
   const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
@@ -1990,66 +2013,55 @@ function App() {
       e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(17, INK))),
 
-    e('div', { className: 'form-desktop-grid', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
-      pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto', opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
-      transition:'opacity .25s ease' } },
+    e('div', { className: 'form-desktop-grid',
+      style:{ display:'flex', flexDirection:'column', gap:'0.95rem',
+        pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto',
+        opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
+        transition:'opacity .25s ease' } },
 
+      /* LEFT: ticket meta, times/dates, parts */
       e('div', { className: 'form-desktop-left', style:{ display:'flex', flexDirection:'column', gap:'0.95rem' } },
-        e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
-          onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-          style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem' } }),
+        e('div', { className: 'form-card', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
+          e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
+            onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
+            style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem' } }),
+          e('div', { style:{ display:'flex', gap:'0.5rem' } },
+            e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
+              border: '1.5px solid '+LINE,
+              background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
+              borderRadius:'13px', padding:'0 0.65rem', transition:'background .2s ease' } },
+              e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
+                style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
+                  fontSize:'0.84rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
+                e('option', { value:'' }, 'Site'),
+                Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
+            e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
+              border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
+              e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
+                background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
+              e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
+                style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
+                  fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
+                e('option', { value:'' }, 'Machine'),
+                Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))),
+          dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
+          form.extra.map((d,i) => dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
+            ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site])),
+          e('button', { onClick:addExtraDay,
+            style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
+              borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } },
+            '+ Another day')
+        ),
 
-        e('div', { style:{ display:'flex', gap:'0.5rem' } },
-          e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-            border: '1.5px solid '+LINE,
-            background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
-            borderRadius:'13px', padding:'0 0.65rem', transition:'background .2s ease' } },
-            e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
-              style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-                fontSize:'0.84rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
-              e('option', { value:'' }, 'Site'),
-              Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
-          e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-            border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
-            e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-              background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
-            e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
-              style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-                fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
-              e('option', { value:'' }, 'Machine'),
-              Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))),
-
-        dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
-
-        form.extra.map((d,i) => dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
-          ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site])),
-
-        e('button', { onClick:addExtraDay,
-          style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-            borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } },
-          '+ Another day')
-      ),
-
-      e('div', { className: 'form-desktop-right', style:{ display:'flex', flexDirection:'column', gap:'0.95rem' } },
-        e('div', null,
-          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.45rem' } },
-            e('label', { style:{ ...LBL, marginBottom:0 } }, 'Work done'),
-            CopyBtn(form.workDone, 'work')),
-          e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
-            onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
-            className: 'work-done-field',
-            style:{ ...FIELD(), minHeight:'7.5rem', resize:'vertical', lineHeight:1.5 } })),
-
-        e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
-
-        e('div', null,
-          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.45rem' } },
+        e('div', { className: 'form-card', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
+          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between' } },
             e('label', { style:{ ...LBL, marginBottom:0 } }, 'Parts'),
             CopyBtn(
               (form.parts||[]).map(p => (p.partNumber||'').trim()).filter(Boolean).join('\n'),
               'parts'
             )),
-          form.parts.length > 0 && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem', marginBottom:'0.5rem' } },
+          e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
+          form.parts.length > 0 && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } },
             form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.4rem', alignItems:'center' } },
               e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
                 onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
@@ -2063,7 +2075,19 @@ function App() {
                 style:{ border:'none', background:'none', color:GREY, fontSize:'0.8rem', fontWeight:800, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕')))),
           e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
             style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-              borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'))
+              borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part')
+        )
+      ),
+
+      /* RIGHT: large work-done notes */
+      e('div', { className: 'form-desktop-right form-card', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.55rem', minHeight:'280px' } },
+        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between' } },
+          e('label', { style:{ ...LBL, marginBottom:0 } }, 'Work done'),
+          CopyBtn(form.workDone, 'work')),
+        e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
+          onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
+          className: 'work-done-field',
+          style:{ ...FIELD(), flex:1, minHeight:'12rem', resize:'vertical', lineHeight:1.55, fontSize:'0.92rem' } })
       )
     ),
 
