@@ -181,7 +181,25 @@ const THEME_PRESETS = [
   { name:'Forest Trail',  accent:'#2D4A2B', sites:['#2D4A2B','#4E7A4C','#7FA779','#B8A24A'] },
   { name:'Slate Minimal', accent:'#3A3F4B', sites:['#3A3F4B','#5C6472','#818A97','#AEB5BE'] },
   { name:'Mono Blue',     accent:'#1E3A5F', sites:['#1E3A5F','#33608E','#5991BE','#8FBAE0'] },
-  { name:'Pastel Dream',  accent:'#7C6A93', sites:['#8FA6C9','#A6C9A8','#E3A6A0','#C7A6D9'] }
+  { name:'Pastel Dream',  accent:'#7C6A93', sites:['#8FA6C9','#A6C9A8','#E3A6A0','#C7A6D9'] },
+  { name:'Midnight Purple',accent:'#241943', sites:['#241943','#4B2E83','#7A4FC4','#B497F0'] },
+  { name:'Rose Gold',     accent:'#7A4B4F', sites:['#7A4B4F','#B98B8F','#D9B8A3','#E8CBAE'] },
+  { name:'Cyber Punk',    accent:'#0D0221', sites:['#FF00A0','#00F0FF','#FFEA00','#8000FF'] },
+  { name:'Desert Sand',   accent:'#6B4F3A', sites:['#6B4F3A','#A67C52','#D9B48F','#EAD7BB'] },
+  { name:'Arctic Ice',    accent:'#1B3A4B', sites:['#1B3A4B','#4A7A96','#8FC1D4','#C9E4EC'] },
+  { name:'Cherry Blossom',accent:'#7A2E43', sites:['#7A2E43','#C2185B','#F06292','#FFC1E3'] },
+  { name:'Volcanic',      accent:'#2B1B17', sites:['#2B1B17','#8B2500','#D2691E','#FF7A33'] },
+  { name:'Emerald City',  accent:'#013220', sites:['#013220','#0B6E4F','#2E8B57','#66C99F'] },
+  { name:'Royal & Gold',  accent:'#2E1A47', sites:['#2E1A47','#6A3FA0','#C6A15B','#E8C874'] },
+  { name:'Coral Reef',    accent:'#004E64', sites:['#004E64','#00A5CF','#F79256','#FBD1A2'] },
+  { name:'Charcoal Mono', accent:'#232323', sites:['#232323','#4A4A4A','#787878','#ACACAC'] },
+  { name:'Blush & Navy',  accent:'#16264D', sites:['#16264D','#3A5A8C','#D98C9E','#F4C6D0'] },
+  { name:'Lavender Fields',accent:'#4B3F72', sites:['#4B3F72','#7C6FA6','#B3A6D6','#DCD3F0'] },
+  { name:'Fire & Ice',    accent:'#14213D', sites:['#14213D','#1CA3C9','#E63946','#FCA311'] },
+  { name:'Olive Grove',   accent:'#3D3D29', sites:['#3D3D29','#6B6B3A','#A3A35C','#D4CB92'] },
+  { name:'Hot Pink Punch',accent:'#3A0CA3', sites:['#3A0CA3','#7209B7','#F72585','#4CC9F0'] },
+  { name:'Sepia Tone',    accent:'#4A3728', sites:['#4A3728','#7A5C42','#A98467','#D4B896'] },
+  { name:'Deep Sea',      accent:'#03045E', sites:['#03045E','#0077B6','#00B4D8','#90E0EF'] }
 ];
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -191,14 +209,16 @@ const shade = (hex, amt) => { const h=hex.replace('#',''); let r=parseInt(h.subs
   r=Math.round(r+(t-r)*p); g=Math.round(g+(t-g)*p); b=Math.round(b+(t-b)*p);
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); };
 
-let INK='#41436A', MID='#565979', GREY='#8E90A8', LINE='rgba(65,67,106,0.16)';
+let INK='#131318', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(19,19,24,0.13)';
 let VIOLET='#41436A', APRICOT='#FFFFFF';
 let TRAVEL='#6B6EB0', TRAVELBG='rgba(65,67,106,0.09)', RED='#B3261E';
 let LOCKED='#41436A', LOCKEDBG='rgba(65,67,106,0.07)';
 const DEFAULT_ACCENT = '#41436A';
 function applyAccent(hex) {
-  INK = hex; VIOLET = hex; LOCKED = hex;
-  LINE = hexToRgba(hex, 0.16);
+  // INK (general UI text) and LINE (chrome borders) stay fixed neutral black/grey —
+  // only the accent-driven interactive bits (buttons, the locked ring, travel highlight)
+  // pick up the chosen colour, so body text always reads as strong, plain black.
+  VIOLET = hex; LOCKED = hex;
   LOCKEDBG = hexToRgba(hex, 0.07);
   TRAVEL = shade(hex, 0.3);
   TRAVELBG = hexToRgba(hex, 0.09);
@@ -229,8 +249,29 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-const SURF='#FFFFFF', SURF2='#F1F1F5', SURF3='#F5F5F8';
-const FIELDBG='#FFFFFF', EMPTY='#F7F7FA';
+let SURF='#FFFFFF', SURF2='#F1F1F5', SURF3='#F5F5F8';
+let FIELDBG='#FFFFFF', EMPTY='#F7F7FA';
+let PAGE_BG='#FAFAFC';
+let DARK_MODE = false;
+function applyDarkMode(on) {
+  DARK_MODE = on;
+  if (on) {
+    INK='#F2F2F5'; MID='#B7B9C2'; GREY='#83858F'; LINE='rgba(255,255,255,0.14)';
+    SURF='#1C1C22'; SURF2='#262631'; SURF3='#232330';
+    FIELDBG='#232330'; EMPTY='#1F1F27'; PAGE_BG='#101014';
+    APRICOT='#FFFFFF';
+  } else {
+    INK='#131318'; MID='#5B5D66'; GREY='#8C8E96'; LINE='rgba(19,19,24,0.13)';
+    SURF='#FFFFFF'; SURF2='#F1F1F5'; SURF3='#F5F5F8';
+    FIELDBG='#FFFFFF'; EMPTY='#F7F7FA'; PAGE_BG='#FAFAFC';
+    APRICOT='#FFFFFF';
+  }
+  try {
+    document.body.style.background = PAGE_BG;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', PAGE_BG);
+  } catch (err) {}
+}
 
 const SHADOW    = '0 8px 20px rgba(22,23,50,0.10), 0 2px 5px rgba(22,23,50,0.07)';
 const SHADOW_SM = '0 3px 9px rgba(22,23,50,0.09), 0 1px 2px rgba(22,23,50,0.06)';
@@ -255,63 +296,39 @@ const glossyBg = (hexA, hexB) => grad(hexA, hexB, 150);
 const GLOSS_BLUR = 'none';
 const glossShadow = (hex) => '0 8px 16px '+hexToRgba(hex,0.28)+', 0 2px 5px '+hexToRgba(hex,0.22);
 
-/* ---------- complementary partner colour + a stable "random" seed per card ----------
-   HSL hue-rotation gives a second colour that contrasts with the site's own colour
-   while staying harmonious (not a jarring 180° opposite). hashStr turns a ticket's
-   id/date into a stable number, so each card's gradient looks a little different
-   from its neighbours but never changes between renders or reloads. */
-const hexToHsl = (hex) => {
-  const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16)/255, g=parseInt(h.substring(2,4),16)/255, b=parseInt(h.substring(4,6),16)/255;
-  const max=Math.max(r,g,b), min=Math.min(r,g,b); let hh=0, s=0; const l=(max+min)/2;
-  if (max !== min) {
-    const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
-    if (max===r) hh=(g-b)/d+(g<b?6:0); else if (max===g) hh=(b-r)/d+2; else hh=(r-g)/d+4;
-    hh *= 60;
-  }
-  return [hh,s,l];
-};
-const hslToHex = (h,s,l) => {
-  h=((h%360)+360)%360; s=Math.max(0,Math.min(1,s)); l=Math.max(0,Math.min(1,l));
-  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
-  let r,g,b;
-  if (h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;} else if(h<180){r=0;g=c;b=x;}
-  else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
-  const to255=(v)=>Math.round((v+m)*255);
-  return '#'+[to255(r),to255(g),to255(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
-};
-const partnerColour = (hex) => {
-  const [h,s,l] = hexToHsl(hex);
-  const newS = Math.max(0.5, Math.min(0.88, s+0.1));
-  const newL = l > 0.55 ? Math.max(0.28, l-0.22) : Math.min(0.78, l+0.22);
-  return hslToHex(h+150, newS, newL);
-};
+/* ---------- a stable "random" seed per card ----------
+   hashStr turns a ticket's id/date into a stable number, so each card's gradient
+   looks a little different from its neighbours but never changes between renders
+   or reloads. */
 const hashStr = (str) => { let h=0; const s=String(str==null?'x':str); for (let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h); };
+const luminance = (hex) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return (0.299*r+0.587*g+0.114*b)/255; };
 
-/* ---------- job-card gradient: two circular areas of two contrasting-but-complementary ----------
-   colours (the site's own hue, and a hue-rotated partner), positioned from a per-ticket
-   hash so cards feel varied rather than identical, all contained within the card's own
-   sharp edge (this is a background, not a box-shadow, so nothing bleeds past the border). */
+/* ---------- job-card gradient: one colour, several shades, felt random ----------
+   Two circular highlight areas — both just lighter shades of the site's own hue —
+   positioned from a per-ticket hash so no two cards line up identically, all
+   contained within the card's own sharp edge (a background, not a box-shadow,
+   so nothing bleeds past the border). */
 const glowBg = (hex, seed) => {
-  const partner = partnerColour(hex);
   const hsh = hashStr(seed);
-  const x1 = 12 + (hsh % 45), y1 = 8 + ((hsh >> 3) % 40);
-  const x2 = 50 + ((hsh >> 6) % 45), y2 = 42 + ((hsh >> 9) % 50);
-  return 'radial-gradient(60% 60% at '+x1+'% '+y1+'%, '+shade(hex,0.28)+' 0%, '+hex+' 55%, transparent 100%), '
-    + 'radial-gradient(65% 65% at '+x2+'% '+y2+'%, '+shade(partner,0.22)+' 0%, '+partner+' 55%, transparent 100%), '
-    + 'linear-gradient(135deg, '+shade(hex,-0.1)+' 0%, '+shade(partner,-0.15)+' 100%)';
+  const x1 = 10 + (hsh % 50), y1 = 6 + ((hsh >> 3) % 42);
+  const x2 = 48 + ((hsh >> 6) % 48), y2 = 40 + ((hsh >> 9) % 52);
+  const hi1 = shade(hex, 0.30 + ((hsh >> 12) % 18) / 100);
+  const hi2 = shade(hex, 0.12 + ((hsh >> 15) % 16) / 100);
+  const lo  = shade(hex, -0.22 - ((hsh >> 18) % 16) / 100);
+  return 'radial-gradient(58% 58% at '+x1+'% '+y1+'%, '+hi1+' 0%, '+hex+' 60%, transparent 100%), '
+    + 'radial-gradient(62% 62% at '+x2+'% '+y2+'%, '+hi2+' 0%, '+hex+' 60%, transparent 100%), '
+    + 'linear-gradient(135deg, '+hex+' 0%, '+lo+' 100%)';
 };
 const glowBorder = (hex) => '1.5px solid '+shade(hex, 0.3);
 const glowShadow = () => '0 3px 8px rgba(22,23,50,0.14), 0 1px 3px rgba(22,23,50,0.10)';
 
 /* ---------- ambient halo for completed tickets: a soft, bleeding glow made of ----------
-   two contrasting-but-complementary colours (the site's own hue plus its hue-rotated
-   partner) — matching the same two-colour language as the card's own gradient. Unlike
-   the card's own contained glow, this one is deliberately soft and allowed to spill
-   past the edges, like the ticket is glowing from within. */
-const luminance = (hex) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return (0.299*r+0.587*g+0.114*b)/255; };
+   two shades of the SAME site hue — the colour itself, plus a much lighter or much
+   darker shade of it (whichever direction gives more contrast). Deliberately soft
+   and allowed to spill past the edges, unlike the card's own contained glow. */
 const ambientCardGlow = (hex) => {
-  const partner = partnerColour(hex);
-  return '0 -14px 38px -6px '+hexToRgba(hex,0.5)+', 0 18px 44px -8px '+hexToRgba(partner,0.55)+', 0 0 26px '+hexToRgba(hex,0.22);
+  const other = luminance(hex) > 0.55 ? shade(hex, -0.55) : shade(hex, 0.55);
+  return '0 -14px 38px -6px '+hexToRgba(hex,0.5)+', 0 18px 44px -8px '+hexToRgba(other,0.55)+', 0 0 26px '+hexToRgba(hex,0.22);
 };
 
 const TickIcon = (done, size, colour) => {
@@ -390,6 +407,7 @@ async function dbSet(k,v){try{const db=await openDB();await new Promise((res,rej
 
 const DEFAULT_SETTINGS = {
   accent: DEFAULT_ACCENT,
+  darkMode: false,
   lockReadOnly: true,
   defaultExportScope: 'month',
   defaultCalMode: 'day',
@@ -465,15 +483,15 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
       boxShadow: glow || 'none', transition:'box-shadow .4s ease',
       animation: entryDelay != null ? 'fadeInUp .34s cubic-bezier(.22,.9,.3,1) both' : 'none',
       animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
-    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-16px', right:'10px', display:'flex', gap:'8px', zIndex:5 } },
+    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-14px', right:'10px', display:'flex', gap:'6px', zIndex:5 } },
       e('button', { key:'lk', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onLock(); }, className:'bubble-pop',
-        style:{ width:'38px', height:'38px', borderRadius:'999px', border:'none', cursor:'pointer', animationDelay:'0s',
-          background: locked ? GREY : LOCKED, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_BTN } },
-        TickIcon(true, 17, APRICOT)),
+        style:{ height:'34px', padding:'0 12px', borderRadius:'9px', border:'none', cursor:'pointer', animationDelay:'0s',
+          background: locked ? GREY : INK, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_BTN } },
+        TickIcon(true, 15, APRICOT)),
       e('button', { key:'del', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onDelete(); }, className:'bubble-pop',
-        style:{ width:'38px', height:'38px', borderRadius:'999px', border:'none', cursor:'pointer', animationDelay:'.06s',
+        style:{ height:'34px', padding:'0 12px', borderRadius:'9px', border:'none', cursor:'pointer', animationDelay:'.06s',
           background:RED, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_BTN } },
-        TrashIcon(16, '#FFF'))),
+        TrashIcon(15, '#FFF'))),
     e('div', { onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd, onClick:handleTap,
       style:{ transform: (holding || pressed) ? 'scale(0.97)' : 'scale(1)', transition:'transform .18s ease', position:'relative' } },
       children));
@@ -501,7 +519,7 @@ function SignInScreen({ onSignIn, busy, error }) {
         e('input', { type:'password', value:password, autoComplete:'current-password',
           onChange:(ev)=>setPassword(ev.target.value), style:{ ...FIELD() } })),
       error && e('div', { style:{ fontSize:'0.75rem', color:RED, fontWeight:700, textAlign:'center' } }, error),
-      e('button', { type:'submit', disabled:busy, style:{ padding:'0.85rem', borderRadius:'999px', border:'none',
+      e('button', { type:'submit', disabled:busy, style:{ padding:'0.85rem', borderRadius:'14px', border:'none',
         background:VIOLET, color:'#FFFFFF', fontWeight:800, fontSize:'0.92rem', cursor: busy?'default':'pointer', opacity: busy?0.6:1 } },
         busy ? 'Signing in…' : 'Sign in')));
 }
@@ -522,6 +540,7 @@ function App() {
   const [form, setForm] = useState(blank());
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [themesOpen, setThemesOpen] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [themeTick, setThemeTick] = useState(0);
   const [siteEdits, setSiteEdits] = useState([]);
@@ -595,6 +614,7 @@ function App() {
         const merged = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
         setSettings(merged);
         applyAccent(merged.accent || DEFAULT_ACCENT);
+        applyDarkMode(!!merged.darkMode);
         if (merged.sites && merged.sites.length) applySites(merged.sites);
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
         TIME_ROUNDING = merged.timeRounding || 5;
@@ -1044,8 +1064,8 @@ function App() {
 
   const swipeHint = view === 'form' && swipeX > 4 && e('div', {
     style:{ position:'fixed', left:'10px', top:'50%', transform:'translateY(-50%) scale('+(0.7+progress*0.5)+')',
-      zIndex:40, width:'48px', height:'48px', borderRadius:'999px',
-      background: armed ? VIOLET : SURF2, boxShadow:SHADOW,
+      zIndex:40, width:'44px', height:'44px', borderRadius:'12px',
+      background: armed ? INK : SURF2, boxShadow:SHADOW,
       display:'flex', alignItems:'center', justifyContent:'center',
       opacity: 0.3 + progress*0.7, transition:'background .12s ease' } },
     ChevronLeft(24, armed ? APRICOT : GREY));
@@ -1162,7 +1182,7 @@ function App() {
         fmtDate(j.startDateTime) + (SITES[j.site] ? '  ·  '+SITES[j.site].label : ''))));
 
   const closeBtn = (onClick) => e('button', { key:'close', onClick,
-    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:SURF2,
+    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'14px', border:'none', background:SURF2,
       color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
@@ -1176,7 +1196,7 @@ function App() {
         SearchIcon(17, GREY)),
       e('input', { type:'search', value:menuSearch, placeholder:'Search all tickets…',
         onChange:(ev)=>setMenuSearch(ev.target.value),
-        style:{ width:'100%', padding:'0.7rem 0.9rem 0.7rem 2.5rem', border:'1px solid '+LINE, borderRadius:'999px',
+        style:{ width:'100%', padding:'0.7rem 0.9rem 0.7rem 2.5rem', border:'1px solid '+LINE, borderRadius:'14px',
           outline:'none', fontSize:'0.85rem', background:FIELDBG, color:INK } })),
 
     menuSearch.trim()
@@ -1247,26 +1267,27 @@ function App() {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
-    const onC = s ? '#FFFFFF' : INK;
-    const subC = s ? 'rgba(255,255,255,0.62)' : MID;
-    const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
-    const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.10)';
+    const vivid = !!(j.locked && s);
+    const onC = vivid ? '#FFFFFF' : INK;
+    const subC = vivid ? 'rgba(255,255,255,0.62)' : MID;
+    const bodyC = vivid ? 'rgba(255,255,255,0.94)' : INK;
+    const chipBg = vivid ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.08)';
     return e('div', {
-      style:{ background: s ? glowBg(s.hex, j.id || j.ticketNumber) : sheen+', '+SURF3,
+      style:{ background: vivid ? glowBg(s.hex, j.id || j.ticketNumber) : SURF,
         overflow:'hidden',
-        border: j.locked ? '3px solid '+INK : (s ? glowBorder(s.hex) : '1px solid '+LINE),
-        boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM
-          : (s ? glowShadow() : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
+        border: vivid ? '3px solid '+INK : '1px solid '+LINE,
+        borderLeft: (!vivid && s) ? '4px solid '+s.hex : undefined,
+        boxShadow: vivid ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM : SHADOW_SM,
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
           i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
           e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
-          s && e('span', { style:{ background:'rgba(255,255,255,0.22)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
+          s && e('span', { style:{ background: vivid ? 'rgba(255,255,255,0.22)' : s.hex, color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK))),
+          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, vivid ? APRICOT : INK))),
       e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -1413,7 +1434,7 @@ function App() {
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
           dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
-      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed rgba(65,67,106,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
+      style:{ padding:'0.85rem', borderRadius:'14px', border:'1.5px dashed '+LINE, background:SURF2, color:INK, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
       '+ Add ticket for this day'));
 
   const periodLabel = () => {
@@ -1426,31 +1447,31 @@ function App() {
 
     e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
 
-      e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
+      e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'14px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
         e('div', { style:{ position:'absolute', top:'3px', left:'3px', bottom:'3px', width:'calc((100% - 6px) / 3)',
-          borderRadius:'999px', background:SURF, backdropFilter:'none', WebkitBackdropFilter:'none',
+          borderRadius:'10px', background:SURF, backdropFilter:'none', WebkitBackdropFilter:'none',
           border:'1.5px solid '+INK, boxShadow:'0 2px 8px rgba(22,23,50,0.14)',
           transform:'translateX('+(['day','week','month'].indexOf(calMode)*100)+'%)',
           transition:'transform .32s cubic-bezier(.22,.9,.3,1)', pointerEvents:'none' } }),
         ['day','week','month'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-          style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
+          style:{ flex:1, padding:'0.5rem', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
             position:'relative', zIndex:1, background:'transparent',
             color: calMode===mode ? INK : MID,
             transition:'color .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem', gap:'0.4rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid rgba(65,67,106,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+        e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'11px', width:'34px', height:'34px',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
         e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px', flex:1, textAlign:'center' } },
           e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
           calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
             String(anchorDate.getFullYear()))),
-        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ width:'26px', height:'26px', borderRadius:'999px',
+        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ width:'26px', height:'26px', borderRadius:'9px',
           background:SURF2, border:'1px solid rgba(65,67,106,0.14)', boxShadow:SHADOW_SM, cursor:'pointer', flexShrink:0,
           display:'flex', alignItems:'center', justifyContent:'center' } },
           e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:INK } })),
-        e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid rgba(65,67,106,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+        e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'11px', width:'34px', height:'34px',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
           transform:'rotate(180deg)' } }, ChevronLeft(17, INK)))),
 
@@ -1492,7 +1513,7 @@ function App() {
        : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
-      style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed rgba(65,67,106,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
+      style:{ padding:'0.9rem', borderRadius:'14px', border:'1.5px dashed '+LINE, background:SURF2, color:INK, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
       '+ Add ticket for this day'),
 
     closeBtn(()=>setDayDetail(null))
@@ -1502,10 +1523,10 @@ function App() {
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
         onChange:(ev)=>setQuery(ev.target.value),
-        style:{ flex:1, padding:'0.68rem 0.95rem', border:'1px solid '+LINE, borderRadius:'999px', outline:'none',
+        style:{ flex:1, padding:'0.68rem 0.95rem', border:'1px solid '+LINE, borderRadius:'14px', outline:'none',
           fontSize:'0.88rem', background:FIELDBG, color:INK } }),
       e('button', { onClick:()=>setShowFilters(!showFilters),
-        style:{ padding:'0.62rem 0.95rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
+        style:{ padding:'0.62rem 0.95rem', borderRadius:'14px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
           background: (siteFilter.length||equipFilter.length) ? VIOLET : SURF2,
           color: (siteFilter.length||equipFilter.length) ? APRICOT : INK } }, 'Filter')),
 
@@ -1514,18 +1535,18 @@ function App() {
         Object.keys(SITES).map(k => {
           const s = SITES[k], on = siteFilter.includes(k);
           return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
-            style:{ padding:'0.42rem 0.9rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
+            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
               border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):SURF2, color: on?'#FFF':INK } }, s.label);
         })),
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(EQUIP).map(k => {
           const on = equipFilter.includes(k);
           return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
-            style:{ padding:'0.42rem 0.9rem', borderRadius:'999px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
+            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
               border: on ? 'none' : '1.5px solid '+LINE, background: on?INK:SURF2, color: on?APRICOT:INK } }, k);
         })),
       (siteFilter.length || equipFilter.length || query) && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); },
-        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:SURF2, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
+        style:{ padding:'0.5rem', borderRadius:'10px', border:'none', background:SURF2, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
 
     e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'),
@@ -1623,10 +1644,10 @@ function App() {
       boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
-      e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
-      e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
 
     e('div', { style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
@@ -1709,7 +1730,7 @@ function App() {
       burst > 0 ? e('div', { key:'burst'+burst, style:{ position:'absolute', right:'32px', top:'50%', width:0, height:0, pointerEvents:'none' } },
         [...Array(8)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
           style:{ '--ang': (bi*45)+'deg', background: bi%2 ? SITES.RH.hex : LOCKED } }))) : null,
-      e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
+      e('span', { style:{ width:'22px', height:'22px', borderRadius:'7px', flexShrink:0,
         border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
         display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
         transition:'background .25s ease, border-color .25s ease',
@@ -1751,9 +1772,9 @@ function App() {
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, label),
         sub && e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, sub)),
-      e('div', { style:{ width:'42px', height:'24px', borderRadius:'999px', background: value?VIOLET:SURF2,
-        border:'1px solid '+(value?VIOLET:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0 } },
-        e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'999px',
+      e('div', { style:{ width:'42px', height:'24px', borderRadius:'8px', background: value?INK:SURF2,
+        border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0 } },
+        e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'5px',
           background:'#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
 
   const chipSelect = (label, options, value, onChange) =>
@@ -1762,7 +1783,7 @@ function App() {
       e('span', { style:{ ...LBL } }, label),
       e('div', { style:{ display:'flex', gap:'0.4rem', flexWrap:'wrap' } },
         options.map(opt => e('button', { key:opt.key, onClick:()=>onChange(opt.key),
-          style:{ padding:'0.4rem 0.75rem', borderRadius:'999px', border: value===opt.key?'none':'1px solid '+LINE,
+          style:{ padding:'0.4rem 0.75rem', borderRadius:'9px', border: value===opt.key?'none':'1px solid '+LINE,
             background: value===opt.key?VIOLET:SURF2, color: value===opt.key?'#FFFFFF':INK,
             fontSize:'0.75rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
 
@@ -1770,23 +1791,22 @@ function App() {
 
   const settingsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
-      e('button', { onClick:()=>setSettingsOpen(false), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:()=>setSettingsOpen(false), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
     settingsSection('Theme'),
-    e('div', { key:'themes', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
-      THEME_PRESETS.map(theme => e('button', { key:theme.name, onClick:()=>applyTheme(theme),
-        style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'16px',
-          border: settings.accent===theme.accent ? '2px solid '+theme.accent : '1px solid '+LINE,
-          background:SURF, cursor:'pointer', textAlign:'left' } },
-        e('div', { style:{ display:'flex', gap:'4px' } },
-          theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'20px', borderRadius:'6px', background:hex,
-            borderTopLeftRadius: hi===0?'6px':0, borderBottomLeftRadius: hi===0?'6px':0,
-            borderTopRightRadius: hi===theme.sites.length-1?'6px':0, borderBottomRightRadius: hi===theme.sites.length-1?'6px':0 } }))),
-        e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name))),
-    ),
+    e('button', { key:'themesRow', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
+      background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer', textAlign:'left' } },
+      e('div', null,
+        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Browse themes'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' preset palettes')),
+      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+        e('div', { style:{ display:'flex', gap:'2px' } },
+          (THEME_PRESETS.find(t=>t.accent===settings.accent) || THEME_PRESETS[0]).sites.slice(0,4).map((hex,hi) =>
+            e('span', { key:hi, style:{ width:'13px', height:'13px', borderRadius:'4px', background:hex } }))),
+        e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
 
     settingsSection('Accent colour'),
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.8rem', background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
@@ -1823,6 +1843,8 @@ function App() {
         borderRadius:'14px', padding:'0.65rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment')),
 
     settingsSection('Behaviour'),
+    toggleRow('Dark mode', 'Switches the app to a dark colour scheme',
+      settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
     toggleRow('Lock tickets when complete', 'Marking a ticket ready stops it being edited until unlocked',
       settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
     toggleRow('Hide weekends by default', 'Weekend columns start collapsed on the calendar',
@@ -1843,8 +1865,23 @@ function App() {
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Signed in'),
         e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
-      e('button', { onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'999px', border:'1px solid '+LINE,
+      e('button', { onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'10px', border:'1px solid '+LINE,
         background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out')));
+
+  const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
+      e('button', { onClick:()=>setThemesOpen(false), style:{ background:SURF2, border:'none', borderRadius:'12px', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Themes'),
+      e('span', { style:{ width:'36px' } })),
+    e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
+      THEME_PRESETS.map(theme => e('button', { key:theme.name, onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
+        style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'14px',
+          border: settings.accent===theme.accent ? '2px solid '+theme.accent : '1px solid '+LINE,
+          background:SURF, cursor:'pointer', textAlign:'left' } },
+        e('div', { style:{ display:'flex', gap:'4px' } },
+          theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'20px', borderRadius:'5px', background:hex } }))),
+        e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name)))));
 
 
   if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
@@ -1855,6 +1892,7 @@ function App() {
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
+  if (settingsOpen && themesOpen) return e('div', { key:'themes', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, themesView);
   if (settingsOpen) return e('div', { key:'settings', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, settingsView);
 
   const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
