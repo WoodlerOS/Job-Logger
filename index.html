@@ -223,7 +223,7 @@ const glassPanel = (alpha) => ({ background:SURF, border:'1px solid '+LINE });
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
 const FIELD = () => ({ width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:FIELDBG, color:INK });
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHADOW+', inset 0 3px 0 0 '+VIOLET, borderRadius:'24px' });
+const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHADOW, borderRadius:'24px' });
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
@@ -235,6 +235,18 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
 const glossyBg = (hexA, hexB) => grad(hexA, hexB, 150);
 const GLOSS_BLUR = 'none';
 const glossShadow = (hex) => '0 8px 16px '+hexToRgba(hex,0.28)+', 0 2px 5px '+hexToRgba(hex,0.22);
+
+/* ---------- contained glow: a bright floating light within the card itself ----------
+   Several shades of the SAME site hue (a light tint, the base colour, and two
+   deeper shades) arranged as a radial "light source" in one corner. Because it's
+   the card's own background — not a box-shadow — it never spills past the card's
+   edge, so the border stays crisp and sharp while the inside reads as glowing. */
+const glowBg = (hex) => {
+  const hi = shade(hex, 0.42), hi2 = shade(hex, 0.18), lo = shade(hex, -0.24), lo2 = shade(hex, -0.42);
+  return 'radial-gradient(135% 150% at 18% 12%, '+hi+' 0%, '+hi2+' 28%, '+hex+' 52%, '+lo+' 78%, '+lo2+' 100%)';
+};
+const glowBorder = (hex) => '1.5px solid '+shade(hex, 0.3);
+const glowShadow = () => '0 3px 8px rgba(22,23,50,0.14), 0 1px 3px rgba(22,23,50,0.10)';
 
 const TickIcon = (done, size, colour) => {
   const s = size || 19;
@@ -1172,11 +1184,11 @@ function App() {
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.10)';
     return e('div', {
-      style:{ background: s ? glossyBg(s.hex, s.hex2) : sheen+', '+SURF3,
-        backdropFilter: s ? GLOSS_BLUR : 'none', WebkitBackdropFilter: s ? GLOSS_BLUR : 'none',
-        border: j.locked ? '3px solid '+INK : (s ? '1.5px solid rgba(255,255,255,0.5)' : '1px solid '+LINE),
+      style:{ background: s ? glowBg(s.hex) : sheen+', '+SURF3,
+        overflow:'hidden',
+        border: j.locked ? '3px solid '+INK : (s ? glowBorder(s.hex) : '1px solid '+LINE),
         boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM
-          : (s ? glossShadow(s.hex) : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
+          : (s ? glowShadow() : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
@@ -1280,18 +1292,17 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[0]].hex2);
-    else if (sites.length > 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[1]].hex2);
+    if (sites.length === 1) bg = glowBg(SITES[sites[0]].hex);
+    else if (sites.length > 1) bg = glowBg(SITES[sites[0]].hex);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
-    const weekGlow = has ? glossShadow(SITES[sites[0]].hex) : null;
+    const weekGlow = has ? glowShadow() : null;
     const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF : null;
     const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
-        background:bg, minHeight: weekend ? '48px' : '66px',
-        backdropFilter: has ? GLOSS_BLUR : GLASS_BLUR, WebkitBackdropFilter: has ? GLOSS_BLUR : GLASS_BLUR,
-        border: allLocked ? '3px solid '+INK : (has ? '1.5px solid rgba(255,255,255,0.45)' : '1px solid rgba(65,67,106,0.10)'),
+        background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden',
+        border: allLocked ? '3px solid '+INK : (has ? glowBorder(SITES[sites[0]].hex) : '1px solid rgba(65,67,106,0.10)'),
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
@@ -1554,22 +1565,22 @@ function App() {
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
 
     e('div', { style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
-      boxShadow: (SITES[form.site] ? glossShadow(SITES[form.site].hex) : SHADOW)+', inset 0 4px 0 0 '+(SITES[form.site] ? SITES[form.site].hex : VIOLET),
+      boxShadow: SHADOW+', inset 0 4px 0 0 '+(SITES[form.site] ? SITES[form.site].hex : VIOLET),
       pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto', opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
       transition:'opacity .25s ease, box-shadow .3s ease' } },
 
       e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
         onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
         style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem',
-          background: SITES[form.site] ? hexToRgba(SITES[form.site].hex,0.07) : FIELDBG,
+          background: SITES[form.site] ? hexToRgba(SITES[form.site].hex,0.12) : FIELDBG,
           borderLeft: SITES[form.site] ? '6px solid '+SITES[form.site].hex : FIELD().border,
           transition:'background .3s ease, border-color .3s ease' } }),
 
       e('div', { style:{ display:'flex', gap:'0.5rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border: SITES[form.site] ? '1.5px solid '+SITES[form.site].hex : '1.5px solid '+LINE,
-          background: SITES[form.site] ? siteGrad(form.site) : FIELDBG,
-          boxShadow: SITES[form.site] ? glossShadow(SITES[form.site].hex) : 'none',
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem', overflow:'hidden',
+          border: SITES[form.site] ? glowBorder(SITES[form.site].hex) : '1.5px solid '+LINE,
+          background: SITES[form.site] ? glowBg(SITES[form.site].hex) : FIELDBG,
+          boxShadow: SITES[form.site] ? glowShadow() : 'none',
           borderRadius:'13px', padding:'0 0.65rem', transition:'background .25s ease, border-color .25s ease' } },
           e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
