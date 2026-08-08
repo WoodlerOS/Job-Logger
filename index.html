@@ -59,7 +59,7 @@
      keyframe animation keeps running regardless of that, so it can never get stuck. */
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(135deg, #6B6EB0 0%, #41436A 100%); }
-  #splash.standalone-play { animation:splashHide 1.7s ease forwards; }
+  #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
   #splash svg { width:168px; height:168px; overflow:visible; }
   .splash-pad { transform-origin:150px 150px; animation:splashPop .5s cubic-bezier(.22,.9,.3,1) both; }
   .splash-ring { opacity:0; transform:scale(0.3); transform-origin:center; animation:splashRingPop .32s cubic-bezier(.34,1.56,.64,1) forwards; }
@@ -106,7 +106,12 @@
     var standalone = window.navigator && window.navigator.standalone === true;
     if (!standalone) { s.remove(); return; }
     var removeIt = function(){ if (s && s.parentNode) s.parentNode.removeChild(s); };
-    s.addEventListener('animationend', removeIt);
+    // Only the outer splashHide animation (on #splash itself) should trigger removal.
+    // animationend bubbles up from every child animation too (the pad pop, each
+    // ring, the T draw-on, the line fade) — without this check, the very first of
+    // those to finish would yank the whole splash away before the logo ever
+    // finished animating.
+    s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
     // belt-and-braces: if the animationend event is ever missed for any reason,
     // this guarantees the splash still gets cleared out of the DOM.
     setTimeout(removeIt, 3000);
