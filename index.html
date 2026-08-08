@@ -293,8 +293,8 @@ const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
-/* ---------- PREVIEW MODE (no login required) ---------- */
-const PREVIEW_MODE = true;
+/* ---------- PREVIEW MODE (set true only for UI demos) ---------- */
+const PREVIEW_MODE = false;
 
 function makePreviewJobs() {
   const today = todayISO();
