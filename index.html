@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#F6F2EA">
+<meta name="theme-color" content="#FAFAFC">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -26,7 +26,7 @@
     background:#FAFAFC;
     background-attachment:fixed;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    color:#41436A; -webkit-tap-highlight-color:transparent;
+    color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
@@ -52,7 +52,7 @@
   .ambient-wrap { position:relative; }
   .ambient-wrap > *:not(.ambient-blob) { position:relative; z-index:1; }
   @keyframes burstFly { 0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(30px) scale(0.4); } }
-  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#41436A;
+  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#0A0A0C;
     animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
 
   /* ---------- animated launch splash (standalone home-screen launches only) ----------
@@ -61,17 +61,15 @@
      splash stuck at full opacity forever, blocking the whole app underneath it. A CSS
      keyframe animation keeps running regardless of that, so it can never get stuck. */
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg, #6B6EB0 0%, #41436A 100%); }
+    background:#FFFFFF; }
   #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
   #splash svg { width:168px; height:168px; overflow:visible; }
-  .splash-pad { transform-origin:150px 150px; animation:splashPop .5s cubic-bezier(.22,.9,.3,1) both; }
+  .splash-pad { transform-origin:150px 161px; animation:splashPop .5s cubic-bezier(.22,.9,.3,1) both; }
   .splash-ring { opacity:0; transform:scale(0.3); transform-origin:center; animation:splashRingPop .32s cubic-bezier(.34,1.56,.64,1) forwards; }
-  .splash-t { stroke-dasharray:200; stroke-dashoffset:200; animation:splashDraw .45s cubic-bezier(.4,0,.2,1) .5s forwards; }
-  .splash-line { opacity:0; animation:splashFade .3s ease .95s forwards; }
+  .splash-t { stroke-dasharray:230; stroke-dashoffset:230; animation:splashDraw .45s cubic-bezier(.4,0,.2,1) .5s forwards; }
   @keyframes splashPop { 0% { opacity:0; transform:scale(0.75); } 70% { opacity:1; transform:scale(1.04); } 100% { opacity:1; transform:scale(1); } }
   @keyframes splashRingPop { to { opacity:1; transform:scale(1); } }
   @keyframes splashDraw { to { stroke-dashoffset:0; } }
-  @keyframes splashFade { to { opacity:1; } }
   @keyframes splashHide { 0%, 82% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
@@ -82,7 +80,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#FAFAFC; color:#41436A; flex-direction:column;
+      background:#FAFAFC; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
@@ -94,15 +92,12 @@
 <div id="splash">
   <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
     <g class="splash-pad">
-      <rect x="90" y="70" width="120" height="160" rx="14" fill="#FFFFFF"/>
-      <circle class="splash-ring" style="animation-delay:.08s" cx="102" cy="70" r="5" fill="none" stroke="#2E2F52" stroke-width="3"/>
-      <circle class="splash-ring" style="animation-delay:.14s" cx="128" cy="70" r="5" fill="none" stroke="#2E2F52" stroke-width="3"/>
-      <circle class="splash-ring" style="animation-delay:.2s" cx="153" cy="70" r="5" fill="none" stroke="#2E2F52" stroke-width="3"/>
-      <circle class="splash-ring" style="animation-delay:.26s" cx="178" cy="70" r="5" fill="none" stroke="#2E2F52" stroke-width="3"/>
-      <circle class="splash-ring" style="animation-delay:.32s" cx="204" cy="70" r="5" fill="none" stroke="#2E2F52" stroke-width="3"/>
-      <line class="splash-line" x1="105" y1="207" x2="195" y2="207" stroke="#E4E3ED" stroke-width="4" stroke-linecap="round"/>
+      <rect x="68" y="79" width="164" height="164" rx="17" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+      <circle class="splash-ring" style="animation-delay:.08s" cx="103" cy="79" r="9" fill="#000000"/>
+      <circle class="splash-ring" style="animation-delay:.16s" cx="150" cy="79" r="9" fill="#000000"/>
+      <circle class="splash-ring" style="animation-delay:.24s" cx="197" cy="79" r="9" fill="#000000"/>
     </g>
-    <path class="splash-t" d="M 112 112 L 188 112 M 150 112 L 150 195" fill="none" stroke="#41436A" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="splash-t" d="M 103 127 L 197 127 M 150 127 L 150 209" fill="none" stroke="#000000" stroke-width="33" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 </div>
 <script>
@@ -130,7 +125,7 @@
 })();
 </script>
 <div class="landscape-lock">
-  <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#8A9A90" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#41436A" stroke-width="1.8" fill="none"/></svg>
+  <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#8A9A90" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#0A0A0C" stroke-width="1.8" fill="none"/></svg>
   <div style="font-weight:800; font-size:1.05rem;">Rotate back to portrait</div>
   <div style="font-size:0.8rem; color:#5E7268; max-width:260px;">Tickets is designed for portrait use only.</div>
 </div>
@@ -262,6 +257,7 @@ function applyDarkMode(on) {
   }
   try {
     document.body.style.background = PAGE_BG;
+    document.body.style.color = INK;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
   } catch (err) {}
