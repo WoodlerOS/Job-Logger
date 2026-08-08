@@ -55,11 +55,6 @@
   .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#0A0A0C;
     animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
 
-  /* ---------- animated launch splash (standalone home-screen launches only) ----------
-     The hide is driven entirely by a CSS animation, not a JS timer. iOS can throttle or
-     delay setTimeout callbacks right at app-launch, which previously risked leaving the
-     splash stuck at full opacity forever, blocking the whole app underneath it. A CSS
-     keyframe animation keeps running regardless of that, so it can never get stuck. */
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
     background:#FFFFFF; }
   #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
@@ -73,10 +68,6 @@
   @keyframes splashHide { 0%, 82% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
-  /* Only lock orientation on actual touchscreens (phones/tablets) — a desktop
-     browser window is technically "landscape" too by this media feature, which
-     previously locked the whole app out on desktop. hover:none + pointer:coarse
-     narrows this to touch-only devices without a mouse. */
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
@@ -108,14 +99,7 @@
     var standalone = window.navigator && window.navigator.standalone === true;
     if (!standalone) { s.remove(); return; }
     var removeIt = function(){ if (s && s.parentNode) s.parentNode.removeChild(s); };
-    // Only the outer splashHide animation (on #splash itself) should trigger removal.
-    // animationend bubbles up from every child animation too (the pad pop, each
-    // ring, the T draw-on, the line fade) — without this check, the very first of
-    // those to finish would yank the whole splash away before the logo ever
-    // finished animating.
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
-    // belt-and-braces: if the animationend event is ever missed for any reason,
-    // this guarantees the splash still gets cleared out of the DOM.
     setTimeout(removeIt, 3000);
     s.classList.add('standalone-play');
   } catch (err) {
@@ -158,11 +142,8 @@ const SITES = {
   RH:   { label:'RH',   hex:'#F64668', hex2:'#D6335A' },
   MMUH: { label:'MMUH', hex:'#FE9677', hex2:'#E87856' }
 };
-/* extra hues auto-assigned to any site added beyond the original four, cycling as needed */
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
-/* ---------- preset themes organised into groups ---------- */
-/* Multi-colour themes first. All keep similar intensity for clean OKLCH gradients. */
 const THEME_GROUPS = [
   { name: 'Colour Mix', themes: [
     { name:'Embers Classic', accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
@@ -191,7 +172,6 @@ const THEME_GROUPS = [
     { name:'Saffron Night',  accent:'#2A1A2A', sites:['#2A1A2A','#4A2A3A','#8A5A1A','#B07A1A'] },
     { name:'Aqua Berry',     accent:'#1A3A4A', sites:['#1A3A4A','#2A5A6A','#7A2A4A','#A03A5A'] },
     { name:'Copper Sky',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#7A4A2A','#A05A2A'] },
-    // extra vibrant multi-hue sets
     { name:'Neon Market',    accent:'#1A0A4A', sites:['#1A0A4A','#C01A6A','#E05A1A','#F0A010'] },
     { name:'Electric Garden',accent:'#0A2A4A', sites:['#0A2A4A','#1A8A4A','#C04A8A','#E08A1A'] },
     { name:'Fuchsia Flame',  accent:'#4A0A3A', sites:['#4A0A3A','#A01A6A','#E04A2A','#F08A10'] },
@@ -279,7 +259,6 @@ const THEME_GROUPS = [
   ]},
 ];
 
-// Flat list kept for any code that still expects THEME_PRESETS
 const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -294,9 +273,6 @@ let VIOLET='#0A0A0C', APRICOT='#FFFFFF';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
 let LOCKED='#0A0A0C', LOCKEDBG='rgba(10,10,12,0.06)';
 
-/* ---------- runtime-editable sites & equipment ----------
-   SITES/EQUIP are mutated in place (not reassigned) so every part of the app that
-   reads SITES[k]/EQUIP[k] picks up changes automatically once a re-render is forced. */
 function applySites(list) {
   Object.keys(SITES).forEach(k => delete SITES[k]);
   list.forEach(item => { SITES[item.key] = { label:item.label, hex:item.hex, hex2:shade(item.hex,-0.22) }; });
@@ -364,10 +340,6 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 
-/* ---------- multi-site background (OKLAB linear) --------------------------------
-   Perceptually smooth diagonal gradient using the oklab colour space so blends
-   stay natural without the hue-arc stripe artefact of oklch. First site still
-   anchors the card so white text remains readable. Works with 2, 3 or 4+ sites. */
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
   if (keys.length === 0) return null;
@@ -375,9 +347,6 @@ const multiSiteBg = (siteKeys) => {
 
   const colors = keys.map(k => SITES[k].hex);
 
-  // OKLAB (not OKLCH) — perceptually smooth without the hue-arc artefact
-  // that produced the thin green/cyan stripe when blending distant colours
-  // (e.g. orange → purple). Slight first-colour bias for text readability.
   if (colors.length === 2) {
     return 'linear-gradient(145deg in oklab, ' +
       colors[0] + ' 0%, ' +
@@ -392,7 +361,6 @@ const multiSiteBg = (siteKeys) => {
       colors[2] + ' 100%)';
   }
 
-  // 4+ colours — even continuous distribution
   const stops = colors.map((c, i) => {
     const pos = Math.round((i / (colors.length - 1)) * 100);
     return c + ' ' + pos + '%';
@@ -400,25 +368,13 @@ const multiSiteBg = (siteKeys) => {
   return 'linear-gradient(145deg in oklab, ' + stops.join(', ') + ')';
 };
 
-/* ---------- flat, sharp, saturated fill for the colour-coded site cards ----------
-   A crisp two-tone gradient in the site's own colour — no translucency, no blur,
-   no soft sheen — so each site reads as a bold, distinct block of colour. */
 const glossyBg = (hexA, hexB) => grad(hexA, hexB, 150);
 const GLOSS_BLUR = 'none';
 const glossShadow = (hex) => '0 8px 16px '+hexToRgba(hex,0.28)+', 0 2px 5px '+hexToRgba(hex,0.22);
 
-/* ---------- a stable "random" seed per card ----------
-   hashStr turns a ticket's id/date into a stable number, so each card's gradient
-   looks a little different from its neighbours but never changes between renders
-   or reloads. */
 const hashStr = (str) => { let h=0; const s=String(str==null?'x':str); for (let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h); };
 const luminance = (hex) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return (0.299*r+0.587*g+0.114*b)/255; };
 
-/* ---------- job-card gradient: one colour, several shades, felt random ----------
-   Two circular highlight areas — both just lighter shades of the site's own hue —
-   positioned from a per-ticket hash so no two cards line up identically, all
-   contained within the card's own sharp edge (a background, not a box-shadow,
-   so nothing bleeds past the border). */
 const glowBg = (hex, seed) => {
   const hsh = hashStr(seed);
   const x1 = 10 + (hsh % 50), y1 = 6 + ((hsh >> 3) % 42);
@@ -433,10 +389,6 @@ const glowBg = (hex, seed) => {
 const glowBorder = (hex) => '1.5px solid '+shade(hex, 0.3);
 const glowShadow = () => '0 3px 8px rgba(22,23,50,0.14), 0 1px 3px rgba(22,23,50,0.10)';
 
-/* ---------- ambient halo for completed tickets: a soft, bleeding glow made of ----------
-   two shades of the SAME site hue — the colour itself, plus a much lighter or much
-   darker shade of it (whichever direction gives more contrast). Deliberately soft
-   and allowed to spill past the edges, unlike the card's own contained glow. */
 const ambientCardGlow = (hex) => {
   const other = luminance(hex) > 0.55 ? shade(hex, -0.55) : shade(hex, 0.55);
   return '0 -14px 38px -6px '+hexToRgba(hex,0.5)+', 0 18px 44px -8px '+hexToRgba(other,0.55)+', 0 0 26px '+hexToRgba(hex,0.22);
@@ -463,7 +415,6 @@ const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0
   e('circle', { cx:10.5, cy:10.5, r:6.5, stroke:col, strokeWidth:2, fill:'none' }),
   e('line', { x1:15.3, y1:15.3, x2:20.5, y2:20.5, stroke:col, strokeWidth:2, strokeLinecap:'round' }));
 
-/* ---------- menu tool icons: flat rounded tiles, ivory glyph on emerald ---------- */
 const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
     background: bg || NEUTRAL_TILE, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:SHADOW_SM } },
@@ -542,10 +493,6 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
   e('path', { d:'M4 7 H20 M9 7 V5a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 V7 M6 7 L7 20 a1 1 0 0 0 1 1 h8 a1 1 0 0 0 1-1 L18 7',
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
-/* ---------- long-press to reveal actions: hold a ticket to pop up Done / Delete ----------
-   Replaces the old swipe-to-reveal gesture, which fought with vertical scrolling.
-   A plain tap still opens the ticket; nothing is captured until the hold threshold
-   is reached, so scrolling past a card costs nothing and never gets hijacked. */
 function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, children }) {
   const [pressed, setPressed] = useState(false);
   const [holding, setHolding] = useState(false);
@@ -607,7 +554,6 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
       children));
 }
 
-/* ---------- sign-in screen: shown whenever there's no active Firebase session ---------- */
 function SignInScreen({ onSignIn, busy, error }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -637,7 +583,7 @@ function SignInScreen({ onSignIn, busy, error }) {
 function App() {
   const [jobs, setJobs] = useState([]);
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState(undefined); // undefined = checking, null = signed out, object = signed in
+  const [user, setUser] = useState(undefined);
   const [authError, setAuthError] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
   const appliedDefaultsRef = useRef(false);
@@ -688,13 +634,11 @@ function App() {
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
 
-  /* sign-in state: Firebase persists the session itself */
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(u => setUser(u));
     return unsub;
   }, []);
 
-  /* live Firestore sync: one document per account holds both jobs and settings */
   useEffect(() => {
     if (!user) { setReady(false); return; }
     const ref = dbFS.collection('users').doc(user.uid);
@@ -703,7 +647,6 @@ function App() {
       try {
         const snap = await ref.get();
         if (!snap.exists) {
-          // first sign-in on this account: seed the cloud from local data if any
           let localJobs = await dbGet(KEY);
           if (!Array.isArray(localJobs)) localJobs = [];
           const localSettings = await dbGet(SETTINGS_KEY);
@@ -745,6 +688,75 @@ function App() {
     setJobs(next);
     if (!user) return;
     try { await dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+  };
+
+  /* ---------- cloud snapshots: a safety net independent of the live document ----------
+     persist() above always overwrites the one live jobs document — nothing else keeps a
+     copy if a bad save or a clashing edit from another device ever wiped something out.
+     This writes a dated, untouched copy into its own collection instead, so there's
+     always somewhere to recover from beyond just "the current state". One snapshot per
+     calendar day (today's snapshot is simply replaced if taken more than once), keeping
+     the most recent BACKUP_RETENTION days and quietly pruning anything older. */
+  const CLOUD_BACKUP_KEY = 'cloudBackupDate';
+  const BACKUP_RETENTION = 14;
+
+  const snapshotToCloud = async () => {
+    if (!user || !jobsRef.current.length) return false;
+    try {
+      await dbFS.collection('users').doc(user.uid).collection('backups').doc(todayISO())
+        .set({ jobs: jobsRef.current, savedAt: new Date().toISOString(), count: jobsRef.current.length });
+      return true;
+    } catch (err) { return false; }
+  };
+
+  const pruneOldBackups = async () => {
+    if (!user) return;
+    try {
+      const snap = await dbFS.collection('users').doc(user.uid).collection('backups').orderBy('savedAt', 'desc').get();
+      const extra = snap.docs.slice(BACKUP_RETENTION);
+      await Promise.all(extra.map(d => d.ref.delete()));
+    } catch (err) {}
+  };
+
+  useEffect(() => {
+    if (!ready || !user) return;
+    (async () => {
+      const t = todayISO();
+      let last = null;
+      try { last = localStorage.getItem(CLOUD_BACKUP_KEY); } catch (err) {}
+      if (last !== t) {
+        const ok = await snapshotToCloud();
+        if (ok) {
+          try { localStorage.setItem(CLOUD_BACKUP_KEY, t); } catch (err) {}
+          pruneOldBackups();
+        }
+      }
+    })();
+  }, [ready, user]);
+
+  const backupNow = async () => {
+    const ok = await snapshotToCloud();
+    alert(ok ? 'Backup saved to the cloud.' : 'Could not save a backup — check your connection.');
+  };
+
+  const [backupsOpen, setBackupsOpen] = useState(false);
+  const [backupsList, setBackupsList] = useState([]);
+  const [backupsLoading, setBackupsLoading] = useState(false);
+
+  const openBackups = async () => {
+    setMenuOpen(false); setBackupsOpen(true); setBackupsLoading(true);
+    try {
+      const snap = await dbFS.collection('users').doc(user.uid).collection('backups').orderBy('savedAt', 'desc').get();
+      setBackupsList(snap.docs.map(d => ({ id:d.id, ...d.data() })));
+    } catch (err) { setBackupsList([]); }
+    setBackupsLoading(false);
+  };
+
+  const restoreBackup = async (b) => {
+    if (!window.confirm('Replace your current tickets with the backup from '+fmtDate(b.savedAt)+'? This will overwrite what\'s currently synced, on every device.')) return;
+    await persist(b.jobs || []);
+    setBackupsOpen(false);
+    alert('Restored '+(b.jobs||[]).length+' ticket(s) from '+fmtDate(b.savedAt)+'.');
   };
 
   const signIn = async (email, password) => {
@@ -817,7 +829,6 @@ function App() {
         cell.border = { top:thin, bottom:thin, left:thin, right:thin };
         if (banded) cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFDCEEF9' } };
       });
-      // rough row-height estimate so wrapped text isn't clipped when opened
       const longest = Math.max(workdone.length / 58, parts.length / 42, ex.length / 45, 1);
       row.height = Math.max(16, Math.ceil(longest) * 14 + 4);
       rowIndex++;
@@ -849,7 +860,6 @@ function App() {
     return false;
   };
 
-  /* ---------- automatic daily JSON backup ---------- */
   const doAutoBackup = (label) => {
     if (!jobsRef.current.length) return;
     const blob = new Blob([JSON.stringify({ app:'tickets', version:9, exported:new Date().toISOString(), auto:true, jobs:jobsRef.current }, null, 2)], { type:'application/json' });
@@ -1174,7 +1184,6 @@ function App() {
       opacity: 0.3 + progress*0.7, transition:'background .12s ease' } },
     ChevronLeft(24, armed ? APRICOT : GREY));
 
-  /* ---------- calendar swipe ---------- */
   const shift = (n) => {
     if (calMode === 'month') {
       const y = anchorDate.getFullYear(), targetM = anchorDate.getMonth() + n;
@@ -1211,7 +1220,6 @@ function App() {
     setCalDX(0);
   };
 
-  /* ---------- pull-down-to-dismiss on bottom sheets ---------- */
   const [sheetDY, setSheetDY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const sheetTouch = useRef({ x:0, y:0, live:false, active:false });
@@ -1313,6 +1321,8 @@ function App() {
             : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
           iconRow(SpreadsheetTile(), 'Export to Excel', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('excel'); }),
           iconRow(ClipboardTile(), 'Copy as text', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('text'); }),
+          iconRow(BackupTile(), 'Back up now', 'Save an extra dated copy to the cloud', backupNow),
+          iconRow(RestoreTile(), 'Restore from backup', 'Browse and recover a previous day\'s data', openBackups),
           iconRow(SettingsTile(), 'Settings', 'Themes, equipment and app behaviour', ()=>openSettings())
         ),
 
@@ -1364,7 +1374,6 @@ function App() {
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
-  /* ---------- ticket detail card ---------- */
   const ticketDetailCard = (j, i) => {
     const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
@@ -1420,7 +1429,6 @@ function App() {
     if (sites.length === 1 && SITES[sites[0]]) {
       bg = SITES[sites[0]].hex;
     } else if (sites.length > 1) {
-      // Organic floating multi-colour gradient (works with 2, 3, 4+ sites)
       bg = multiSiteBg(sites);
     }
 
@@ -1489,7 +1497,6 @@ function App() {
     if (sites.length === 1 && SITES[sites[0]]) {
       bg = SITES[sites[0]].hex;
     } else if (sites.length > 1) {
-      // Organic floating multi-colour gradient (works with 2, 3, 4+ sites)
       bg = multiSiteBg(sites);
     }
 
@@ -1656,7 +1663,6 @@ function App() {
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } }, filtered.map((j,i)=>swipeCard(j, null, {view:'list'}, i))));
 
-  /* ---------- times section ---------- */
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem', background:SURF2, borderRadius:'14px', padding:'0.55rem 0.7rem 0.55rem 0.8rem' } },
       PlaneIcon(14, MID),
@@ -1838,7 +1844,6 @@ function App() {
         animation: form.locked ? 'popIn .3s cubic-bezier(.34,1.56,.64,1)' : 'none' } },
         form.locked ? '✓' : '')));
 
-  /* ---------- Settings screen ---------- */
   const openSettings = () => { setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setSettingsOpen(true); };
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list }); };
@@ -1856,7 +1861,6 @@ function App() {
   const addEquip = () => commitEquip([...equipEdits, { key:slugKey('EQ', equipEdits.map(x=>x.key)), label:'New equipment' }]);
 
   const applyTheme = (theme) => {
-    // Always read the live site list so themes work even if siteEdits is empty
     const base = (siteEdits && siteEdits.length) ? siteEdits : sitesToList();
     const nextSites = base.map((s, idx) => ({
       ...s,
@@ -1965,6 +1969,28 @@ function App() {
       )
     )));
 
+  const backupsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
+      e('button', { onClick:()=>setBackupsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Backups'),
+      e('span', { style:{ width:'36px' } })),
+    e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, padding:'0 0.15rem' } },
+      'A dated snapshot is kept automatically once a day, for the last '+BACKUP_RETENTION+' days.'),
+    backupsLoading
+      ? e('div', { style:{ textAlign:'center', padding:'2rem 0', color:GREY, fontSize:'0.85rem' } }, 'Loading…')
+      : backupsList.length === 0
+        ? e('div', { style:{ textAlign:'center', padding:'2rem 0', color:GREY, fontSize:'0.85rem' } }, 'No backups yet')
+        : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+            backupsList.map(b => e('button', { key:b.id, onClick:()=>restoreBackup(b),
+              style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', justifyContent:'space-between',
+                background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.75rem 0.9rem', cursor:'pointer' } },
+              e('div', null,
+                e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } },
+                  new Date(b.savedAt).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
+                e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, (b.count||0)+' ticket(s)')),
+              e('span', { style:{ fontSize:'0.72rem', color:MID, fontWeight:800 } }, 'Restore')))));
+
 
   if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
@@ -1974,6 +2000,7 @@ function App() {
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
+  if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
   if (settingsOpen && themesOpen) return e('div', { key:'themes', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, themesView);
   if (settingsOpen) return e('div', { key:'settings', style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, settingsView);
 
