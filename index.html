@@ -14,7 +14,6 @@
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
@@ -187,12 +186,6 @@ const RestoreTile = () => iconTile([
   e('path', { key:'a', d:'M12 20.5 V9.5 M7.2 14.5 L12 9.7 L16.8 14.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }),
   e('path', { key:'t', d:'M5 7.5 V5 A2 2 0 0 1 7 3 H17 A2 2 0 0 1 19 5 V7.5', fill:'none', stroke:APRICOT, strokeWidth:2, strokeLinecap:'round' }) ]);
 
-const ReportTile = () => iconTile([
-  e('rect', { key:'r', x:4, y:5, width:16, height:14, rx:2.2, stroke:APRICOT, strokeWidth:1.7, fill:'none' }),
-  e('line', { key:'l1', x1:7, y1:9, x2:17, y2:9, stroke:APRICOT, strokeWidth:1.8, strokeLinecap:'round' }),
-  e('line', { key:'l2', x1:7, y1:13, x2:14.5, y2:13, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.7 }),
-  e('line', { key:'l3', x1:7, y1:16, x2:12, y2:16, stroke:APRICOT, strokeWidth:1.6, strokeLinecap:'round', opacity:0.5 }) ], grad(SITES.RH.hex, SITES.RH.hex2, 140));
-
 const ClipboardTile = () => iconTile([
   e('rect', { key:'r', x:6, y:5, width:12, height:16, rx:2.2, stroke:APRICOT, strokeWidth:1.8, fill:'none' }),
   e('rect', { key:'c', x:9, y:3, width:6, height:3, rx:1, fill:APRICOT }),
@@ -302,6 +295,7 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuSearch, setMenuSearch] = useState('');
+  const [chooser, setChooser] = useState(null);
   const [formMenu, setFormMenu] = useState(false);
   const [form, setForm] = useState(blank());
   const [returnTo, setReturnTo] = useState(null);
@@ -385,6 +379,7 @@ function App() {
     const ws = wb.addWorksheet('Tickets', { views:[{ state:'frozen', ySplit:1 }] });
     ws.columns = cols;
 
+    let rowIndex = 0;
     [...rowsSrc].sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime)).forEach(j => {
       const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription)
         .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — '+p.partDescription.trim() : '')).join(' | ');
@@ -403,12 +398,18 @@ function App() {
         date: fmtDate(j.startDateTime), t1: j.hasTravel?fmtTime(j.travelDateTime):'', start: fmtTime(j.startDateTime),
         finish: fmtTime(j.finishDateTime), t2: j.hasTravel2?fmtTime(j.travel2DateTime):'', onsite: on?hm(on):'',
         travelmins: tr||'', extra: ex, signed: j.locked ? 'Ready' : '', workdone, parts });
-      row.getCell('workdone').alignment = { wrapText:true, vertical:'top' };
-      row.getCell('parts').alignment = { wrapText:true, vertical:'top' };
-      row.getCell('extra').alignment = { wrapText:true, vertical:'top' };
+
+      const banded = rowIndex % 2 === 1;
+      const thin = { style:'thin', color:{ argb:'FFD8E4E0' } };
+      row.eachCell({ includeEmpty:true }, cell => {
+        cell.alignment = { wrapText:true, vertical:'top' };
+        cell.border = { top:thin, bottom:thin, left:thin, right:thin };
+        if (banded) cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFDCEEF9' } };
+      });
       // rough row-height estimate so wrapped text isn't clipped when opened
       const longest = Math.max(workdone.length / 58, parts.length / 42, ex.length / 45, 1);
       row.height = Math.max(16, Math.ceil(longest) * 14 + 4);
+      rowIndex++;
     });
 
     const header = ws.getRow(1);
@@ -417,6 +418,8 @@ function App() {
       cell.font = { bold:true, color:{ argb:'FFF7F1E2' } };
       cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF064E3B' } };
       cell.alignment = { vertical:'middle' };
+      cell.border = { top:{style:'thin',color:{argb:'FF064E3B'}}, bottom:{style:'thin',color:{argb:'FF064E3B'}},
+        left:{style:'thin',color:{argb:'FF064E3B'}}, right:{style:'thin',color:{argb:'FF064E3B'}} };
     });
     ws.autoFilter = { from:{ row:1, column:1 }, to:{ row:1, column:cols.length } };
 
@@ -457,16 +460,34 @@ function App() {
     return () => clearInterval(iv);
   }, [ready]);
 
+  const scopeTickets = (scope) => {
+    if (scope === 'day') return dv.list;
+    if (scope === 'week') {
+      const set = [];
+      wk.dates.forEach(dt => {
+        const iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+        (wk.byDate[iso]||[]).forEach(j => set.push(j));
+      });
+      return set;
+    }
+    if (scope === 'month') return ms.src;
+    return jobs;
+  };
+  const scopeSuffix = (scope) => {
+    if (scope === 'day') return ' ' + anchorDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    if (scope === 'week') return ' week of ' + wk.dates[0].toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    if (scope === 'month') return ' ' + anchorDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+    return ' all';
+  };
+
   const doSpreadsheet = async (scope) => {
-    const src = scope === 'month' ? ms.src : (scope === 'filtered' ? filtered : jobs);
+    const src = scopeTickets(scope);
     if (!src.length) { alert('Nothing to export.'); return; }
     if (typeof ExcelJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
-    const suffix = scope === 'month' ? ' ' + anchorDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'})
-                 : (scope === 'filtered' ? ' (filtered)' : '');
-    const name = stamp()+' App tickets'+suffix+'.xlsx';
+    const name = stamp()+' App tickets'+scopeSuffix(scope)+'.xlsx';
     const blob = await buildXlsxBlob(src);
     if (!(await shareFiles([new File([blob],name,{type:blob.type})]))) download(blob,name);
-    setMenuOpen(false);
+    setMenuOpen(false); setChooser(null);
   };
 
   const doBackup = async () => {
@@ -500,14 +521,16 @@ function App() {
     input.click();
   };
 
-  const doCopyMonth = async () => {
-    if (!ms.src.length) { alert('Nothing to copy.'); return; }
-    const byDay = Object.keys(ms.days).map(Number).sort((a,b)=>a-b);
-    const text = byDay.map(dnum => {
-      const d = ms.days[dnum];
-      const head = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})
-        + (d.siteSequence.length ? '\nRoute: ' + d.siteSequence.map(s=>SITES[s].label).join(' → ') : '');
-      const body = d.tickets.map(j => {
+  const doCopyText = async (scope) => {
+    const src = scopeTickets(scope);
+    if (!src.length) { alert('Nothing to copy.'); return; }
+    const byDate = {};
+    src.forEach(j => { const iso = (j.startDateTime||'').slice(0,10); (byDate[iso] = byDate[iso] || []).push(j); });
+    const dates = Object.keys(byDate).sort();
+    const text = dates.map(iso => {
+      const list = byDate[iso].slice().sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
+      const head = new Date(iso+'T00:00').toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'});
+      const body = list.map(j => {
         const p = (j.parts||[]).filter(x=>x.partNumber||x.partDescription)
           .map(x => (x.partNumber||'')+(x.partDescription?' — '+x.partDescription:'')).join(', ');
         const ex = exOf(j).map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ');
@@ -515,7 +538,10 @@ function App() {
           'Ticket: ' + j.ticketNumber,
           SITES[j.site] ? 'Site: ' + SITES[j.site].label : null,
           eqOf(j).length ? 'Machine: ' + eqOf(j).join(', ') : null,
+          'Date: ' + fmtDate(j.startDateTime),
+          j.hasTravel ? 'Travel 1: ' + fmtTime(j.travelDateTime) : null,
           'Time: ' + fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime),
+          j.hasTravel2 ? 'Travel 2: ' + fmtTime(j.travel2DateTime) : null,
           ex ? 'Also: ' + ex : null,
           j.workDone ? 'Work done: ' + j.workDone.replace(/\n/g,' ') : null,
           p ? 'Parts: ' + p : null
@@ -524,64 +550,9 @@ function App() {
       }).join('\n\n');
       return head + '\n\n' + body;
     }).join('\n\n\n');
-    try { await navigator.clipboard.writeText(text); alert('Copied '+ms.src.length+' ticket(s).'); }
+    try { await navigator.clipboard.writeText(text); alert('Copied '+src.length+' ticket(s).'); }
     catch (err) { alert('Copy failed — clipboard access blocked.'); }
-    setMenuOpen(false);
-  };
-
-  /* ---------- shareable PowerPoint report, styled like the app's own ticket cards ---------- */
-  const doReport = async () => {
-    if (!ms.src.length) { alert('Nothing to export.'); return; }
-    if (typeof PptxGenJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
-
-    const pptx = new PptxGenJS();
-    pptx.defineLayout({ name:'TICKETS', width:10, height:5.63 });
-    pptx.layout = 'TICKETS';
-
-    const title = pptx.addSlide();
-    title.background = { color:'064E3B' };
-    title.addShape(pptx.ShapeType.ellipse, { x:8.55, y:0.55, w:0.5, h:0.5, fill:{ color:'D9A542' }, line:{ type:'none' } });
-    title.addText('Tickets', { x:0.6, y:1.9, w:8.8, h:1, fontSize:44, bold:true, color:'F7F1E2', fontFace:'Helvetica' });
-    title.addText(monthShort+' '+anchorDate.getFullYear(), { x:0.6, y:2.8, w:8.8, h:0.5, fontSize:18, color:'D9A542', fontFace:'Helvetica', bold:true });
-    title.addText(ms.src.length+' ticket'+(ms.src.length===1?'':'s')+' logged', { x:0.6, y:3.25, w:8.8, h:0.4, fontSize:12, color:'CFE3D8', fontFace:'Helvetica' });
-
-    const byDay = Object.keys(ms.days).map(Number).sort((a,b)=>a-b);
-    byDay.forEach(dnum => {
-      const day = ms.days[dnum];
-      const slide = pptx.addSlide();
-      slide.background = { color:'F7F3E9' };
-      const dateLabel = new Date(ms.y, ms.m, dnum).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' });
-      slide.addText(dateLabel, { x:0.4, y:0.28, w:7.5, h:0.5, fontSize:20, bold:true, color:'064E3B', fontFace:'Helvetica' });
-      slide.addText(day.tickets.length+(day.tickets.length===1?' ticket':' tickets'), { x:0.4, y:0.68, w:7.5, h:0.3, fontSize:11, color:'4A6B5C', fontFace:'Helvetica' });
-
-      const cardW = 4.4, cardH = 1.95, gapX = 0.28, gapY = 0.24, startX = 0.4, startY = 1.15;
-      day.tickets.slice(0,4).forEach((j, idx) => {
-        const col = idx % 2, row = Math.floor(idx/2);
-        const x = startX + col*(cardW+gapX), y = startY + row*(cardH+gapY);
-        const site = SITES[j.site];
-        const fillColor = site ? site.hex.replace('#','') : 'F5F0E4';
-        const textColor = site ? 'FFFFFF' : '064E3B';
-        slide.addShape(pptx.ShapeType.roundRect, { x, y, w:cardW, h:cardH, rectRadius:0.12,
-          fill:{ color:fillColor }, line: j.locked ? { color:'064E3B', width:2.5 } : { type:'none' } });
-        slide.addText(j.ticketNumber, { x:x+0.22, y:y+0.14, w:cardW-1.1, h:0.32, fontSize:14, bold:true, color:textColor, fontFace:'Helvetica' });
-        if (site) slide.addText(site.label, { x:x+cardW-0.85, y:y+0.16, w:0.65, h:0.28, fontSize:9, bold:true, color:textColor,
-          fill:{ color:'FFFFFF', transparency:78 }, align:'center', fontFace:'Helvetica' });
-        const on = mins(j.startDateTime, j.finishDateTime);
-        const timeStr = fmtTime(j.startDateTime)+'–'+fmtTime(j.finishDateTime)+(on?'  ·  '+hm(on):'');
-        slide.addText(timeStr, { x:x+0.22, y:y+0.56, w:cardW-0.44, h:0.28, fontSize:10.5, color:textColor, fontFace:'Helvetica' });
-        if (j.workDone) slide.addText(j.workDone.replace(/\n/g,' ').slice(0,150), { x:x+0.22, y:y+0.92, w:cardW-0.44, h:0.9,
-          fontSize:9, color:textColor, fontFace:'Helvetica', valign:'top' });
-      });
-      if (day.tickets.length > 4) {
-        slide.addText('+ '+(day.tickets.length-4)+' more ticket(s) logged this day', { x:0.4, y:startY+2*(cardH+gapY)+0.05, w:9, h:0.3,
-          fontSize:10, italic:true, color:'4A6B5C', fontFace:'Helvetica' });
-      }
-    });
-
-    const name = stamp()+' Tickets report '+monthShort+'.pptx';
-    const blob = await pptx.write({ outputType:'blob' });
-    if (!(await shareFiles([new File([blob],name,{type:blob.type||'application/vnd.openxmlformats-officedocument.presentationml.presentation'})]))) download(blob,name);
-    setMenuOpen(false);
+    setMenuOpen(false); setChooser(null);
   };
 
   const filtered = useMemo(() => {
@@ -928,18 +899,30 @@ function App() {
           view === 'list'
             ? iconRow(CalendarTile(), 'Calendar view', 'Month, week and day planner', ()=>{ closeMenu(); setView('month'); window.scrollTo(0,0); })
             : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
-          (view === 'list' && (query || siteFilter.length || equipFilter.length))
-            ? iconRow(SpreadsheetTile(), 'Export to Excel', filtered.length+' ticket(s), current view — wrapped text', ()=>doSpreadsheet('filtered'))
-            : iconRow(SpreadsheetTile(), 'Export to Excel', ms.src.length+' ticket(s), '+monthShort+' — wrapped text', ()=>doSpreadsheet('month')),
-          iconRow(SpreadsheetTile(), 'Export to Excel — everything', 'All '+jobs.length+' ticket(s)', ()=>doSpreadsheet('all')),
-          iconRow(ReportTile(), 'Share report', monthShort+' as PowerPoint slides, styled like your tickets', doReport),
-          iconRow(ClipboardTile(), 'Copy '+monthShort+' as text', 'For pasting into an email', doCopyMonth),
+          iconRow(SpreadsheetTile(), 'Export to Excel', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('excel'); }),
+          iconRow(ClipboardTile(), 'Copy as text', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('text'); }),
           iconRow(BackupTile(), 'Create backup', 'Save all your data as a .json file', doBackup),
           iconRow(RestoreTile(), 'Restore from backup', 'Load a previous .json backup', doRestore)
         ),
 
     closeBtn(closeMenu)
   ], closeMenu);
+
+  const chooserOptions = [
+    { key:'day', label:anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'short' }), sub: scopeTickets('day').length+' ticket(s)' },
+    { key:'week', label:'This week', sub: scopeTickets('week').length+' ticket(s)' },
+    { key:'month', label:monthShort, sub: scopeTickets('month').length+' ticket(s)' },
+    { key:'all', label:'Everything', sub: jobs.length+' ticket(s)' }
+  ];
+  const closeChooser = () => setChooser(null);
+  const chooserSheet = chooser && sheet([
+    e('div', { key:'hd', style:{ fontSize:'1.05rem', fontWeight:900, letterSpacing:'-0.2px', padding:'0 0.1rem' } },
+      chooser === 'excel' ? 'Export to Excel' : 'Copy as text'),
+    e('div', { key:'opts', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+      chooserOptions.map(opt => menuRow(opt.label, opt.sub,
+        ()=>{ if (chooser === 'excel') doSpreadsheet(opt.key); else doCopyText(opt.key); }))),
+    closeBtn(closeChooser)
+  ], closeChooser);
 
 
   const formSheet = formMenu && sheet([
@@ -1435,7 +1418,7 @@ function App() {
 
   const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
   const body = e('div', { key:view, style:{ animation:'fadeInUp .32s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
-  return e('div', null, header, body, menu, daySheet, formSheet, swipeHint);
+  return e('div', null, header, body, menu, chooserSheet, daySheet, formSheet, swipeHint);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(e(App));
