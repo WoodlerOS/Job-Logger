@@ -108,40 +108,60 @@
     #root { display:none; }
   }
 
-  /* ---------- Desktop / large-screen layout ---------- */
-  @media (min-width: 800px) {
+  /* ---------- Desktop / large-screen layout (centred phone column) ---------- */
+  @media (min-width: 700px) {
     html, body {
-      background: #F0F1F5;
+      background: #E8E9EF;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(65,67,106,0.08), transparent),
+        linear-gradient(180deg, #EEF0F5 0%, #E4E6ED 100%);
     }
     #root {
-      max-width: 1080px;
+      max-width: 430px;
       margin: 0 auto;
       min-height: 100vh;
       background: #FAFAFC;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.06),
+        0 20px 50px rgba(22,23,50,0.12),
+        0 4px 16px rgba(22,23,50,0.06);
+      border-radius: 0;
       overflow-x: hidden;
       position: relative;
     }
-    /* Form: two-column layout so notes + parts are fully visible side by side */
-    .form-desktop-grid {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-      align-items: start;
+    @media (min-height: 800px) {
+      #root {
+        margin-top: 24px;
+        margin-bottom: 24px;
+        min-height: calc(100vh - 48px);
+        border-radius: 28px;
+        overflow: hidden;
+      }
     }
-    .form-desktop-left, .form-desktop-right {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
+    .fab-btn {
+      right: auto !important;
+      left: 50%;
+      margin-left: calc(215px - 56px - 1.15rem);
     }
-    .work-done-field {
-      min-height: 16rem !important;
+    .sheet-overlay {
+      left: 50% !important;
+      right: auto !important;
+      width: 430px !important;
+      margin-left: -215px;
+      border-radius: 0 0 28px 28px;
+      overflow: hidden;
     }
-    .ticket-work-preview {
-      display: block !important;
-      max-height: none !important;
-      overflow: visible !important;
+    .swipe-hint {
+      left: auto !important;
+      right: auto !important;
+      margin-left: calc(50% - 215px + 10px);
     }
+  }
+  @media (min-width: 1100px) {
+    #root { max-width: 440px; }
+    .fab-btn { margin-left: calc(220px - 56px - 1.15rem); }
+    .sheet-overlay { width: 440px !important; margin-left: -220px; }
+    .swipe-hint { margin-left: calc(50% - 220px + 10px); }
   }
 </style>
 </head>
@@ -438,10 +458,12 @@ function applyDarkMode(on) {
     APRICOT='#FFFFFF';
   }
   try {
-    const isDesktop = window.matchMedia && window.matchMedia('(min-width: 800px)').matches;
+    const isDesktop = window.matchMedia && window.matchMedia('(min-width: 700px)').matches;
     if (isDesktop) {
-      document.body.style.background = on ? '#0C0C10' : '#F0F1F5';
-      document.body.style.backgroundImage = 'none';
+      document.body.style.background = on ? '#0C0C10' : '#E8E9EF';
+      document.body.style.backgroundImage = on
+        ? 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,255,255,0.04), transparent)'
+        : 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(65,67,106,0.08), transparent), linear-gradient(180deg, #EEF0F5 0%, #E4E6ED 100%)';
       const root = document.getElementById('root');
       if (root) root.style.background = PAGE_BG;
     } else {
@@ -544,6 +566,9 @@ const PlaneIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
 const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('circle', { cx:10.5, cy:10.5, r:6.5, stroke:col, strokeWidth:2, fill:'none' }),
   e('line', { x1:15.3, y1:15.3, x2:20.5, y2:20.5, stroke:col, strokeWidth:2, strokeLinecap:'round' }));
+const CopyIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('rect', { x:8, y:8, width:11, height:11, rx:2, fill:'none', stroke:col, strokeWidth:1.9 }),
+  e('path', { d:'M6 15.5 V6.5 A1.5 1.5 0 0 1 7.5 5 H15.5', fill:'none', stroke:col, strokeWidth:1.9, strokeLinecap:'round' }));
 
 const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
@@ -927,15 +952,25 @@ function App() {
       alert('Copy failed — clipboard access blocked.');
     }
   };
-  const CopyBtn = (text, key) => e('button', {
-    type: 'button',
-    onClick: (ev) => { ev.stopPropagation(); copyText(text, key); },
-    style: {
-      border: 'none', background: copiedKey === key ? INK : SURF2, color: copiedKey === key ? APRICOT : MID,
-      borderRadius: '8px', padding: '0.28rem 0.55rem', fontSize: '0.65rem', fontWeight: 800,
-      cursor: 'pointer', flexShrink: 0, transition: 'background .15s ease, color .15s ease'
-    }
-  }, copiedKey === key ? 'Copied' : 'Copy');
+  const CopyBtn = (text, key, light) => {
+    const done = copiedKey === key;
+    return e('button', {
+      type: 'button',
+      title: done ? 'Copied' : 'Copy',
+      onClick: (ev) => { ev.stopPropagation(); copyText(text, key); },
+      style: {
+        border: 'none',
+        background: done ? (light ? 'rgba(255,255,255,0.9)' : INK) : (light ? 'rgba(255,255,255,0.18)' : SURF2),
+        width: '30px', height: '30px', borderRadius: '8px', padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', flexShrink: 0,
+        transition: 'background .15s ease, transform .12s ease'
+      }
+    }, done
+      ? e('svg', { width:15, height:15, viewBox:'0 0 24 24', style:{ display:'block' } },
+          e('path', { d:'M6.5 12.5 L10.2 16 L17.5 8.2', fill:'none', stroke: light ? '#0A0A0C' : APRICOT, strokeWidth:2.4, strokeLinecap:'round', strokeLinejoin:'round' }))
+      : CopyIcon(15, light ? '#FFFFFF' : MID));
+  };
 
   const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
   const hm = (m) => m >= 60 ? Math.floor(m/60)+'h '+(m%60?pad(m%60)+'m':'') : m+'m';
@@ -1576,34 +1611,10 @@ function App() {
         (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
       ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:subC, fontWeight:700, marginTop:'0.25rem' } },
         'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-      j.workDone && e('div', { style:{ marginTop:'0.45rem' } },
-        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' } },
-          e('span', { style:{ fontSize:'0.58rem', fontWeight:800, color:subC, textTransform:'uppercase', letterSpacing:'0.4px' } }, 'Work done'),
-          e('button', {
-            type:'button',
-            onClick:(ev)=>{ ev.stopPropagation(); copyText(j.workDone, 'card-work-'+j.id); },
-            style:{ border:'none', background: copiedKey === 'card-work-'+j.id ? (s ? 'rgba(255,255,255,0.9)' : INK) : chipBg,
-              color: copiedKey === 'card-work-'+j.id ? (s ? s.hex : APRICOT) : onC,
-              borderRadius:'7px', padding:'0.2rem 0.45rem', fontSize:'0.58rem', fontWeight:800, cursor:'pointer' }
-          }, copiedKey === 'card-work-'+j.id ? 'Copied' : 'Copy')),
-        e('p', { className:'ticket-work-preview', style:{ fontSize:'0.8rem', color:bodyC, margin:0, whiteSpace:'pre-wrap' } }, j.workDone)),
-      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem' } },
-        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' } },
-          e('span', { style:{ fontSize:'0.58rem', fontWeight:800, color:subC, textTransform:'uppercase', letterSpacing:'0.4px' } }, 'Parts'),
-          e('button', {
-            type:'button',
-            onClick:(ev)=>{
-              ev.stopPropagation();
-              const txt = parts.map(p => (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')).join('\n');
-              copyText(txt, 'card-parts-'+j.id);
-            },
-            style:{ border:'none', background: copiedKey === 'card-parts-'+j.id ? (s ? 'rgba(255,255,255,0.9)' : INK) : chipBg,
-              color: copiedKey === 'card-parts-'+j.id ? (s ? s.hex : APRICOT) : onC,
-              borderRadius:'7px', padding:'0.2rem 0.45rem', fontSize:'0.58rem', fontWeight:800, cursor:'pointer' }
-          }, copiedKey === 'card-parts-'+j.id ? 'Copied' : 'Copy')),
-        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.15rem' } },
-          parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
-            '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : ''))))));
+      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
+      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
+        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
+          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : ''))));
   };
 
   const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
@@ -1988,9 +1999,7 @@ function App() {
           e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.45rem' } },
             e('label', { style:{ ...LBL, marginBottom:0 } }, 'Parts'),
             CopyBtn(
-              (form.parts||[]).filter(p => p.partNumber || p.partDescription)
-                .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — ' + p.partDescription.trim() : ''))
-                .join('\n'),
+              (form.parts||[]).map(p => (p.partNumber||'').trim()).filter(Boolean).join('\n'),
               'parts'
             )),
           form.parts.length > 0 && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem', marginBottom:'0.5rem' } },
