@@ -75,7 +75,11 @@
   @keyframes splashHide { 0%, 82% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
-  @media (orientation:landscape) {
+  /* Only lock orientation on actual touchscreens (phones/tablets) — a desktop
+     browser window is technically "landscape" too by this media feature, which
+     previously locked the whole app out on desktop. hover:none + pointer:coarse
+     narrows this to touch-only devices without a mouse. */
+  @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
       background:#FAFAFC; color:#41436A; flex-direction:column;
