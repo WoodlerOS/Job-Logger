@@ -152,6 +152,17 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 
+/* ---------- glossy "liquid glass" fill for colourful, saturated elements ----------
+   Layers a strong top sheen and a soft bottom glow over a semi-transparent site colour
+   gradient, so whatever sits behind shows through slightly — combined with backdropFilter
+   this reads as a thick, glassy, almost-3D tinted pane rather than a flat colour block. */
+const glossyBg = (hexA, hexB) =>
+  'linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 38%), ' +
+  'linear-gradient(0deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 24%), ' +
+  'linear-gradient(155deg, '+hexToRgba(hexA,0.86)+' 0%, '+hexToRgba(hexB,0.92)+' 100%)';
+const GLOSS_BLUR = 'blur(16px) saturate(220%)';
+const glossShadow = (hex) => '0 16px 30px '+hexToRgba(hex,0.30)+', 0 3px 8px '+hexToRgba(hex,0.22)+', inset 0 1px 0 rgba(255,255,255,0.55)';
+
 const TickIcon = (done, size, colour) => {
   const s = size || 19;
   const col = colour || (done ? LOCKED : GREY);
@@ -970,10 +981,11 @@ function App() {
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
     const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.10)';
     return e('div', {
-      style:{ background: s ? sheen+', '+siteGrad(j.site) : sheen+', '+SURF3,
-        border: j.locked ? '3px solid '+INK : (s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE),
+      style:{ background: s ? glossyBg(s.hex, s.hex2) : sheen+', '+SURF3,
+        backdropFilter: s ? GLOSS_BLUR : 'none', WebkitBackdropFilter: s ? GLOSS_BLUR : 'none',
+        border: j.locked ? '3px solid '+INK : (s ? '1.5px solid rgba(255,255,255,0.5)' : '1px solid '+LINE),
         boxShadow: j.locked ? 'inset 0 0 0 2px '+SURF+', '+SHADOW_SM
-          : (s ? '0 10px 22px '+hexToRgba(s.hex,0.34)+', 0 2px 6px '+hexToRgba(s.hex,0.2) : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
+          : (s ? glossShadow(s.hex) : 'inset 4px 0 0 0 '+VIOLET+', '+SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
       e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
@@ -984,10 +996,17 @@ function App() {
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
           j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK))),
-      e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
-        (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
-        fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-        (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
+      e('div', { style:{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:'0.35rem' } },
+        j.hasTravel && e('span', { key:'t1', style:{ display:'inline-flex', alignItems:'center', gap:'3px',
+          background:'rgba(255,255,255,0.88)', color:'#C2632E', padding:'0.12rem 0.42rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } },
+          PlaneIcon(8,'#C2632E'), fmtTime(j.travelDateTime)),
+        e('span', { key:'main', style:{ color:onC, fontWeight:800, fontSize:'0.74rem' } },
+          fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime)),
+        on ? e('span', { key:'dur', style:{ background:'rgba(255,255,255,0.88)', color:'#C7295A',
+          padding:'0.12rem 0.44rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, hm(on)) : null,
+        j.hasTravel2 && e('span', { key:'t2', style:{ display:'inline-flex', alignItems:'center', gap:'3px',
+          background:'rgba(255,255,255,0.88)', color:'#C2632E', padding:'0.12rem 0.42rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } },
+          PlaneIcon(8,'#C2632E'), fmtTime(j.travel2DateTime))),
       ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:subC, fontWeight:700, marginTop:'0.25rem' } },
         'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
       j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
@@ -1012,22 +1031,22 @@ function App() {
     const has = sites.length > 0;
 
     let bg = weekend ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.32)';
-    if (sites.length === 1) bg = siteGrad(sites[0]);
-    else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
+    if (sites.length === 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[0]].hex2);
+    else if (sites.length > 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[1]].hex2);
 
     let border = '1px solid rgba(65,67,106,0.10)';
-    if (has) border = '1px solid rgba(255,255,255,0.14)';
+    if (has) border = '1.5px solid rgba(255,255,255,0.45)';
     if (d && d.allLocked) border = '2px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
-    const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
+    const glow = has ? glossShadow(SITES[sites[0]].hex) : null;
     const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
     const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
-        backdropFilter: has ? 'none' : GLASS_BLUR, WebkitBackdropFilter: has ? 'none' : GLASS_BLUR,
+        backdropFilter: has ? GLOSS_BLUR : GLASS_BLUR, WebkitBackdropFilter: has ? GLOSS_BLUR : GLASS_BLUR,
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease',
@@ -1077,18 +1096,18 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
     let bg = weekend ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.32)';
-    if (sites.length === 1) bg = siteGrad(sites[0]);
-    else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
+    if (sites.length === 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[0]].hex2);
+    else if (sites.length > 1) bg = glossyBg(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
-    const weekGlow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.20) : null;
+    const weekGlow = has ? glossShadow(SITES[sites[0]].hex) : null;
     const doneRing = allLocked ? 'inset 0 0 0 2px '+SURF : null;
     const weekShadow = [weekGlow, doneRing].filter(Boolean).join(', ') || 'none';
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px',
-        backdropFilter: has ? 'none' : GLASS_BLUR, WebkitBackdropFilter: has ? 'none' : GLASS_BLUR,
-        border: allLocked ? '3px solid '+INK : '1px solid rgba(65,67,106,0.10)',
+        backdropFilter: has ? GLOSS_BLUR : GLASS_BLUR, WebkitBackdropFilter: has ? GLOSS_BLUR : GLASS_BLUR,
+        border: allLocked ? '3px solid '+INK : (has ? '1.5px solid rgba(255,255,255,0.45)' : '1px solid rgba(65,67,106,0.10)'),
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
@@ -1145,13 +1164,17 @@ function App() {
       e('span', { key:'b1', className:'ambient-blob b1' }),
       e('span', { key:'b2', className:'ambient-blob b2' }),
 
-      e('div', { style:{ position:'relative', display:'flex', background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
+      e('div', { style:{ position:'relative', display:'flex', background:'rgba(255,255,255,0.38)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
+        e('div', { style:{ position:'absolute', top:'3px', left:'3px', bottom:'3px', width:'calc((100% - 6px) / 3)',
+          borderRadius:'999px', background:'rgba(255,255,255,0.4)', backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)',
+          border:'1.5px solid '+INK, boxShadow:'0 2px 8px rgba(22,23,50,0.14)',
+          transform:'translateX('+(['month','week','day'].indexOf(calMode)*100)+'%)',
+          transition:'transform .32s cubic-bezier(.22,.9,.3,1)', pointerEvents:'none' } }),
         ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
           style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
-            background: calMode===mode ? SITES.NX.hex : 'transparent',
-            color: calMode===mode ? APRICOT : MID,
-            boxShadow: calMode===mode ? SHADOW_SM : 'none',
-            transition:'background .2s ease, box-shadow .2s ease' } },
+            position:'relative', zIndex:1, background:'transparent',
+            color: calMode===mode ? INK : MID,
+            transition:'color .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem', gap:'0.4rem' } },
