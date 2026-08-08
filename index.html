@@ -24,7 +24,7 @@
     background-image:linear-gradient(180deg,#FBF8F2 0%,#F6F2EA 45%,#EFE8D8 100%);
     background-attachment:fixed;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    color:#064E3B; -webkit-tap-highlight-color:transparent;
+    color:#41436A; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
@@ -34,11 +34,13 @@
   select { -webkit-appearance:none; appearance:none; color-scheme:light; }
   button { font-family:inherit; transition:transform .12s ease, opacity .12s ease; }
   button:active { transform:scale(0.965); opacity:0.7; }
-  input:focus, textarea:focus { border-color:rgba(6,78,59,0.55) !important; }
+  input:focus, textarea:focus { border-color:rgba(65,67,106,0.55) !important; }
   @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes fadeInUp { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:translateY(0); } }
   @keyframes popIn { 0% { opacity:0; transform:scale(0.92); } 60% { opacity:1; transform:scale(1.03); } 100% { transform:scale(1); } }
+  @keyframes tickBreathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.14); } }
+  .tick-complete { animation:tickBreathe 1.8s ease-in-out infinite; transform-origin:center; }
   @keyframes dotPulseAbs { 0%,100% { opacity:1; transform:translateX(-50%) scale(1); } 50% { opacity:0.4; transform:translateX(-50%) scale(1.5); } }
   @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.5); } }
   @keyframes blobDrift1 { 0%,100% { transform:translate(-10%,-15%) scale(1); } 50% { transform:translate(8%,10%) scale(1.15); } }
@@ -49,12 +51,12 @@
   .ambient-blob.b2 { width:130px; height:130px; top:-30px; right:-30px; background:radial-gradient(circle, rgba(217,165,66,0.32), rgba(217,165,66,0) 70%); animation:blobDrift2 11s ease-in-out infinite; }
   .ambient-wrap > *:not(.ambient-blob) { position:relative; z-index:1; }
   @keyframes burstFly { 0% { opacity:1; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(0) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--ang)) translateX(30px) scale(0.4); } }
-  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#064E3B;
+  .burst-dot { position:absolute; top:50%; left:50%; width:6px; height:6px; border-radius:999px; background:#41436A;
     animation:burstFly .6s cubic-bezier(.22,.9,.3,1) forwards; }
 
   /* ---------- animated launch splash (standalone home-screen launches only) ---------- */
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg, #17A374 0%, #064E3B 100%);
+    background:linear-gradient(135deg, #6B6EB0 0%, #41436A 100%);
     transition:opacity .42s ease, visibility .42s ease; }
   #splash.splash-hide { opacity:0; visibility:hidden; pointer-events:none; }
   #splash svg { width:168px; height:168px; overflow:visible; }
@@ -69,7 +71,7 @@
   @media (orientation:landscape) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#F6F2EA; color:#064E3B; flex-direction:column;
+      background:#F6F2EA; color:#41436A; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
@@ -83,10 +85,10 @@
     <circle class="splash-dot" cx="235" cy="70" r="14" fill="#D9A542"/>
     <g class="splash-ticket">
       <rect x="70" y="90" width="160" height="120" rx="16" fill="#F7F1E2"/>
-      <circle cx="70" cy="150" r="11" fill="#0A6146"/>
-      <circle cx="230" cy="150" r="11" fill="#0A6146"/>
+      <circle cx="70" cy="150" r="11" fill="#2E2F52"/>
+      <circle cx="230" cy="150" r="11" fill="#2E2F52"/>
       <line x1="98" y1="150" x2="202" y2="150" stroke="#D8CDB0" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/>
-      <path class="splash-check" d="M 108 152 L 138 182 L 196 118" fill="none" stroke="#064E3B" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="splash-check" d="M 108 152 L 138 182 L 196 118" fill="none" stroke="#41436A" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
   </svg>
 </div>
@@ -103,7 +105,7 @@
 })();
 </script>
 <div class="landscape-lock">
-  <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#8A9A90" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#064E3B" stroke-width="1.8" fill="none"/></svg>
+  <svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3 L12 8 M12 21 L12 16 M7 4.5 L9 8 M17 4.5 L15 8 M7 19.5 L9 16 M17 19.5 L15 16" stroke="#8A9A90" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="7" y="8" width="10" height="8" rx="2" stroke="#41436A" stroke-width="1.8" fill="none"/></svg>
   <div style="font-weight:800; font-size:1.05rem;">Rotate back to portrait</div>
   <div style="font-size:0.8rem; color:#5E7268; max-width:260px;">Tickets is designed for portrait use only.</div>
 </div>
@@ -117,30 +119,34 @@ const e = React.createElement;
 /* ---------- palette: apricot surface, violet accent ----------
    Site coding is four tones of the same violet rather than four hues. */
 const SITES = {
-  NX:   { label:'NX',   hex:'#17A374', hex2:'#0F7F5C' },
-  WS:   { label:'WS',   hex:'#2790A0', hex2:'#1B6E7C' },
-  RH:   { label:'RH',   hex:'#D9A542', hex2:'#C08A2E' },
-  MMUH: { label:'MMUH', hex:'#C25A2E', hex2:'#A8451F' }
+  NX:   { label:'NX',   hex:'#41436A', hex2:'#2E2F52' },
+  WS:   { label:'WS',   hex:'#984063', hex2:'#7A3350' },
+  RH:   { label:'RH',   hex:'#F64668', hex2:'#D6335A' },
+  MMUH: { label:'MMUH', hex:'#FE9677', hex2:'#E87856' }
 };
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
-const INK='#064E3B', MID='#4A6B5C', GREY='#8A9A90', LINE='rgba(6,78,59,0.16)';
-const VIOLET='#064E3B', APRICOT='#F7F1E2';
-const TRAVEL='#0E7C5A', TRAVELBG='rgba(6,78,59,0.09)', GREEN=VIOLET, BLUE=VIOLET, RED='#B3261E';
-const LOCKED='#064E3B', LOCKEDBG='rgba(6,78,59,0.07)';
+const INK='#41436A', MID='#565979', GREY='#8E90A8', LINE='rgba(65,67,106,0.16)';
+const VIOLET='#41436A', APRICOT='#F7F1E2';
+const TRAVEL='#6B6EB0', TRAVELBG='rgba(65,67,106,0.09)', GREEN=VIOLET, BLUE=VIOLET, RED='#B3261E';
+const LOCKED='#41436A', LOCKEDBG='rgba(65,67,106,0.07)';
 
 const SURF='#FBF9F4', SURF2='#EFE7D6', SURF3='#F5F0E4';
 const FIELDBG='#FFFFFF', EMPTY='#F7F3E9';
 
-const SHADOW    = '0 14px 34px rgba(16,58,43,0.16), 0 3px 8px rgba(16,58,43,0.10)';
-const SHADOW_SM = '0 5px 14px rgba(16,58,43,0.13), 0 1px 3px rgba(16,58,43,0.09)';
-const SHADOW_BTN = '0 6px 16px rgba(16,58,43,0.16), 0 1px 3px rgba(16,58,43,0.10)';
+const SHADOW    = '0 14px 34px rgba(22,23,50,0.16), 0 3px 8px rgba(22,23,50,0.10)';
+const SHADOW_SM = '0 5px 14px rgba(22,23,50,0.13), 0 1px 3px rgba(22,23,50,0.09)';
+const SHADOW_BTN = '0 6px 16px rgba(22,23,50,0.16), 0 1px 3px rgba(22,23,50,0.10)';
 const sheen = 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 45%)';
+const GLASS_BLUR = 'blur(22px) saturate(180%)';
+const glassPanel = (alpha) => ({ background:sheen+', rgba(255,255,255,'+(alpha||0.5)+')',
+  backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR,
+  border:'1px solid rgba(255,255,255,0.65)' });
 
 const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
 const FIELD = { width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:FIELDBG, color:INK };
 const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
-const PANEL = { background:sheen+', '+SURF, boxShadow:SHADOW+', inset 0 3px 0 0 '+VIOLET, borderRadius:'24px', border:'1px solid rgba(6,78,59,0.08)' };
+const PANEL = { ...glassPanel(0.48), boxShadow:SHADOW+', inset 0 3px 0 0 '+VIOLET, borderRadius:'24px' };
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
@@ -416,10 +422,10 @@ function App() {
     header.height = 22;
     header.eachCell(cell => {
       cell.font = { bold:true, color:{ argb:'FFF7F1E2' } };
-      cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF064E3B' } };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF41436A' } };
       cell.alignment = { vertical:'middle' };
-      cell.border = { top:{style:'thin',color:{argb:'FF064E3B'}}, bottom:{style:'thin',color:{argb:'FF064E3B'}},
-        left:{style:'thin',color:{argb:'FF064E3B'}}, right:{style:'thin',color:{argb:'FF064E3B'}} };
+      cell.border = { top:{style:'thin',color:{argb:'FF41436A'}}, bottom:{style:'thin',color:{argb:'FF41436A'}},
+        left:{style:'thin',color:{argb:'FF41436A'}}, right:{style:'thin',color:{argb:'FF41436A'}} };
     });
     ws.autoFilter = { from:{ row:1, column:1 }, to:{ row:1, column:cols.length } };
 
@@ -839,24 +845,25 @@ function App() {
         animation:'fadeIn .18s ease' } },
       e('div', { ref:sheetPanelRef, onClick:(ev)=>ev.stopPropagation(),
         onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
-        style:{ width:'100%', background:SURF, borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
+        style:{ width:'100%', background:'rgba(255,255,255,0.62)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR,
+          borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .28s cubic-bezier(.22,.9,.3,1)', maxHeight:'88vh', overflowY:'auto',
-          boxShadow:'0 -10px 34px rgba(16,58,43,0.16)', border:'1px solid rgba(6,78,59,0.10)', borderBottom:'none',
+          boxShadow:'0 -10px 34px rgba(22,23,50,0.16)', border:'1px solid rgba(255,255,255,0.7)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
         e('div', { style:{ padding:'0.85rem 0 0.5rem' } },
-          e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(6,78,59,0.22)', margin:'0 auto' } })),
+          e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(65,67,106,0.22)', margin:'0 auto' } })),
         children));
   };
 
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
-      background:SURF3, cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
+      background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
       e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || INK } }, label),
       e('span', { style:{ fontSize:'0.7rem', color:GREY } }, sub));
 
   const iconRow = (icon, label, sub, onClick) =>
     e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.65rem 0.75rem', borderRadius:'16px', border:'none',
-      background:SURF3, cursor:'pointer', display:'flex', alignItems:'center', gap:'0.75rem' } },
+      background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, cursor:'pointer', display:'flex', alignItems:'center', gap:'0.75rem' } },
       icon,
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.87rem', fontWeight:800, color:INK } }, label),
@@ -865,7 +872,7 @@ function App() {
   const menuResultRow = (j) => e('button', { key:j.id,
     onClick:()=>{ setMenuOpen(false); setMenuSearch(''); openEdit(j, view==='list' ? {view:'list'} : {view:'month', day: new Date(j.startDateTime).getDate()}); },
     style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.6rem', padding:'0.6rem 0.75rem',
-      borderRadius:'14px', border:'none', background:SURF3, cursor:'pointer' } },
+      borderRadius:'14px', border:'none', background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, cursor:'pointer' } },
     e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', flexShrink:0,
       background: SITES[j.site] ? siteGrad(j.site) : GREY } }),
     e('div', { style:{ flex:1, minWidth:0 } },
@@ -874,7 +881,7 @@ function App() {
         fmtDate(j.startDateTime) + (SITES[j.site] ? '  ·  '+SITES[j.site].label : ''))));
 
   const closeBtn = (onClick) => e('button', { key:'close', onClick,
-    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:SURF2,
+    style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'999px', border:'none', background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR,
       color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
@@ -938,9 +945,7 @@ function App() {
     e('button', { onClick:()=>setMenuOpen(true), style:{ ...TXTBTN, color:INK, fontWeight:800 } }, 'Menu'),
     e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.2px' } }, view === 'list' ? 'All tickets' : 'Tickets'),
     e('button', { onClick:()=>openNew(null, view==='list'?{view:'list'}:null),
-      style:{ border:'none', cursor:'pointer', color:APRICOT, fontWeight:800, fontSize:'0.78rem',
-        background:SITES.NX.hex, padding:'0.42rem 0.85rem', borderRadius:'999px',
-        boxShadow:SHADOW_SM } }, 'New'));
+      style:{ ...TXTBTN, color:INK, fontWeight:900, fontSize:'0.9rem' } }, 'New'));
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -963,7 +968,7 @@ function App() {
     const onC = s ? '#FFFFFF' : INK;
     const subC = s ? 'rgba(255,255,255,0.62)' : MID;
     const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
-    const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(6,78,59,0.10)';
+    const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.10)';
     return e('div', {
       style:{ background: s ? sheen+', '+siteGrad(j.site) : sheen+', '+SURF3,
         border: j.locked ? '3px solid '+INK : (s ? '1px solid rgba(255,255,255,0.22)' : '1px solid '+LINE),
@@ -978,7 +983,7 @@ function App() {
           s && e('span', { style:{ background:'rgba(255,255,255,0.22)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
           eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
           ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', style:{ display:'inline-flex' } }, TickIcon(true, 14, s ? APRICOT : INK))),
+          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK))),
       e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
@@ -1006,21 +1011,23 @@ function App() {
     const today = isToday(ms.y, ms.m, dnum);
     const has = sites.length > 0;
 
-    let bg = weekend ? SURF2 : EMPTY;
+    let bg = weekend ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.32)';
     if (sites.length === 1) bg = siteGrad(sites[0]);
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
 
-    let border = '1px solid rgba(6,78,59,0.10)';
+    let border = '1px solid rgba(65,67,106,0.10)';
     if (has) border = '1px solid rgba(255,255,255,0.14)';
     if (d && d.allLocked) border = '2px solid '+INK;
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const glow = has ? '0 5px 14px '+hexToRgba(SITES[sites[0]].hex,0.22) : null;
-    const boxShadow = glow || 'none';
+    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
+    const boxShadow = [glow, doneRing].filter(Boolean).join(', ') || 'none';
 
     return e('button', { key:dnum, onClick:()=>setDayDetail(dnum),
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
+        backdropFilter: has ? 'none' : GLASS_BLUR, WebkitBackdropFilter: has ? 'none' : GLASS_BLUR,
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease',
@@ -1069,7 +1076,7 @@ function App() {
     const allLocked = list.length > 0 && list.every(j=>j.locked);
     const weekend = i >= 5;
     const has = sites.length > 0;
-    let bg = weekend ? SURF2 : EMPTY;
+    let bg = weekend ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.32)';
     if (sites.length === 1) bg = siteGrad(sites[0]);
     else if (sites.length > 1) bg = grad(SITES[sites[0]].hex, SITES[sites[1]].hex2);
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
@@ -1080,7 +1087,8 @@ function App() {
       onClick:()=>{ setAnchorDate(dt); setDayDetail(dt.getDate()); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px',
-        border: allLocked ? '3px solid '+INK : '1px solid rgba(6,78,59,0.10)',
+        backdropFilter: has ? 'none' : GLASS_BLUR, WebkitBackdropFilter: has ? 'none' : GLASS_BLUR,
+        border: allLocked ? '3px solid '+INK : '1px solid rgba(65,67,106,0.10)',
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:weekShadow } },
@@ -1114,7 +1122,7 @@ function App() {
         anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
       e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
         dv.list.length + (dv.list.length===1?' job logged':' jobs logged'))),
-    dv.list.length > 0 && e('div', { style:{ background:SURF3, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
+    dv.list.length > 0 && e('div', { style:{ background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dv.siteSequence)),
     dv.list.length === 0
@@ -1122,7 +1130,7 @@ function App() {
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
           dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i))),
     e('button', { onClick:()=>openNew(dv.iso, { view:'month', day:anchorDate.getDate() }),
-      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed rgba(6,78,59,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
+      style:{ padding:'0.85rem', borderRadius:'999px', border:'1.5px dashed rgba(65,67,106,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.85rem', cursor:'pointer' } },
       '+ Add ticket for this day'));
 
   const periodLabel = () => {
@@ -1137,7 +1145,7 @@ function App() {
       e('span', { key:'b1', className:'ambient-blob b1' }),
       e('span', { key:'b2', className:'ambient-blob b2' }),
 
-      e('div', { style:{ position:'relative', display:'flex', background:SURF2, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(16,58,43,0.12)' } },
+      e('div', { style:{ position:'relative', display:'flex', background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'999px', padding:'3px', boxShadow:'inset 0 1px 4px rgba(22,23,50,0.12)' } },
         ['month','week','day'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
           style:{ flex:1, padding:'0.5rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
             background: calMode===mode ? SITES.NX.hex : 'transparent',
@@ -1146,14 +1154,18 @@ function App() {
             transition:'background .2s ease, box-shadow .2s ease' } },
           mode[0].toUpperCase()+mode.slice(1)))),
 
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid rgba(6,78,59,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.1rem', gap:'0.4rem' } },
+        e('button', { onClick:()=>shift(-1), style:{ background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'1px solid rgba(65,67,106,0.14)', borderRadius:'999px', width:'34px', height:'34px',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(17, INK)),
-        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px' } },
+        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'2px 6px', flex:1, textAlign:'center' } },
           e('span', { style:{ fontSize:'1.15rem', fontWeight:900, letterSpacing:'-0.4px', color:INK } }, periodLabel()),
           calMode === 'month' && e('span', { style:{ fontSize:'1.15rem', fontWeight:400, color:GREY, marginLeft:'0.35rem' } },
             String(anchorDate.getFullYear()))),
-        e('button', { onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid rgba(6,78,59,0.14)', borderRadius:'999px', width:'34px', height:'34px',
+        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ width:'26px', height:'26px', borderRadius:'999px',
+          background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'1px solid rgba(65,67,106,0.14)', boxShadow:SHADOW_SM, cursor:'pointer', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } },
+          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:INK } })),
+        e('button', { onClick:()=>shift(1), style:{ background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'1px solid rgba(65,67,106,0.14)', borderRadius:'999px', width:'34px', height:'34px',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM,
           transform:'rotate(180deg)' } }, ChevronLeft(17, INK)))),
 
@@ -1165,7 +1177,7 @@ function App() {
 
     e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
       Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.6rem', fontWeight:800,
-        color:MID, flexShrink:0, background:SURF, padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
+        color:MID, flexShrink:0, background:'rgba(255,255,255,0.45)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
         e('span', { style:{ width:'9px', height:'9px', borderRadius:'999px', background:siteGrad(k) } }), SITES[k].label))),
 
     calMode !== 'day' && e('button', { onClick:()=>setShowWeekends(!showWeekends),
@@ -1187,7 +1199,7 @@ function App() {
       dd && e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, marginTop:'0.15rem' } },
         dd.tickets.length + (dd.tickets.length===1?' job':' jobs') + '  ·  ' + fmtTime(dd.first) + '–' + fmtTime(dd.last))),
 
-    dd ? e('div', { key:'rt', style:{ background:SURF3, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
+    dd ? e('div', { key:'rt', style:{ background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'14px', padding:'0.7rem 0.85rem' } },
       e('div', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Route'),
       siteSeqRow(dd.siteSequence)) : null,
 
@@ -1195,7 +1207,7 @@ function App() {
        : e('div', { key:'none', style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1rem 0' } }, 'Nothing logged on this day'),
 
     e('button', { key:'add', onClick:()=>openNew(ms.y+'-'+pad(ms.m+1)+'-'+pad(dayDetail), dayRet),
-      style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed rgba(6,78,59,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
+      style:{ padding:'0.9rem', borderRadius:'999px', border:'1.5px dashed rgba(65,67,106,0.3)', background:LOCKEDBG, color:VIOLET, fontWeight:800, fontSize:'0.88rem', cursor:'pointer' } },
       '+ Add ticket for this day'),
 
     closeBtn(()=>setDayDetail(null))
@@ -1212,7 +1224,7 @@ function App() {
           background: (siteFilter.length||equipFilter.length) ? VIOLET : SURF2,
           color: (siteFilter.length||equipFilter.length) ? APRICOT : INK } }, 'Filter')),
 
-    showFilters && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:SURF, borderRadius:'20px', padding:'0.8rem', boxShadow:SHADOW_SM } },
+    showFilters && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:'rgba(255,255,255,0.45)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, borderRadius:'20px', padding:'0.8rem', boxShadow:SHADOW_SM } },
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(SITES).map(k => {
           const s = SITES[k], on = siteFilter.includes(k);
@@ -1228,7 +1240,7 @@ function App() {
               border: on ? 'none' : '1.5px solid '+LINE, background: on?INK:SURF2, color: on?APRICOT:INK } }, k);
         })),
       (siteFilter.length || equipFilter.length || query) && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); },
-        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:SURF3, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
+        style:{ padding:'0.5rem', borderRadius:'999px', border:'none', background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
 
     e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'),
@@ -1246,7 +1258,7 @@ function App() {
         style:{ width:'70px', border:'none', background:'transparent', outline:'none', textAlign:'right',
           fontSize:'0.95rem', fontWeight:800, color:TRAVEL, fontVariantNumeric:'tabular-nums', padding:0 } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:'rgba(6,78,59,0.14)',
+        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:'rgba(65,67,106,0.14)',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
         XIcon(11, TRAVEL)));
 
@@ -1295,7 +1307,7 @@ function App() {
   };
 
   const dayPanel = (d, update, prefix, title, onRemove) =>
-    e('div', { key:prefix, style:{ background:SURF3, border:'1px solid '+LINE, borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
+    e('div', { key:prefix, style:{ background:'rgba(255,255,255,0.42)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'1px solid '+LINE, borderRadius:'20px', padding:'0.9rem 0.85rem 1.05rem',
       display:'flex', flexDirection:'column', gap:'0.6rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('span', { style:{ ...LBL, color: onRemove ? TRAVEL : GREY } }, title),
@@ -1320,16 +1332,17 @@ function App() {
       transform:'translateX('+swipeX+'px)',
       transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
       borderRadius: swipeX > 4 ? '24px' : '0',
-      boxShadow: swipeX > 4 ? '-10px 0 28px rgba(16,58,43,0.18)' : 'none' } },
+      boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0' } },
-      e('button', { onClick:backOut, style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:backOut, style:{ background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
-      e('button', { onClick:()=>setFormMenu(true), style:{ background:SURF2, border:'none', borderRadius:'999px', width:'36px', height:'36px',
+      e('button', { onClick:()=>setFormMenu(true), style:{ background:'rgba(255,255,255,0.5)', backdropFilter:GLASS_BLUR, WebkitBackdropFilter:GLASS_BLUR, border:'none', borderRadius:'999px', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:SHADOW_SM } }, DotsIcon(17, INK))),
 
-    e('div', { style:{ ...PANEL, padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem' } },
+    e('div', { style:{ ...PANEL, padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
+      pointerEvents: form.locked ? 'none' : 'auto', opacity: form.locked ? 0.55 : 1, transition:'opacity .25s ease' } },
 
       e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
         onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
@@ -1339,7 +1352,7 @@ function App() {
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
           border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
           e('span', { style:{ width:'12px', height:'12px', borderRadius:'999px', flexShrink:0,
-            background: SITES[form.site] ? siteGrad(form.site) : 'rgba(6,78,59,0.18)' } }),
+            background: SITES[form.site] ? siteGrad(form.site) : 'rgba(65,67,106,0.18)' } }),
           e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
               fontSize:'0.84rem', fontWeight:800, color: form.site ? INK : GREY } },
@@ -1348,7 +1361,7 @@ function App() {
         e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
           border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
           e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-            background: form.equipment.length ? VIOLET : 'rgba(6,78,59,0.18)' } }),
+            background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
           e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
             style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
               fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
@@ -1390,29 +1403,29 @@ function App() {
 
       e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
         style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-          borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'),
+          borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part')),
 
-      e('button', { onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
-        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
-          border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
-          background: form.locked ? LOCKEDBG : FIELDBG,
-          borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left',
-          transition:'background .25s ease, border-color .25s ease' } },
-        TickIcon(!!form.locked, 21),
-        e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ fontSize:'0.84rem', fontWeight:900, color:INK } },
-            form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off'),
-          e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
-            form.locked ? 'Highlighted on the calendar' : 'All information has been added')),
-        burst > 0 ? e('div', { key:'burst'+burst, style:{ position:'absolute', right:'32px', top:'50%', width:0, height:0, pointerEvents:'none' } },
-          [...Array(8)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
-            style:{ '--ang': (bi*45)+'deg', background: bi%2 ? SITES.RH.hex : LOCKED } }))) : null,
-        e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
-          border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
-          display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
-          transition:'background .25s ease, border-color .25s ease',
-          animation: form.locked ? 'popIn .3s cubic-bezier(.34,1.56,.64,1)' : 'none' } },
-          form.locked ? '✓' : ''))));
+    e('button', { onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
+      style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
+        border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
+        background: form.locked ? LOCKEDBG : FIELDBG,
+        borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left',
+        transition:'background .25s ease, border-color .25s ease' } },
+      TickIcon(!!form.locked, 21),
+      e('div', { style:{ flex:1, minWidth:0 } },
+        e('div', { style:{ fontSize:'0.84rem', fontWeight:900, color:INK } },
+          form.locked ? 'Ready for sign-off' : 'Mark ready for sign-off'),
+        e('div', { style:{ fontSize:'0.65rem', color:GREY, fontWeight:600, marginTop:'1px' } },
+          form.locked ? 'Locked — tap to unlock and edit' : 'All information has been added')),
+      burst > 0 ? e('div', { key:'burst'+burst, style:{ position:'absolute', right:'32px', top:'50%', width:0, height:0, pointerEvents:'none' } },
+        [...Array(8)].map((_,bi) => e('span', { key:bi, className:'burst-dot',
+          style:{ '--ang': (bi*45)+'deg', background: bi%2 ? SITES.RH.hex : LOCKED } }))) : null,
+      e('span', { style:{ width:'22px', height:'22px', borderRadius:'999px', flexShrink:0,
+        border: form.locked ? 'none' : '2px solid '+LINE, background: form.locked ? LOCKED : 'transparent',
+        display:'flex', alignItems:'center', justifyContent:'center', color:APRICOT, fontSize:'0.72rem', fontWeight:900,
+        transition:'background .25s ease, border-color .25s ease',
+        animation: form.locked ? 'popIn .3s cubic-bezier(.34,1.56,.64,1)' : 'none' } },
+        form.locked ? '✓' : '')));
 
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
