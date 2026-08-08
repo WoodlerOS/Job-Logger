@@ -107,6 +107,42 @@
     }
     #root { display:none; }
   }
+
+  /* ---------- Desktop / large-screen layout ---------- */
+  @media (min-width: 800px) {
+    html, body {
+      background: #F0F1F5;
+    }
+    #root {
+      max-width: 1080px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #FAFAFC;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+      overflow-x: hidden;
+      position: relative;
+    }
+    /* Form: two-column layout so notes + parts are fully visible side by side */
+    .form-desktop-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .form-desktop-left, .form-desktop-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .work-done-field {
+      min-height: 16rem !important;
+    }
+    .ticket-work-preview {
+      display: block !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -402,7 +438,16 @@ function applyDarkMode(on) {
     APRICOT='#FFFFFF';
   }
   try {
-    document.body.style.background = PAGE_BG;
+    const isDesktop = window.matchMedia && window.matchMedia('(min-width: 800px)').matches;
+    if (isDesktop) {
+      document.body.style.background = on ? '#0C0C10' : '#F0F1F5';
+      document.body.style.backgroundImage = 'none';
+      const root = document.getElementById('root');
+      if (root) root.style.background = PAGE_BG;
+    } else {
+      document.body.style.background = PAGE_BG;
+      document.body.style.backgroundImage = 'none';
+    }
     document.body.style.color = INK;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
@@ -870,6 +915,28 @@ function App() {
   const stamp = () => { const d=new Date();
     return pad(d.getFullYear()%100)+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
 
+  const [copiedKey, setCopiedKey] = useState(null);
+  const copyText = async (text, key) => {
+    const t = (text || '').trim();
+    if (!t) { alert('Nothing to copy.'); return; }
+    try {
+      await navigator.clipboard.writeText(t);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(k => k === key ? null : k), 1600);
+    } catch (err) {
+      alert('Copy failed — clipboard access blocked.');
+    }
+  };
+  const CopyBtn = (text, key) => e('button', {
+    type: 'button',
+    onClick: (ev) => { ev.stopPropagation(); copyText(text, key); },
+    style: {
+      border: 'none', background: copiedKey === key ? INK : SURF2, color: copiedKey === key ? APRICOT : MID,
+      borderRadius: '8px', padding: '0.28rem 0.55rem', fontSize: '0.65rem', fontWeight: 800,
+      cursor: 'pointer', flexShrink: 0, transition: 'background .15s ease, color .15s ease'
+    }
+  }, copiedKey === key ? 'Copied' : 'Copy');
+
   const mins = (a,b) => { if (!a||!b) return 0; const m = Math.round((new Date(b)-new Date(a))/60000); return (isNaN(m)||m<0)?0:m; };
   const hm = (m) => m >= 60 ? Math.floor(m/60)+'h '+(m%60?pad(m%60)+'m':'') : m+'m';
   const eqOf = (j) => Array.isArray(j.equipment) ? j.equipment : [];
@@ -1273,7 +1340,7 @@ function App() {
   const progress = Math.min(swipeX / SWIPE_TRIGGER, 1);
   const armed = swipeX >= SWIPE_TRIGGER;
 
-  const swipeHint = view === 'form' && swipeX > 4 && e('div', {
+  const swipeHint = view === 'form' && swipeX > 4 && e('div', { className:'swipe-hint',
     style:{ position:'fixed', left:'10px', top:'50%', transform:'translateY(-50%) scale('+(0.7+progress*0.5)+')',
       zIndex:40, width:'44px', height:'44px', borderRadius:'12px',
       background: armed ? INK : SURF2, boxShadow:SHADOW,
@@ -1350,10 +1417,10 @@ function App() {
       setSheetDragging(false);
       if (sheetDY >= SHEET_TRIGGER) { setSheetDY(0); onClose(); } else setSheetDY(0);
     };
-    return e('div', { onClick:onClose,
+    return e('div', { onClick:onClose, className:'sheet-overlay',
       style:{ position:'fixed', inset:0, background:'rgba(6,45,34,0.34)', zIndex:60, display:'flex', alignItems:'flex-end',
         animation:'fadeIn .18s ease' } },
-      e('div', { ref:sheetPanelRef, onClick:(ev)=>ev.stopPropagation(),
+      e('div', { ref:sheetPanelRef, onClick:(ev)=>ev.stopPropagation(), className:'sheet-panel',
         onTouchStart:handleStart, onTouchMove:handleMove, onTouchEnd:handleEnd, onTouchCancel:handleEnd,
         style:{ width:'100%', background:SURF2,
           borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
@@ -1509,10 +1576,34 @@ function App() {
         (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
       ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:subC, fontWeight:700, marginTop:'0.25rem' } },
         'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
-      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
-        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
-          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
+      j.workDone && e('div', { style:{ marginTop:'0.45rem' } },
+        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' } },
+          e('span', { style:{ fontSize:'0.58rem', fontWeight:800, color:subC, textTransform:'uppercase', letterSpacing:'0.4px' } }, 'Work done'),
+          e('button', {
+            type:'button',
+            onClick:(ev)=>{ ev.stopPropagation(); copyText(j.workDone, 'card-work-'+j.id); },
+            style:{ border:'none', background: copiedKey === 'card-work-'+j.id ? (s ? 'rgba(255,255,255,0.9)' : INK) : chipBg,
+              color: copiedKey === 'card-work-'+j.id ? (s ? s.hex : APRICOT) : onC,
+              borderRadius:'7px', padding:'0.2rem 0.45rem', fontSize:'0.58rem', fontWeight:800, cursor:'pointer' }
+          }, copiedKey === 'card-work-'+j.id ? 'Copied' : 'Copy')),
+        e('p', { className:'ticket-work-preview', style:{ fontSize:'0.8rem', color:bodyC, margin:0, whiteSpace:'pre-wrap' } }, j.workDone)),
+      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem' } },
+        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', marginBottom:'0.2rem' } },
+          e('span', { style:{ fontSize:'0.58rem', fontWeight:800, color:subC, textTransform:'uppercase', letterSpacing:'0.4px' } }, 'Parts'),
+          e('button', {
+            type:'button',
+            onClick:(ev)=>{
+              ev.stopPropagation();
+              const txt = parts.map(p => (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')).join('\n');
+              copyText(txt, 'card-parts-'+j.id);
+            },
+            style:{ border:'none', background: copiedKey === 'card-parts-'+j.id ? (s ? 'rgba(255,255,255,0.9)' : INK) : chipBg,
+              color: copiedKey === 'card-parts-'+j.id ? (s ? s.hex : APRICOT) : onC,
+              borderRadius:'7px', padding:'0.2rem 0.45rem', fontSize:'0.58rem', fontWeight:800, cursor:'pointer' }
+          }, copiedKey === 'card-parts-'+j.id ? 'Copied' : 'Copy')),
+        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.15rem' } },
+          parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
+            '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : ''))))));
   };
 
   const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
@@ -1841,70 +1932,84 @@ function App() {
       e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(17, INK))),
 
-    e('div', { style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
+    e('div', { className: 'form-desktop-grid', style:{ ...PANEL(), padding:'1.15rem', display:'flex', flexDirection:'column', gap:'0.95rem',
       pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto', opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
       transition:'opacity .25s ease' } },
 
-      e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
-        onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-        style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem' } }),
+      e('div', { className: 'form-desktop-left', style:{ display:'flex', flexDirection:'column', gap:'0.95rem' } },
+        e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
+          onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
+          style:{ ...FIELD(), fontWeight:800, fontSize:'1.02rem' } }),
 
-      e('div', { style:{ display:'flex', gap:'0.5rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border: '1.5px solid '+LINE,
-          background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
-          borderRadius:'13px', padding:'0 0.65rem', transition:'background .2s ease' } },
-          e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
-            style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-              fontSize:'0.84rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
-            e('option', { value:'' }, 'Site'),
-            Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
-          border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
-          e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-            background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
-          e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
-            style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
-              fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
-            e('option', { value:'' }, 'Machine'),
-            Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))),
+        e('div', { style:{ display:'flex', gap:'0.5rem' } },
+          e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
+            border: '1.5px solid '+LINE,
+            background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
+            borderRadius:'13px', padding:'0 0.65rem', transition:'background .2s ease' } },
+            e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
+              style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
+                fontSize:'0.84rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
+              e('option', { value:'' }, 'Site'),
+              Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
+          e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem',
+            border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'13px', padding:'0 0.65rem' } },
+            e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
+              background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
+            e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
+              style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.6rem 0',
+                fontSize:'0.84rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
+              e('option', { value:'' }, 'Machine'),
+              Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))),
 
-      dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
+        dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
 
-      form.extra.map((d,i) => dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
-        ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site])),
+        form.extra.map((d,i) => dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
+          ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site])),
 
-      e('button', { onClick:addExtraDay,
-        style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-          borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } },
-        '+ Another day'),
+        e('button', { onClick:addExtraDay,
+          style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
+            borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } },
+          '+ Another day')
+      ),
 
-      e('div', null,
-        e('label', { style:{ ...LBL, marginBottom:'0.45rem' } }, 'Work done'),
-        e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
-          onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
-          style:{ ...FIELD(), minHeight:'7.5rem', resize:'none', lineHeight:1.5 } })),
+      e('div', { className: 'form-desktop-right', style:{ display:'flex', flexDirection:'column', gap:'0.95rem' } },
+        e('div', null,
+          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.45rem' } },
+            e('label', { style:{ ...LBL, marginBottom:0 } }, 'Work done'),
+            CopyBtn(form.workDone, 'work')),
+          e('textarea', { value:form.workDone, placeholder:'Notes about work completed…',
+            onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
+            className: 'work-done-field',
+            style:{ ...FIELD(), minHeight:'7.5rem', resize:'vertical', lineHeight:1.5 } })),
 
-      e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
+        e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
 
-      form.parts.length > 0 && e('div', null,
-        e('label', { style:{ ...LBL, marginBottom:'0.45rem' } }, 'Parts'),
-        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } },
-          form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.4rem', alignItems:'center' } },
-            e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
-              onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-              style:{ flex:'0 0 38%', minWidth:0, border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'11px',
-                padding:'0.55rem 0.65rem', fontSize:'0.8rem', fontWeight:800, outline:'none', color:INK } }),
-            e('input', { type:'text', value:p.partDescription, placeholder:'Description',
-              onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-              style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'11px',
-                padding:'0.55rem 0.65rem', fontSize:'0.8rem', outline:'none', color:INK } }),
-            e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-              style:{ border:'none', background:'none', color:GREY, fontSize:'0.8rem', fontWeight:800, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕'))))),
-
-      e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
-        style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-          borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part')),
+        e('div', null,
+          e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.45rem' } },
+            e('label', { style:{ ...LBL, marginBottom:0 } }, 'Parts'),
+            CopyBtn(
+              (form.parts||[]).filter(p => p.partNumber || p.partDescription)
+                .map(p => (p.partNumber||'').trim() + (p.partDescription ? ' — ' + p.partDescription.trim() : ''))
+                .join('\n'),
+              'parts'
+            )),
+          form.parts.length > 0 && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem', marginBottom:'0.5rem' } },
+            form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.4rem', alignItems:'center' } },
+              e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
+                onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
+                style:{ flex:'0 0 38%', minWidth:0, border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'11px',
+                  padding:'0.55rem 0.65rem', fontSize:'0.8rem', fontWeight:800, outline:'none', color:INK } }),
+              e('input', { type:'text', value:p.partDescription, placeholder:'Description',
+                onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
+                style:{ flex:1, minWidth:0, border:'1.5px solid '+LINE, background:FIELDBG, borderRadius:'11px',
+                  padding:'0.55rem 0.65rem', fontSize:'0.8rem', outline:'none', color:INK } }),
+              e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
+                style:{ border:'none', background:'none', color:GREY, fontSize:'0.8rem', fontWeight:800, cursor:'pointer', width:'18px', flexShrink:0 } }, '✕')))),
+          e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
+            style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
+              borderRadius:'14px', padding:'0.72rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add part'))
+      )
+    ),
 
     e('button', { onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
       style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
