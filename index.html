@@ -1832,47 +1832,79 @@ function App() {
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
   const ticketDetailCard = (j, i) => {
-    const s = SITES[j.site], eq = eqOf(j), ex = exOf(j);
-    const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
-    const on = mins(j.startDateTime, j.finishDateTime);
-    const onC = s ? '#FFFFFF' : INK;
-    const subC = s ? 'rgba(255,255,255,0.82)' : MID;
-    const bodyC = s ? 'rgba(255,255,255,0.95)' : INK;
-    const chipBg = s ? 'rgba(255,255,255,0.32)' : 'rgba(65,67,106,0.12)';
-    const workText = (j.workDone || '').replace(/\s*\n+\s*/g, ' ').trim();
-    return e('div', {
-      style:{ background: s ? s.hex : SURF,
-        overflow:'hidden',
-        border: j.locked ? '3px solid '+INK : (s ? 'none' : '1px solid '+LINE),
-        boxShadow: j.locked ? 'inset 0 0 0 1px '+SURF : (s ? 'none' : SHADOW_SM),
-        borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
-        transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
-      e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.4rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap' } },
-          i != null ? e('span', { style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
-          e('span', { style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
-          s && e('span', { style:{ background:chipBg, color:'#FFF', padding:'0.22rem 0.62rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:900 } }, s.label),
-          eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, x)),
-          ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK)))),
-      e('div', { style:{ fontSize:'0.8rem', color:subC, fontWeight:700 } },
+    try {
+      if (!j) {
+        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:GREY } }, 'Empty ticket');
+      }
+      const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
+      const eq = eqOf(j);
+      const ex = exOf(j);
+      const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
+      const on = mins(j.startDateTime, j.finishDateTime);
+      const onC = s ? '#FFFFFF' : INK;
+      const subC = s ? 'rgba(255,255,255,0.82)' : MID;
+      const bodyC = s ? 'rgba(255,255,255,0.95)' : INK;
+      const chipBg = s ? 'rgba(255,255,255,0.32)' : 'rgba(65,67,106,0.12)';
+      const workRaw = j.workDone == null ? '' : String(j.workDone);
+      const workText = workRaw.replace(/\s*\n+\s*/g, ' ').trim();
+      const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
+      const timeLine =
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-        (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
-      ex.length > 0 && e('div', { style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.28rem' } },
-        'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-      workText && e('div', { style:{ fontSize:'0.82rem', color:bodyC, margin:'0.5rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35, whiteSpace:'normal' } }, workText),
-      parts.length > 0 && e('div', { style:{ marginTop:'0.55rem', display:'flex' } },
-        e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
-          parts.length + (parts.length === 1 ? ' part' : ' parts')));
+        (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '');
+
+      const chips = [];
+      if (i != null) chips.push(e('span', { key:'num', style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)));
+      chips.push(e('span', { key:'tn', style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, title));
+      if (s) chips.push(e('span', { key:'site', style:{ background:chipBg, color:'#FFF', padding:'0.22rem 0.62rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:900 } }, s.label || j.site));
+      eq.forEach((x, xi) => chips.push(e('span', { key:'eq'+xi, style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, String(x))));
+      if (ex.length > 0) chips.push(e('span', { key:'ex', style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day'));
+      if (j.locked) chips.push(e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK)));
+
+      const children = [
+        e('div', { key:'head', style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.4rem' } }, chips),
+        e('div', { key:'time', style:{ fontSize:'0.8rem', color:subC, fontWeight:700 } }, timeLine || '—')
+      ];
+      if (ex.length > 0) {
+        children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.28rem' } },
+          'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')));
+      }
+      if (workText) {
+        children.push(e('div', { key:'work', style:{ fontSize:'0.82rem', color:bodyC, margin:'0.5rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35, whiteSpace:'normal' } }, workText));
+      }
+      if (parts.length > 0) {
+        children.push(e('div', { key:'parts', style:{ marginTop:'0.55rem', display:'flex' } },
+          e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
+            parts.length + (parts.length === 1 ? ' part' : ' parts'))));
+      }
+
+      return e('div', {
+        key: 'card-'+(j.id != null ? j.id : i),
+        style:{ background: s ? s.hex : SURF,
+          overflow:'hidden',
+          border: j.locked ? '3px solid '+INK : (s ? 'none' : '1px solid '+LINE),
+          boxShadow: j.locked ? 'inset 0 0 0 1px '+SURF : (s ? 'none' : SHADOW_SM),
+          borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
+          minHeight:'56px',
+          transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
+      }, children);
+    } catch (err) {
+      return e('div', {
+        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:INK }
+      }, String((j && j.ticketNumber) || 'Ticket') + ' (couldn’t render details)');
+    }
   };
 
-  const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
+  const swipeCard = (j, i, ret, stagger) => e(SwipeCard, {
+      key: (j && j.id != null) ? String(j.id) : ('idx-'+i),
+      locked: !!(j && j.locked),
+      radius:'18px',
       glow: null,
-      onLock:()=>toggleLock(j.id),
-      onDelete:()=>{ if (window.confirm('Delete this ticket?')) remove(j.id); },
-      onTap:()=>openEdit(j, ret),
-      entryDelay: stagger != null ? Math.min(stagger,8)*28 : null },
+      onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
+      onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
+      onTap:()=>{ if (j) openEdit(j, ret); },
+      entryDelay: null
+    },
     ticketDetailCard(j, i));
 
   const dayCell = (dnum) => {
