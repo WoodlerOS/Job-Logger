@@ -187,8 +187,8 @@
       align-items: center;
       gap: 0.85rem;
       padding: 0.9rem 1.35rem;
-      border-bottom: 1px solid rgba(10,10,12,0.1);
-      background: #fff;
+      border-bottom: 1px solid var(--line, rgba(10,10,12,0.1));
+      background: var(--card-bg, #fff);
       flex-shrink: 0;
       box-shadow: 0 2px 12px rgba(22,23,50,0.08);
     }
@@ -206,8 +206,8 @@
       min-height: 0;
     }
     .desktop-panel {
-      background: #fff;
-      border: 1px solid rgba(10,10,12,0.06);
+      background: var(--card-bg, #fff) !important;
+      border: 1px solid var(--line, rgba(10,10,12,0.06)) !important;
       border-radius: 16px;
       padding: 1rem 1.1rem;
       box-shadow: 0 4px 18px rgba(22,23,50,0.12), 0 1px 4px rgba(22,23,50,0.06);
@@ -234,10 +234,55 @@
     .form-card {
       background: var(--card-bg, #fff) !important;
       box-shadow: 0 4px 18px rgba(22,23,50,0.12), 0 1px 4px rgba(22,23,50,0.06) !important;
-      border: 1px solid rgba(10,10,12,0.06) !important;
+      border: 1px solid var(--line, rgba(10,10,12,0.06)) !important;
     }
-    .desktop-panel {
-      background: var(--card-bg, #fff) !important;
+    /* Desktop settings / themes layout */
+    .settings-desktop-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.15rem 1.35rem;
+      align-items: start;
+    }
+    .settings-desktop-grid .settings-span-2 {
+      grid-column: 1 / -1;
+    }
+    .themes-desktop-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 0.75rem !important;
+    }
+    @media (min-width: 1200px) {
+      .themes-desktop-grid { grid-template-columns: repeat(5, 1fr) !important; }
+    }
+    /* Hover affordances (desktop only) */
+    .d-hover {
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+    }
+    .d-hover:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(22,23,50,0.14), 0 2px 6px rgba(22,23,50,0.08) !important;
+    }
+    .d-hover-btn {
+      transition: transform .12s ease, opacity .12s ease, background .15s ease, border-color .15s ease;
+    }
+    .d-hover-btn:hover {
+      transform: scale(1.03);
+      opacity: 0.92;
+    }
+    .d-hover-btn:active {
+      transform: scale(0.98);
+    }
+    .desktop-panel button:hover,
+    .desktop-content button:hover {
+      filter: brightness(1.04);
+    }
+    .day-cell-btn {
+      transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .day-cell-btn:hover {
+      transform: scale(1.04);
+      z-index: 2;
+      box-shadow: 0 4px 14px rgba(22,23,50,0.16) !important;
     }
   }
   @media (max-width: 899px) {
@@ -538,6 +583,7 @@ function applySurfaceLightness(bgDim, cardDim, dark) {
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
     document.documentElement.style.setProperty('--card-bg', CARD_BG);
+    document.documentElement.style.setProperty('--line', dark ? 'rgba(255,255,255,0.14)' : 'rgba(10,10,12,0.13)');
     document.body.style.background = PAGE_BG;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
@@ -551,8 +597,9 @@ function applyDarkMode(on) {
     VIOLET='#F2F2F5'; LOCKED='#F2F2F5'; LOCKEDBG='rgba(255,255,255,0.08)';
     TRAVEL='#B7B9C2'; TRAVELBG='rgba(255,255,255,0.06)';
     SURF='#1C1C22'; SURF2='#262631'; SURF3='#232330';
-    FIELDBG='#232330'; EMPTY='#1F1F27'; PAGE_BG='#101014';
+    FIELDBG='#232330'; EMPTY='#1F1F27'; PAGE_BG='#101014'; CARD_BG='#1C1C22';
     APRICOT='#FFFFFF';
+    applySurfaceLightness(BG_DIM, CARD_DIM, true);
   } else {
     INK='#0A0A0C'; MID='#5B5D66'; GREY='#8C8E96'; LINE='rgba(10,10,12,0.13)';
     VIOLET='#0A0A0C'; LOCKED='#0A0A0C'; LOCKEDBG='rgba(10,10,12,0.06)';
@@ -1778,7 +1825,7 @@ function App() {
     const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
     const boxShadow = doneRing || 'none';
 
-    return e('button', { key:dnum, onClick:()=>{
+    return e('button', { key:dnum, className:'day-cell-btn', onClick:()=>{
         setAnchorDate(new Date(ms.y, ms.m, dnum));
         setDayDetail(null);
         if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day');
@@ -1787,7 +1834,7 @@ function App() {
         background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
-        transition:'box-shadow .25s ease, border-color .25s ease',
+        transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow } },
       e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px',
@@ -2223,7 +2270,7 @@ function App() {
   };
 
   const toggleRow = (label, sub, value, onToggle) =>
-    e('button', { key:label, onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem', textAlign:'left',
+    e('button', { key:label, className:'d-hover', onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem', textAlign:'left',
       background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer' } },
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, label),
@@ -2231,103 +2278,109 @@ function App() {
       e('div', { style:{ width:'42px', height:'24px', borderRadius:'8px', background: value?INK:SURF2,
         border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0 } },
         e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'5px',
-          background:'#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
+          background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
 
   const chipSelect = (label, options, value, onChange) =>
     e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:SURF, border:'1px solid '+LINE,
       borderRadius:'16px', padding:'0.75rem 0.9rem' } },
       e('span', { style:{ ...LBL } }, label),
       e('div', { style:{ display:'flex', gap:'0.4rem', flexWrap:'wrap' } },
-        options.map(opt => e('button', { key:opt.key, onClick:()=>onChange(opt.key),
+        options.map(opt => e('button', { key:opt.key, className:'d-hover-btn', onClick:()=>onChange(opt.key),
           style:{ padding:'0.4rem 0.75rem', borderRadius:'9px', border: value===opt.key?'none':'1px solid '+LINE,
-            background: value===opt.key?VIOLET:SURF2, color: value===opt.key?'#FFFFFF':INK,
+            background: value===opt.key?VIOLET:SURF2, color: value===opt.key?(DARK_MODE?'#0A0A0C':'#FFFFFF'):INK,
             fontSize:'0.75rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
 
-  const settingsSection = (title) => e('div', { key:'h-'+title, style:{ ...LBL, marginTop:'0.5rem' } }, title);
+  const settingsSection = (title) => e('div', { key:'h-'+title, className:'settings-span-2', style:{ ...LBL, marginTop:'0.5rem' } }, title);
 
   const settingsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
-    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
-      e('button', { onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
+    e('div', { className:'settings-span-2', style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
+      e('button', { className:'d-hover-btn', onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Settings'),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px', color:INK } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
-    settingsSection('Theme'),
-    e('button', { key:'themesRow', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
-      background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer', textAlign:'left' } },
-      e('div', null,
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Browse themes'),
-        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' preset palettes')),
-      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
-        e('div', { style:{ display:'flex', gap:'2px' } },
-          sitesToList().slice(0,4).map((s,hi) =>
-            e('span', { key:hi, style:{ width:'13px', height:'13px', borderRadius:'4px', background:s.hex } }))),
-        e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
+    e('div', { className:'settings-desktop-grid', style:{ display:'flex', flexDirection:'column', gap:'0.7rem' } },
+      settingsSection('Theme'),
+      e('button', { key:'themesRow', className:'d-hover settings-span-2', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
+        background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer', textAlign:'left' } },
+        e('div', null,
+          e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Browse themes'),
+          e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' preset palettes')),
+        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+          e('div', { style:{ display:'flex', gap:'3px' } },
+            sitesToList().slice(0,4).map((s,hi) =>
+              e('span', { key:hi, style:{ width:'16px', height:'16px', borderRadius:'4px', background:s.hex || '#888', display:'block', flexShrink:0 } }))),
+          e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
 
-    settingsSection('Equipment'),
-    e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-      equipEdits.map((x,idx) => e('div', { key:x.key, style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.5rem 0.6rem' } },
-        e('input', { type:'text', value:x.label, onChange:(ev)=>updateEquipLabel(idx, ev.target.value),
-          onBlur:()=>commitEquip(equipEdits),
-          style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:800, color:INK } }),
-        e('button', { onClick:()=>removeEquip(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
-          TrashIcon(16, GREY)))),
-      e('button', { onClick:addEquip, style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-        borderRadius:'14px', padding:'0.65rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment')),
+      settingsSection('Equipment'),
+      e('div', { className:'settings-span-2', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+        equipEdits.map((x,idx) => e('div', { key:x.key, className:'d-hover', style:{ display:'flex', alignItems:'center', gap:'0.5rem',
+          background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.5rem 0.6rem' } },
+          e('input', { type:'text', value:x.label, onChange:(ev)=>updateEquipLabel(idx, ev.target.value),
+            onBlur:()=>commitEquip(equipEdits),
+            style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:800, color:INK } }),
+          e('button', { onClick:()=>removeEquip(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
+            TrashIcon(16, GREY)))),
+        e('button', { className:'d-hover-btn', onClick:addEquip, style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
+          borderRadius:'14px', padding:'0.65rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment')),
 
-    settingsSection('Behaviour'),
-    toggleRow('Dark mode', 'Switches the app to a dark colour scheme',
-      settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
-    !settings.darkMode && e('div', { key:'bgdim', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-      e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Background brightness'),
-      e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down the page white'),
-      e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
-        onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
-        style:{ width:'100%', accentColor:INK } })),
-    !settings.darkMode && e('div', { key:'carddim', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-      e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Card brightness'),
-      e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down white cards and panels'),
-      e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
-        onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
-        style:{ width:'100%', accentColor:INK } })),
-    toggleRow('Lock tickets when complete', 'Marking a ticket ready stops it being edited until unlocked',
-      settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
-    toggleRow('Hide weekends by default', 'Weekend columns start collapsed on the calendar',
-      settings.hideWeekendsDefault, ()=>saveSettings({ hideWeekendsDefault: !settings.hideWeekendsDefault })),
+      settingsSection('Behaviour'),
+      toggleRow('Dark mode', 'Switches the app to a dark colour scheme',
+        settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
+      !settings.darkMode && e('div', { key:'bgdim', className:'d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
+        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Background brightness'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down the page white'),
+        e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
+          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
+          style:{ width:'100%', accentColor:INK } })),
+      !settings.darkMode && e('div', { key:'carddim', className:'d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
+        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Card brightness'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down white cards and panels'),
+        e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
+          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
+          style:{ width:'100%', accentColor:INK } })),
+      toggleRow('Lock tickets when complete', 'Marking a ticket ready stops it being edited until unlocked',
+        settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
+      toggleRow('Hide weekends by default', 'Weekend columns start collapsed on the calendar',
+        settings.hideWeekendsDefault, ()=>saveSettings({ hideWeekendsDefault: !settings.hideWeekendsDefault })),
 
-    chipSelect('Calendar opens to', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'}],
-      settings.defaultCalMode, (v)=>saveSettings({ defaultCalMode:v })),
-    chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'Everything'}],
-      settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v })),
-    chipSelect('Round new ticket times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
-      settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
+      chipSelect('Calendar opens to', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'}],
+        settings.defaultCalMode, (v)=>saveSettings({ defaultCalMode:v })),
+      chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'Everything'}],
+        settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v })),
+      chipSelect('Round new ticket times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
+        settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
 
-    settingsSection('Account'),
-    e('div', { key:'acct', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem',
-      display:'flex', alignItems:'center', gap:'0.7rem' } },
-      e('div', { style:{ flex:1, minWidth:0 } },
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Signed in'),
-        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
-      e('button', { onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'10px', border:'1px solid '+LINE,
-        background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out')));
+      settingsSection('Account'),
+      e('div', { key:'acct', className:'settings-span-2 d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem',
+        display:'flex', alignItems:'center', gap:'0.7rem' } },
+        e('div', { style:{ flex:1, minWidth:0 } },
+          e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Signed in'),
+          e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
+        e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'10px', border:'1px solid '+LINE,
+          background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
+    )
+  );
 
   const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
-      e('button', { onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
+      e('button', { className:'d-hover-btn', onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Themes'),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px', color:INK } }, 'Themes'),
       e('span', { style:{ width:'36px' } })),
-    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-      e('div', { style:{ ...LBL, marginBottom:'0.15rem' } }, group.name),
-      e('div', { style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.45rem' } },
-        group.themes.map(theme => e('button', { key:theme.name, onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
-          style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.65rem', borderRadius:'14px',
+    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
+      e('div', { style:{ ...LBL, marginBottom:'0.1rem' } }, group.name),
+      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
+        group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
+          style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'14px',
             border: '1px solid '+LINE,
             background:SURF, cursor:'pointer', textAlign:'left' } },
-          e('div', { style:{ display:'flex', gap:'3px' } },
-            theme.sites.map((hex,hi) => e('span', { key:hi, style:{ flex:1, height:'18px', borderRadius:'4px', background:hex } }))),
-          e('span', { style:{ fontSize:'0.7rem', fontWeight:800, color:INK } }, theme.name)))
+          e('div', { style:{ display:'flex', gap:'4px', width:'100%' } },
+            (theme.sites || []).map((hex,hi) => e('span', { key:hi, style:{
+              flex:1, height:'22px', minWidth:0, borderRadius:'5px',
+              background: hex, display:'block'
+            } }))),
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name)))
       )
     )));
 
@@ -2363,13 +2416,13 @@ function App() {
   if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
 
   if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
-  if (settingsOpen && themesOpen) return e('div', { key:'themes', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, themesView);
 
   const navTo = (target) => {
     setSettingsOpen(false); setThemesOpen(false); setMenuOpen(false);
     if (target === 'settings') { setSettingsOpen(true); return; }
     if (target === 'list') { setView('list'); return; }
     setView('month');
+    if (window.matchMedia && window.matchMedia('(min-width: 900px)').matches) setCalMode('month');
   };
 
   const desktopSidebar = e('div', { className: 'desktop-only desktop-sidebar' },
@@ -2410,51 +2463,47 @@ function App() {
     }),
     e('div', { style:{ flex:1 } }),
     e('button', {
-      onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
+      className: 'd-hover-btn',
+      onClick: () => openNew(null, view === 'list' ? { view:'list' } : null),
       style: {
         display: 'flex', alignItems: 'center', gap: '0.4rem',
         padding: '0.65rem 1.1rem', borderRadius: '12px', border: 'none',
-        background: INK, color: APRICOT, fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer'
+        background: INK, color: DARK_MODE ? '#0A0A0C' : APRICOT, fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer'
       }
     }, e('span', { style:{ fontSize:'1.1rem', lineHeight:1 } }, '+'), 'New ticket')
   );
 
   if (settingsOpen) {
-    const settingsBody = e('div', { key:'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, settingsView);
+    const pane = themesOpen ? themesView : settingsView;
+    const settingsBody = e('div', { key: themesOpen ? 'themes' : 'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, pane);
     return e('div', { className: 'desktop-shell' },
       desktopSidebar,
-      e('div', { className: 'desktop-main', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
+      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
-        e('div', { className: 'desktop-content mobile-only', style:{ flex:1, overflow:'auto' } }, settingsBody),
-        e('div', { className: 'desktop-only', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem' } }, settingsBody)
+        e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, settingsBody)
       ),
-      e('div', { className: 'mobile-only' }, header, settingsBody, menu, chooserSheet, formSheet, fab)
+      e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
+        header, settingsBody, menu, chooserSheet, formSheet, fab)
     );
   }
 
   const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
   const body = e('div', { key:view, style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
 
-  /* Desktop calendar split: calendar panel + day tickets panel */
+  /* Desktop: month calendar left + selected day tickets right (no week/day modes) */
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
-      e('div', { style:{ display:'flex', borderBottom:'1px solid '+LINE, marginBottom:'0.75rem' } },
-        ['day','week','month'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-          style:{ flex:1, padding:'0.45rem 0', border:'none', cursor:'pointer', background:'transparent',
-            fontSize:'0.78rem', fontWeight: calMode===mode ? 900 : 700,
-            color: calMode===mode ? INK : GREY,
-            borderBottom: calMode===mode ? '2px solid '+INK : '2px solid transparent',
-            marginBottom:'-1px' } }, mode[0].toUpperCase()+mode.slice(1)))),
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.75rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'4px' } }, ChevronLeft(18, INK)),
-        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.05rem', fontWeight:900, color:INK } }, periodLabel()),
-          calMode === 'month' && e('span', { style:{ fontSize:'1.05rem', fontWeight:400, color:GREY, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
-        e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'4px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
-      calMode === 'month' ? monthGrid : calMode === 'week' ? weekGrid : dayView
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
+        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, INK)),
+        e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:900, color:INK } },
+            anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:GREY, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
+      monthGrid
     ),
     e('div', { className: 'desktop-panel' },
-      e('div', { style:{ fontSize:'1.02rem', fontWeight:900, color:INK, marginBottom:'0.35rem' } },
+      e('div', { style:{ fontSize:'1.05rem', fontWeight:900, color:INK, marginBottom:'0.3rem' } },
         anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
       e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:700, marginBottom:'0.85rem' } },
         dv.list.length + (dv.list.length===1?' ticket':' tickets')),
