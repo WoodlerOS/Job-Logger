@@ -348,120 +348,15 @@ const SITES = {
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
 const THEME_GROUPS = [
-  { name: 'iOS', themes: [
-    { name:'iOS', accent:'#007AFF', sites:['#34C759','#007AFF','#FF2D55','#BF5AF2'] },
-  ]},
-  { name: 'Colour Mix', themes: [
-    { name:'Embers Classic', accent:'#41436A', sites:['#41436A','#984063','#F64668','#FE9677'] },
-    { name:'Twilight Market',accent:'#3D2A5C', sites:['#3D2A5C','#6B3A5A','#A05A4A','#C87A3A'] },
-    { name:'Harbor Lights',  accent:'#1A3A5A', sites:['#1A3A5A','#2A6A6A','#8A5A3A','#C04A4A'] },
-    { name:'Studio Night',   accent:'#2A1A4A', sites:['#2A1A4A','#5A2A6A','#8A4A5A','#C06A3A'] },
-    { name:'Coral Depth',    accent:'#1A3A4A', sites:['#1A3A4A','#2A6A5A','#8A4A4A','#C06A3A'] },
-    { name:'Indigo Copper',  accent:'#2A2A5A', sites:['#2A2A5A','#4A3A7A','#8A5A3A','#C07A2A'] },
-    { name:'Plum Citrus',    accent:'#4A1A4A', sites:['#4A1A4A','#6A2A6A','#8A5A2A','#B07A2A'] },
-    { name:'Teal Rose',      accent:'#1A4A4A', sites:['#1A4A4A','#2A6A5A','#8A4A5A','#C06A5A'] },
-    { name:'Forest Ember',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#8A4A2A','#C05A2A'] },
-    { name:'Navy Amber',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#8A5A2A','#C07A2A'] },
-    { name:'Berry Sage',     accent:'#4A1A3A', sites:['#4A1A3A','#6A2A4A','#3A5A4A','#5A7A4A'] },
-    { name:'Cobalt Coral',   accent:'#1A2A5A', sites:['#1A2A5A','#2A3A7A','#A04A4A','#C06A3A'] },
-    { name:'Violet Gold',    accent:'#3A1A5A', sites:['#3A1A5A','#5A2A7A','#8A5A2A','#B07A2A'] },
-    { name:'Jade Magenta',   accent:'#1A4A3A', sites:['#1A4A3A','#2A6A4A','#8A2A5A','#B03A6A'] },
-    { name:'Slate Citrus',   accent:'#2A3A4A', sites:['#2A3A4A','#3A5A5A','#8A6A2A','#B08A2A'] },
-    { name:'Wine Teal',      accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A5A5A','#2A7A6A'] },
-    { name:'Royal Peach',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#A05A4A','#C07A4A'] },
-    { name:'Moss Blush',     accent:'#2A3A2A', sites:['#2A3A2A','#3A5A3A','#8A4A5A','#B05A6A'] },
-    { name:'Midnight Mango', accent:'#1A1A3A', sites:['#1A1A3A','#2A2A5A','#8A5A2A','#C07A2A'] },
-    { name:'Orchid Steel',   accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#3A4A5A','#5A6A7A'] },
-    { name:'Crimson Ocean',  accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#1A4A5A','#2A6A7A'] },
-    { name:'Emerald Dust',   accent:'#1A3A2A', sites:['#1A3A2A','#2A5A3A','#6A4A3A','#8A5A3A'] },
-    { name:'Purple Haze',    accent:'#2A1A3A', sites:['#2A1A3A','#4A2A5A','#6A3A6A','#3A5A5A'] },
-    { name:'Saffron Night',  accent:'#2A1A2A', sites:['#2A1A2A','#4A2A3A','#8A5A1A','#B07A1A'] },
-    { name:'Aqua Berry',     accent:'#1A3A4A', sites:['#1A3A4A','#2A5A6A','#7A2A4A','#A03A5A'] },
-    { name:'Copper Sky',     accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#7A4A2A','#A05A2A'] },
-    { name:'Neon Market',    accent:'#1A0A4A', sites:['#1A0A4A','#C01A6A','#E05A1A','#F0A010'] },
-    { name:'Electric Garden',accent:'#0A2A4A', sites:['#0A2A4A','#1A8A4A','#C04A8A','#E08A1A'] },
-    { name:'Fuchsia Flame',  accent:'#4A0A3A', sites:['#4A0A3A','#A01A6A','#E04A2A','#F08A10'] },
-    { name:'Cyan Punch',     accent:'#0A2A5A', sites:['#0A2A5A','#0A8AAA','#C02A6A','#E06A2A'] },
-    { name:'Limeberry',      accent:'#1A3A1A', sites:['#1A3A1A','#4AAA2A','#C02A6A','#E05A2A'] },
-    { name:'Ultraviolet',    accent:'#2A0A5A', sites:['#2A0A5A','#6A1AAA','#C02A8A','#E05A4A'] },
-    { name:'Tropic Storm',   accent:'#0A3A3A', sites:['#0A3A3A','#1A8A6A','#C04A3A','#E08A1A'] },
-    { name:'Ruby Teal',      accent:'#5A0A2A', sites:['#5A0A2A','#A01A3A','#1A6A6A','#2A9A8A'] },
-    { name:'Mango Night',    accent:'#1A1A4A', sites:['#1A1A4A','#3A2A7A','#E06A1A','#F0A020'] },
-    { name:'Pink Horizon',   accent:'#3A0A4A', sites:['#3A0A4A','#8A1A7A','#E04A5A','#F08A3A'] },
-    { name:'Jade Fire',      accent:'#0A3A2A', sites:['#0A3A2A','#1A8A4A','#C03A2A','#E06A1A'] },
-    { name:'Vivid Orchid',   accent:'#3A0A5A', sites:['#3A0A5A','#7A1A9A','#C04A6A','#E08A3A'] },
-  ]},
-  { name: 'Warm', themes: [
-    { name:'Ember Vein',    accent:'#5C2E2E', sites:['#5C2E2E','#7A3A3A','#9B4A4A','#B85A4A'] },
-    { name:'Copper Vein',   accent:'#5A3A20', sites:['#5A3A20','#7A4A28','#9A5A30','#BA6A38'] },
-    { name:'Canyon',        accent:'#5A3A2A', sites:['#5A3A2A','#7A4A3A','#9A5A4A','#BA6A4A'] },
-    { name:'Rustfield',     accent:'#5A2A18', sites:['#5A2A18','#7A3A20','#9A4A28','#BA5A30'] },
-    { name:'Solar Rust',    accent:'#5A2008', sites:['#5A2008','#8A300C','#BA4010','#E05018'] },
-    { name:'Terracotta',    accent:'#6B2E1A', sites:['#6B2E1A','#8A3E2A','#A9523A','#C8684A'] },
-    { name:'Amber Depth',   accent:'#5A3808', sites:['#5A3808','#7A4C10','#9A6018','#BA7420'] },
-    { name:'Brick Lane',    accent:'#5A2820', sites:['#5A2820','#7A3830','#9A4840','#BA5850'] },
-  ]},
-  { name: 'Cool & Ocean', themes: [
-    { name:'Harbor',        accent:'#2A3A4A', sites:['#2A3A4A','#3A5A6A','#4A7A7A','#5A8A8A'] },
-    { name:'Lagoon',        accent:'#2A4A5A', sites:['#2A4A5A','#3A6A6B','#4A8A7A','#5AAA7A'] },
-    { name:'Abyss Teal',    accent:'#1A3A3A', sites:['#1A3A3A','#2A5A5A','#3A7A7A','#4A9A9A'] },
-    { name:'Storm',         accent:'#2E3A4A', sites:['#2E3A4A','#3A5A6B','#4A7A7A','#5A8A6B'] },
-    { name:'Azure Forge',   accent:'#083050', sites:['#083050','#0C4878','#1060A0','#1878C8'] },
-    { name:'Hot Cobalt',    accent:'#102050', sites:['#102050','#183078','#2040A0','#3050C8'] },
-    { name:'Cobalt Clay',   accent:'#1A2A4A', sites:['#1A2A4A','#2A3A6A','#3A4A8A','#4A5AAA'] },
-    { name:'Steel Tide',    accent:'#1A2A3A', sites:['#1A2A3A','#2A3A5A','#3A4A7A','#4A5A9A'] },
-  ]},
-  { name: 'Nature', themes: [
-    { name:'Moss Stone',    accent:'#3A4A3A', sites:['#3A4A3A','#5A6A4A','#7A7A5A','#9A8A5A'] },
-    { name:'Pine Ridge',    accent:'#2A3A28', sites:['#2A3A28','#3A5A38','#4A7A48','#5A9A58'] },
-    { name:'Midnight Sage', accent:'#2A3A32', sites:['#2A3A32','#3A5A48','#4A7A5E','#5A9A74'] },
-    { name:'Electric Moss', accent:'#104020', sites:['#104020','#186030','#208040','#30A050'] },
-    { name:'Jade Pulse',    accent:'#084030', sites:['#084030','#0C6048','#108060','#18A078'] },
-    { name:'Lime Depth',    accent:'#284008', sites:['#284008','#3C600C','#508010','#64A018'] },
-    { name:'Fern Hollow',   accent:'#2A4028', sites:['#2A4028','#3A5A38','#4A7A48','#5A9A58'] },
-    { name:'Olive Depth',   accent:'#3A4020', sites:['#3A4020','#5A5A30','#7A7A40','#9A9A50'] },
-  ]},
-  { name: 'Berry & Floral', themes: [
-    { name:'Twilight',      accent:'#3D3A5C', sites:['#3D3A5C','#6B4E71','#9B6B8A','#C48B7A'] },
-    { name:'Dusk',          accent:'#4A3F5C', sites:['#4A3F5C','#6B5A7A','#8A6B7A','#A87A6B'] },
-    { name:'Heather',       accent:'#4A3A5A', sites:['#4A3A5A','#6B4A6B','#8A5A7A','#A86A6B'] },
-    { name:'Wine Grove',    accent:'#4A2A3A', sites:['#4A2A3A','#6B3A4A','#8A4A5A','#A85A6A'] },
-    { name:'Plum Iron',     accent:'#3A2A3A', sites:['#3A2A3A','#5A3A5A','#7A4A7A','#9A5A9A'] },
-    { name:'Vivid Plum',    accent:'#401050', sites:['#401050','#601878','#8020A0','#A030C8'] },
-    { name:'Magenta Depth', accent:'#500830', sites:['#500830','#780C48','#A01060','#C81878'] },
-    { name:'Neon Ember',    accent:'#5A1030', sites:['#5A1030','#8A1838','#BA2040','#E03050'] },
-    { name:'Crimson Tide',  accent:'#500818', sites:['#500818','#780C24','#A01030','#C81840'] },
-    { name:'Rose Iron',     accent:'#4A2030', sites:['#4A2030','#6A3040','#8A4050','#AA5060'] },
-  ]},
-  { name: 'Jewel', themes: [
-    { name:'Steel Orchid',  accent:'#3A2A4A', sites:['#3A2A4A','#5A3A6A','#7A4A8A','#9A5AAA'] },
-    { name:'Indigo Clay',   accent:'#2A2A4A', sites:['#2A2A4A','#4A3A5A','#6A4A5A','#8A5A4A'] },
-    { name:'Slate Rose',    accent:'#3A3A4A', sites:['#3A3A4A','#5A4A5A','#7A5A6A','#9A6A6A'] },
-    { name:'Royal Vein',    accent:'#2A1A4A', sites:['#2A1A4A','#4A2A6A','#6A3A8A','#8A4AAA'] },
-    { name:'Amethyst Depth',accent:'#3A1A4A', sites:['#3A1A4A','#5A2A6A','#7A3A8A','#9A4AAA'] },
-    { name:'Sapphire Ore',  accent:'#1A1A4A', sites:['#1A1A4A','#2A2A6A','#3A3A8A','#4A4AAA'] },
-    { name:'Garnet Path',   accent:'#4A1A2A', sites:['#4A1A2A','#6A2A3A','#8A3A4A','#AA4A5A'] },
-    { name:'Topaz Vein',    accent:'#4A3A08', sites:['#4A3A08','#6A5A10','#8A7A18','#AA9A20'] },
-  ]},
-  { name: 'Neutral', themes: [
-    { name:'Charcoal Step', accent:'#2A2A2A', sites:['#2A2A2A','#3A3A3A','#4A4A4A','#5A5A5A'] },
-    { name:'Graphite',      accent:'#2A2E32', sites:['#2A2E32','#3A3E42','#4A4E52','#5A5E62'] },
-    { name:'Stone Path',    accent:'#3A3834', sites:['#3A3834','#4A4844','#5A5854','#6A6864'] },
-    { name:'Iron Dust',     accent:'#3A3230', sites:['#3A3230','#4A4240','#5A5250','#6A6260'] },
-    { name:'Smoke',         accent:'#2E2E32', sites:['#2E2E32','#3E3E42','#4E4E52','#5E5E62'] },
-    { name:'Pewter',        accent:'#32363A', sites:['#32363A','#42464A','#52565A','#62666A'] },
-    { name:'Ash Ridge',     accent:'#3A3632', sites:['#3A3632','#4A4642','#5A5652','#6A6662'] },
-    { name:'Lead',          accent:'#2A2A2E', sites:['#2A2A2E','#3A3A3E','#4A4A4E','#5A5A5E'] },
-  ]},
-  { name: 'Vibrant', themes: [
-    { name:'Pulse Magenta', accent:'#4A0840', sites:['#4A0840','#6A0C60','#8A1080','#AA14A0'] },
-    { name:'Forge Orange',  accent:'#5A2000', sites:['#5A2000','#7A3000','#9A4000','#BA5000'] },
-    { name:'Neon Forest',   accent:'#084020', sites:['#084020','#0C6030','#108040','#14A050'] },
-    { name:'Electric Indigo',accent:'#200850', sites:['#200850','#300C78','#4010A0','#5014C8'] },
-    { name:'Crimson Forge', accent:'#500010', sites:['#500010','#780018','#A00020','#C80028'] },
-    { name:'Teal Charge',   accent:'#004040', sites:['#004040','#006060','#008080','#00A0A0'] },
-    { name:'Violet Strike', accent:'#300850', sites:['#300850','#480C78','#6010A0','#7814C8'] },
-    { name:'Amber Strike',  accent:'#502000', sites:['#502000','#783000','#A04000','#C85000'] },
+  { name: 'Themes', themes: [
+    /* iOS — slightly softened system colours */
+    { name:'iOS', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
+    /* Google */
+    { name:'Google', accent:'#4285F4', sites:['#4285F4','#EA4335','#FBBC05','#34A853'] },
+    /* Blocks (Minecraft overworld) */
+    { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#78A7FF'] },
+    /* Starters (Pokémon Kanto) */
+    { name:'Starters', accent:'#E8A800', sites:['#E03535','#2B5CDE','#2E9B3A','#E8A800'] },
   ]},
 ];
 
@@ -1848,32 +1743,53 @@ function App() {
       const workRaw = j.workDone == null ? '' : String(j.workDone);
       const workText = workRaw.replace(/\s*\n+\s*/g, ' ').trim();
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
-      const timeLine =
-        (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
-        fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
-        (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '');
 
-      const chips = [];
-      if (i != null) chips.push(e('span', { key:'num', style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)));
-      chips.push(e('span', { key:'tn', style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, title));
-      if (s) chips.push(e('span', { key:'site', style:{ background:chipBg, color:'#FFF', padding:'0.22rem 0.62rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:900 } }, s.label || j.site));
-      eq.forEach((x, xi) => chips.push(e('span', { key:'eq'+xi, style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, String(x))));
-      if (ex.length > 0) chips.push(e('span', { key:'ex', style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day'));
-      if (j.locked) chips.push(e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK)));
+      /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
+      const t1 = j.hasTravel ? fmtTime(j.travelDateTime) : '';
+      const tCore = fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '');
+      const t2 = j.hasTravel2 ? fmtTime(j.travel2DateTime) : '';
+      const timeParts = [];
+      if (t1) { timeParts.push(t1); timeParts.push('→'); }
+      timeParts.push(tCore);
+      if (t2) { timeParts.push('→'); timeParts.push(t2); }
+
+      /* Complete = soft transparent stroke (no black border, no checkmark) */
+      const lockedStroke = s
+        ? '2px solid rgba(255,255,255,0.55)'
+        : '2px solid rgba(10,10,12,0.16)';
+      const normalStroke = s ? 'none' : '1px solid ' + LINE;
+      const cardBorder = j.locked ? lockedStroke : normalStroke;
+
+      const leftHead = [];
+      if (i != null) leftHead.push(e('span', { key:'num', style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)));
+      leftHead.push(e('span', { key:'tn', style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, title));
+      if (ex.length > 0) leftHead.push(e('span', { key:'ex', style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day'));
+
+      const rightPills = [];
+      if (s) rightPills.push(e('span', { key:'site', style:{ background:chipBg, color:'#FFF', padding:'0.22rem 0.62rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:900, flexShrink:0 } }, s.label || j.site));
+      eq.forEach((x, xi) => rightPills.push(e('span', { key:'eq'+xi, style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900, flexShrink:0 } }, String(x))));
 
       const children = [
-        e('div', { key:'head', style:{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.4rem' } }, chips),
-        e('div', { key:'time', style:{ fontSize:'0.8rem', color:subC, fontWeight:700 } }, timeLine || '—')
+        e('div', { key:'head', style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
+          e('div', { key:'left', style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } }, leftHead),
+          rightPills.length > 0 && e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.35rem', flexWrap:'nowrap', flexShrink:0, marginLeft:'auto' } }, rightPills)
+        ),
+        e('div', { key:'time', style:{ fontSize:'0.8rem', color:subC, fontWeight:700, textShadow:'none' } },
+          timeParts.length ? timeParts.join(' ') : '—')
       ];
       if (ex.length > 0) {
-        children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.28rem' } },
+        children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.25rem', textShadow:'none' } },
           'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')));
       }
       if (workText) {
-        children.push(e('div', { key:'work', style:{ fontSize:'0.82rem', color:bodyC, margin:'0.5rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35, whiteSpace:'normal' } }, workText));
+        children.push(e('div', { key:'work', style:{
+          fontSize:'0.82rem', color:bodyC, margin:'0.45rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35,
+          whiteSpace:'normal', textShadow:'none',
+          display:'-webkit-box', WebkitLineClamp:6, WebkitBoxOrient:'vertical', overflow:'hidden'
+        } }, workText));
       }
       if (parts.length > 0) {
-        children.push(e('div', { key:'parts', style:{ marginTop:'0.55rem', display:'flex' } },
+        children.push(e('div', { key:'parts', style:{ marginTop:'0.5rem', display:'flex', justifyContent:'flex-end' } },
           e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
             parts.length + (parts.length === 1 ? ' part' : ' parts'))));
       }
@@ -1882,8 +1798,8 @@ function App() {
         key: 'card-'+(j.id != null ? j.id : i),
         style:{ background: s ? s.hex : SURF,
           overflow:'hidden',
-          border: j.locked ? '3px solid '+INK : (s ? 'none' : '1px solid '+LINE),
-          boxShadow: j.locked ? 'inset 0 0 0 1px '+SURF : (s ? 'none' : SHADOW_SM),
+          border: cardBorder,
+          boxShadow: s ? 'none' : SHADOW_SM,
           borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
@@ -1925,12 +1841,11 @@ function App() {
 
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
-    if (d && d.allLocked) border = '2px solid '+INK;
+    if (d && d.allLocked) border = has ? '2px solid rgba(255,255,255,0.55)' : '2px solid rgba(10,10,12,0.16)';
     if (selected) border = '2px solid '+(has ? '#FFFFFF' : INK);
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
-    const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
-    const boxShadow = doneRing || (selected ? '0 0 0 2px '+(has ? 'rgba(255,255,255,0.55)' : 'rgba(10,10,12,0.2)') : 'none');
+    const boxShadow = selected ? '0 0 0 2px '+(has ? 'rgba(255,255,255,0.55)' : 'rgba(10,10,12,0.2)') : 'none';
 
     return e('button', { key:dnum, className:'day-cell-btn', onClick:()=>{
         const clicked = new Date(ms.y, ms.m, dnum);
@@ -2003,21 +1918,22 @@ function App() {
     }
 
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
-    const doneRing = allLocked ? 'inset 0 0 0 1px '+SURF : null;
-    const weekShadow = doneRing || 'none';
+    const weekBorder = allLocked
+      ? (has ? '2px solid rgba(255,255,255,0.55)' : '2px solid rgba(10,10,12,0.16)')
+      : (has ? 'none' : '1px solid rgba(10,10,12,0.10)');
 
     return e('button', { key:i,
       onClick:()=>{ setAnchorDate(dt); setDayDetail(null); if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day'); },
       style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', gap:'0.75rem', cursor:'pointer',
         background:bg, minHeight: weekend ? '48px' : '66px', overflow:'hidden', position:'relative',
-        border: allLocked ? '3px solid '+INK : (has ? 'none' : '1px solid rgba(10,10,12,0.10)'),
+        border: weekBorder,
         borderRadius:'17px', padding:'0.5rem 0.75rem',
         transition:'box-shadow .25s ease, border-color .25s ease',
-        boxShadow:weekShadow } },
+        boxShadow:'none' } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
         e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
         e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg,
-          textShadow: has ? '0 1px 2px rgba(0,0,0,0.45), 0 0 8px rgba(0,0,0,0.25)' : 'none' } }, String(dt.getDate())),
+          textShadow:'none' } }, String(dt.getDate())),
         today ? e('span', { key:'td', style:{ display:'block', width:'5px', height:'5px', borderRadius:'999px',
           background: has ? '#FFFFFF' : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
       e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
@@ -2025,10 +1941,9 @@ function App() {
           ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700 } }, '—')
           : [ e('div', { key:'s', style:{ display:'flex', gap:'0.25rem', flexWrap:'wrap' } },
                 sites.map(s => e('span', { key:s, style:{ background:'rgba(255,255,255,0.22)', color:'#FFF',
-                  padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s].label))),
+                  padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s] ? SITES[s].label : s))),
               e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:700 } },
-                list.length + (list.length===1?' ticket':' tickets')) ]),
-      allLocked ? TickIcon(true, 16, APRICOT) : null);
+                list.length + (list.length===1?' ticket':' tickets')) ]));
   };
 
   const weekGrid = e('div', { style:{ ...PANEL(), padding:'0.9rem 0.85rem 1rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
