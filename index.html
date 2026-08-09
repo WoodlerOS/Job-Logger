@@ -2087,22 +2087,23 @@ function App() {
         setMonthPickerOpen(false);
         if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day');
       },
-      style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
-        background:bg, border:border, padding: weekend ? '5px 3px' : '8px 5px',
+      style:{ minHeight: weekend ? '60px' : '92px', borderRadius: weekend ? '13px' : '18px',
+        background:bg, border:border, padding: weekend ? '6px 4px' : '10px 6px 8px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
-        gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
+        gap:'4px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
-      e('span', { style:{ fontSize: weekend ? '0.72rem' : '0.92rem', fontWeight: today?900:800, color:fg,
-        lineHeight:1, letterSpacing:'-0.2px', textShadow:'none' } }, String(dnum)),
-      has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'2px' } },
+      e('span', { style:{ fontSize: weekend ? '0.76rem' : '1rem', fontWeight: today?900:800, color:fg,
+        lineHeight:1, letterSpacing:'-0.25px', textShadow:'none' } }, String(dnum)),
+      has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'3px', alignItems:'center', marginTop:'3px', width:'100%', padding:'0 2px' } },
         sites.slice(0,2).map(sk => {
           const hex = (SITES[sk] && SITES[sk].hex) || '#888';
-          return e('span', { key:sk, style:{ fontSize:'0.58rem', fontWeight:900, color:'#FFF',
-            background: hex, borderRadius:'6px', padding:'2px 6px', letterSpacing:'0.2px',
+          return e('span', { key:sk, style:{ fontSize:'0.62rem', fontWeight:900, color:'#FFF',
+            background: hex, borderRadius:'8px', padding:'3px 8px', letterSpacing:'0.25px',
+            minWidth:'70%', textAlign:'center',
             boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45), 0 1px 2px rgba(0,0,0,0.12)' } }, (SITES[sk] && SITES[sk].label) || sk);
         }),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.52rem', fontWeight:800, color:'rgba(255,255,255,0.95)' } },
+        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:800, color:'rgba(255,255,255,0.95)', marginTop:'1px' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
         sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null,
@@ -2113,10 +2114,10 @@ function App() {
 
   const monthGrid = e('div', { style:{ ...PANEL(), padding:'1rem 0.85rem 1.15rem' } },
     showWeekends ? [
-      e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'8px', marginBottom:'10px' } },
+      e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px', marginBottom:'12px' } },
         DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
           fontWeight:900, color: i<5 ? MID : GREY, letterSpacing:'0.5px' } }, i<5 ? d.toUpperCase() : d[0]))),
-      e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'8px' } },
+      e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px' } },
         [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
         [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1)))
     ] : (() => {
@@ -2124,7 +2125,7 @@ function App() {
         .filter(dnum => ((new Date(ms.y, ms.m, dnum).getDay()+6)%7) < 5);
       const blanks = weekdayNums.length ? ((new Date(ms.y, ms.m, weekdayNums[0]).getDay()+6)%7) : 0;
       return [
-        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'10px' } },
+        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'12px' } },
           DOWF.slice(0,5).map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.6rem',
             fontWeight:900, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
         e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px' } },
@@ -2231,100 +2232,129 @@ function App() {
     setAnchorDate(new Date(y, m, Math.min(anchorDate.getDate(), days)));
   };
 
-  const mpProgress = Math.min(1, mpDY / 140);
+  const closeMonthPicker = () => {
+    setMonthPickerOpen(false);
+    setMpDY(0);
+    setMpDragging(false);
+    setMpMonthDX(0);
+    setMpMonthDragging(false);
+    window.__mpDrag = null;
+  };
+
+  const mpProgress = Math.min(1, Math.max(0, mpDY) / 140);
+
+  /* Unified sheet drag:
+     - Handle: free up/down control (rubber-band upward)
+     - Anywhere else: downward swipe dismisses; upward ignored
+     - Always preventDefault so the page behind never scrolls */
+  const beginSheetDrag = (ev, mode) => {
+    if (!ev.touches || !ev.touches[0]) return;
+    const t = ev.touches[0];
+    window.__mpDrag = {
+      y: t.clientY,
+      dy: 0,
+      live: true,
+      mode: mode || 'dismiss', /* 'handle' | 'dismiss' */
+      locked: false
+    };
+    setMpDragging(true);
+  };
+  const moveSheetDrag = (ev) => {
+    if (!window.__mpDrag || !window.__mpDrag.live) return;
+    const t = ev.touches[0];
+    let dy = t.clientY - window.__mpDrag.y;
+    if (window.__mpDrag.mode === 'handle') {
+      /* free control: allow slight upward lift, full downward */
+      if (dy < 0) dy = dy * 0.35;
+      dy = Math.max(-40, Math.min(220, dy));
+    } else {
+      /* body: only downward counts toward dismiss */
+      if (dy < 0) dy = 0;
+      dy = Math.min(220, dy);
+    }
+    window.__mpDrag.dy = dy;
+    setMpDY(dy);
+    if (ev.cancelable) ev.preventDefault();
+    ev.stopPropagation();
+  };
+  const endSheetDrag = (ev) => {
+    if (ev) ev.stopPropagation();
+    const dy = (window.__mpDrag && window.__mpDrag.dy) || 0;
+    const mode = window.__mpDrag && window.__mpDrag.mode;
+    window.__mpDrag = null;
+    setMpDragging(false);
+    if (dy > 70) closeMonthPicker();
+    else setMpDY(0);
+  };
+
   const monthPicker = monthPickerOpen && e('div', {
       key: 'month-picker',
-      onTouchStart:(ev)=>ev.stopPropagation(),
-      onTouchMove:(ev)=>{ ev.stopPropagation(); if (ev.cancelable) ev.preventDefault(); },
+      onTouchStart:(ev)=>{ ev.stopPropagation(); },
+      onTouchMove:(ev)=>{
+        ev.stopPropagation();
+        if (ev.cancelable) ev.preventDefault();
+      },
       onTouchEnd:(ev)=>ev.stopPropagation(),
       style:{
         position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:90,
         display:'flex', alignItems:'flex-end', justifyContent:'center',
         paddingTop: 'env(safe-area-inset-top)',
-        background:'rgba(0,0,0,'+(0.55 * (1 - mpProgress * 0.7))+')',
+        background:'rgba(0,0,0,'+(0.58 * (1 - mpProgress * 0.75))+')',
         transition: mpDragging ? 'none' : 'background .2s ease',
-        touchAction: 'none'
+        touchAction: 'none',
+        overscrollBehavior: 'none'
       }
     },
       e('div', {
-        onClick:()=>{ setMonthPickerOpen(false); setMpDY(0); setMpDragging(false); setMpMonthDX(0); },
-        style:{ position:'absolute', inset:0 }
+        onClick: closeMonthPicker,
+        style:{ position:'absolute', inset:0, touchAction:'none' }
       }),
       e('div', {
         ref: (el) => { mpPanelRef.current = el; },
         onClick:(ev)=>ev.stopPropagation(),
         onTouchStart:(ev)=>{
           ev.stopPropagation();
-          const t = ev.touches[0];
-          const panel = mpPanelRef.current;
-          const atTop = !panel || panel.scrollTop <= 2;
-          window.__mpDrag = { y: t.clientY, dy: 0, live: atTop, startedAtTop: atTop };
-          if (atTop) setMpDragging(true);
+          /* Body of sheet: any downward drag dismisses */
+          beginSheetDrag(ev, 'dismiss');
         },
-        onTouchMove:(ev)=>{
-          ev.stopPropagation();
-          if (!window.__mpDrag || !window.__mpDrag.live) return;
-          const t = ev.touches[0];
-          const dy = Math.max(0, t.clientY - window.__mpDrag.y);
-          window.__mpDrag.dy = dy;
-          setMpDY(dy);
-          if (ev.cancelable) ev.preventDefault();
-        },
-        onTouchEnd:(ev)=>{
-          ev.stopPropagation();
-          const dy = (window.__mpDrag && window.__mpDrag.dy) || 0;
-          window.__mpDrag = null;
-          setMpDragging(false);
-          if (dy > 90) { setMonthPickerOpen(false); setMpDY(0); setMpMonthDX(0); }
-          else setMpDY(0);
-        },
+        onTouchMove: moveSheetDrag,
+        onTouchEnd: endSheetDrag,
+        onTouchCancel: endSheetDrag,
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
-          padding:'0.85rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
-          boxShadow:'0 -12px 40px rgba(0,0,0,'+(0.22 * (1 - mpProgress * 0.5))+')',
-          transform: 'translateY('+mpDY+'px) scale('+(1 - mpProgress * 0.025)+')',
+          padding:'0.35rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
+          boxShadow:'0 -12px 40px rgba(0,0,0,'+(0.24 * (1 - mpProgress * 0.5))+')',
+          transform: 'translateY('+Math.max(0, mpDY)+'px) scale('+(1 - mpProgress * 0.03)+')',
           transition: mpDragging ? 'none' : 'transform .28s cubic-bezier(.22,.9,.3,1)',
-          maxHeight:'min(88vh, 640px)', overflowY:'auto',
-          zIndex: 1, touchAction: 'pan-y',
+          maxHeight:'min(88vh, 640px)', overflowY: mpDragging ? 'hidden' : 'auto',
+          zIndex: 1,
+          touchAction: 'none',
           opacity: 1 - mpProgress * 0.12,
+          overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch'
         }
       },
-        /* Drag handle — primary dismiss target */
+        /* Handle — free vertical control */
         e('div', {
           onTouchStart:(ev)=>{
             ev.stopPropagation();
-            const t = ev.touches[0];
-            window.__mpDrag = { y: t.clientY, dy: 0, live: true, startedAtTop: true };
-            setMpDragging(true);
+            beginSheetDrag(ev, 'handle');
           },
-          onTouchMove:(ev)=>{
-            ev.stopPropagation();
-            if (!window.__mpDrag || !window.__mpDrag.live) return;
-            const t = ev.touches[0];
-            const dy = Math.max(0, t.clientY - window.__mpDrag.y);
-            window.__mpDrag.dy = dy;
-            setMpDY(dy);
-            if (ev.cancelable) ev.preventDefault();
-          },
-          onTouchEnd:(ev)=>{
-            ev.stopPropagation();
-            const dy = (window.__mpDrag && window.__mpDrag.dy) || 0;
-            window.__mpDrag = null;
-            setMpDragging(false);
-            if (dy > 90) { setMonthPickerOpen(false); setMpDY(0); setMpMonthDX(0); }
-            else setMpDY(0);
-          },
+          onTouchMove: moveSheetDrag,
+          onTouchEnd: endSheetDrag,
+          onTouchCancel: endSheetDrag,
           style:{
-            width:'100%', padding:'0.35rem 0 0.55rem', cursor:'grab',
-            display:'flex', justifyContent:'center', touchAction:'none'
+            width:'100%', padding:'0.55rem 0 0.65rem', cursor:'grab',
+            display:'flex', justifyContent:'center', touchAction:'none',
+            /* larger hit target for the grabber */
+            marginBottom: '0.1rem'
           }
         },
           e('div', { style:{
-            width: (40 + mpProgress * 20) + 'px', height: (5 + mpProgress * 2) + 'px',
+            width: (44 + mpProgress * 22) + 'px', height: (5 + mpProgress * 2.5) + 'px',
             borderRadius:'999px',
-            background: mpDY > 90 ? INK : LINE,
+            background: mpDY > 70 ? INK : LINE,
             transition: mpDragging ? 'none' : 'width .2s ease, background .15s ease',
             opacity: 0.95
           } })
@@ -2338,45 +2368,64 @@ function App() {
           ),
           e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))
         ),
-        /* Horizontal swipe on the grid changes month */
+        /* Horizontal swipe changes month; vertical still goes to parent dismiss */
         e('div', {
           onTouchStart:(ev)=>{
             const t = ev.touches[0];
-            mpMonthTouch.current = { x:t.clientX, y:t.clientY, live:true };
-            setMpMonthDragging(true);
+            mpMonthTouch.current = { x:t.clientX, y:t.clientY, live:true, axis:null };
+            /* also start dismiss drag so downward works on the grid */
+            beginSheetDrag(ev, 'dismiss');
           },
           onTouchMove:(ev)=>{
-            if (!mpMonthTouch.current.live) return;
+            if (!mpMonthTouch.current.live && !(window.__mpDrag && window.__mpDrag.live)) return;
             const t = ev.touches[0];
-            const dx = t.clientX - mpMonthTouch.current.x;
-            const dy = t.clientY - mpMonthTouch.current.y;
-            if (Math.abs(dy) > Math.abs(dx) + 10) {
-              mpMonthTouch.current.live = false;
-              setMpMonthDragging(false);
-              setMpMonthDX(0);
+            const dx = t.clientX - (mpMonthTouch.current.x || t.clientX);
+            const dy = t.clientY - (mpMonthTouch.current.y || t.clientY);
+            if (mpMonthTouch.current.live && mpMonthTouch.current.axis == null) {
+              if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                mpMonthTouch.current.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+              }
+            }
+            if (mpMonthTouch.current.axis === 'x') {
+              /* cancel vertical dismiss while swiping months */
+              if (window.__mpDrag) window.__mpDrag.live = false;
+              setMpDY(0);
+              setMpMonthDragging(true);
+              setMpMonthDX(Math.max(-90, Math.min(90, dx)));
+              if (ev.cancelable) ev.preventDefault();
               return;
             }
-            if (Math.abs(dx) > 8 && ev.cancelable) ev.preventDefault();
-            setMpMonthDX(Math.max(-90, Math.min(90, dx)));
+            /* vertical → dismiss path */
+            moveSheetDrag(ev);
           },
-          onTouchEnd:()=>{
-            if (!mpMonthTouch.current.live) { setMpMonthDragging(false); setMpMonthDX(0); return; }
-            mpMonthTouch.current.live = false;
-            setMpMonthDragging(false);
-            if (mpMonthDX <= -40) shiftMonth(1);
-            else if (mpMonthDX >= 40) shiftMonth(-1);
-            setMpMonthDX(0);
+          onTouchEnd:(ev)=>{
+            if (mpMonthTouch.current.axis === 'x') {
+              const dx = mpMonthDX;
+              mpMonthTouch.current = { x:0, y:0, live:false, axis:null };
+              setMpMonthDragging(false);
+              if (dx <= -40) shiftMonth(1);
+              else if (dx >= 40) shiftMonth(-1);
+              setMpMonthDX(0);
+              window.__mpDrag = null;
+              setMpDragging(false);
+              return;
+            }
+            mpMonthTouch.current = { x:0, y:0, live:false, axis:null };
+            endSheetDrag(ev);
           },
-          onTouchCancel:()=>{ mpMonthTouch.current.live = false; setMpMonthDragging(false); setMpMonthDX(0); },
+          onTouchCancel:(ev)=>{
+            mpMonthTouch.current = { x:0, y:0, live:false, axis:null };
+            endSheetDrag(ev);
+          },
           style:{
             transform:'translateX('+mpMonthDX+'px)',
             transition: mpMonthDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)',
             opacity: 1 - Math.abs(mpMonthDX)/200,
-            touchAction: 'pan-y'
+            touchAction: 'none'
           }
         }, monthGrid),
         e('button', {
-          onClick:()=>{ goToday(); setMonthPickerOpen(false); setMpDY(0); },
+          onClick:()=>{ goToday(); closeMonthPicker(); },
           style:{ width:'100%', marginTop:'0.75rem', border:'none', background:SURF2, color:INK,
             borderRadius:'14px', padding:'0.75rem', fontWeight:800, fontSize:'0.84rem', cursor:'pointer' }
         }, 'Jump to today')
@@ -2390,7 +2439,7 @@ function App() {
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
         e('button', {
-          onClick:()=>{ setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMonthPickerOpen(true); },
+          onClick:()=>{ setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true); },
           style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
             borderRadius:'10px' }
         },
