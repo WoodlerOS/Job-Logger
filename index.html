@@ -713,8 +713,16 @@ const DEFAULT_SETTINGS = {
   showRouteKey: true,
   compactCards: false,
   defaultStartTime: '09:00',
+  defaultFinishOffset: 120,
   rememberLastSite: true,
-  showDurationOnCards: true
+  showDurationOnCards: true,
+  showJobCount: true,
+  hapticFeedback: true,
+  autoAddTravel: false,
+  defaultTravelMins: 30,
+  sortTickets: 'time',
+  weekStartsMon: true,
+  largeText: false
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -971,6 +979,9 @@ function App() {
   const [pinnedDay, setPinnedDay] = useState(null); // { y, m, d, tickets, siteSequence } from month cell click
   const [showWeekends, setShowWeekends] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, defaults: false, equipment: false, account: true });
+  const edgeSwipe = useRef({ live:false, x:0, y:0 });
+  const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
   const [swipeX, setSwipeX] = useState(0);
   const [burst, setBurst] = useState(0);
@@ -1640,6 +1651,7 @@ function App() {
   const goToday = () => { setAnchorDate(new Date()); setPinnedDay(null); };
 
   const onCalTouchStart = (ev) => {
+    if (monthPickerOpen || menuOpen) return;
     const t = ev.touches[0];
     calTouch.current = { x:t.clientX, y:t.clientY, live:true };
     setCalDragging(true);
@@ -1739,7 +1751,7 @@ function App() {
       color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
-  const closeMenu = () => { setMenuOpen(false); setMenuSearch(''); };
+  const closeMenu = () => { setMenuOpen(false); setMenuSlide(0); setMenuSearch(''); };
 
   const sideMenuItem = (label, onClick, muted) =>
     e('button', {
@@ -1753,13 +1765,15 @@ function App() {
       }
     }, label);
 
-  const menu = menuOpen && e('div', {
+  const menuVisible = menuOpen || menuSlide > 0.02;
+  const menu = menuVisible && e('div', {
       key: 'side-menu',
-      style:{ position:'fixed', inset:0, zIndex:80, display:'flex' }
+      style:{ position:'fixed', inset:0, zIndex:80, display:'flex', pointerEvents: menuOpen || menuSlide > 0.15 ? 'auto' : 'none' }
     },
       e('div', {
         onClick: closeMenu,
-        style:{ position:'absolute', inset:0, background:'rgba(0,0,0,0.45)', animation:'fadeIn .2s ease' }
+        style:{ position:'absolute', inset:0, background:'rgba(0,0,0,'+(0.45 * (menuOpen ? 1 : menuSlide))+')',
+          transition: menuOpen ? 'none' : 'background .12s ease' }
       }),
       e('div', {
         style:{
@@ -1768,7 +1782,9 @@ function App() {
           padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.15rem',
           boxShadow:'12px 0 40px rgba(0,0,0,0.35)',
-          animation:'slideInLeft .28s cubic-bezier(.22,.9,.3,1)'
+          transform: menuOpen ? 'translateX(0)' : 'translateX('+((-100 + menuSlide * 100))+'%)',
+          transition: menuOpen ? 'transform .32s cubic-bezier(.22,.9,.3,1)' : (edgeSwipe.current.live ? 'none' : 'transform .22s ease'),
+          willChange: 'transform'
         }
       },
         e('div', { style:{ fontSize:'0.68rem', fontWeight:800, letterSpacing:'0.12em', textTransform:'uppercase',
@@ -1846,9 +1862,29 @@ function App() {
     closeBtn(()=>setFormMenu(false))
   ].filter(Boolean), ()=>setFormMenu(false));
 
-  const header = (view !== 'form' && !settingsOpen) && e('div', { style:{ padding:'0.35rem 0.75rem 0.15rem', display:'flex', justifyContent:'flex-start', alignItems:'center' } },
-    e('button', { onClick:()=>setMenuOpen(true), style:{ background:'none', border:'none', width:'38px', height:'38px',
-      display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', padding:0 } }, DotsIcon(19, INK)));
+  const header = null;
+
+  /* Edge-swipe from left to open the black side menu (home / list only) */
+  const onEdgeStart = (ev) => {
+    if (view === 'form' || settingsOpen || themesOpen || backupsOpen || monthPickerOpen) return;
+    const t = ev.touches[0];
+    if (t.clientX > 28) { edgeSwipe.current.live = false; return; }
+    edgeSwipe.current = { live:true, x:t.clientX, y:t.clientY };
+  };
+  const onEdgeMove = (ev) => {
+    if (!edgeSwipe.current.live) return;
+    const t = ev.touches[0];
+    const dx = t.clientX - edgeSwipe.current.x;
+    const dy = t.clientY - edgeSwipe.current.y;
+    if (Math.abs(dy) > Math.abs(dx) + 10) { edgeSwipe.current.live = false; setMenuSlide(0); return; }
+    if (dx > 8) setMenuSlide(Math.min(1, dx / 220));
+  };
+  const onEdgeEnd = () => {
+    if (!edgeSwipe.current.live) { setMenuSlide(0); return; }
+    edgeSwipe.current.live = false;
+    if (menuSlide >= 0.28) { setMenuOpen(true); setMenuSlide(1); }
+    else setMenuSlide(0);
+  };
 
   const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('button', {
     className: 'fab-btn',
@@ -1960,7 +1996,7 @@ function App() {
           position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'18px', padding:'0.9rem 0.95rem', cursor:'pointer',
+          borderRadius:'18px', padding: settings.compactCards ? '0.65rem 0.75rem' : '0.9rem 0.95rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
@@ -2141,7 +2177,7 @@ function App() {
       : dv.siteSequence;
 
   const dayView = e('div', { style:{ ...PANEL(), padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700 } },
+    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700 } },
       mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
     mobileDayList.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
@@ -2158,17 +2194,33 @@ function App() {
 
   const monthPicker = monthPickerOpen && e('div', {
       key: 'month-picker',
-      style:{ position:'fixed', inset:0, zIndex:70, display:'flex', alignItems:'flex-end', justifyContent:'center' }
+      onTouchStart:(ev)=>ev.stopPropagation(),
+      onTouchMove:(ev)=>ev.stopPropagation(),
+      onTouchEnd:(ev)=>ev.stopPropagation(),
+      style:{
+        position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:90,
+        display:'flex', alignItems:'flex-end', justifyContent:'center',
+        paddingTop: 'env(safe-area-inset-top)',
+        background:'rgba(0,0,0,0.55)',
+        animation:'fadeIn .22s ease'
+      }
     },
-      e('div', { onClick:()=>setMonthPickerOpen(false), style:{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)', animation:'fadeIn .2s ease' } }),
       e('div', {
+        onClick:()=>setMonthPickerOpen(false),
+        style:{ position:'absolute', inset:0 }
+      }),
+      e('div', {
+        onClick:(ev)=>ev.stopPropagation(),
+        onTouchStart:(ev)=>ev.stopPropagation(),
+        onTouchMove:(ev)=>ev.stopPropagation(),
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
           padding:'0.85rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
-          boxShadow:'0 -12px 40px rgba(0,0,0,0.18)',
+          boxShadow:'0 -12px 40px rgba(0,0,0,0.22)',
           animation:'slideUp .32s cubic-bezier(.22,.9,.3,1)',
-          maxHeight:'88vh', overflowY:'auto'
+          maxHeight:'min(88vh, 640px)', overflowY:'auto',
+          zIndex: 1
         }
       },
         e('div', { style:{ width:'36px', height:'4px', borderRadius:'999px', background:LINE, margin:'0 auto 0.85rem' } }),
@@ -2201,9 +2253,12 @@ function App() {
   const monthView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
     e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem' } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.05rem', gap:'0.25rem' } },
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem' } },
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
+        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
+          padding:'3px 6px 3px 2px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
+          e('span', { style:{ width:'6px', height:'6px', borderRadius:'999px', background:INK } })),
         e('button', {
           onClick:()=>setMonthPickerOpen(true),
           style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
@@ -2213,9 +2268,6 @@ function App() {
             anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
           e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap for month')
         ),
-        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
-          padding:'3px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
-          e('span', { style:{ width:'5px', height:'5px', borderRadius:'999px', background:INK } })),
         e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK)))),
 
@@ -2223,9 +2275,7 @@ function App() {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
       style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
         opacity: 1 - Math.abs(calDX)/220 } },
-      dayView),
-
-    monthPicker
+      dayView)
   );
 
   // daySheet popup removed — tapping a day now switches to Day mode
@@ -2550,123 +2600,155 @@ function App() {
   };
 
   const toggleRow = (label, sub, value, onToggle) =>
-    e('button', { key:label, className:'d-hover', onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem', textAlign:'left',
-      background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer' } },
+    e('button', { key:label, className:'d-hover', onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
+      background:'transparent', border:'none', borderBottom:'1px solid '+LINE, borderRadius:0, padding:'0.72rem 0.15rem', cursor:'pointer' } },
       e('div', { style:{ flex:1, minWidth:0 } },
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, label),
-        sub && e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, sub)),
-      e('div', { style:{ width:'42px', height:'24px', borderRadius:'8px', background: value?INK:SURF2,
+        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, label),
+        sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px', lineHeight:1.3 } }, sub)),
+      e('div', { style:{ width:'42px', height:'24px', borderRadius:'999px', background: value?INK:SURF3,
         border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0 } },
-        e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'5px',
+        e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'999px',
           background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
 
   const chipSelect = (label, options, value, onChange) =>
-    e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.5rem', background:SURF, border:'1px solid '+LINE,
-      borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-      e('span', { style:{ ...LBL } }, label),
-      e('div', { style:{ display:'flex', gap:'0.4rem', flexWrap:'wrap' } },
-        options.map(opt => e('button', { key:opt.key, className:'d-hover-btn', onClick:()=>onChange(opt.key),
-          style:{ padding:'0.4rem 0.75rem', borderRadius:'9px', border: value===opt.key?'none':'1px solid '+LINE,
-            background: value===opt.key?VIOLET:SURF2, color: value===opt.key?(DARK_MODE?'#0A0A0C':'#FFFFFF'):INK,
-            fontSize:'0.75rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
+    e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid '+LINE } },
+      e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, label),
+      e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
+        options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>onChange(opt.key),
+          style:{ padding:'0.38rem 0.7rem', borderRadius:'999px', border: value===opt.key?'none':'1px solid '+LINE,
+            background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
+            fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
 
-  const settingsSection = (title) => e('div', { key:'h-'+title, className:'settings-span-2', style:{ ...LBL, marginTop:'0.5rem' } }, title);
+  const collapseSection = (key, title, children) => {
+    const open = !!settingsSections[key];
+    return e('div', { key:key, className:'settings-span-2 form-card', style:{
+        background:SURF, borderRadius:'20px', border:'1px solid '+LINE,
+        boxShadow:'0 6px 18px rgba(22,23,50,0.06)', overflow:'hidden', marginBottom:'0.55rem'
+      } },
+      e('button', {
+        onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
+        style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem',
+          background:'transparent', border:'none', padding:'0.9rem 1rem', cursor:'pointer', textAlign:'left' }
+      },
+        e('span', { style:{ fontSize:'0.88rem', fontWeight:900, color:INK, letterSpacing:'-0.2px' } }, title),
+        e('span', { style:{
+          display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
+          transition:'transform .22s ease', opacity:0.55
+        } }, ChevronLeft(16, GREY))
+      ),
+      open && e('div', { style:{ padding:'0 0.95rem 0.85rem', display:'flex', flexDirection:'column' } }, children)
+    );
+  };
 
-  const settingsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
-    e('div', { className:'settings-span-2', style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
+  const settingsView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.15rem 0.1rem 0.55rem' } },
       e('button', { className:'d-hover-btn', onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px', color:INK } }, 'Settings'),
+      e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
-    e('div', { className:'settings-desktop-grid', style:{ display:'flex', flexDirection:'column', gap:'0.7rem' } },
-      settingsSection('Theme'),
-      e('button', { key:'themesRow', className:'d-hover settings-span-2', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
-        background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem', cursor:'pointer', textAlign:'left' } },
+    collapseSection('appearance', 'Appearance', [
+      e('button', { key:'themesRow', className:'d-hover', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
+        background:SURF2, border:'none', borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer', textAlign:'left', marginBottom:'0.35rem' } },
         e('div', null,
-          e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Browse themes'),
-          e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' preset palettes')),
-        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
+          e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Colour themes'),
+          e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' palettes')),
+        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
           e('div', { style:{ display:'flex', gap:'3px' } },
             sitesToList().slice(0,4).map((s,hi) =>
-              e('span', { key:hi, style:{ width:'16px', height:'16px', borderRadius:'4px', background:s.hex || '#888', display:'block', flexShrink:0 } }))),
-          e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(15, GREY)))),
+              e('span', { key:hi, style:{ width:'14px', height:'14px', borderRadius:'999px', background:s.hex || '#888', display:'block', flexShrink:0 } }))),
+          e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(14, GREY)))),
+      toggleRow('Dark mode', 'Dim the whole interface',
+        settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
+      !settings.darkMode && e('div', { key:'bgdim', style:{ padding:'0.55rem 0.15rem 0.35rem', borderBottom:'1px solid '+LINE } },
+        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK } }, 'Background brightness'),
+        e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
+          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
+          style:{ width:'100%', accentColor:INK, marginTop:'0.35rem' } })),
+      !settings.darkMode && e('div', { key:'carddim', style:{ padding:'0.55rem 0.15rem 0.35rem', borderBottom:'1px solid '+LINE } },
+        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK } }, 'Card brightness'),
+        e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
+          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
+          style:{ width:'100%', accentColor:INK, marginTop:'0.35rem' } })),
+      toggleRow('Larger text', 'Slightly bigger type on cards and forms',
+        !!settings.largeText, ()=>saveSettings({ largeText: !settings.largeText }))
+    ]),
 
-      settingsSection('Equipment'),
-      e('div', { className:'settings-span-2', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+    collapseSection('tickets', 'Tickets & cards', [
+      toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
+        settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
+      toggleRow('Confirm before delete', 'Ask before removing a ticket',
+        settings.confirmDelete !== false, ()=>saveSettings({ confirmDelete: !(settings.confirmDelete !== false) })),
+      toggleRow('Show duration on cards', 'On-site time on the right of the time line',
+        settings.showDurationOnCards !== false, ()=>saveSettings({ showDurationOnCards: !(settings.showDurationOnCards !== false) })),
+      toggleRow('Show job count on day', '“X jobs logged” under the date',
+        settings.showJobCount !== false, ()=>saveSettings({ showJobCount: !(settings.showJobCount !== false) })),
+      toggleRow('Show site key in menu', 'Colour legend in the side menu',
+        settings.showRouteKey !== false, ()=>saveSettings({ showRouteKey: !(settings.showRouteKey !== false) })),
+      toggleRow('Compact cards', 'Tighter spacing on ticket cards',
+        !!settings.compactCards, ()=>saveSettings({ compactCards: !settings.compactCards })),
+      chipSelect('Sort tickets by', [{key:'time',label:'Start time'},{key:'number',label:'Ticket no.'},{key:'site',label:'Site'}],
+        settings.sortTickets || 'time', (v)=>saveSettings({ sortTickets:v }))
+    ]),
+
+    collapseSection('defaults', 'New ticket defaults', [
+      toggleRow('Remember last site', 'Pre-fill site from your previous ticket',
+        settings.rememberLastSite !== false, ()=>saveSettings({ rememberLastSite: !(settings.rememberLastSite !== false) })),
+      toggleRow('Suggest travel times', 'Offer travel before/after when creating tickets',
+        !!settings.autoAddTravel, ()=>saveSettings({ autoAddTravel: !settings.autoAddTravel })),
+      chipSelect('Default start time', [{key:'08:00',label:'08:00'},{key:'08:30',label:'08:30'},{key:'09:00',label:'09:00'},{key:'09:30',label:'09:30'},{key:'10:00',label:'10:00'}],
+        settings.defaultStartTime || '09:00', (v)=>saveSettings({ defaultStartTime:v })),
+      chipSelect('Default job length', [{key:60,label:'1h'},{key:90,label:'1.5h'},{key:120,label:'2h'},{key:180,label:'3h'},{key:240,label:'4h'}],
+        settings.defaultFinishOffset || 120, (v)=>saveSettings({ defaultFinishOffset:v })),
+      chipSelect('Round times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
+        settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
+      chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'All'}],
+        settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v }))
+    ]),
+
+    collapseSection('equipment', 'Equipment', [
+      e('div', { key:'eqlist', style:{ display:'flex', flexDirection:'column', gap:'0.4rem', paddingTop:'0.15rem' } },
         equipEdits.map((x,idx) => e('div', { key:x.key, className:'d-hover', style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-          background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.5rem 0.6rem' } },
+          background:SURF2, borderRadius:'12px', padding:'0.45rem 0.55rem' } },
           e('input', { type:'text', value:x.label, onChange:(ev)=>updateEquipLabel(idx, ev.target.value),
             onBlur:()=>commitEquip(equipEdits),
             style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:800, color:INK } }),
           e('button', { onClick:()=>removeEquip(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
             TrashIcon(16, GREY)))),
-        e('button', { className:'d-hover-btn', onClick:addEquip, style:{ width:'100%', border:'1.5px dashed '+LINE, background:'transparent', color:MID,
-          borderRadius:'14px', padding:'0.65rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment')),
+        e('button', { className:'d-hover-btn', onClick:addEquip, style:{ width:'100%', border:'none', background:SURF2, color:MID,
+          borderRadius:'12px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment'))
+    ]),
 
-      settingsSection('Behaviour'),
-      toggleRow('Dark mode', 'Switches the app to a dark colour scheme',
-        settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
-      !settings.darkMode && e('div', { key:'bgdim', className:'d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Background brightness'),
-        e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down the page white'),
-        e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
-          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
-          style:{ width:'100%', accentColor:INK } })),
-      !settings.darkMode && e('div', { key:'carddim', className:'d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem' } },
-        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Card brightness'),
-        e('div', { style:{ fontSize:'0.68rem', color:GREY, margin:'2px 0 0.55rem' } }, 'Lower to tone down white cards and panels'),
-        e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
-          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
-          style:{ width:'100%', accentColor:INK } })),
-      toggleRow('Lock tickets when complete', 'Marking a ticket ready stops it being edited until unlocked',
-        settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
-      toggleRow('Confirm before delete', 'Ask before removing a ticket',
-        settings.confirmDelete !== false, ()=>saveSettings({ confirmDelete: !(settings.confirmDelete !== false) })),
-      toggleRow('Show site key in menu', 'Colour legend for each site',
-        settings.showRouteKey !== false, ()=>saveSettings({ showRouteKey: !(settings.showRouteKey !== false) })),
-      toggleRow('Show duration on cards', 'On-site time on the right of the time line',
-        settings.showDurationOnCards !== false, ()=>saveSettings({ showDurationOnCards: !(settings.showDurationOnCards !== false) })),
-      toggleRow('Remember last site', 'Pre-fill site from your previous ticket',
-        settings.rememberLastSite !== false, ()=>saveSettings({ rememberLastSite: !(settings.rememberLastSite !== false) })),
-
-      chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'Everything'}],
-        settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v })),
-      chipSelect('Round new ticket times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
-        settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
-      chipSelect('Default start time', [{key:'08:00',label:'08:00'},{key:'08:30',label:'08:30'},{key:'09:00',label:'09:00'},{key:'09:30',label:'09:30'},{key:'10:00',label:'10:00'}],
-        settings.defaultStartTime || '09:00', (v)=>saveSettings({ defaultStartTime:v })),
-
-      settingsSection('Account'),
-      e('div', { key:'acct', className:'settings-span-2 d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem',
-        display:'flex', alignItems:'center', gap:'0.7rem' } },
+    collapseSection('account', 'Account', [
+      e('div', { key:'acct', style:{ display:'flex', alignItems:'center', gap:'0.7rem', padding:'0.35rem 0.1rem 0.55rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } }, 'Signed in'),
+          e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Signed in'),
           e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
-        e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.5rem 0.9rem', borderRadius:'10px', border:'1px solid '+LINE,
+        e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.45rem 0.85rem', borderRadius:'999px', border:'1px solid '+LINE,
           background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
-    )
+    ])
   );
 
-  const themesView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem' } },
-    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
+  const themesView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.2rem' } },
       e('button', { className:'d-hover-btn', onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px', color:INK } }, 'Themes'),
+      e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Themes'),
       e('span', { style:{ width:'36px' } })),
-    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
-      e('div', { style:{ ...LBL, marginBottom:'0.1rem' } }, group.name),
-      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.5rem' } },
+    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
+      e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, letterSpacing:'0.06em', textTransform:'uppercase', padding:'0 0.2rem' } }, group.name),
+      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.45rem' } },
         group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
-          style:{ display:'flex', flexDirection:'column', gap:'0.5rem', padding:'0.7rem', borderRadius:'14px',
+          style:{ display:'flex', flexDirection:'column', gap:'0.4rem', padding:'0.55rem 0.55rem 0.6rem', borderRadius:'18px',
             border: '1px solid '+LINE,
-            background:SURF, cursor:'pointer', textAlign:'left' } },
-          e('div', { style:{ display:'flex', gap:'4px', width:'100%' } },
+            background:SURF, cursor:'pointer', textAlign:'left',
+            boxShadow:'0 4px 12px rgba(22,23,50,0.05)' } },
+          e('div', { style:{ display:'flex', gap:'3px', width:'100%' } },
             (theme.sites || []).map((hex,hi) => e('span', { key:hi, style:{
-              flex:1, height:'22px', minWidth:0, borderRadius:'5px',
+              flex:1, height:'18px', minWidth:0, borderRadius:'999px',
               background: hex, display:'block'
             } }))),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK } }, theme.name)))
+          e('span', { style:{ fontSize:'0.7rem', fontWeight:800, color:INK, padding:'0 0.1rem' } }, theme.name)))
       )
     )));
 
@@ -2769,7 +2851,7 @@ function App() {
         e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, settingsBody)
       ),
       e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
-        header, settingsBody, menu, chooserSheet, formSheet, fab)
+        settingsBody, menu, chooserSheet, formSheet, fab)
     );
   }
 
@@ -2835,7 +2917,11 @@ function App() {
       )
     ),
     e('div', { className: 'mobile-only', style:{ width:'100%' } },
-      header, body, menu, chooserSheet, formSheet, swipeHint, fab
+      e('div', {
+      onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
+      style:{ minHeight:'100%' }
+    }, body),
+    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
