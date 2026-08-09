@@ -200,7 +200,7 @@
     }
     .desktop-split {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 0.82fr 1.18fr;
       gap: 1.15rem;
       align-items: start;
       min-height: 0;
@@ -1764,9 +1764,10 @@ function App() {
     const parts = (j.parts||[]).filter(p=>p.partNumber||p.partDescription);
     const on = mins(j.startDateTime, j.finishDateTime);
     const onC = s ? '#FFFFFF' : INK;
-    const subC = s ? 'rgba(255,255,255,0.62)' : MID;
-    const bodyC = s ? 'rgba(255,255,255,0.94)' : INK;
-    const chipBg = s ? 'rgba(255,255,255,0.20)' : 'rgba(65,67,106,0.08)';
+    const subC = s ? 'rgba(255,255,255,0.82)' : MID;
+    const bodyC = s ? 'rgba(255,255,255,0.95)' : INK;
+    const chipBg = s ? 'rgba(255,255,255,0.32)' : 'rgba(65,67,106,0.12)';
+    const workText = (j.workDone || '').replace(/\s*\n+\s*/g, ' ').trim();
     return e('div', {
       style:{ background: s ? s.hex : SURF,
         overflow:'hidden',
@@ -1774,24 +1775,24 @@ function App() {
         boxShadow: j.locked ? 'inset 0 0 0 1px '+SURF : (s ? 'none' : SHADOW_SM),
         borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' } },
-      e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.35rem' } },
-        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } },
-          i != null ? e('span', { style:{ background:chipBg, color:onC, width:'19px', height:'19px', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
-          e('span', { style:{ fontWeight:900, fontSize:'0.94rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
-          s && e('span', { style:{ background:'rgba(255,255,255,0.22)', color:'#FFF', padding:'0.18rem 0.55rem', borderRadius:'999px', fontSize:'0.58rem', fontWeight:900 } }, s.label),
-          eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.16rem 0.42rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, x)),
-          ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.16rem 0.45rem', borderRadius:'6px', fontSize:'0.55rem', fontWeight:900 } }, '+'+ex.length+' day')),
-          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK))),
-      e('div', { style:{ fontSize:'0.68rem', color:subC, fontWeight:600 } },
+      e('div', { style:{ display:'flex', alignItems:'flex-start', gap:'0.5rem', marginBottom:'0.4rem' } },
+        e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap' } },
+          i != null ? e('span', { style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' } }, String(i+1)) : null,
+          e('span', { style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, j.ticketNumber),
+          s && e('span', { style:{ background:chipBg, color:'#FFF', padding:'0.22rem 0.62rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:900 } }, s.label),
+          eq.map(x => e('span', { key:x, style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, x)),
+          ex.length > 0 && e('span', { style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day')),
+          j.locked && e('span', { key:'lk', className:'tick-complete', style:{ display:'inline-flex' } }, TickIcon(true, 19, s ? APRICOT : INK)))),
+      e('div', { style:{ fontSize:'0.8rem', color:subC, fontWeight:700 } },
         (j.hasTravel ? 'Travel 1 ' + fmtTime(j.travelDateTime) + '  ·  ' : '') +
         fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '') +
         (j.hasTravel2 ? '  ·  Travel 2 ' + fmtTime(j.travel2DateTime) : '')),
-      ex.length > 0 && e('div', { style:{ fontSize:'0.66rem', color:subC, fontWeight:700, marginTop:'0.25rem' } },
+      ex.length > 0 && e('div', { style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.28rem' } },
         'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')),
-      j.workDone && e('p', { style:{ fontSize:'0.8rem', color:bodyC, margin:'0.45rem 0 0', whiteSpace:'pre-wrap' } }, j.workDone),
-      parts.length > 0 && e('div', { style:{ marginTop:'0.45rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
-        parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.68rem', color:subC } },
-          '• ' + (p.partNumber||'') + (p.partDescription ? ' — ' + p.partDescription : '')))));
+      workText && e('div', { style:{ fontSize:'0.82rem', color:bodyC, margin:'0.5rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35, whiteSpace:'normal' } }, workText),
+      parts.length > 0 && e('div', { style:{ marginTop:'0.55rem', display:'flex' } },
+        e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
+          parts.length + (parts.length === 1 ? ' part' : ' parts')));
   };
 
   const swipeCard = (j, i, ret, stagger) => e(SwipeCard, { key:j.id, locked:!!j.locked, radius:'18px',
@@ -1836,13 +1837,12 @@ function App() {
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow } },
-      e('span', { style:{ fontSize: weekend ? '0.64rem' : '0.82rem', fontWeight: today?900:800, color:fg,
-        lineHeight:1, letterSpacing:'-0.2px',
-        textShadow: has ? '0 1px 2px rgba(0,0,0,0.45), 0 0 8px rgba(0,0,0,0.25)' : 'none' } }, String(dnum)),
+      e('span', { style:{ fontSize: weekend ? '0.72rem' : '0.92rem', fontWeight: today?900:800, color:fg,
+        lineHeight:1, letterSpacing:'-0.2px', textShadow:'none' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'2px' } },
-        sites.slice(0,2).map(s => e('span', { key:s, style:{ fontSize:'0.5rem', fontWeight:900, color:'#FFF',
-          background:'rgba(255,255,255,0.22)', borderRadius:'5px', padding:'1px 4px', letterSpacing:'0.2px' } }, SITES[s].label)),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.46rem', fontWeight:800, color:'rgba(255,255,255,0.85)' } },
+        sites.slice(0,2).map(s => e('span', { key:s, style:{ fontSize:'0.58rem', fontWeight:900, color:'#FFF',
+          background:'rgba(255,255,255,0.28)', borderRadius:'5px', padding:'2px 5px', letterSpacing:'0.2px' } }, SITES[s].label)),
+        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.52rem', fontWeight:800, color:'rgba(255,255,255,0.9)' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
         sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null,
