@@ -357,6 +357,14 @@ const THEME_GROUPS = [
     { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#78A7FF'] },
     /* Starters (Pokémon Kanto) */
     { name:'Starters', accent:'#E8A800', sites:['#E03535','#2B5CDE','#2E9B3A','#E8A800'] },
+    /* Matrix */
+    { name:'One', accent:'#00FF41', sites:['#00FF41','#3A86FF','#E63946','#0A0A0A'] },
+    /* Cyberpunk 2077 */
+    { name:'Night City', accent:'#00B8FF', sites:['#FCEE09','#FF2A9D','#00B8FF','#111111'] },
+    /* Ninja Turtles */
+    { name:'Shell', accent:'#1E6FFF', sites:['#1E6FFF','#E02020','#7A2DB0','#F0A010'] },
+    /* Hogwarts houses */
+    { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#ECB939'] },
   ]},
 ];
 
@@ -1746,12 +1754,13 @@ function App() {
 
       /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
       const t1 = j.hasTravel ? fmtTime(j.travelDateTime) : '';
-      const tCore = fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime) + (on ? '  ·  ' + hm(on) : '');
+      const tCore = fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime);
       const t2 = j.hasTravel2 ? fmtTime(j.travel2DateTime) : '';
       const timeParts = [];
       if (t1) { timeParts.push(t1); timeParts.push('→'); }
       timeParts.push(tCore);
       if (t2) { timeParts.push('→'); timeParts.push(t2); }
+      const durationLabel = on ? hm(on) : '';
 
       /* Complete = soft transparent stroke (no black border, no checkmark) */
       const lockedStroke = s
@@ -1762,7 +1771,8 @@ function App() {
 
       const leftHead = [];
       if (i != null) leftHead.push(e('span', { key:'num', style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)));
-      leftHead.push(e('span', { key:'tn', style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC } }, title));
+      const titleShow = title.length > 18 ? title.slice(0, 18) : title;
+      leftHead.push(e('span', { key:'tn', title: title, style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC, maxWidth:'18ch', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'inline-block', verticalAlign:'bottom' } }, titleShow));
       if (ex.length > 0) leftHead.push(e('span', { key:'ex', style:{ background:chipBg, color:onC, padding:'0.2rem 0.5rem', borderRadius:'7px', fontSize:'0.65rem', fontWeight:900 } }, '+'+ex.length+' day'));
 
       const rightPills = [];
@@ -1774,8 +1784,9 @@ function App() {
           e('div', { key:'left', style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' } }, leftHead),
           rightPills.length > 0 && e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.35rem', flexWrap:'nowrap', flexShrink:0, marginLeft:'auto' } }, rightPills)
         ),
-        e('div', { key:'time', style:{ fontSize:'0.8rem', color:subC, fontWeight:700, textShadow:'none' } },
-          timeParts.length ? timeParts.join(' ') : '—')
+        e('div', { key:'time', style:{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.8rem', color:subC, fontWeight:700, textShadow:'none' } },
+          e('span', { key:'tl', style:{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, timeParts.length ? timeParts.join(' ') : '—'),
+          durationLabel ? e('span', { key:'dur', style:{ flexShrink:0, fontWeight:800, marginLeft:'auto' } }, durationLabel) : null)
       ];
       if (ex.length > 0) {
         children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.25rem', textShadow:'none' } },
@@ -1785,11 +1796,11 @@ function App() {
         children.push(e('div', { key:'work', style:{
           fontSize:'0.82rem', color:bodyC, margin:'0.45rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35,
           whiteSpace:'normal', textShadow:'none',
-          display:'-webkit-box', WebkitLineClamp:6, WebkitBoxOrient:'vertical', overflow:'hidden'
+          display:'-webkit-box', WebkitLineClamp:5, WebkitBoxOrient:'vertical', overflow:'hidden'
         } }, workText));
       }
       if (parts.length > 0) {
-        children.push(e('div', { key:'parts', style:{ marginTop:'0.5rem', display:'flex', justifyContent:'flex-end' } },
+        children.push(e('div', { key:'parts', style:{ marginTop:'0.75rem', display:'flex', justifyContent:'flex-end' } },
           e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
             parts.length + (parts.length === 1 ? ' part' : ' parts'))));
       }
