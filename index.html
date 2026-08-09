@@ -1566,7 +1566,8 @@ function App() {
     ChevronLeft(24, armed ? APRICOT : GREY));
 
   const shift = (n) => {
-    if (calMode === 'month') {
+    const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
+    if (calMode === 'month' || isDesktop) {
       const y = anchorDate.getFullYear(), targetM = anchorDate.getMonth() + n;
       const daysInTarget = new Date(y, targetM+1, 0).getDate();
       setAnchorDate(new Date(y, targetM, Math.min(anchorDate.getDate(), daysInTarget)));
@@ -2497,6 +2498,18 @@ function App() {
   const rawBody = view === 'form' ? formView : view === 'list' ? listView : monthView;
   const body = e('div', { key:view, style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, rawBody);
 
+  /* Desktop day list: always the same tickets that colour the selected month cell */
+  const desktopDayNum = anchorDate.getDate();
+  const desktopDayBucket = (anchorDate.getFullYear() === ms.y && anchorDate.getMonth() === ms.m)
+    ? (ms.days[desktopDayNum] || null)
+    : null;
+  const desktopDayList = desktopDayBucket
+    ? desktopDayBucket.tickets
+    : dv.list;
+  const desktopDaySeq = desktopDayBucket
+    ? desktopDayBucket.siteSequence
+    : dv.siteSequence;
+
   /* Desktop: month calendar left + selected day tickets right (no week/day modes) */
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
@@ -2509,17 +2522,17 @@ function App() {
         e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
       monthGrid
     ),
-    e('div', { className: 'desktop-panel' },
+    e('div', { className: 'desktop-panel', key: 'day-'+ms.y+'-'+ms.m+'-'+desktopDayNum },
       e('div', { style:{ fontSize:'1.05rem', fontWeight:900, color:INK, marginBottom:'0.3rem' } },
         anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
       e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:700, marginBottom:'0.85rem' } },
-        dv.list.length + (dv.list.length===1?' ticket':' tickets')),
-      dv.list.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'12px', padding:'0.55rem 0.7rem', marginBottom:'0.75rem' } },
-        siteSeqRow(dv.siteSequence)),
-      dv.list.length === 0
+        desktopDayList.length + (desktopDayList.length===1?' ticket':' tickets')),
+      desktopDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'12px', padding:'0.55rem 0.7rem', marginBottom:'0.75rem' } },
+        siteSeqRow(desktopDaySeq)),
+      desktopDayList.length === 0
         ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'2rem 0' } }, 'Nothing logged on this day')
         : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.65rem' } },
-            dv.list.map((j,i) => swipeCard(j, i, { view:'month', day:anchorDate.getDate() }, i)))
+            desktopDayList.map((j,i) => swipeCard(j, i, { view:'month', day:desktopDayNum }, i)))
     )
   );
 
