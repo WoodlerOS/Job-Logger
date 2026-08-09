@@ -1424,9 +1424,14 @@ function App() {
   }, [jobs, anchorDate]);
 
   const dv = useMemo(() => {
-    const iso = anchorDate.getFullYear()+'-'+pad(anchorDate.getMonth()+1)+'-'+pad(anchorDate.getDate());
-    const list = jobs.filter(j => (j.startDateTime||'').slice(0,10) === iso)
-      .sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
+    const y = anchorDate.getFullYear(), m = anchorDate.getMonth(), day = anchorDate.getDate();
+    const iso = y+'-'+pad(m+1)+'-'+pad(day);
+    const list = jobs.filter(j => {
+      if (!j.startDateTime) return false;
+      const d = new Date(j.startDateTime);
+      if (isNaN(d.getTime())) return (j.startDateTime||'').slice(0,10) === iso;
+      return d.getFullYear() === y && d.getMonth() === m && d.getDate() === day;
+    }).sort((a,b)=>new Date(a.startDateTime)-new Date(b.startDateTime));
     const seq = [];
     list.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
     return { iso, list, siteSequence:seq };
@@ -1809,6 +1814,7 @@ function App() {
     const dow = (new Date(ms.y, ms.m, dnum).getDay() + 6) % 7;
     const weekend = dow >= 5;
     const today = isToday(ms.y, ms.m, dnum);
+    const selected = anchorDate.getFullYear()===ms.y && anchorDate.getMonth()===ms.m && anchorDate.getDate()===dnum;
     const has = sites.length > 0;
 
     let bg = weekend ? SURF2 : EMPTY;
@@ -1821,10 +1827,11 @@ function App() {
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
     if (d && d.allLocked) border = '2px solid '+INK;
+    if (selected) border = '2px solid '+(has ? '#FFFFFF' : INK);
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const doneRing = (d && d.allLocked) ? 'inset 0 0 0 1px '+SURF : null;
-    const boxShadow = doneRing || 'none';
+    const boxShadow = doneRing || (selected ? '0 0 0 2px '+(has ? 'rgba(255,255,255,0.55)' : 'rgba(10,10,12,0.2)') : 'none');
 
     return e('button', { key:dnum, className:'day-cell-btn', onClick:()=>{
         setAnchorDate(new Date(ms.y, ms.m, dnum));
@@ -1836,7 +1843,7 @@ function App() {
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'3px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
-        boxShadow:boxShadow } },
+        boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
       e('span', { style:{ fontSize: weekend ? '0.72rem' : '0.92rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px', textShadow:'none' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'2px' } },
