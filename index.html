@@ -349,22 +349,57 @@ const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9
 
 const THEME_GROUPS = [
   { name: 'Themes', themes: [
-    /* iOS — slightly softened system colours */
     { name:'iOS', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
-    /* Google */
-    { name:'Google', accent:'#4285F4', sites:['#4285F4','#EA4335','#FBBC05','#34A853'] },
-    /* Blocks (Minecraft overworld) */
-    { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#78A7FF'] },
-    /* Starters (Pokémon Kanto) */
-    { name:'Starters', accent:'#E8A800', sites:['#E03535','#2B5CDE','#2E9B3A','#E8A800'] },
-    /* Matrix */
-    { name:'One', accent:'#00FF41', sites:['#00FF41','#3A86FF','#E63946','#0A0A0A'] },
-    /* Cyberpunk 2077 */
-    { name:'Night City', accent:'#00B8FF', sites:['#FCEE09','#FF2A9D','#00B8FF','#111111'] },
-    /* Ninja Turtles */
-    { name:'Shell', accent:'#1E6FFF', sites:['#1E6FFF','#E02020','#7A2DB0','#F0A010'] },
-    /* Hogwarts houses */
-    { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#ECB939'] },
+    { name:'Google', accent:'#4285F4', sites:['#4285F4','#EA4335','#D4A017','#2E9B4A'] },
+    { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#5A8ACC'] },
+    { name:'Starters', accent:'#C99200', sites:['#C43535','#2B5CDE','#2E9B3A','#C99200'] },
+    { name:'The One', accent:'#1A8F48', sites:['#1A8F48','#2F5FB0','#B03A42','#161616'] },
+    { name:'Night City', accent:'#1A86B8', sites:['#B09E12','#B83278','#1A86B8','#141414'] },
+    { name:'Shell', accent:'#1E6FFF', sites:['#1E6FFF','#C42828','#7A2DB0','#D49010'] },
+    { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#C9A12A'] },
+  ]},
+  { name: 'Digital Synopsis', themes: [
+    { name:'Purple Blue Pink Orange', accent:'#B48115', sites:['#B48115', '#7850AA', '#5ABEE6', '#E64682'] },
+    { name:'Coral Blush', accent:'#B4814F', sites:['#B4814F', '#AC9090', '#FA8C8C', '#BE6482'] },
+    { name:'Teal Amber', accent:'#F05032', sites:['#F05032', '#46A0A0', '#B47A24', '#64463C'] },
+    { name:'Ocean Blues', accent:'#46AAD2', sites:['#46AAD2', '#5078B4', '#5050BE', '#323C96'] },
+    { name:'Steel Lime', accent:'#3282C8', sites:['#3282C8', '#9E9E97', '#B4BE3C', '#505A64'] },
+    { name:'Storm Peach', accent:'#A5A590', sites:['#A5A590', '#AC7A48', '#323C50', '#E6645A'] },
+    { name:'Violet Bloom', accent:'#AA5AB4', sites:['#AA5AB4', '#E65A96', '#9790AC', '#3C32AA'] },
+    { name:'Navy Magenta', accent:'#ACA581', sites:['#ACA581', '#E60064', '#FA8C64', '#142878'] },
+    { name:'Berry Amber', accent:'#B49E81', sites:['#B49E81', '#B47A24', '#82286E', '#E63264'] },
+    { name:'Moss Orchid', accent:'#B4812B', sites:['#B4812B', '#6E3C96', '#F06E8C', '#8CB45A'] },
+    { name:'Pastel Rose', accent:'#A59781', sites:['#A59781', '#B4815D', '#E67896', '#6E1450'] },
+    { name:'Plum Citrus', accent:'#FA8278', sites:['#FA8278', '#A0286E', '#641E6E', '#E65064'] },
+    { name:'Citrus Sea', accent:'#E07830', sites:['#E07830', '#3A9A78', '#2A6A9A', '#4A4A4A'] },
+    { name:'Slate Sunrise', accent:'#6A7A8A', sites:['#6A7A8A', '#3A6A9A', '#E07840', '#5A5A5A'] },
+    { name:'Violet Horizon', accent:'#E07840', sites:['#E07840', '#3A6AAA', '#7A4A9A', '#4A4A6A'] },
+    { name:'Amethyst', accent:'#A57390', sites:['#A57390', '#E682B4', '#C864AA', '#965096'] },
+    { name:'Indigo Peach', accent:'#F08C8C', sites:['#F08C8C', '#A59788', '#3C468C', '#AA4678'] },
+    { name:'Graphite', accent:'#97907A', sites:['#97907A', '#827878', '#505046', '#281E1E'] },
+    { name:'Royal Coral', accent:'#AC8848', sites:['#AC8848', '#6C9E9E', '#C8286E', '#322850'] },
+    { name:'Peach Blush', accent:'#ACA59E', sites:['#ACA59E', '#FA5078', '#DC508C', '#B49056'] },
+    { name:'Fuchsia Gold', accent:'#B48848', sites:['#B48848', '#DC64AA', '#FA6E96', '#7850B4'] },
+    { name:'Clay Ember', accent:'#ACA597', sites:['#ACA597', '#F08282', '#823C50', '#BE5A78'] },
+    { name:'Spectrum', accent:'#785096', sites:['#785096', '#BE5096', '#FA826E', '#B4902B'] },
+    { name:'Copper Sea', accent:'#3C96AA', sites:['#3C96AA', '#AC9E90', '#283C50', '#FA8C82'] },
+    { name:'Lagoon', accent:'#649E73', sites:['#649E73', '#32BEA0', '#3278BE', '#503C82'] },
+    { name:'Harvest', accent:'#28A08C', sites:['#28A08C', '#FA8C64', '#A59E90', '#BE3C64'] },
+    { name:'Lilac Sea', accent:'#2832AA', sites:['#2832AA', '#E65A96', '#0AB4E6', '#9646B4'] },
+    { name:'Espresso', accent:'#ACACA5', sites:['#ACACA5', '#AC9788', '#8C466E', '#502850'] },
+    { name:'Paper Blue', accent:'#96B4E6', sites:['#96B4E6', '#B4ACA5', '#B49090', '#FA9696'] },
+    { name:'Forest Rose', accent:'#9EACAC', sites:['#9EACAC', '#9E9E24', '#E65078', '#784664'] },
+    { name:'Garden Coral', accent:'#F08CAA', sites:['#F08CAA', '#B4ACA5', '#325064', '#B48173'] },
+    { name:'Desert Violet', accent:'#D08060', sites:['#D08060', '#C09080', '#7A4A9A', '#3A5A8A'] },
+    { name:'Orchid Grove', accent:'#7A4A9A', sites:['#7A4A9A', '#E07840', '#4A9A5A', '#5A5A4A'] },
+    { name:'Ash Crimson', accent:'#6A6A6A', sites:['#6A6A6A', '#C04050', '#8A8A8A', '#4A4A4A'] },
+    { name:'Prism', accent:'#3A6AAA', sites:['#3A6AAA', '#7A4A9A', '#D0A020', '#E07840'] },
+    { name:'Deep Teal', accent:'#1A5A6A', sites:['#1A5A6A', '#2A8A9A', '#3AAAAA', '#1A3A4A'] },
+    { name:'Coastal Clay', accent:'#3A6AAA', sites:['#3A6AAA', '#E07850', '#C09080', '#4A5A6A'] },
+    { name:'Orchid Pink', accent:'#7A4A9A', sites:['#7A4A9A', '#D06090', '#B05080', '#5A3A6A'] },
+    { name:'Emerald', accent:'#2A7A4A', sites:['#2A7A4A', '#3A9A5A', '#1A5A3A', '#4AAA6A'] },
+    { name:'Slate Crimson', accent:'#325064', sites:['#325064', '#78A0B4', '#ACA5A5', '#F0465A'] },
+    { name:'Timber Blue', accent:'#3CBED2', sites:['#3CBED2', '#ACAC9E', '#FA968C', '#AA3C5A'] },
   ]},
 ];
 
@@ -826,21 +861,40 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
 
   useEffect(() => () => clearTimers(), []);
 
-  return e('div', { style:{ position:'relative', borderRadius:radius,
+  const fireLock = (ev) => {
+    if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+    setPressed(false); clearTimers();
+    if (typeof onLock === 'function') onLock();
+  };
+  const fireDelete = (ev) => {
+    if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+    setPressed(false); clearTimers();
+    if (typeof onDelete === 'function') onDelete();
+  };
+
+  return e('div', { style:{ position:'relative', borderRadius:radius, overflow:'visible',
       boxShadow: glow || 'none', transition:'box-shadow .4s ease',
       animation: entryDelay != null ? 'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' : 'none',
       animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
-    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-58px', right:'6px', display:'flex', gap:'10px', zIndex:5 } },
-      e('button', { key:'lk', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onLock(); }, className:'bubble-pop',
+    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-58px', right:'6px', display:'flex', gap:'10px', zIndex:40, pointerEvents:'auto' } },
+      e('button', { key:'lk', type:'button',
+        onClick:fireLock,
+        onTouchEnd:fireLock,
+        onMouseDown:(ev)=>{ ev.stopPropagation(); },
+        className:'bubble-pop',
         style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'0s',
           background: locked ? GREY : INK, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)' } },
+          boxShadow:'0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)', WebkitTapHighlightColor:'transparent' } },
         TickIcon(true, 18, APRICOT),
         e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
-      e('button', { key:'del', onClick:(ev)=>{ ev.stopPropagation(); setPressed(false); clearTimers(); onDelete(); }, className:'bubble-pop',
+      e('button', { key:'del', type:'button',
+        onClick:fireDelete,
+        onTouchEnd:fireDelete,
+        onMouseDown:(ev)=>{ ev.stopPropagation(); },
+        className:'bubble-pop',
         style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'.07s',
           background:RED, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'0 8px 20px rgba(179,38,30,0.35), 0 2px 6px rgba(179,38,30,0.2)' } },
+          boxShadow:'0 8px 20px rgba(179,38,30,0.35), 0 2px 6px rgba(179,38,30,0.2)', WebkitTapHighlightColor:'transparent' } },
         TrashIcon(17, '#FFF'),
         e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
     e('div', {
@@ -1488,8 +1542,37 @@ function App() {
     goBack();
   };
 
-  const remove = (id) => { persist(jobs.filter(j => j.id !== id)); setDayDetail(null); };
-  const toggleLock = (id) => persist(jobs.map(j => j.id === id ? { ...j, locked: !j.locked } : j));
+  const remove = (id) => {
+    const sid = id == null ? null : String(id);
+    setJobs(prev => {
+      const next = prev.filter(j => String(j.id) !== sid);
+      if (!PREVIEW_MODE && user) {
+        try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+      }
+      return next;
+    });
+    setDayDetail(null);
+  };
+  const toggleLock = (id) => {
+    const sid = id == null ? null : String(id);
+    setJobs(prev => {
+      const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !j.locked } : j);
+      if (!PREVIEW_MODE && user) {
+        try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+      }
+      return next;
+    });
+  };
+  const setJobLocked = (id, locked) => {
+    const sid = id == null ? null : String(id);
+    setJobs(prev => {
+      const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !!locked } : j);
+      if (!PREVIEW_MODE && user) {
+        try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+      }
+      return next;
+    });
+  };
 
   const setPart = (i, field, val) => {
     const parts = form.parts.map((p,idx) => idx===i ? { ...p, [field]:val } : p);
@@ -1762,12 +1845,10 @@ function App() {
       if (t2) { timeParts.push('→'); timeParts.push(t2); }
       const durationLabel = on ? hm(on) : '';
 
-      /* Complete = soft transparent stroke (no black border, no checkmark) */
-      const lockedStroke = s
-        ? '2px solid rgba(255,255,255,0.55)'
-        : '2px solid rgba(10,10,12,0.16)';
-      const normalStroke = s ? 'none' : '1px solid ' + LINE;
-      const cardBorder = j.locked ? lockedStroke : normalStroke;
+      /* Complete = soft internal ring (no black border, no checkmark) */
+      const cardBorder = s ? 'none' : ('1px solid ' + LINE);
+      const cardShadow = s ? 'none' : SHADOW_SM;
+      const ringColor = s ? 'rgba(255,255,255,0.62)' : 'rgba(10,10,12,0.22)';
 
       const leftHead = [];
       if (i != null) leftHead.push(e('span', { key:'num', style:{ background:chipBg, color:onC, width:'20px', height:'20px', borderRadius:'999px', fontSize:'0.62rem', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, String(i+1)));
@@ -1808,13 +1889,20 @@ function App() {
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i),
         style:{ background: s ? s.hex : SURF,
-          overflow:'hidden',
+          overflow:'visible',
+          position:'relative',
           border: cardBorder,
-          boxShadow: s ? 'none' : SHADOW_SM,
+          boxShadow: cardShadow,
           borderRadius:'18px', padding:'0.85rem 0.9rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
-      }, children);
+      },
+        j.locked ? e('div', { key:'ring', style:{
+          position:'absolute', inset:0, borderRadius:'18px', pointerEvents:'none',
+          boxShadow:'inset 0 0 0 2.5px '+ringColor
+        }}) : null,
+        e('div', { key:'body', style:{ position:'relative', overflow:'hidden', borderRadius:'14px' } }, children)
+      );
     } catch (err) {
       return e('div', {
         style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:INK }
@@ -2260,11 +2348,12 @@ function App() {
           style:{ ...FIELD(), flex:1, minHeight:'12rem', resize:'vertical', lineHeight:1.55, fontSize:'0.92rem' } }),
         e('button', {
           className: 'desktop-only-inline',
-          onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
+          onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
           style:{
             alignSelf:'flex-start', marginTop:'0.35rem',
-            alignItems:'center', gap:'0.4rem',
+            display:'inline-flex', alignItems:'center', gap:'0.4rem',
             padding:'0.45rem 0.85rem', borderRadius:'10px', cursor:'pointer',
+            pointerEvents:'auto',
             border: form.locked ? '1.5px solid '+LOCKED : '1.5px solid '+LINE,
             background: form.locked ? LOCKEDBG : SURF2,
             color: INK, fontWeight:800, fontSize:'0.78rem'
@@ -2276,8 +2365,8 @@ function App() {
     /* Mobile full-width sign-off control */
     e('button', {
       className: 'mobile-only',
-      onClick:()=>{ const next = !form.locked; setForm({ ...form, locked: next }); if (next) setBurst(b=>b+1); },
-      style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible',
+      onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
+      style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', cursor:'pointer', position:'relative', overflow:'visible', pointerEvents:'auto',
         border: form.locked ? '2px solid '+LOCKED : '1.5px solid '+LINE,
         background: form.locked ? LOCKEDBG : FIELDBG,
         borderRadius:'16px', padding:'0.78rem 0.85rem', textAlign:'left',
