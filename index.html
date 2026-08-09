@@ -2123,7 +2123,7 @@ function App() {
           const hex = (SITES[sk] && SITES[sk].hex) || '#888';
           return e('span', { key:sk, style:{ fontSize:'0.58rem', fontWeight:900, color:'#FFF',
             background: hex, borderRadius:'6px', padding:'2px 6px', letterSpacing:'0.2px',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45), 0 1px 2px rgba(0,0,0,0.12)' } }, SITES[sk].label);
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45), 0 1px 2px rgba(0,0,0,0.12)' } }, (SITES[sk] && SITES[sk].label) || sk);
         }),
         d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.52rem', fontWeight:800, color:'rgba(255,255,255,0.95)' } },
           d.tickets.length+' jobs') : null) : null,
@@ -2165,7 +2165,15 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
 
-    const primary = d && d.primarySite ? d.primarySite : (sites[0] || null);
+    /* Primary site by most on-site minutes (no undefined `d`) */
+    const timeBySite = {};
+    list.forEach(j => {
+      if (!j.site) return;
+      const m = Math.max(0, Math.round((new Date(j.finishDateTime) - new Date(j.startDateTime)) / 60000) || 0);
+      timeBySite[j.site] = (timeBySite[j.site] || 0) + m;
+    });
+    let primary = sites[0] || null, best = -1;
+    Object.keys(timeBySite).forEach(k => { if (timeBySite[k] > best) { best = timeBySite[k]; primary = k; } });
     let bg = weekend ? SURF2 : EMPTY;
     if (primary && SITES[primary]) bg = SITES[primary].hex;
 
@@ -2789,20 +2797,26 @@ function App() {
     collapseSection('tickets', 'Tickets & cards', [
       e('div', { key:'preview', style:{ marginBottom:'0.75rem', pointerEvents:'none', transform: settings.largeText ? 'scale(1.03)' : 'none', transformOrigin:'top center' } },
         e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, marginBottom:'0.4rem', letterSpacing:'0.04em', textTransform:'uppercase' } }, 'Live preview'),
-        ticketDetailCard({
-          id: 'preview',
-          ticketNumber: 'JT-DEMO',
-          site: (sitesToList()[0] && sitesToList()[0].key) || '',
-          equipment: equipEdits[0] ? [equipEdits[0].key] : [],
-          startDateTime: todayISO() + 'T09:15:00',
-          finishDateTime: todayISO() + 'T11:40:00',
-          hasTravel: true, travelDateTime: todayISO() + 'T08:40:00',
-          hasTravel2: true, travel2DateTime: todayISO() + 'T12:10:00',
-          workDone: 'Example work notes shown on the card. Adjust options below to see how cards look.',
-          parts: [{ partNumber: 'PN-100', partDescription: 'Filter' }],
-          locked: !!settings.lockReadOnly,
-          extraDays: []
-        }, 0)
+        (function(){
+          try {
+            return ticketDetailCard({
+              id: 'preview',
+              ticketNumber: 'JT-DEMO',
+              site: (sitesToList()[0] && sitesToList()[0].key) || '',
+              equipment: (equipEdits && equipEdits[0]) ? [equipEdits[0].key] : [],
+              startDateTime: todayISO() + 'T09:15:00',
+              finishDateTime: todayISO() + 'T11:40:00',
+              hasTravel: true, travelDateTime: todayISO() + 'T08:40:00',
+              hasTravel2: true, travel2DateTime: todayISO() + 'T12:10:00',
+              workDone: 'Example work notes shown on the card. Adjust options below to see how cards look.',
+              parts: [{ partNumber: 'PN-100', partDescription: 'Filter' }],
+              locked: !!(settings && settings.lockReadOnly),
+              extraDays: []
+            }, 0);
+          } catch (err) {
+            return e('div', { style:{ fontSize:'0.75rem', color:GREY } }, 'Preview unavailable');
+          }
+        })()
       ),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
@@ -3099,7 +3113,19 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+} catch (err) {
+  console.error(err);
+  var r = document.getElementById('root');
+  if (r) r.innerHTML = '<div style="padding:2rem;font-family:system-ui;color:#b00">App failed to start: ' + String(err && err.message || err) + '</div>';
+}
+window.addEventListener('error', function(ev) {
+  console.error('Runtime error', ev.error || ev.message);
+});
+window.addEventListener('unhandledrejection', function(ev) {
+  console.error('Unhandled rejection', ev.reason);
+});
 </script>
 </body>
 </html>
