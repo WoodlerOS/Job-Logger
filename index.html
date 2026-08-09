@@ -979,7 +979,8 @@ function App() {
   const [pinnedDay, setPinnedDay] = useState(null); // { y, m, d, tickets, siteSequence } from month cell click
   const [showWeekends, setShowWeekends] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, defaults: false, equipment: false, account: true });
+  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, equipment: false, account: true });
+  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[] }
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
@@ -991,6 +992,8 @@ function App() {
 
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
+  const [mpDY, setMpDY] = useState(0);
+  const [mpDragging, setMpDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
   const CAL_TRIGGER = 26;
 
@@ -998,10 +1001,9 @@ function App() {
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
 
   function blank(date) {
-    const s = roundNow();
     const d = date || todayISO();
     return { ticketNumber:'', site:'', equipment:[], date:d,
-      t1:'', start:s, finish:shiftTime(s,1), t2:'', extra:[],
+      t1:'', start:'00:00', finish:'00:00', t2:'', extra:[],
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
 
@@ -1156,11 +1158,35 @@ function App() {
     return pad(d.getFullYear()%100)+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
 
   const [copiedKey, setCopiedKey] = useState(null);
+
+  /* Haptic patterns (ms). No-ops when unsupported or disabled in settings. */
+  const HAPTICS = {
+    light: 10,
+    selection: 8,
+    success: [12, 40, 18],
+    warning: [20, 40, 20],
+    error: [30, 50, 30, 50, 40],
+    impact: 16,
+    open: [8, 30, 14],
+    dismiss: 12,
+    step: 10
+  };
+  const haptic = (pattern) => {
+    try {
+      if (settings && settings.hapticFeedback === false) return;
+      if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+      const p = typeof pattern === 'string' ? HAPTICS[pattern] : pattern;
+      if (p == null) return;
+      navigator.vibrate(p);
+    } catch (err) {}
+  };
+
   const copyText = async (text, key) => {
     const t = (text || '').trim();
     if (!t) { alert('Nothing to copy.'); return; }
     try {
       await navigator.clipboard.writeText(t);
+      haptic('success');
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(k => k === key ? null : k), 1600);
     } catch (err) {
@@ -1449,6 +1475,16 @@ function App() {
       day.sites = [...new Set(day.tickets.map(j=>j.site).filter(Boolean))];
       day.equip = [...new Set(day.tickets.flatMap(eqOf))];
       day.allLocked = day.tickets.every(j => j.locked);
+      /* Primary site = most on-site minutes that day (no multi-site gradient) */
+      const timeBySite = {};
+      day.tickets.forEach(j => {
+        if (!j.site) return;
+        const m = Math.max(0, Math.round((new Date(j.finishDateTime) - new Date(j.startDateTime)) / 60000) || 0);
+        timeBySite[j.site] = (timeBySite[j.site] || 0) + m;
+      });
+      let primary = day.sites[0] || null, best = -1;
+      Object.keys(timeBySite).forEach(k => { if (timeBySite[k] > best) { best = timeBySite[k]; primary = k; } });
+      day.primarySite = primary;
       day.first = day.tickets[0].hasTravel && day.tickets[0].travelDateTime ? day.tickets[0].travelDateTime : day.tickets[0].startDateTime;
       const lastJob = day.tickets[day.tickets.length-1];
       day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
@@ -1575,6 +1611,7 @@ function App() {
   };
   const toggleLock = (id) => {
     const sid = id == null ? null : String(id);
+    haptic('impact');
     setJobs(prev => {
       const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !j.locked } : j);
       if (!PREVIEW_MODE && user) {
@@ -1585,6 +1622,7 @@ function App() {
   };
   const setJobLocked = (id, locked) => {
     const sid = id == null ? null : String(id);
+    haptic(locked ? 'success' : 'light');
     setJobs(prev => {
       const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !!locked } : j);
       if (!PREVIEW_MODE && user) {
@@ -1662,16 +1700,25 @@ function App() {
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
     if (Math.abs(dy) > Math.abs(dx) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
-    setCalDX(Math.max(-80, Math.min(80, dx)));
+    /* Rubber-band past 56px so the drag feels weighted */
+    const clamped = Math.max(-56, Math.min(56, dx));
+    const extra = dx - clamped;
+    const next = clamped + extra * 0.22;
+    const wasArmed = Math.abs(calDX) >= CAL_TRIGGER;
+    const nowArmed = Math.abs(next) >= CAL_TRIGGER;
+    if (!wasArmed && nowArmed) haptic('selection');
+    setCalDX(next);
   };
   const onCalTouchEnd = () => {
     if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
     calTouch.current.live = false;
     setCalDragging(false);
-    if (calDX <= -CAL_TRIGGER) shift(1);
-    else if (calDX >= CAL_TRIGGER) shift(-1);
+    if (calDX <= -CAL_TRIGGER) { haptic('step'); shift(1); }
+    else if (calDX >= CAL_TRIGGER) { haptic('step'); shift(-1); }
     setCalDX(0);
   };
+  const calProgress = Math.min(1, Math.abs(calDX) / 56);
+  const calArmed = Math.abs(calDX) >= CAL_TRIGGER;
 
   const [sheetDY, setSheetDY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
@@ -1782,9 +1829,12 @@ function App() {
           padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.15rem',
           boxShadow:'12px 0 40px rgba(0,0,0,0.35)',
-          transform: menuOpen ? 'translateX(0)' : 'translateX('+((-100 + menuSlide * 100))+'%)',
+          transform: menuOpen
+            ? 'translateX(0)'
+            : 'translateX('+((-100 + menuSlide * 100))+'%) scale('+(0.98 + menuSlide * 0.02)+')',
           transition: menuOpen ? 'transform .32s cubic-bezier(.22,.9,.3,1)' : (edgeSwipe.current.live ? 'none' : 'transform .22s ease'),
-          willChange: 'transform'
+          willChange: 'transform',
+          opacity: menuOpen ? 1 : (0.55 + menuSlide * 0.45)
         }
       },
         e('div', { style:{ fontSize:'0.68rem', fontWeight:800, letterSpacing:'0.12em', textTransform:'uppercase',
@@ -1882,13 +1932,13 @@ function App() {
   const onEdgeEnd = () => {
     if (!edgeSwipe.current.live) { setMenuSlide(0); return; }
     edgeSwipe.current.live = false;
-    if (menuSlide >= 0.28) { setMenuOpen(true); setMenuSlide(1); }
+    if (menuSlide >= 0.28) { haptic('open'); setMenuOpen(true); setMenuSlide(1); }
     else setMenuSlide(0);
   };
 
   const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('button', {
     className: 'fab-btn',
-    onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
+    onClick: () => { haptic('impact'); openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null); },
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
       width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer', zIndex:35,
@@ -2019,7 +2069,7 @@ function App() {
       radius:'18px',
       glow: null,
       onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
-      onDelete:()=>{ if (j && j.id != null && (settings.confirmDelete === false || window.confirm('Delete this ticket?'))) remove(j.id); },
+      onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
       onTap:()=>{ if (j) openEdit(j, ret); },
       entryDelay: null
     },
@@ -2034,12 +2084,9 @@ function App() {
     const selected = anchorDate.getFullYear()===ms.y && anchorDate.getMonth()===ms.m && anchorDate.getDate()===dnum;
     const has = sites.length > 0;
 
+    const primary = d && d.primarySite ? d.primarySite : (sites[0] || null);
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1 && SITES[sites[0]]) {
-      bg = SITES[sites[0]].hex;
-    } else if (sites.length > 1) {
-      bg = multiSiteBg(sites);
-    }
+    if (primary && SITES[primary]) bg = SITES[primary].hex;
 
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
@@ -2059,6 +2106,7 @@ function App() {
           tickets: bucket && Array.isArray(bucket.tickets) ? bucket.tickets.slice() : [],
           siteSequence: bucket && Array.isArray(bucket.siteSequence) ? bucket.siteSequence.slice() : []
         });
+        haptic('selection');
         setMonthPickerOpen(false);
         if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day');
       },
@@ -2071,9 +2119,13 @@ function App() {
       e('span', { style:{ fontSize: weekend ? '0.72rem' : '0.92rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.2px', textShadow:'none' } }, String(dnum)),
       has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', alignItems:'center', marginTop:'2px' } },
-        sites.slice(0,2).map(s => e('span', { key:s, style:{ fontSize:'0.58rem', fontWeight:900, color:'#FFF',
-          background:'rgba(255,255,255,0.28)', borderRadius:'5px', padding:'2px 5px', letterSpacing:'0.2px' } }, SITES[s].label)),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.52rem', fontWeight:800, color:'rgba(255,255,255,0.9)' } },
+        sites.slice(0,2).map(sk => {
+          const hex = (SITES[sk] && SITES[sk].hex) || '#888';
+          return e('span', { key:sk, style:{ fontSize:'0.58rem', fontWeight:900, color:'#FFF',
+            background: hex, borderRadius:'6px', padding:'2px 6px', letterSpacing:'0.2px',
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45), 0 1px 2px rgba(0,0,0,0.12)' } }, SITES[sk].label);
+        }),
+        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.52rem', fontWeight:800, color:'rgba(255,255,255,0.95)' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
         sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null,
@@ -2113,12 +2165,9 @@ function App() {
     const weekend = i >= 5;
     const has = sites.length > 0;
 
+    const primary = d && d.primarySite ? d.primarySite : (sites[0] || null);
     let bg = weekend ? SURF2 : EMPTY;
-    if (sites.length === 1 && SITES[sites[0]]) {
-      bg = SITES[sites[0]].hex;
-    } else if (sites.length > 1) {
-      bg = multiSiteBg(sites);
-    }
+    if (primary && SITES[primary]) bg = SITES[primary].hex;
 
     const fg = has ? '#FFF' : (weekend ? GREY : INK);
     const weekBorder = allLocked
@@ -2192,6 +2241,7 @@ function App() {
     return anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' });
   };
 
+  const mpProgress = Math.min(1, mpDY / 140);
   const monthPicker = monthPickerOpen && e('div', {
       key: 'month-picker',
       onTouchStart:(ev)=>ev.stopPropagation(),
@@ -2201,29 +2251,58 @@ function App() {
         position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:90,
         display:'flex', alignItems:'flex-end', justifyContent:'center',
         paddingTop: 'env(safe-area-inset-top)',
-        background:'rgba(0,0,0,0.55)',
-        animation:'fadeIn .22s ease'
+        background:'rgba(0,0,0,'+(0.55 * (1 - mpProgress * 0.65))+')',
+        transition: mpDragging ? 'none' : 'background .2s ease'
       }
     },
       e('div', {
-        onClick:()=>setMonthPickerOpen(false),
+        onClick:()=>{ setMonthPickerOpen(false); setMpDY(0); setMpDragging(false); },
         style:{ position:'absolute', inset:0 }
       }),
       e('div', {
         onClick:(ev)=>ev.stopPropagation(),
-        onTouchStart:(ev)=>ev.stopPropagation(),
-        onTouchMove:(ev)=>ev.stopPropagation(),
+        onTouchStart:(ev)=>{
+          ev.stopPropagation();
+          const t = ev.touches[0];
+          window.__mpDrag = { y: t.clientY, dy: 0, live: true };
+          setMpDragging(true);
+        },
+        onTouchMove:(ev)=>{
+          ev.stopPropagation();
+          if (!window.__mpDrag || !window.__mpDrag.live) return;
+          const t = ev.touches[0];
+          const dy = Math.max(0, t.clientY - window.__mpDrag.y);
+          window.__mpDrag.dy = dy;
+          setMpDY(dy);
+        },
+        onTouchEnd:(ev)=>{
+          ev.stopPropagation();
+          const dy = (window.__mpDrag && window.__mpDrag.dy) || 0;
+          window.__mpDrag = null;
+          setMpDragging(false);
+          if (dy > 90) { haptic('dismiss'); setMonthPickerOpen(false); setMpDY(0); }
+          else { setMpDY(0); }
+        },
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
           padding:'0.85rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
-          boxShadow:'0 -12px 40px rgba(0,0,0,0.22)',
-          animation:'slideUp .32s cubic-bezier(.22,.9,.3,1)',
+          boxShadow:'0 -12px 40px rgba(0,0,0,'+(0.22 * (1 - mpProgress * 0.5))+')',
+          transform: 'translateY('+mpDY+'px) scale('+(1 - mpProgress * 0.03)+')',
+          transition: mpDragging ? 'none' : 'transform .28s cubic-bezier(.22,.9,.3,1)',
           maxHeight:'min(88vh, 640px)', overflowY:'auto',
-          zIndex: 1
+          zIndex: 1, touchAction: 'pan-y',
+          opacity: 1 - mpProgress * 0.15
         }
       },
-        e('div', { style:{ width:'36px', height:'4px', borderRadius:'999px', background:LINE, margin:'0 auto 0.85rem' } }),
+        e('div', { style:{
+          width: (40 + mpProgress * 18) + 'px', height: (5 + mpProgress * 2) + 'px',
+          borderRadius:'999px',
+          background: mpDY > 90 ? INK : LINE,
+          margin:'0 auto 0.85rem',
+          transition: mpDragging ? 'none' : 'width .2s ease, background .15s ease',
+          opacity: 0.95
+        } }),
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
           e('button', { onClick:()=>{
               const y = anchorDate.getFullYear(), m = anchorDate.getMonth() - 1;
@@ -2256,11 +2335,8 @@ function App() {
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem' } },
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
-        e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
-          padding:'3px 6px 3px 2px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
-          e('span', { style:{ width:'6px', height:'6px', borderRadius:'999px', background:INK } })),
         e('button', {
-          onClick:()=>setMonthPickerOpen(true),
+          onClick:()=>{ setMpDY(0); setMpDragging(false); setMonthPickerOpen(true); },
           style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
             borderRadius:'10px' }
         },
@@ -2273,9 +2349,38 @@ function App() {
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
-      style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
-        opacity: 1 - Math.abs(calDX)/220 } },
-      dayView)
+      style:{
+        position:'relative',
+        transform:'translateX('+calDX+'px) scale('+(1 - calProgress * 0.02)+')',
+        transition: calDragging ? 'none' : 'transform .28s cubic-bezier(.22,.9,.3,1), opacity .2s ease',
+        opacity: 1 - calProgress * 0.18,
+        minHeight: '62vh',
+        paddingBottom: '2rem',
+        touchAction: 'pan-y'
+      } },
+      /* Direction hints while dragging days */
+      calDragging && calDX > 6 && e('div', { style:{
+        position:'absolute', left:'8px', top:'28%', zIndex:5, pointerEvents:'none',
+        width:'36px', height:'36px', borderRadius:'12px',
+        background: calArmed ? INK : SURF2, color: calArmed ? APRICOT : GREY,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        boxShadow: SHADOW_SM, opacity: Math.min(1, calDX/40),
+        transform: 'scale('+(0.75 + Math.min(1, calDX/56)*0.35)+')',
+        transition: 'background .12s ease'
+      } }, ChevronLeft(18, calArmed ? APRICOT : GREY)),
+      calDragging && calDX < -6 && e('div', { style:{
+        position:'absolute', right:'8px', top:'28%', zIndex:5, pointerEvents:'none',
+        width:'36px', height:'36px', borderRadius:'12px',
+        background: calArmed ? INK : SURF2, color: calArmed ? APRICOT : GREY,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        boxShadow: SHADOW_SM, opacity: Math.min(1, -calDX/40),
+        transform: 'scale('+(0.75 + Math.min(1, -calDX/56)*0.35)+') rotate(180deg)',
+        transition: 'background .12s ease'
+      } }, ChevronLeft(18, calArmed ? APRICOT : GREY)),
+      dayView,
+      /* Extra swipe surface so day changes work outside card edges */
+      e('div', { style:{ minHeight:'28vh', width:'100%' } })
+    )
   );
 
   // daySheet popup removed — tapping a day now switches to Day mode
@@ -2535,7 +2640,7 @@ function App() {
           e('button', {
             type: 'button',
             title: form.locked ? 'Ready' : 'Mark complete',
-            onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
+            onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); else haptic(next ? 'success' : 'light'); },
             style:{
               width:'36px', height:'36px', borderRadius:'999px', cursor:'pointer',
               display:'flex', alignItems:'center', justifyContent:'center',
@@ -2556,7 +2661,7 @@ function App() {
       e('button', {
         type: 'button',
         title: form.locked ? 'Ready' : 'Mark complete',
-        onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
+        onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); else haptic(next ? 'success' : 'light'); },
         style:{
           width:'40px', height:'40px', borderRadius:'999px', cursor:'pointer',
           display:'flex', alignItems:'center', justifyContent:'center',
@@ -2600,14 +2705,15 @@ function App() {
   };
 
   const toggleRow = (label, sub, value, onToggle) =>
-    e('button', { key:label, className:'d-hover', onClick:onToggle, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
-      background:'transparent', border:'none', borderBottom:'1px solid '+LINE, borderRadius:0, padding:'0.72rem 0.15rem', cursor:'pointer' } },
+    e('div', { key:label, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
+      background:'transparent', border:'none', borderBottom:'1px solid rgba(10,10,12,0.06)', borderRadius:0, padding:'0.78rem 0.2rem' } },
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, label),
-        sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px', lineHeight:1.3 } }, sub)),
-      e('div', { style:{ width:'42px', height:'24px', borderRadius:'999px', background: value?INK:SURF3,
-        border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0 } },
-        e('div', { style:{ position:'absolute', top:'2px', left: value?'20px':'2px', width:'18px', height:'18px', borderRadius:'999px',
+        sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px', lineHeight:1.35 } }, sub)),
+      e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); onToggle(); },
+        style:{ width:'48px', height:'28px', borderRadius:'999px', background: value?INK:SURF3,
+        border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0, padding:0, cursor:'pointer' } },
+        e('div', { style:{ position:'absolute', top:'3px', left: value?'24px':'3px', width:'20px', height:'20px', borderRadius:'999px',
           background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
 
   const chipSelect = (label, options, value, onChange) =>
@@ -2621,22 +2727,22 @@ function App() {
 
   const collapseSection = (key, title, children) => {
     const open = !!settingsSections[key];
-    return e('div', { key:key, className:'settings-span-2 form-card', style:{
-        background:SURF, borderRadius:'20px', border:'1px solid '+LINE,
-        boxShadow:'0 6px 18px rgba(22,23,50,0.06)', overflow:'hidden', marginBottom:'0.55rem'
+    return e('div', { key:key, className:'settings-span-2', style:{
+        background: SURF, borderRadius:'22px', border:'none',
+        boxShadow:'0 8px 24px rgba(22,23,50,0.05)', overflow:'hidden', marginBottom:'0.65rem'
       } },
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem',
-          background:'transparent', border:'none', padding:'0.9rem 1rem', cursor:'pointer', textAlign:'left' }
+          background:'transparent', border:'none', padding:'0.95rem 1.05rem', cursor:'pointer', textAlign:'left' }
       },
-        e('span', { style:{ fontSize:'0.88rem', fontWeight:900, color:INK, letterSpacing:'-0.2px' } }, title),
+        e('span', { style:{ fontSize:'0.9rem', fontWeight:900, color:INK, letterSpacing:'-0.25px' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
-          transition:'transform .22s ease', opacity:0.55
+          transition:'transform .22s ease', opacity:0.45
         } }, ChevronLeft(16, GREY))
       ),
-      open && e('div', { style:{ padding:'0 0.95rem 0.85rem', display:'flex', flexDirection:'column' } }, children)
+      open && e('div', { style:{ padding:'0 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
     );
   };
 
@@ -2649,10 +2755,10 @@ function App() {
 
     collapseSection('appearance', 'Appearance', [
       e('button', { key:'themesRow', className:'d-hover', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
-        background:SURF2, border:'none', borderRadius:'16px', padding:'0.8rem 0.9rem', cursor:'pointer', textAlign:'left', marginBottom:'0.35rem' } },
+        background:'rgba(10,10,12,0.04)', border:'none', borderRadius:'18px', padding:'0.85rem 0.95rem', cursor:'pointer', textAlign:'left', marginBottom:'0.4rem' } },
         e('div', null,
           e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Colour themes'),
-          e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' palettes')),
+          e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' soft palettes')),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
           e('div', { style:{ display:'flex', gap:'3px' } },
             sitesToList().slice(0,4).map((s,hi) =>
@@ -2660,25 +2766,46 @@ function App() {
           e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(14, GREY)))),
       toggleRow('Dark mode', 'Dim the whole interface',
         settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
-      !settings.darkMode && e('div', { key:'bgdim', style:{ padding:'0.55rem 0.15rem 0.35rem', borderBottom:'1px solid '+LINE } },
-        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK } }, 'Background brightness'),
+      !settings.darkMode && e('div', { key:'bgdim', style:{ padding:'0.7rem 0.15rem 0.55rem', borderBottom:'1px solid rgba(10,10,12,0.06)' } },
+        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK, marginBottom:'0.45rem' } }, 'Background brightness'),
         e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
           onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
-          style:{ width:'100%', accentColor:INK, marginTop:'0.35rem' } })),
-      !settings.darkMode && e('div', { key:'carddim', style:{ padding:'0.55rem 0.15rem 0.35rem', borderBottom:'1px solid '+LINE } },
-        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK } }, 'Card brightness'),
+          style:{ width:'100%', accentColor:INK, height:'28px' } })),
+      !settings.darkMode && e('div', { key:'carddim', style:{ padding:'0.7rem 0.15rem 0.55rem', borderBottom:'1px solid rgba(10,10,12,0.06)' } },
+        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK, marginBottom:'0.45rem' } }, 'Card brightness'),
         e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
           onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
-          style:{ width:'100%', accentColor:INK, marginTop:'0.35rem' } })),
+          style:{ width:'100%', accentColor:INK, height:'28px' } })),
       toggleRow('Larger text', 'Slightly bigger type on cards and forms',
-        !!settings.largeText, ()=>saveSettings({ largeText: !settings.largeText }))
+        !!settings.largeText, ()=>saveSettings({ largeText: !settings.largeText })),
+      toggleRow('Haptic feedback', 'Short vibrations on key actions (supported devices)',
+        settings.hapticFeedback !== false, ()=>{
+          const next = !(settings.hapticFeedback !== false);
+          saveSettings({ hapticFeedback: next });
+          if (next) { try { navigator.vibrate && navigator.vibrate(12); } catch (err) {} }
+        })
     ]),
 
     collapseSection('tickets', 'Tickets & cards', [
+      e('div', { key:'preview', style:{ marginBottom:'0.75rem', pointerEvents:'none', transform: settings.largeText ? 'scale(1.03)' : 'none', transformOrigin:'top center' } },
+        e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, marginBottom:'0.4rem', letterSpacing:'0.04em', textTransform:'uppercase' } }, 'Live preview'),
+        ticketDetailCard({
+          id: 'preview',
+          ticketNumber: 'JT-DEMO',
+          site: (sitesToList()[0] && sitesToList()[0].key) || '',
+          equipment: equipEdits[0] ? [equipEdits[0].key] : [],
+          startDateTime: todayISO() + 'T09:15:00',
+          finishDateTime: todayISO() + 'T11:40:00',
+          hasTravel: true, travelDateTime: todayISO() + 'T08:40:00',
+          hasTravel2: true, travel2DateTime: todayISO() + 'T12:10:00',
+          workDone: 'Example work notes shown on the card. Adjust options below to see how cards look.',
+          parts: [{ partNumber: 'PN-100', partDescription: 'Filter' }],
+          locked: !!settings.lockReadOnly,
+          extraDays: []
+        }, 0)
+      ),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
-      toggleRow('Confirm before delete', 'Ask before removing a ticket',
-        settings.confirmDelete !== false, ()=>saveSettings({ confirmDelete: !(settings.confirmDelete !== false) })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
         settings.showDurationOnCards !== false, ()=>saveSettings({ showDurationOnCards: !(settings.showDurationOnCards !== false) })),
       toggleRow('Show job count on day', '“X jobs logged” under the date',
@@ -2688,18 +2815,7 @@ function App() {
       toggleRow('Compact cards', 'Tighter spacing on ticket cards',
         !!settings.compactCards, ()=>saveSettings({ compactCards: !settings.compactCards })),
       chipSelect('Sort tickets by', [{key:'time',label:'Start time'},{key:'number',label:'Ticket no.'},{key:'site',label:'Site'}],
-        settings.sortTickets || 'time', (v)=>saveSettings({ sortTickets:v }))
-    ]),
-
-    collapseSection('defaults', 'New ticket defaults', [
-      toggleRow('Remember last site', 'Pre-fill site from your previous ticket',
-        settings.rememberLastSite !== false, ()=>saveSettings({ rememberLastSite: !(settings.rememberLastSite !== false) })),
-      toggleRow('Suggest travel times', 'Offer travel before/after when creating tickets',
-        !!settings.autoAddTravel, ()=>saveSettings({ autoAddTravel: !settings.autoAddTravel })),
-      chipSelect('Default start time', [{key:'08:00',label:'08:00'},{key:'08:30',label:'08:30'},{key:'09:00',label:'09:00'},{key:'09:30',label:'09:30'},{key:'10:00',label:'10:00'}],
-        settings.defaultStartTime || '09:00', (v)=>saveSettings({ defaultStartTime:v })),
-      chipSelect('Default job length', [{key:60,label:'1h'},{key:90,label:'1.5h'},{key:120,label:'2h'},{key:180,label:'3h'},{key:240,label:'4h'}],
-        settings.defaultFinishOffset || 120, (v)=>saveSettings({ defaultFinishOffset:v })),
+        settings.sortTickets || 'time', (v)=>saveSettings({ sortTickets:v })),
       chipSelect('Round times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
         settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
       chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'All'}],
@@ -2729,28 +2845,83 @@ function App() {
     ])
   );
 
-  const themesView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.85rem' } },
+  const themesView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.95rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.2rem' } },
       e('button', { className:'d-hover-btn', onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Themes'),
       e('span', { style:{ width:'36px' } })),
-    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-      e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, letterSpacing:'0.06em', textTransform:'uppercase', padding:'0 0.2rem' } }, group.name),
-      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.45rem' } },
-        group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{ applyTheme(theme); setThemesOpen(false); },
-          style:{ display:'flex', flexDirection:'column', gap:'0.4rem', padding:'0.55rem 0.55rem 0.6rem', borderRadius:'18px',
-            border: '1px solid '+LINE,
-            background:SURF, cursor:'pointer', textAlign:'left',
-            boxShadow:'0 4px 12px rgba(22,23,50,0.05)' } },
-          e('div', { style:{ display:'flex', gap:'3px', width:'100%' } },
+    e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, padding:'0 0.25rem' } },
+      'Tap a palette to preview and rearrange colours for your sites.'),
+    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
+      e('div', { style:{ fontSize:'0.65rem', fontWeight:800, color:GREY, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0 0.35rem' } }, group.name),
+      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.55rem' } },
+        group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{
+            setThemeDraft({ name: theme.name, sites: (theme.sites || []).slice() });
+          },
+          style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.7rem 0.65rem 0.75rem', borderRadius:'22px',
+            border: 'none',
+            background:'rgba(10,10,12,0.035)', cursor:'pointer', textAlign:'left',
+            boxShadow:'0 6px 16px rgba(22,23,50,0.04)' } },
+          e('div', { style:{ display:'flex', gap:'4px', width:'100%' } },
             (theme.sites || []).map((hex,hi) => e('span', { key:hi, style:{
-              flex:1, height:'18px', minWidth:0, borderRadius:'999px',
-              background: hex, display:'block'
+              flex:1, height:'20px', minWidth:0, borderRadius:'999px',
+              background: hex, display:'block', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.25)'
             } }))),
-          e('span', { style:{ fontSize:'0.7rem', fontWeight:800, color:INK, padding:'0 0.1rem' } }, theme.name)))
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK, padding:'0 0.15rem' } }, theme.name)))
       )
     )));
+
+  const themeDraftModal = themeDraft && e('div', {
+      key:'theme-draft',
+      style:{ position:'fixed', inset:0, zIndex:95, display:'flex', alignItems:'center', justifyContent:'center',
+        background:'rgba(0,0,0,0.45)', padding:'1.25rem', animation:'fadeIn .2s ease' }
+    },
+      e('div', {
+        style:{ width:'100%', maxWidth:'360px', background:SURF, borderRadius:'24px', padding:'1.15rem 1.1rem 1.2rem',
+          boxShadow:'0 20px 50px rgba(0,0,0,0.25)', animation:'popIn .28s cubic-bezier(.34,1.56,.64,1)' }
+      },
+        e('div', { style:{ fontSize:'1rem', fontWeight:900, color:INK, marginBottom:'0.25rem' } }, themeDraft.name),
+        e('div', { style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.85rem' } }, 'Reorder colours for your sites, then apply.'),
+        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem', marginBottom:'1rem' } },
+          themeDraft.sites.map((hex, i) => e('div', { key:i, style:{ display:'flex', alignItems:'center', gap:'0.55rem',
+            background:'rgba(10,10,12,0.04)', borderRadius:'14px', padding:'0.45rem 0.55rem' } },
+            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:hex, flexShrink:0,
+              boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.08)' } }),
+            e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:800, color:INK } },
+              (sitesToList()[i] && sitesToList()[i].label) || ('Colour '+(i+1))),
+            e('button', { type:'button', disabled:i===0, onClick:()=>{
+              setThemeDraft(prev => {
+                const arr = prev.sites.slice();
+                if (i===0) return prev;
+                const t = arr[i-1]; arr[i-1]=arr[i]; arr[i]=t;
+                return { ...prev, sites: arr };
+              });
+            }, style:{ border:'none', background:'transparent', opacity:i===0?0.25:1, cursor:'pointer', padding:'4px' } }, '↑'),
+            e('button', { type:'button', disabled:i===themeDraft.sites.length-1, onClick:()=>{
+              setThemeDraft(prev => {
+                const arr = prev.sites.slice();
+                if (i>=arr.length-1) return prev;
+                const t = arr[i+1]; arr[i+1]=arr[i]; arr[i]=t;
+                return { ...prev, sites: arr };
+              });
+            }, style:{ border:'none', background:'transparent', opacity:i===themeDraft.sites.length-1?0.25:1, cursor:'pointer', padding:'4px' } }, '↓')
+          ))
+        ),
+        e('div', { style:{ display:'flex', gap:'0.5rem' } },
+          e('button', { type:'button', onClick:()=>setThemeDraft(null),
+            style:{ flex:1, border:'none', background:'rgba(10,10,12,0.06)', color:INK, borderRadius:'14px',
+              padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Cancel'),
+          e('button', { type:'button', onClick:()=>{
+              haptic('success');
+              applyTheme({ name: themeDraft.name, sites: themeDraft.sites });
+              setThemeDraft(null); setThemesOpen(false);
+            },
+            style:{ flex:1, border:'none', background:INK, color:APRICOT, borderRadius:'14px',
+              padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Apply')
+        )
+      )
+    );
 
   const backupsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
@@ -2851,7 +3022,7 @@ function App() {
         e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, settingsBody)
       ),
       e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
-        settingsBody, menu, chooserSheet, formSheet, fab)
+        settingsBody, menu, themeDraftModal, chooserSheet, formSheet, fab)
     );
   }
 
@@ -2921,7 +3092,7 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab
+    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
