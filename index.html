@@ -52,11 +52,45 @@
     filter: brightness(1.05);
     box-shadow: 0 4px 12px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1) !important;
   }
+  .fab-wrap {
+    position: fixed;
+    right: 1.15rem;
+    bottom: calc(1.35rem + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    z-index: 35;
+    pointer-events: none;
+  }
+  .fab-wrap .fab-btn { pointer-events: auto; position: relative; right: auto; bottom: auto; }
+  .fab-pulse {
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: rgba(26, 122, 232, 0.28);
+    animation: fabPulse 2.4s ease-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .fab-pulse::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: rgba(26, 122, 232, 0.18);
+    animation: fabPulse 2.4s ease-out 0.55s infinite;
+  }
+  @keyframes fabPulse {
+    0%   { transform: scale(0.88); opacity: 0.55; }
+    70%  { transform: scale(1.28); opacity: 0; }
+    100% { transform: scale(1.28); opacity: 0; }
+  }
   input:focus, textarea:focus { border-color:rgba(65,67,106,0.55) !important; }
-  @keyframes slideUp { 
-    from { transform:translateY(100%); } 
-    70% { transform:translateY(-6px); }
-    to { transform:translateY(0); } 
+  @keyframes slideUp {
+    from { transform: translateY(105%); opacity: 0.92; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .sheet-slide-up {
+    animation: slideUp 0.38s cubic-bezier(0.22, 0.9, 0.3, 1) both;
   }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes fadeInUp { 
@@ -350,7 +384,7 @@ const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9
 const THEME_GROUPS = [
   { name: 'Themes', themes: [
     { name:'iOS', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
-    { name:'Google', accent:'#4285F4', sites:['#4285F4','#EA4335','#D4A017','#2E9B4A'] },
+    { name:'Search', accent:'#4285F4', sites:['#4285F4','#EA4335','#D4A017','#2E9B4A'] },
     { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#5A8ACC'] },
     { name:'Starters', accent:'#C99200', sites:['#C43535','#2B5CDE','#2E9B3A','#C99200'] },
     { name:'The One', accent:'#1A8F48', sites:['#1A8F48','#2F5FB0','#B03A42','#161616'] },
@@ -376,7 +410,6 @@ const THEME_GROUPS = [
     { name:'Violet Horizon', accent:'#E07840', sites:['#E07840', '#3A6AAA', '#7A4A9A', '#4A4A6A'] },
     { name:'Amethyst', accent:'#A57390', sites:['#A57390', '#E682B4', '#C864AA', '#965096'] },
     { name:'Indigo Peach', accent:'#F08C8C', sites:['#F08C8C', '#A59788', '#3C468C', '#AA4678'] },
-    { name:'Graphite', accent:'#97907A', sites:['#97907A', '#827878', '#505046', '#281E1E'] },
     { name:'Royal Coral', accent:'#AC8848', sites:['#AC8848', '#6C9E9E', '#C8286E', '#322850'] },
     { name:'Peach Blush', accent:'#ACA59E', sites:['#ACA59E', '#FA5078', '#DC508C', '#B49056'] },
     { name:'Fuchsia Gold', accent:'#B48848', sites:['#B48848', '#DC64AA', '#FA6E96', '#7850B4'] },
@@ -722,7 +755,9 @@ const DEFAULT_SETTINGS = {
   defaultTravelMins: 30,
   sortTickets: 'time',
   weekStartsMon: true,
-  largeText: false
+  largeText: false,
+  cardTextScale: 'normal', /* normal | large | xl */
+  cardTitleWeight: 'bold' /* bold | black */
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -1914,18 +1949,27 @@ function App() {
     else setMenuSlide(0);
   };
 
-  const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('button', {
-    className: 'fab-btn',
-    onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
+  const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('div', {
+    className: 'fab-wrap',
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
-      width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer', zIndex:35,
-      background: INK, color: APRICOT,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      boxShadow:'0 10px 28px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.12)',
-      transition:'transform .15s cubic-bezier(.22,.9,.3,1), opacity .12s ease, box-shadow .15s ease, filter .12s ease'
+      width:'56px', height:'56px', zIndex:35
     }
-  }, PlusIcon(26, APRICOT));
+  },
+    e('div', { className: 'fab-pulse', 'aria-hidden': true }),
+    e('button', {
+      className: 'fab-btn',
+      onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
+      style: {
+        position:'relative', zIndex:1,
+        width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer',
+        background: INK, color: APRICOT,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        boxShadow:'0 10px 28px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.12)',
+        transition:'transform .15s cubic-bezier(.22,.9,.3,1), opacity .12s ease, box-shadow .15s ease, filter .12s ease'
+      }
+    }, PlusIcon(26, APRICOT))
+  );
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -1957,6 +2001,14 @@ function App() {
       const workRaw = j.workDone == null ? '' : String(j.workDone);
       const workText = workRaw.replace(/\s*\n+\s*/g, ' ').trim();
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
+      /* Strong typography scale from settings */
+      const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
+      const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
+      const titleSize = (0.98 * tScale).toFixed(3) + 'rem';
+      const bodySize = (0.82 * tScale).toFixed(3) + 'rem';
+      const timeSize = (0.80 * tScale).toFixed(3) + 'rem';
+      const pillSize = (0.64 * tScale).toFixed(3) + 'rem';
+      const titleWeight = settings.cardTitleWeight === 'black' ? 900 : 800;
 
       /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
       const t1 = j.hasTravel ? fmtTime(j.travelDateTime) : '';
@@ -1973,10 +2025,10 @@ function App() {
       const cardShadow = s ? 'none' : SHADOW_SM;
       const ringColor = s ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
       const pillBase = {
-        background: chipBg, color: onC, padding: '0.2rem 0.58rem', borderRadius: '999px',
-        fontSize: '0.64rem', fontWeight: 900, flexShrink: 0, lineHeight: '1.15',
+        background: chipBg, color: onC, padding: '0.22rem 0.62rem', borderRadius: '999px',
+        fontSize: pillSize, fontWeight: 900, flexShrink: 0, lineHeight: '1.15',
         whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        boxSizing: 'border-box', height: '22px', maxWidth: 'none', overflow: 'visible'
+        boxSizing: 'border-box', height: (22 * tScale).toFixed(1) + 'px', maxWidth: 'none', overflow: 'visible'
       };
 
       const leftHead = [];
@@ -1984,7 +2036,7 @@ function App() {
         width: '22px', minWidth: '22px', padding: '0', height: '22px'
       }) }, String(i+1)));
       const titleShow = title.length > 18 ? title.slice(0, 18) : title;
-      leftHead.push(e('span', { key:'tn', title: title, style:{ fontWeight:900, fontSize:'0.98rem', letterSpacing:'-0.2px', color:onC, maxWidth:'16ch', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'inline-block', lineHeight:1.2 } }, titleShow));
+      leftHead.push(e('span', { key:'tn', title: title, style:{ fontWeight:titleWeight, fontSize:titleSize, letterSpacing:'-0.2px', color:onC, maxWidth:'16ch', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'inline-block', lineHeight:1.2 } }, titleShow));
       if (ex.length > 0) leftHead.push(e('span', { key:'ex', style: Object.assign({}, pillBase) }, '+'+ex.length+' day'));
 
       const rightPills = [];
@@ -1996,7 +2048,7 @@ function App() {
           e('div', { key:'left', style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem', flexWrap:'nowrap', overflow:'hidden' } }, leftHead),
           rightPills.length > 0 && e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', flexShrink:0, marginLeft:'6px', marginRight: '2px' } }, rightPills)
         ),
-        e('div', { key:'time', style:{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.8rem', color:subC, fontWeight:700, textShadow:'none' } },
+        e('div', { key:'time', style:{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:timeSize, color:subC, fontWeight:700, textShadow:'none' } },
           e('span', { key:'tl', style:{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, timeParts.length ? timeParts.join(' ') : '—'),
           durationLabel ? e('span', { key:'dur', style:{ flexShrink:0, fontWeight:800, marginLeft:'auto' } }, durationLabel) : null)
       ];
@@ -2006,7 +2058,7 @@ function App() {
       }
       if (workText) {
         children.push(e('div', { key:'work', style:{
-          fontSize:'0.82rem', color:bodyC, margin:'0.45rem 0 0', paddingLeft:'0.45rem', lineHeight:1.35,
+          fontSize:bodySize, color:bodyC, margin:'0.45rem 0 0', paddingLeft:'0.45rem', lineHeight:1.4,
           whiteSpace:'normal', textShadow:'none',
           display:'-webkit-box', WebkitLineClamp:5, WebkitBoxOrient:'vertical', overflow:'hidden'
         } }, workText));
@@ -2302,7 +2354,8 @@ function App() {
         background:'rgba(0,0,0,'+(0.58 * (1 - mpProgress * 0.75))+')',
         transition: mpDragging ? 'none' : 'background .2s ease',
         touchAction: 'none',
-        overscrollBehavior: 'none'
+        overscrollBehavior: 'none',
+        animation: 'fadeIn .28s ease both'
       }
     },
       e('div', {
@@ -2320,6 +2373,7 @@ function App() {
         onTouchMove: moveSheetDrag,
         onTouchEnd: endSheetDrag,
         onTouchCancel: endSheetDrag,
+        className: mpDragging ? '' : 'sheet-slide-up',
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
@@ -2332,7 +2386,8 @@ function App() {
           touchAction: 'none',
           opacity: 1 - mpProgress * 0.12,
           overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          animation: mpDragging ? 'none' : undefined
         }
       },
         /* Handle — free vertical control */
@@ -2439,13 +2494,36 @@ function App() {
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
         e('button', {
-          onClick:()=>{ setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true); },
+          onClick:()=>{
+            if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
+            setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true);
+          },
+          onContextMenu:(ev)=>{ ev.preventDefault(); },
+          onTouchStart:(ev)=>{
+            window.__dateHoldTimer = setTimeout(() => {
+              window.__dateHoldTimer = null;
+              window.__dateLongPressed = true;
+              goToday();
+            }, 480);
+          },
+          onTouchEnd:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+          onTouchCancel:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+          onMouseDown:(ev)=>{
+            if (ev.button !== 0) return;
+            window.__dateHoldTimer = setTimeout(() => {
+              window.__dateHoldTimer = null;
+              window.__dateLongPressed = true;
+              goToday();
+            }, 480);
+          },
+          onMouseUp:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+          onMouseLeave:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
           style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
             borderRadius:'10px' }
         },
           e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } },
             anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-          e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap for month')
+          e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap month · hold today')
         ),
         e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK)))),
@@ -2859,12 +2937,10 @@ function App() {
         e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
           onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
           style:{ width:'100%', accentColor:INK, height:'28px' } })),
-      toggleRow('Larger text', 'Slightly bigger type on cards and forms',
-        !!settings.largeText, ()=>saveSettings({ largeText: !settings.largeText }))
     ]),
 
     collapseSection('tickets', 'Tickets & cards', [
-      e('div', { key:'preview', style:{ marginBottom:'0.75rem', pointerEvents:'none', transform: settings.largeText ? 'scale(1.03)' : 'none', transformOrigin:'top center' } },
+      e('div', { key:'preview', style:{ marginBottom:'0.85rem', pointerEvents:'none' } },
         e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, marginBottom:'0.4rem', letterSpacing:'0.04em', textTransform:'uppercase' } }, 'Live preview'),
         ticketDetailCard({
           id: 'preview',
@@ -2881,6 +2957,21 @@ function App() {
           extraDays: []
         }, 0)
       ),
+      e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:900, color:INK, letterSpacing:'-0.15px',
+        margin:'0.15rem 0 0.35rem', padding:'0.15rem 0' } }, 'Ticket text'),
+      chipSelect('Card text size', [
+        {key:'normal', label:'Normal'},
+        {key:'large', label:'Large'},
+        {key:'xl', label:'Extra large'}
+      ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
+        saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
+      }),
+      chipSelect('Ticket title weight', [
+        {key:'bold', label:'Bold'},
+        {key:'black', label:'Heavy'}
+      ], settings.cardTitleWeight || 'bold', (v)=>saveSettings({ cardTitleWeight: v })),
+      toggleRow('Compact cards', 'Tighter spacing on ticket cards',
+        !!settings.compactCards, ()=>saveSettings({ compactCards: !settings.compactCards })),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
@@ -2889,8 +2980,6 @@ function App() {
         settings.showJobCount !== false, ()=>saveSettings({ showJobCount: !(settings.showJobCount !== false) })),
       toggleRow('Show site key in menu', 'Colour legend in the side menu',
         settings.showRouteKey !== false, ()=>saveSettings({ showRouteKey: !(settings.showRouteKey !== false) })),
-      toggleRow('Compact cards', 'Tighter spacing on ticket cards',
-        !!settings.compactCards, ()=>saveSettings({ compactCards: !settings.compactCards })),
       chipSelect('Sort tickets by', [{key:'time',label:'Start time'},{key:'number',label:'Ticket no.'},{key:'site',label:'Site'}],
         settings.sortTickets || 'time', (v)=>saveSettings({ sortTickets:v })),
       chipSelect('Round times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
