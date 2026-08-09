@@ -708,7 +708,13 @@ const DEFAULT_SETTINGS = {
   timeRounding: 5,
   autoBackupEnabled: false,
   bgDim: 0,
-  cardDim: 0
+  cardDim: 0,
+  confirmDelete: true,
+  showRouteKey: true,
+  compactCards: false,
+  defaultStartTime: '09:00',
+  rememberLastSite: true,
+  showDurationOnCards: true
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -964,6 +970,7 @@ function App() {
   const [dayDetail, setDayDetail] = useState(null);
   const [pinnedDay, setPinnedDay] = useState(null); // { y, m, d, tickets, siteSequence } from month cell click
   const [showWeekends, setShowWeekends] = useState(false);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   const [swipeX, setSwipeX] = useState(0);
   const [burst, setBurst] = useState(0);
@@ -1620,12 +1627,10 @@ function App() {
 
   const shift = (n) => {
     const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
-    if (calMode === 'month' || isDesktop) {
+    if (monthPickerOpen || (isDesktop && view === 'month')) {
       const y = anchorDate.getFullYear(), targetM = anchorDate.getMonth() + n;
       const daysInTarget = new Date(y, targetM+1, 0).getDate();
       setAnchorDate(new Date(y, targetM, Math.min(anchorDate.getDate(), daysInTarget)));
-    } else if (calMode === 'week') {
-      const d = new Date(anchorDate); d.setDate(d.getDate() + n*7); setAnchorDate(d);
     } else {
       const d = new Date(anchorDate); d.setDate(d.getDate() + n); setAnchorDate(d);
     }
@@ -1736,32 +1741,84 @@ function App() {
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
   const closeMenu = () => { setMenuOpen(false); setMenuSearch(''); };
 
-  const menu = menuOpen && sheet([
-    e('div', { key:'hd', style:{ fontSize:'1.05rem', fontWeight:900, letterSpacing:'-0.2px', padding:'0 0.1rem' } }, 'Menu'),
+  const sideMenuItem = (label, onClick, muted) =>
+    e('button', {
+      key: label,
+      onClick: ()=>{ closeMenu(); if (onClick) onClick(); },
+      style:{
+        width:'100%', textAlign:'left', border:'none', background:'transparent', cursor:'pointer',
+        padding:'0.85rem 0.15rem', color: muted ? 'rgba(255,255,255,0.45)' : '#FFFFFF',
+        fontSize:'0.95rem', fontWeight: muted ? 600 : 700, letterSpacing:'-0.2px',
+        borderBottom: '1px solid rgba(255,255,255,0.08)'
+      }
+    }, label);
 
-    e('div', { key:'search', style:{ position:'relative' } },
-      e('div', { style:{ position:'absolute', left:'0.85rem', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' } },
-        SearchIcon(17, GREY)),
-      e('input', { type:'search', value:menuSearch, placeholder:'Search all tickets…',
-        onChange:(ev)=>setMenuSearch(ev.target.value),
-        style:{ width:'100%', padding:'0.7rem 0.9rem 0.7rem 2.5rem', border:'1px solid '+LINE, borderRadius:'14px',
-          outline:'none', fontSize:'0.85rem', background:FIELDBG, color:INK } })),
+  const menu = menuOpen && e('div', {
+      key: 'side-menu',
+      style:{ position:'fixed', inset:0, zIndex:80, display:'flex' }
+    },
+      e('div', {
+        onClick: closeMenu,
+        style:{ position:'absolute', inset:0, background:'rgba(0,0,0,0.45)', animation:'fadeIn .2s ease' }
+      }),
+      e('div', {
+        style:{
+          position:'relative', width:'min(300px, 84vw)', height:'100%',
+          background:'#0A0A0C', color:'#FFF',
+          padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
+          display:'flex', flexDirection:'column', gap:'0.15rem',
+          boxShadow:'12px 0 40px rgba(0,0,0,0.35)',
+          animation:'slideInLeft .28s cubic-bezier(.22,.9,.3,1)'
+        }
+      },
+        e('div', { style:{ fontSize:'0.68rem', fontWeight:800, letterSpacing:'0.12em', textTransform:'uppercase',
+          color:'rgba(255,255,255,0.4)', marginBottom:'0.85rem' } }, 'Menu'),
 
-    menuSearch.trim()
-      ? (menuSearchResults.length
-          ? e('div', { key:'results', style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, menuSearchResults.map(menuResultRow))
-          : e('div', { key:'noresults', style:{ fontSize:'0.8rem', color:GREY, textAlign:'center', padding:'0.9rem 0' } }, 'No tickets match'))
-      : e('div', { key:'tools', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-          view === 'list'
-            ? iconRow(CalendarTile(), 'Calendar view', 'Month, week and day planner', ()=>{ closeMenu(); setView('month'); window.scrollTo(0,0); })
-            : iconRow(ListTile(), 'All tickets', 'Browse and filter everything logged', ()=>{ closeMenu(); setView('list'); window.scrollTo(0,0); }),
-          iconRow(SpreadsheetTile(), 'Export to Excel', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('excel'); }),
-          iconRow(ClipboardTile(), 'Copy as text', 'Choose day, week, month or everything', ()=>{ setMenuOpen(false); setChooser('text'); }),
-          iconRow(SettingsTile(), 'Settings', 'Themes, equipment and app behaviour', ()=>openSettings())
-        ),
+        e('div', { style:{ position:'relative', marginBottom:'0.75rem' } },
+          e('input', { type:'search', value:menuSearch, placeholder:'Search tickets…',
+            onChange:(ev)=>setMenuSearch(ev.target.value),
+            style:{ width:'100%', padding:'0.65rem 0.85rem', border:'1px solid rgba(255,255,255,0.12)',
+              borderRadius:'12px', outline:'none', fontSize:'0.84rem',
+              background:'rgba(255,255,255,0.06)', color:'#FFF' } })),
 
-    closeBtn(closeMenu)
-  ], closeMenu);
+        menuSearch.trim()
+          ? (menuSearchResults.length
+              ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.25rem', overflowY:'auto', flex:1 } },
+                  menuSearchResults.map(j => e('button', {
+                    key: j.id,
+                    onClick: ()=>{ closeMenu(); openEdit(j, { view: 'list' }); },
+                    style:{ textAlign:'left', border:'none', background:'rgba(255,255,255,0.06)', borderRadius:'12px',
+                      padding:'0.7rem 0.8rem', color:'#FFF', cursor:'pointer' }
+                  }, e('div', { style:{ fontWeight:800, fontSize:'0.88rem' } }, j.ticketNumber || 'Ticket'),
+                     e('div', { style:{ fontSize:'0.7rem', color:'rgba(255,255,255,0.45)', marginTop:'2px' } },
+                       (SITES[j.site] ? SITES[j.site].label : '') + (j.startDateTime ? ' · ' + fmtDay(j.startDateTime) : ''))
+                  )))
+              : e('div', { style:{ fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', padding:'1rem 0' } }, 'No matches'))
+          : e('div', { style:{ display:'flex', flexDirection:'column', flex:1, overflowY:'auto' } },
+              sideMenuItem(view === 'list' ? 'Calendar' : 'All tickets', ()=>{ setView(view === 'list' ? 'month' : 'list'); window.scrollTo(0,0); }),
+              sideMenuItem('Export to Excel', ()=> setChooser('excel')),
+              sideMenuItem('Copy as text', ()=> setChooser('text')),
+              sideMenuItem('Settings', ()=> openSettings()),
+              settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
+                borderTop:'1px solid rgba(255,255,255,0.1)' } },
+                e('div', { style:{ fontSize:'0.65rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase',
+                  color:'rgba(255,255,255,0.35)', marginBottom:'0.55rem' } }, 'Sites'),
+                e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
+                  Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.55rem' } },
+                    e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', background:siteGrad(k), flexShrink:0 } }),
+                    e('span', { style:{ fontSize:'0.82rem', fontWeight:700, color:'rgba(255,255,255,0.85)' } }, SITES[k].label)
+                  ))
+                )
+              )
+            ),
+
+        e('button', {
+          onClick: closeMenu,
+          style:{ marginTop:'auto', border:'none', background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)',
+            borderRadius:'12px', padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' }
+        }, 'Close')
+      )
+    );
 
   const chooserOptions = [
     { key:'day', label:anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'short' }), sub: scopeTickets('day').length+' ticket(s)' },
@@ -1845,7 +1902,7 @@ function App() {
       if (t1) { timeParts.push(t1); timeParts.push('→'); }
       timeParts.push(tCore);
       if (t2) { timeParts.push('→'); timeParts.push(t2); }
-      const durationLabel = on ? hm(on) : '';
+      const durationLabel = (settings.showDurationOnCards !== false && on) ? hm(on) : '';
 
       /* Complete = very thin white line just inside the card edge */
       const cardBorder = s ? 'none' : ('1px solid ' + LINE);
@@ -1926,7 +1983,7 @@ function App() {
       radius:'18px',
       glow: null,
       onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
-      onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
+      onDelete:()=>{ if (j && j.id != null && (settings.confirmDelete === false || window.confirm('Delete this ticket?'))) remove(j.id); },
       onTap:()=>{ if (j) openEdit(j, ret); },
       entryDelay: null
     },
@@ -1966,6 +2023,7 @@ function App() {
           tickets: bucket && Array.isArray(bucket.tickets) ? bucket.tickets.slice() : [],
           siteSequence: bucket && Array.isArray(bucket.siteSequence) ? bucket.siteSequence.slice() : []
         });
+        setMonthPickerOpen(false);
         if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day');
       },
       style:{ minHeight: weekend ? '56px' : '78px', borderRadius: weekend ? '12px' : '16px',
@@ -2098,26 +2156,63 @@ function App() {
     return anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' });
   };
 
+  const monthPicker = monthPickerOpen && e('div', {
+      key: 'month-picker',
+      style:{ position:'fixed', inset:0, zIndex:70, display:'flex', alignItems:'flex-end', justifyContent:'center' }
+    },
+      e('div', { onClick:()=>setMonthPickerOpen(false), style:{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)', animation:'fadeIn .2s ease' } }),
+      e('div', {
+        style:{
+          position:'relative', width:'100%', maxWidth:'440px',
+          background: SURF, borderRadius:'24px 24px 0 0',
+          padding:'0.85rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
+          boxShadow:'0 -12px 40px rgba(0,0,0,0.18)',
+          animation:'slideUp .32s cubic-bezier(.22,.9,.3,1)',
+          maxHeight:'88vh', overflowY:'auto'
+        }
+      },
+        e('div', { style:{ width:'36px', height:'4px', borderRadius:'999px', background:LINE, margin:'0 auto 0.85rem' } }),
+        e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
+          e('button', { onClick:()=>{
+              const y = anchorDate.getFullYear(), m = anchorDate.getMonth() - 1;
+              const days = new Date(y, m+1, 0).getDate();
+              setAnchorDate(new Date(y, m, Math.min(anchorDate.getDate(), days)));
+            }, style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, INK)),
+          e('div', { style:{ textAlign:'center' } },
+            e('div', { style:{ fontSize:'1rem', fontWeight:900, color:INK } },
+              anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
+            e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:700 } }, String(anchorDate.getFullYear()))
+          ),
+          e('button', { onClick:()=>{
+              const y = anchorDate.getFullYear(), m = anchorDate.getMonth() + 1;
+              const days = new Date(y, m+1, 0).getDate();
+              setAnchorDate(new Date(y, m, Math.min(anchorDate.getDate(), days)));
+            }, style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))
+        ),
+        monthGrid,
+        e('button', {
+          onClick:()=>{ goToday(); setMonthPickerOpen(false); },
+          style:{ width:'100%', marginTop:'0.75rem', border:'none', background:SURF2, color:INK,
+            borderRadius:'14px', padding:'0.75rem', fontWeight:800, fontSize:'0.84rem', cursor:'pointer' }
+        }, 'Jump to today')
+      )
+    );
+
   const monthView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.35rem' } },
-
-      e('div', { style:{ display:'flex', borderBottom:'1px solid '+LINE } },
-        ['day','week','month'].map(mode => e('button', { key:mode, onClick:()=>setCalMode(mode),
-          style:{ flex:1, padding:'0.32rem 0', border:'none', cursor:'pointer', background:'transparent',
-            fontSize:'0.7rem', fontWeight: calMode===mode ? 900 : 700,
-            color: calMode===mode ? INK : GREY,
-            borderBottom: calMode===mode ? '2px solid '+INK : '2px solid transparent',
-            marginBottom:'-1px', transition:'color .2s ease, border-color .2s ease' } },
-          mode[0].toUpperCase()+mode.slice(1)))),
-
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.05rem', gap:'0.25rem', marginTop:'0.05rem' } },
+    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem' } },
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 0.05rem', gap:'0.25rem' } },
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
-        e('button', { onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', padding:'1px 3px', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'0.92rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } }, periodLabel()),
-          calMode === 'month' && e('span', { style:{ fontSize:'0.92rem', fontWeight:400, color:GREY, marginLeft:'0.28rem' } },
-            String(anchorDate.getFullYear()))),
+        e('button', {
+          onClick:()=>setMonthPickerOpen(true),
+          style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
+            borderRadius:'10px' }
+        },
+          e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } },
+            anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
+          e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap for month')
+        ),
         e('button', { key:'today', onClick:goToday, title:'Jump to today', style:{ background:'none', border:'none', cursor:'pointer',
           padding:'3px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' } },
           e('span', { style:{ width:'5px', height:'5px', borderRadius:'999px', background:INK } })),
@@ -2128,21 +2223,10 @@ function App() {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
       style:{ transform:'translateX('+calDX+'px)', transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
         opacity: 1 - Math.abs(calDX)/220 } },
-      calMode === 'month' ? monthGrid : calMode === 'week' ? weekGrid : dayView),
+      dayView),
 
-    e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto', justifyContent:'center', paddingTop:'0.1rem' } },
-      Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.6rem', fontWeight:800,
-        color:MID, flexShrink:0, background:SURF2, padding:'0.35rem 0.68rem', borderRadius:'999px', boxShadow:SHADOW_SM } },
-        e('span', { style:{ width:'9px', height:'9px', borderRadius:'999px', background:siteGrad(k) } }), SITES[k].label))),
-
-    calMode !== 'day' && e('button', { onClick:()=>setShowWeekends(!showWeekends),
-      style:{ background:'none', border:'none', color:GREY, fontSize:'0.66rem', fontWeight:700, cursor:'pointer',
-        padding:'0.3rem', textAlign:'center', opacity:0.85 } },
-      showWeekends ? 'Hide weekends' : 'Show weekends'),
-
-    ms.src.length === 0 && calMode === 'month' &&
-      e('div', { style:{ textAlign:'center', padding:'1rem', color:GREY, fontSize:'0.8rem' } },
-        'Nothing logged this month. Tap a day or use the + button.'));
+    monthPicker
+  );
 
   // daySheet popup removed — tapping a day now switches to Day mode
 
@@ -2537,15 +2621,21 @@ function App() {
           style:{ width:'100%', accentColor:INK } })),
       toggleRow('Lock tickets when complete', 'Marking a ticket ready stops it being edited until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
-      toggleRow('Hide weekends by default', 'Weekend columns start collapsed on the calendar',
-        settings.hideWeekendsDefault, ()=>saveSettings({ hideWeekendsDefault: !settings.hideWeekendsDefault })),
+      toggleRow('Confirm before delete', 'Ask before removing a ticket',
+        settings.confirmDelete !== false, ()=>saveSettings({ confirmDelete: !(settings.confirmDelete !== false) })),
+      toggleRow('Show site key in menu', 'Colour legend for each site',
+        settings.showRouteKey !== false, ()=>saveSettings({ showRouteKey: !(settings.showRouteKey !== false) })),
+      toggleRow('Show duration on cards', 'On-site time on the right of the time line',
+        settings.showDurationOnCards !== false, ()=>saveSettings({ showDurationOnCards: !(settings.showDurationOnCards !== false) })),
+      toggleRow('Remember last site', 'Pre-fill site from your previous ticket',
+        settings.rememberLastSite !== false, ()=>saveSettings({ rememberLastSite: !(settings.rememberLastSite !== false) })),
 
-      chipSelect('Calendar opens to', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'}],
-        settings.defaultCalMode, (v)=>saveSettings({ defaultCalMode:v })),
       chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'Everything'}],
         settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v })),
       chipSelect('Round new ticket times to', [{key:1,label:'1 min'},{key:5,label:'5 min'},{key:10,label:'10 min'},{key:15,label:'15 min'},{key:30,label:'30 min'}],
         settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
+      chipSelect('Default start time', [{key:'08:00',label:'08:00'},{key:'08:30',label:'08:30'},{key:'09:00',label:'09:00'},{key:'09:30',label:'09:30'},{key:'10:00',label:'10:00'}],
+        settings.defaultStartTime || '09:00', (v)=>saveSettings({ defaultStartTime:v })),
 
       settingsSection('Account'),
       e('div', { key:'acct', className:'settings-span-2 d-hover', style:{ background:SURF, border:'1px solid '+LINE, borderRadius:'16px', padding:'0.75rem 0.9rem',
