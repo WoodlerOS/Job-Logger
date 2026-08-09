@@ -64,25 +64,27 @@
   .fab-wrap .fab-btn { pointer-events: auto; position: relative; right: auto; bottom: auto; }
   .fab-pulse {
     position: absolute;
-    inset: -5px;
+    inset: -8px;
     border-radius: 50%;
-    background: rgba(26, 122, 232, 0.28);
-    animation: fabPulse 2.4s ease-out infinite;
+    background: rgba(40, 140, 255, 0.72);
+    box-shadow: 0 0 18px 6px rgba(40, 140, 255, 0.55), 0 0 36px 12px rgba(40, 140, 255, 0.28);
+    animation: fabPulse 2.1s ease-out infinite;
     pointer-events: none;
     z-index: 0;
   }
   .fab-pulse::after {
     content: '';
     position: absolute;
-    inset: 4px;
+    inset: 2px;
     border-radius: 50%;
-    background: rgba(26, 122, 232, 0.18);
-    animation: fabPulse 2.4s ease-out 0.55s infinite;
+    background: rgba(80, 170, 255, 0.55);
+    box-shadow: 0 0 14px 4px rgba(80, 170, 255, 0.4);
+    animation: fabPulse 2.1s ease-out 0.45s infinite;
   }
   @keyframes fabPulse {
-    0%   { transform: scale(0.88); opacity: 0.55; }
-    70%  { transform: scale(1.28); opacity: 0; }
-    100% { transform: scale(1.28); opacity: 0; }
+    0%   { transform: scale(0.92); opacity: 0.95; }
+    65%  { transform: scale(1.38); opacity: 0; }
+    100% { transform: scale(1.38); opacity: 0; }
   }
   input:focus, textarea:focus { border-color:rgba(65,67,106,0.55) !important; }
   @keyframes slideUp {
@@ -744,7 +746,6 @@ const DEFAULT_SETTINGS = {
   cardDim: 0,
   confirmDelete: true,
   showRouteKey: true,
-  compactCards: false,
   defaultStartTime: '09:00',
   defaultFinishOffset: 120,
   rememberLastSite: true,
@@ -756,8 +757,7 @@ const DEFAULT_SETTINGS = {
   sortTickets: 'time',
   weekStartsMon: true,
   largeText: false,
-  cardTextScale: 'normal', /* normal | large | xl */
-  cardTitleWeight: 'bold' /* bold | black */
+  cardTextScale: 'normal' /* normal | large | xl */
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -2008,7 +2008,7 @@ function App() {
       const bodySize = (0.82 * tScale).toFixed(3) + 'rem';
       const timeSize = (0.80 * tScale).toFixed(3) + 'rem';
       const pillSize = (0.64 * tScale).toFixed(3) + 'rem';
-      const titleWeight = settings.cardTitleWeight === 'black' ? 900 : 800;
+      const titleWeight = 900;
 
       /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
       const t1 = j.hasTravel ? fmtTime(j.travelDateTime) : '';
@@ -2076,7 +2076,7 @@ function App() {
           position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'18px', padding: settings.compactCards ? '0.65rem 0.75rem' : '0.9rem 0.95rem', cursor:'pointer',
+          borderRadius:'18px', padding: '0.9rem 0.95rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
@@ -2966,12 +2966,6 @@ function App() {
       ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
         saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
       }),
-      chipSelect('Ticket title weight', [
-        {key:'bold', label:'Bold'},
-        {key:'black', label:'Heavy'}
-      ], settings.cardTitleWeight || 'bold', (v)=>saveSettings({ cardTitleWeight: v })),
-      toggleRow('Compact cards', 'Tighter spacing on ticket cards',
-        !!settings.compactCards, ()=>saveSettings({ compactCards: !settings.compactCards })),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
