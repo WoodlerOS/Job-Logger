@@ -852,7 +852,6 @@ const toLocalDate = (val) => {
   }
   const s = String(val).trim();
   if (!s) return null;
-  // Prefer explicit local parse for YYYY-MM-DD or YYYY-MM-DDTHH:mm
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
   if (m) {
     const d = new Date(
@@ -1085,6 +1084,19 @@ function App() {
   const [pinnedDay, setPinnedDay] = useState(null); // { y, m, d, tickets, siteSequence } from month cell click
   const [showWeekends, setShowWeekends] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [mpJustOpened, setMpJustOpened] = useState(false);
+  /* The slide-up entrance animation should play exactly once, when the sheet first
+     opens — not every time the CSS class happens to change. Previously the class
+     toggled with mpDragging (on/off on every horizontal month-swipe gesture too),
+     which re-triggered the whole "pop up from the bottom" animation on every swipe. */
+  useEffect(() => {
+    if (monthPickerOpen) {
+      setMpJustOpened(true);
+      const t = setTimeout(() => setMpJustOpened(false), 420);
+      return () => clearTimeout(t);
+    }
+    setMpJustOpened(false);
+  }, [monthPickerOpen]);
   const [mpDY, setMpDY] = useState(0);
   const [mpDragging, setMpDragging] = useState(false);
   const [mpMonthDX, setMpMonthDX] = useState(0);
@@ -1642,7 +1654,8 @@ function App() {
         t1: d.hasTravel && d.travelDateTime ? d.travelDateTime.slice(11,16) : '',
         start: (d.startDateTime||'').slice(11,16),
         finish: (d.finishDateTime||'').slice(11,16),
-        t2: d.hasTravel2 && d.travel2DateTime ? d.travel2DateTime.slice(11,16) : ''
+        t2: d.hasTravel2 && d.travel2DateTime ? d.travel2DateTime.slice(11,16) : '',
+        notes: d.notes || ''
       })),
       workDone: j.workDone || '',
       parts: (j.parts||[]).filter(p => p.partNumber || p.partDescription),
@@ -1662,7 +1675,8 @@ function App() {
       const c = composeTimes(d.date, [d.t1, d.start, d.finish || d.start, d.t2]);
       return { startDateTime:c[1], finishDateTime:c[2],
         hasTravel: !!d.t1, travelDateTime: c[0] || c[1],
-        hasTravel2: !!d.t2, travel2DateTime: c[3] || c[2] };
+        hasTravel2: !!d.t2, travel2DateTime: c[3] || c[2],
+        notes: d.notes || '' };
     };
     return {
       id: editingId || Date.now(),
@@ -1758,6 +1772,21 @@ function App() {
     setSwiping(false);
     if (swipeX >= SWIPE_TRIGGER) backOut(); else setSwipeX(0);
   };
+
+  /* Safety net: if iOS ever claims the gesture for native scroll mid-swipe and
+     silently drops our touchend/touchcancel, "swiping" would stay true forever
+     with the card frozen offset. This watchdog only fires if no normal touchend
+     has toggled swiping off within a few seconds — a real stuck gesture — so it
+     never races with (or interferes with) the normal completion path. */
+  useEffect(() => {
+    if (!swiping) return;
+    const t = setTimeout(() => {
+      touch.current.live = false;
+      setSwiping(false);
+      setSwipeX(0);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [swiping]);
 
   const progress = Math.min(swipeX / SWIPE_TRIGGER, 1);
   const armed = swipeX >= SWIPE_TRIGGER;
@@ -2194,11 +2223,14 @@ function App() {
 
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
-    if (d && d.allLocked) border = has ? '2px solid rgba(255,255,255,0.55)' : '2px solid rgba(10,10,12,0.16)';
     if (selected) border = '2px solid '+(has ? '#FFFFFF' : INK);
 
     const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
     const boxShadow = selected ? '0 0 0 2px '+(has ? 'rgba(255,255,255,0.55)' : 'rgba(10,10,12,0.2)') : 'none';
+    /* Same "complete" language as the day-view ticket cards: a thin ring inset
+       from the edge (white on a coloured cell, dark on a plain one) rather than
+       a thick outer border. */
+    const lockRingColor = has ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
 
     return e('button', { key:dnum, className:'day-cell-btn', onClick:()=>{
         const clicked = new Date(ms.y, ms.m, dnum);
@@ -2219,23 +2251,22 @@ function App() {
         gap:'4px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
+      d && d.allLocked ? e('div', { key:'ring', style:{ position:'absolute', inset:'3px',
+        borderRadius: weekend ? '10px' : '15px', border:'1px solid '+lockRingColor,
+        pointerEvents:'none', zIndex:2 } }) : null,
       e('span', { style:{ fontSize: weekend ? '0.76rem' : '1rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.25px', textShadow:'none' } }, String(dnum)),
-      has && !weekend ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'3px', alignItems:'center', marginTop:'3px', width:'100%', padding:'0 2px' } },
-        sites.slice(0,2).map(sk => {
+      has && !weekend ? e('div', { style:{ display:'flex', gap:'5px', alignItems:'center', justifyContent:'center', marginTop:'4px', flexWrap:'wrap', width:'100%' } },
+        sites.slice(0,4).map(sk => {
           const hex = (SITES[sk] && SITES[sk].hex) || '#888';
-          return e('span', { key:sk, style:{ fontSize:'0.62rem', fontWeight:900, color:'#FFF',
-            background: hex, borderRadius:'8px', padding:'3px 8px', letterSpacing:'0.25px',
-            minWidth:'70%', textAlign:'center',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45), 0 1px 2px rgba(0,0,0,0.12)' } }, (SITES[sk] && SITES[sk].label) || sk);
+          return e('span', { key:sk, style:{ width:'8px', height:'8px', borderRadius:'999px', background:hex, flexShrink:0,
+            border:'1.2px solid rgba(255,255,255,0.8)', boxShadow:'0 0 0 0.5px rgba(0,0,0,0.15)' } });
         }),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:800, color:'rgba(255,255,255,0.95)', marginTop:'1px' } },
+        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:800, color:'rgba(255,255,255,0.95)', marginTop:'1px', width:'100%', textAlign:'center' } },
           d.tickets.length+' jobs') : null) : null,
-      has && weekend ? e('div', { style:{ display:'flex', gap:'2px' } },
-        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'4px', height:'4px', borderRadius:'999px', background:'rgba(255,255,255,0.9)' } }))) : null,
-      today ? e('span', { key:'td', style:{ position:'absolute', bottom: weekend?'4px':'6px', left:'50%',
-        width:'5px', height:'5px', borderRadius:'999px', background: has ? '#FFFFFF' : INK,
-        animation:'dotPulseAbs 2.4s ease-in-out infinite' } }) : null);
+      has && weekend ? e('div', { style:{ display:'flex', gap:'3px' } },
+        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px',
+          background: (SITES[s] && SITES[s].hex) || '#888', border:'1px solid rgba(255,255,255,0.8)' } }))) : null);
   };
 
   const monthGrid = e('div', { style:{ ...PANEL(), padding:'1rem 0.85rem 1.15rem' } },
@@ -2447,7 +2478,7 @@ function App() {
         onTouchMove: moveSheetDrag,
         onTouchEnd: endSheetDrag,
         onTouchCancel: endSheetDrag,
-        className: mpDragging ? '' : 'sheet-slide-up',
+        className: mpJustOpened ? 'sheet-slide-up' : '',
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
@@ -2760,7 +2791,7 @@ function App() {
   const addExtraDay = () => {
     const last = form.extra.length ? form.extra[form.extra.length-1] : form;
     setForm({ ...form, extra: [ ...form.extra, {
-      date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'' } ] });
+      date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'', notes:'' } ] });
   };
 
   const formView = e('div', {
@@ -2769,6 +2800,7 @@ function App() {
       transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
       transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 4 ? '24px' : '0',
+      touchAction: 'pan-y',
       boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.05rem 0.1rem 0' } },
@@ -2828,7 +2860,17 @@ function App() {
                 borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } },
               '+ Another day')
           )
-        )
+        ),
+
+        /* One extra Notes box per additional day, date label live-tracks that day's date */
+        form.extra.map((d,i) => sectionShell(
+          'Notes — Day ' + (i+2) + ' · ' + (d.date ? ukDate(d.date) : ''),
+          e('textarea', { value:d.notes||'', placeholder:'What was done on this day…',
+            onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
+            style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.85rem',
+              minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
+              outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } })
+        ))
       ),
 
       /* RIGHT: notes then parts */
@@ -3124,7 +3166,12 @@ function App() {
           e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
         e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.45rem 0.85rem', borderRadius:'999px', border:'1px solid '+LINE,
           background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
-    ])
+    ]),
+
+    /* Hidden long-press backups access: press and hold for options */
+    e('div', { key:'backupsAccess', style:{ display:'flex', justifyContent:'center', paddingTop:'0.5rem' } },
+      e(BackupsLongPress, { onBackupNow:backupNow, onOpenBackups:openBackups })
+    )
   );
 
   const themesView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.95rem' } },
@@ -3377,6 +3424,31 @@ function App() {
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
+  );
+}
+
+function BackupsLongPress({ onBackupNow, onOpenBackups }) {
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef(null);
+  const start = () => { timerRef.current = setTimeout(() => setOpen(true), 550); };
+  const cancel = () => { if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; } };
+  return e('div', { style:{ position:'relative' } },
+    e('button', {
+      onTouchStart:start, onTouchEnd:cancel, onTouchCancel:cancel,
+      onMouseDown:start, onMouseUp:cancel, onMouseLeave:cancel,
+      onContextMenu:(ev)=>ev.preventDefault(),
+      style:{ width:'34px', height:'34px', borderRadius:'999px', border:'1px solid '+LINE,
+        background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:0.5 }
+    }, e('span', { style:{ width:'4px', height:'4px', borderRadius:'999px', background:GREY, boxShadow:'6px 0 0 '+GREY+', -6px 0 0 '+GREY } })),
+    open && e('div', {
+        onClick:()=>setOpen(false),
+        style:{ position:'fixed', inset:0, zIndex:99, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center', animation:'fadeIn .15s ease' }
+      },
+      e('div', { onClick:(ev)=>ev.stopPropagation(), style:{ background:SURF, borderRadius:'18px', padding:'0.6rem', display:'flex', flexDirection:'column', gap:'0.35rem', minWidth:'220px', boxShadow:'0 12px 32px rgba(0,0,0,0.2)' } },
+        e('button', { onClick:()=>{ setOpen(false); onBackupNow(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Back up now'),
+        e('button', { onClick:()=>{ setOpen(false); onOpenBackups(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Restore from backup')
+      )
+    )
   );
 }
 
