@@ -2790,8 +2790,9 @@ function App() {
   const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx===i ? { ...x, ...patch } : x) });
   const addExtraDay = () => {
     const last = form.extra.length ? form.extra[form.extra.length-1] : form;
+    const nextDate = addDayISO(last.date, 1);
     setForm({ ...form, extra: [ ...form.extra, {
-      date: addDayISO(last.date, 1), t1:'', start: form.start, finish: form.finish, t2:'', notes:'' } ] });
+      date: nextDate, t1:'', start: form.start, finish: form.finish, t2:'', notes: ukDate(nextDate) + '\n' } ] });
   };
 
   const formView = e('div', {
@@ -2850,41 +2851,39 @@ function App() {
           )
         ),
 
-        sectionShell('Schedule',
-          e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-            dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
-            form.extra.map((d,i) => dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
-              ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site])),
-            e('button', { onClick:addExtraDay,
-              style:{ alignSelf:'center', border:'none', background:SURF2, color:MID,
-                borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } },
-              '+ Another day')
-          )
-        ),
+        dayPanel(form, updateMain, 'm', 'Day 1', null, SITES[form.site]),
 
-        /* One extra Notes box per additional day, date label live-tracks that day's date */
-        form.extra.map((d,i) => sectionShell(
-          'Notes — Day ' + (i+2) + ' · ' + (d.date ? ukDate(d.date) : ''),
-          e('textarea', { value:d.notes||'', placeholder:'What was done on this day…',
-            onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
-            style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.85rem',
-              minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-              outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } })
-        ))
-      ),
-
-      /* RIGHT: notes then parts */
-      e('div', { className: 'form-desktop-right', style:{ display:'flex', flexDirection:'column', gap:'0.85rem' } },
         sectionShell('Notes',
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
             className: 'work-done-field',
             style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.8rem 0.95rem',
-              flex:1, minHeight:'10.5rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
+              flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
               outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } }),
           CopyBtn(form.workDone, 'work')
         ),
 
+        ...form.extra.flatMap((d,i) => [
+          dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
+            ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site]),
+          sectionShell('Notes — Day ' + (i+2),
+            e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…',
+              onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
+              style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.85rem',
+                minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
+                outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } })
+          )
+        ]),
+
+
+        e('button', { onClick:addExtraDay,
+          style:{ alignSelf:'center', border:'none', background:SURF2, color:MID,
+            borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } },
+          '+ Another day')
+      ),
+
+      /* RIGHT: parts */
+      e('div', { className: 'form-desktop-right', style:{ display:'flex', flexDirection:'column', gap:'0.85rem' } },
         sectionShell('Parts',
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.35rem' } },
             e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
