@@ -1330,6 +1330,18 @@ function App() {
   const hm = (m) => m >= 60 ? Math.floor(m/60)+'h '+(m%60?pad(m%60)+'m':'') : m+'m';
   const eqOf = (j) => Array.isArray(j.equipment) ? j.equipment : [];
   const exOf = (j) => Array.isArray(j.extraDays) ? j.extraDays : [];
+  /* Every "visit" a ticket represents: the primary day (dayIndex 1) plus each
+     extra day (dayIndex 2, 3, ...). Calendar buckets and day-view cards use this
+     so a ticket's later days show up on their own dates, not just under day 1. */
+  const daySegments = (j) => {
+    const segs = [{ dayIndex:1, startDateTime:j.startDateTime, finishDateTime:j.finishDateTime,
+      hasTravel:j.hasTravel, travelDateTime:j.travelDateTime,
+      hasTravel2:j.hasTravel2, travel2DateTime:j.travel2DateTime, notes:j.workDone }];
+    exOf(j).forEach((ed, idx) => segs.push({ dayIndex: idx+2, startDateTime:ed.startDateTime, finishDateTime:ed.finishDateTime,
+      hasTravel:ed.hasTravel, travelDateTime:ed.travelDateTime,
+      hasTravel2:ed.hasTravel2, travel2DateTime:ed.travel2DateTime, notes:ed.notes }));
+    return segs;
+  };
 
   const composeTimes = (date, arr) => {
     let d = date, last = null;
@@ -1570,34 +1582,36 @@ function App() {
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
     const days = {};
-    src.forEach(j => {
-      const d = toLocalDate(j.startDateTime);
-      if (!d) return;
-      const dnum = d.getDate();
-      (days[dnum] = days[dnum] || { tickets:[] }).tickets.push(j);
+    jobs.forEach(j => {
+      daySegments(j).forEach(seg => {
+        const d = toLocalDate(seg.startDateTime);
+        if (!d || d.getFullYear() !== y || d.getMonth() !== m) return;
+        const dnum = d.getDate();
+        (days[dnum] = days[dnum] || { tickets:[] }).tickets.push({ j, dayIndex: seg.dayIndex, seg });
+      });
     });
     Object.keys(days).forEach(d => {
       const day = days[d];
-      day.tickets.sort((a,b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+      day.tickets.sort((a,b) => new Date(a.seg.startDateTime) - new Date(b.seg.startDateTime));
       const seq = [];
-      day.tickets.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+      day.tickets.forEach(({j}) => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
       day.siteSequence = seq;
-      day.sites = [...new Set(day.tickets.map(j=>j.site).filter(Boolean))];
-      day.equip = [...new Set(day.tickets.flatMap(eqOf))];
-      day.allLocked = day.tickets.every(j => j.locked);
+      day.sites = [...new Set(day.tickets.map(({j})=>j.site).filter(Boolean))];
+      day.equip = [...new Set(day.tickets.flatMap(({j})=>eqOf(j)))];
+      day.allLocked = day.tickets.every(({j}) => j.locked);
       /* Primary site = most on-site minutes that day (no multi-site gradient) */
       const timeBySite = {};
-      day.tickets.forEach(j => {
+      day.tickets.forEach(({j, seg}) => {
         if (!j.site) return;
-        const m = Math.max(0, Math.round((new Date(j.finishDateTime) - new Date(j.startDateTime)) / 60000) || 0);
-        timeBySite[j.site] = (timeBySite[j.site] || 0) + m;
+        const mins_ = Math.max(0, Math.round((new Date(seg.finishDateTime) - new Date(seg.startDateTime)) / 60000) || 0);
+        timeBySite[j.site] = (timeBySite[j.site] || 0) + mins_;
       });
       let primary = day.sites[0] || null, best = -1;
       Object.keys(timeBySite).forEach(k => { if (timeBySite[k] > best) { best = timeBySite[k]; primary = k; } });
       day.primarySite = primary;
-      day.first = day.tickets[0].hasTravel && day.tickets[0].travelDateTime ? day.tickets[0].travelDateTime : day.tickets[0].startDateTime;
-      const lastJob = day.tickets[day.tickets.length-1];
-      day.last = lastJob.hasTravel2 && lastJob.travel2DateTime ? lastJob.travel2DateTime : lastJob.finishDateTime;
+      const firstEntry = day.tickets[0], lastEntry = day.tickets[day.tickets.length-1];
+      day.first = firstEntry.seg.hasTravel && firstEntry.seg.travelDateTime ? firstEntry.seg.travelDateTime : firstEntry.seg.startDateTime;
+      day.last = lastEntry.seg.hasTravel2 && lastEntry.seg.travel2DateTime ? lastEntry.seg.travel2DateTime : lastEntry.seg.finishDateTime;
     });
     return { y, m, src, days, daysInMonth, firstDow };
   }, [jobs, anchorDate]);
@@ -1615,15 +1629,21 @@ function App() {
   const dv = useMemo(() => {
     const y = anchorDate.getFullYear(), m = anchorDate.getMonth(), day = anchorDate.getDate();
     const iso = y+'-'+pad(m+1)+'-'+pad(day);
-    const list = jobs.filter(j => localYMD(j.startDateTime) === iso)
-      .sort((a,b) => {
-        const da = toLocalDate(a.startDateTime), db = toLocalDate(b.startDateTime);
-        return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+    const list = [];
+    jobs.forEach(j => {
+      daySegments(j).forEach(seg => {
+        if (localYMD(seg.startDateTime) === iso) list.push({ j, dayIndex: seg.dayIndex, seg });
       });
+    });
+    list.sort((a,b) => {
+      const da = toLocalDate(a.seg.startDateTime), db = toLocalDate(b.seg.startDateTime);
+      return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+    });
     const seq = [];
-    list.forEach(j => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
+    list.forEach(({j}) => { if (j.site && seq[seq.length-1] !== j.site) seq.push(j.site); });
     return { iso, list, siteSequence:seq };
   }, [jobs, anchorDate]);
+
 
   const goBack = () => {
     const r = returnTo;
@@ -2087,7 +2107,7 @@ function App() {
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
-  const ticketDetailCard = (j, i) => {
+  const ticketDetailCard = (j, i, dayIndex) => {
     try {
       if (!j) {
         return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:GREY } }, 'Empty ticket');
@@ -2095,14 +2115,24 @@ function App() {
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
       const ex = exOf(j);
+      /* When showing a specific visit (dayIndex > 1), use that day's own times
+         and notes instead of the ticket's primary day — this is what makes a
+         later visit's card actually reflect that day's work. */
+      const seg = (dayIndex && dayIndex > 1 && ex[dayIndex-2]) ? ex[dayIndex-2] : null;
+      const segStart = seg ? seg.startDateTime : j.startDateTime;
+      const segFinish = seg ? seg.finishDateTime : j.finishDateTime;
+      const segHasTravel = seg ? seg.hasTravel : j.hasTravel;
+      const segTravel = seg ? seg.travelDateTime : j.travelDateTime;
+      const segHasTravel2 = seg ? seg.hasTravel2 : j.hasTravel2;
+      const segTravel2 = seg ? seg.travel2DateTime : j.travel2DateTime;
+      const segWorkRaw = seg ? (seg.notes == null ? '' : String(seg.notes)) : (j.workDone == null ? '' : String(j.workDone));
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
-      const on = mins(j.startDateTime, j.finishDateTime);
+      const on = mins(segStart, segFinish);
       const onC = s ? '#FFFFFF' : INK;
       const subC = s ? 'rgba(255,255,255,0.82)' : MID;
       const bodyC = s ? 'rgba(255,255,255,0.95)' : INK;
       const chipBg = s ? 'rgba(255,255,255,0.32)' : 'rgba(65,67,106,0.12)';
-      const workRaw = j.workDone == null ? '' : String(j.workDone);
-      const workText = workRaw.replace(/\s*\n+\s*/g, ' ').trim();
+      const workText = segWorkRaw.replace(/\s*\n+\s*/g, ' ').trim();
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
       /* Strong typography scale from settings */
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
@@ -2114,9 +2144,9 @@ function App() {
       const titleWeight = 900;
 
       /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
-      const t1 = j.hasTravel ? fmtTime(j.travelDateTime) : '';
-      const tCore = fmtTime(j.startDateTime) + '–' + fmtTime(j.finishDateTime);
-      const t2 = j.hasTravel2 ? fmtTime(j.travel2DateTime) : '';
+      const t1 = segHasTravel ? fmtTime(segTravel) : '';
+      const tCore = fmtTime(segStart) + '–' + fmtTime(segFinish);
+      const t2 = segHasTravel2 ? fmtTime(segTravel2) : '';
       const timeParts = [];
       if (t1) { timeParts.push(t1); timeParts.push('→'); }
       timeParts.push(tCore);
@@ -2140,7 +2170,9 @@ function App() {
       }) }, String(i+1)));
       const titleShow = title.length > 18 ? title.slice(0, 18) : title;
       leftHead.push(e('span', { key:'tn', title: title, style:{ fontWeight:titleWeight, fontSize:titleSize, letterSpacing:'-0.2px', color:onC, maxWidth:'16ch', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'inline-block', lineHeight:1.2 } }, titleShow));
-      if (ex.length > 0) leftHead.push(e('span', { key:'ex', style: Object.assign({}, pillBase) }, '+'+ex.length+' day'));
+      /* "+N day" only makes sense when we're showing the primary card — once
+         we're already rendering one specific extra day, it would be confusing. */
+      if (!seg && ex.length > 0) leftHead.push(e('span', { key:'ex', style: Object.assign({}, pillBase) }, '+'+ex.length+' day'));
 
       const rightPills = [];
       if (s) rightPills.push(e('span', { key:'site', style: Object.assign({}, pillBase, { color: '#FFF' }) }, s.label || j.site));
@@ -2155,7 +2187,7 @@ function App() {
           e('span', { key:'tl', style:{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, timeParts.length ? timeParts.join(' ') : '—'),
           durationLabel ? e('span', { key:'dur', style:{ flexShrink:0, fontWeight:800, marginLeft:'auto' } }, durationLabel) : null)
       ];
-      if (ex.length > 0) {
+      if (!seg && ex.length > 0) {
         children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.25rem', textShadow:'none' } },
           'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')));
       }
@@ -2166,14 +2198,25 @@ function App() {
           display:'-webkit-box', WebkitLineClamp:5, WebkitBoxOrient:'vertical', overflow:'hidden'
         } }, workText));
       }
-      if (parts.length > 0) {
-        children.push(e('div', { key:'parts', style:{ marginTop:'0.75rem', display:'flex', justifyContent:'flex-end' } },
-          e('span', { style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
-            parts.length + (parts.length === 1 ? ' part' : ' parts'))));
+      /* Bottom row: parts count bottom-left, "Day N" indicator bottom-right —
+         a subtle marker that this card is another visit on the same ticket,
+         not a separate job, without any change to which ticket tapping opens. */
+      const partsBadge = parts.length > 0
+        ? e('span', { key:'partsbadge', style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
+            parts.length + (parts.length === 1 ? ' part' : ' parts'))
+        : null;
+      const dayBadge = seg
+        ? e('span', { key:'daybadge', style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800, marginLeft:'auto' } },
+            'Day ' + dayIndex)
+        : null;
+      if (partsBadge || dayBadge) {
+        children.push(e('div', { key:'bottomrow', style:{ marginTop:'0.75rem', display:'flex',
+          justifyContent: dayBadge ? 'flex-start' : 'flex-end', alignItems:'center', gap:'0.4rem' } },
+          partsBadge, dayBadge));
       }
 
       return e('div', {
-        key: 'card-'+(j.id != null ? j.id : i),
+        key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         style:{ background: s ? s.hex : SURF,
           overflow:'visible',
           position:'relative',
@@ -2196,8 +2239,8 @@ function App() {
     }
   };
 
-  const swipeCard = (j, i, ret, stagger) => e(SwipeCard, {
-      key: (j && j.id != null) ? String(j.id) : ('idx-'+i),
+  const swipeCard = (j, i, ret, stagger, dayIndex) => e(SwipeCard, {
+      key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
       locked: !!(j && j.locked),
       radius:'18px',
       glow: null,
@@ -2206,7 +2249,7 @@ function App() {
       onTap:()=>{ if (j) openEdit(j, ret); },
       entryDelay: null
     },
-    ticketDetailCard(j, i));
+    ticketDetailCard(j, i, dayIndex));
 
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
@@ -2373,7 +2416,7 @@ function App() {
     mobileDayList.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
-          mobileDayList.map((j,i) => swipeCard(j, i, { view:'month', day:mobileDayNum }, i))),
+          mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex))),
     mobileDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem' } },
       siteSeqRow(mobileDaySeq)));
 
@@ -2787,7 +2830,21 @@ function App() {
       e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
-  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => idx===i ? { ...x, ...patch } : x) });
+  /* Editing an extra day's date also keeps that day's notes prefix in sync — the
+     first line always shows the current date, exactly like Day 1's notes box,
+     but everything the user typed after it (from the first newline onward) is
+     left untouched. */
+  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => {
+    if (idx !== i) return x;
+    const next = { ...x, ...patch };
+    if (patch.date != null && patch.date !== x.date) {
+      const text = x.notes || '';
+      const nl = text.indexOf('\n');
+      const rest = nl === -1 ? '' : text.slice(nl);
+      next.notes = ukDate(patch.date) + rest;
+    }
+    return next;
+  }) });
   const addExtraDay = () => {
     const last = form.extra.length ? form.extra[form.extra.length-1] : form;
     const nextDate = addDayISO(last.date, 1);
@@ -3398,7 +3455,7 @@ function App() {
       desktopDayList.length === 0
         ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'2rem 0' } }, 'Nothing logged on this day')
         : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.65rem' } },
-            desktopDayList.map((j,i) => swipeCard(j, i, { view:'month', day:desktopDayNum }, i)))
+            desktopDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:desktopDayNum }, i, entry.dayIndex)))
     )
   );
 
