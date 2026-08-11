@@ -781,29 +781,32 @@ const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0
 const CopyIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('rect', { x:8, y:8, width:11, height:11, rx:2, fill:'none', stroke:col, strokeWidth:1.9 }),
   e('path', { d:'M6 15.5 V6.5 A1.5 1.5 0 0 1 7.5 5 H15.5', fill:'none', stroke:col, strokeWidth:1.9, strokeLinecap:'round' }));
-/* A solid, filled cog rather than a thin outline — a ring (outer circle minus
-   inner circle, via evenodd) plus eight stubby teeth rotated around it. */
+/* A solid, filled cog — a ring (outer circle minus inner circle, via
+   evenodd) plus eight teeth rotated around it. Sharper corners (small rx)
+   and a tighter ring than before, so it reads as a proper cog rather than a
+   soft blob. */
 const GearIcon = (size, col) => {
   const teeth = Array.from({ length: 8 }, (_, i) => e('rect', {
-    key: 't'+i, x:10.3, y:1.6, width:3.4, height:4.2, rx:1.1, fill:col,
+    key: 't'+i, x:10.5, y:1.9, width:3.0, height:3.7, rx:0.4, fill:col,
     transform:'rotate('+(i*45)+' 12 12)'
   }));
   return e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
     teeth,
     e('path', {
-      d:'M12 12 m -6.6 0 a 6.6 6.6 0 1 0 13.2 0 a 6.6 6.6 0 1 0 -13.2 0 M12 12 m -2.9 0 a 2.9 2.9 0 1 0 5.8 0 a 2.9 2.9 0 1 0 -5.8 0',
+      d:'M12 12 m -6.1 0 a 6.1 6.1 0 1 0 12.2 0 a 6.1 6.1 0 1 0 -12.2 0 M12 12 m -2.9 0 a 2.9 2.9 0 1 0 5.8 0 a 2.9 2.9 0 1 0 -5.8 0',
       fill:col, fillRule:'evenodd'
     }));
 };
-/* Two solid, chunky oval rings (each an outer ellipse minus a smaller inner
-   ellipse, via evenodd — same reliable technique as the gear's ring) so the
-   chain reads as bold interlocking links rather than thin outlined ovals. */
+/* Two solid rings that genuinely overlap (rather than sitting side by side)
+   so they read as a real interlocking chain link rather than two static
+   ovals — the overlap area doubles up naturally since both are the same
+   fill colour, giving it some depth instead of looking flat. */
 const ellipseRing = (cx, cy, rxO, ryO, rxI, ryI) =>
   'M '+(cx-rxO)+' '+cy+' A '+rxO+' '+ryO+' 0 1 0 '+(cx+rxO)+' '+cy+' A '+rxO+' '+ryO+' 0 1 0 '+(cx-rxO)+' '+cy+' Z '+
   'M '+(cx-rxI)+' '+cy+' A '+rxI+' '+ryI+' 0 1 0 '+(cx+rxI)+' '+cy+' A '+rxI+' '+ryI+' 0 1 0 '+(cx-rxI)+' '+cy+' Z';
 const ChainIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('path', { d: ellipseRing(8.6, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 8.6 12)' }),
-  e('path', { d: ellipseRing(15.4, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 15.4 12)' }));
+  e('path', { d: ellipseRing(9.6, 10.4, 6.0, 4.2, 3.7, 2.1), fill:col, fillRule:'evenodd', transform:'rotate(-38 9.6 10.4)' }),
+  e('path', { d: ellipseRing(14.4, 13.6, 6.0, 4.2, 3.7, 2.1), fill:col, fillRule:'evenodd', transform:'rotate(-38 14.4 13.6)' }));
 
 const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
@@ -2181,7 +2184,7 @@ function App() {
   const EQ_BADGE_MAP = { I:'AI', C:'CC' };
   const badgeLabelFor = (eqCode) => EQ_BADGE_MAP[eqCode] || eqCode;
 
-  const ticketDetailCard = (j, i, dayIndex) => {
+  const ticketDetailCard = (j, i, dayIndex, overlapped) => {
     try {
       if (!j) {
         return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'32px', color:GREY } }, 'Empty ticket');
@@ -2233,13 +2236,13 @@ function App() {
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          /* Underline + a bolder weight is the "complete" signal now — quieter
-             than a border around the whole card, and it lives right on the
-             one piece of text that's otherwise the least important on the
-             card, so it doesn't compete with the times. */
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color:faintC,
-            whiteSpace:'nowrap', paddingTop:'4px',
-            textDecoration: j.locked ? 'underline' : 'none', textUnderlineOffset:'3px' } }, title)
+          /* A background pill, same treatment as the equipment badge, is the
+             "complete" signal now — reads as a matched pair of chips on the
+             card rather than a stray underline on otherwise-quiet text. */
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color: j.locked ? onC : faintC,
+            whiteSpace:'nowrap', marginTop:'2px',
+            background: j.locked ? (s ? 'rgba(255,255,255,0.24)' : 'rgba(10,10,12,0.08)') : 'transparent',
+            borderRadius:'999px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
@@ -2258,7 +2261,7 @@ function App() {
         style:{ background: s ? s.hex : SURF,
           overflow:'hidden', position:'relative',
           border: cardBorder,
-          boxShadow: s ? '0 26px 48px rgba(10,10,20,0.40), 0 9px 18px rgba(10,10,20,0.30)' : SHADOW_SM,
+          boxShadow: !s ? SHADOW_SM : (overlapped ? '0 26px 48px rgba(10,10,20,0.40), 0 9px 18px rgba(10,10,20,0.30)' : SHADOW_SM),
           borderRadius:'32px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
@@ -2281,18 +2284,19 @@ function App() {
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) and the multi-visit
-           indicator (chain link) now sit together in the bottom-right. */
+           indicator (chain link) both default to the bottom-right corner —
+           each is only rendered when it has something to show, so with just
+           one of the two present it sits flush in the corner; they only
+           shift apart when both are present at once. */
         e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.65rem',
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
-          e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px',
-            visibility: partsCount ? 'visible' : 'hidden' } },
-            GearIcon(20, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC, letterSpacing:'0.1px' } },
-              partsCount + (partsCount===1?' part':' parts'))),
-          e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
-            style:{ display:'flex', alignItems:'center', gap:'6px', visibility: multiCount ? 'visible' : 'hidden' } },
-            ChainIcon(20, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC } }, String(multiCount)))
+          partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
+            GearIcon(17, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC, letterSpacing:'0.1px' } }, String(partsCount))) : null,
+          multiCount ? e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
+            style:{ display:'flex', alignItems:'center', gap:'6px' } },
+            ChainIcon(17, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC } }, String(multiCount))) : null
         )
       );
     } catch (err) {
@@ -2311,6 +2315,14 @@ function App() {
   const swipeCard = (j, i, ret, stagger, dayIndex, groupKey, stackIndex) => {
     const isOpen = groupKey ? !!stackOpen[groupKey] : true;
     const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.75rem' : '-30px') : (stackIndex > 0 ? '0.75rem' : 0);
+    /* Only truly "overlapped" (one card's edge tucked directly under the
+       next) when it's part of a collapsed stack — that's the one case where
+       the heavy shadow is doing real work (selling the floating-above
+       illusion). Once the stack opens back out to separated cards with
+       normal gaps, or for cards that were never in a stack at all, a lighter
+       shadow avoids a heavy dark band sitting in what's now open space
+       between cards. */
+    const overlapped = !!(groupKey && stackIndex > 0 && !isOpen);
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
         locked: !!(j && j.locked),
@@ -2325,7 +2337,7 @@ function App() {
         },
         entryDelay: null
       },
-      ticketDetailCard(j, i, dayIndex));
+      ticketDetailCard(j, i, dayIndex, overlapped));
     if (!groupKey) return card;
     return e('div', { key:'wrap-'+((j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i)),
       style:{ marginTop: overlap, transition:'margin-top .38s cubic-bezier(.22,.9,.3,1)', position:'relative' } }, card);
