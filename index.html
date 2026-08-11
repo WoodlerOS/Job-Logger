@@ -2447,14 +2447,30 @@ function App() {
       : dv.siteSequence;
 
   const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700, padding:'0 0.6rem' } },
+    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700, padding:'0 0.05rem' } },
       mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
     mobileDayList.length === 0
-      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0.6rem' } }, 'Nothing logged on this day')
-      : e('div', { style:{ display:'flex', flexDirection:'column' } },
-          mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))),
-    mobileDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem', marginLeft:'0.6rem', marginRight:'0.6rem' } },
-      siteSeqRow(mobileDaySeq)));
+      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0.05rem' } }, 'Nothing logged on this day')
+      : e('div', { style:{ display:'flex', flexDirection:'column', paddingBottom:'3.5rem' } },
+          mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))));
+
+  /* Journey indicator: fixed bottom-left, mirroring the FAB's fixed bottom-right
+     placement, so it stays visible above the scrolling card stack rather than
+     scrolling away with it. */
+  const journeyIndicator = (view === 'month' && !monthPickerOpen && !settingsOpen && !themesOpen && !backupsOpen && mobileDayList.length > 0)
+    && e('div', { key:'journey', style:{
+        position:'fixed', left:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
+        maxWidth:'calc(100vw - 5.4rem)', zIndex:35,
+        background: SURF, boxShadow:SHADOW, borderRadius:'999px',
+        padding:'0.55rem 0.9rem', overflowX:'auto',
+        display:'flex', alignItems:'center' } },
+      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
+        mobileDaySeq.length === 0
+          ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
+          : mobileDaySeq.map((s,i) => [
+              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, flexShrink:0 } }, SITES[s].label),
+              i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7, flexShrink:0 } }, '›') : null
+            ])));
 
   const periodLabel = () => {
     if (calMode === 'month') return anchorDate.toLocaleDateString('en-GB',{ month:'long' });
@@ -2673,7 +2689,8 @@ function App() {
 
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem', padding:'0 0.6rem' } },
+    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem', padding:'0.4rem 0.6rem 0.5rem',
+        position:'sticky', top:0, zIndex:34, background:PAGE_BG, boxShadow:'0 6px 12px -4px rgba(20,20,30,0.06)' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem' } },
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
@@ -2719,7 +2736,7 @@ function App() {
         transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
         opacity: 1 - Math.abs(calDX)/220,
         minHeight: '62vh',
-        paddingBottom: '2rem',
+        padding: '0 0.55rem 2rem',
         touchAction: 'pan-y'
       } },
       dayView,
@@ -3512,7 +3529,7 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab
+    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab, journeyIndicator
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
