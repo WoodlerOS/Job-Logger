@@ -1108,6 +1108,21 @@ function App() {
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
+  /* Overlapping ticket stack: which day-groups are currently "opened" (spread
+     apart, no overlap). A group auto-collapses back to an overlapping stack
+     3s after the last tap on any card within it. */
+  const [stackOpen, setStackOpen] = useState({});
+  const stackTimers = useRef({});
+  const openStack = (groupKey) => {
+    setStackOpen(prev => (prev[groupKey] ? prev : { ...prev, [groupKey]: true }));
+    if (stackTimers.current[groupKey]) clearTimeout(stackTimers.current[groupKey]);
+    stackTimers.current[groupKey] = setTimeout(() => {
+      setStackOpen(prev => ({ ...prev, [groupKey]: false }));
+      delete stackTimers.current[groupKey];
+    }, 3000);
+  };
+  useEffect(() => () => { Object.values(stackTimers.current).forEach(clearTimeout); }, []);
+
   const [swipeX, setSwipeX] = useState(0);
   const [burst, setBurst] = useState(0);
   const [swiping, setSwiping] = useState(false);
@@ -2107,10 +2122,15 @@ function App() {
   const isToday = (y,m,dnum) => { const t=new Date();
     return t.getFullYear()===y && t.getMonth()===m && t.getDate()===dnum; };
 
+  /* Badge shown top-left of each card: short equipment code, with the two
+     substitutions requested (I -> AI, C -> CC). SCM / GLP pass through as-is. */
+  const EQ_BADGE_MAP = { I:'AI', C:'CC' };
+  const badgeLabelFor = (eqCode) => EQ_BADGE_MAP[eqCode] || eqCode;
+
   const ticketDetailCard = (j, i, dayIndex) => {
     try {
       if (!j) {
-        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:GREY } }, 'Empty ticket');
+        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'26px', color:GREY } }, 'Empty ticket');
       }
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
@@ -2125,16 +2145,16 @@ function App() {
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
       const on = mins(segStart, segFinish);
       const onC = s ? '#FFFFFF' : INK;
-      const faintC = s ? 'rgba(255,255,255,0.62)' : GREY;
-      const lineC = s ? 'rgba(255,255,255,0.4)' : LINE;
+      const faintC = s ? 'rgba(255,255,255,0.66)' : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.86 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.16 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.72 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.62 * tScale).toFixed(3) + 'rem';
+      const numberSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const durSize = (0.95 * tScale).toFixed(3) + 'rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -2148,92 +2168,105 @@ function App() {
 
       const dayMarker = (!seg && ex.length > 0)
         ? e('div', { key:'multi', title:(ex.length+1)+' visits', style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
-            StackIcon(14, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC } }, String(ex.length+1)))
+            StackIcon(12, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(ex.length+1)))
         : seg
           ? e('div', { key:'dayn', title:'Day '+dayIndex, style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
-              StackIcon(14, faintC),
-              e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC } }, String(dayIndex)))
+              StackIcon(12, faintC),
+              e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(dayIndex)))
           : null;
 
-      const eqLabel = eq.length ? eq.join(' · ') : '';
+      const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
+      const badge = e('div', { key:'badge', style:{
+        width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
+        background: s ? 'rgba(255,255,255,0.24)' : 'rgba(10,10,12,0.08)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.2px', color:onC } }, badgeText);
 
-      const smallTravelStyle = { fontSize:smallTimeSize, fontWeight:700, color:faintC, whiteSpace:'nowrap' };
-      const bigTimeStyle = { fontSize:bigTimeSize, fontWeight:800, color:onC, whiteSpace:'nowrap', letterSpacing:'-0.3px' };
-      const arrowStyle = { fontSize:smallTimeSize, fontWeight:700, color:faintC, flexShrink:0 };
-
-      const timeRow = e('div', { key:'time', style:{ display:'flex', alignItems:'baseline', gap:'0.4rem',
-          marginTop:'0.65rem', overflow:'hidden' } },
-        t1 ? e('span', { key:'t1', style:smallTravelStyle }, t1) : null,
-        t1 ? e('span', { key:'a1', style:arrowStyle }, '→') : null,
-        e('span', { key:'ts', style:bigTimeStyle }, tStart),
-        e('span', { key:'dash', style:{ fontSize:smallTimeSize, color:faintC, fontWeight:700 } }, '–'),
-        e('span', { key:'tf', style:bigTimeStyle }, tFinish),
-        t2 ? e('span', { key:'a2', style:arrowStyle }, '→') : null,
-        t2 ? e('span', { key:'t2', style:smallTravelStyle }, t2) : null,
-        durationLabel ? e('span', { key:'dur', style:{ ...smallTravelStyle, marginLeft:'auto', flexShrink:0 } }, durationLabel) : null
-      );
-
-      const routeLine = e('div', { key:'route', style:{ height:'1.5px', borderRadius:'999px',
-        background:lineC, marginTop:'0.55rem', opacity:0.8 } });
+      const travelLine = (text, marginProp) => e('div', { style:{
+        fontSize:smallTimeSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
+        [marginProp]:'0.3rem' } }, text);
 
       const children = [
-        e('div', { key:'head', style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:700, color:onC, letterSpacing:'-0.1px',
-            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, title),
-          e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.5rem', flexShrink:0 } },
-            eqLabel ? e('span', { key:'eq', style:{ fontSize:capSize, fontWeight:700, color:faintC, letterSpacing:'0.2px' } }, eqLabel) : null,
-            dayMarker
+        e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
+          badge,
+          e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.5rem', paddingTop:'4px' } },
+            dayMarker,
+            e('span', { style:{ fontSize:numberSize, fontWeight:400, color:faintC, whiteSpace:'nowrap' } }, title)
           )
         ),
-        timeRow,
-        routeLine
+        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
+        e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
+          e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
+            whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart+'–'+tFinish),
+          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:800, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
+        ),
+        t2 ? travelLine(t2, 'marginTop') : null
       ];
-
-      if (parts.length > 0) {
-        children.push(e('div', { key:'parts', style:{ marginTop:'0.5rem', fontSize:capSize, fontWeight:700, color:faintC } },
-          parts.length + (parts.length===1?' part':' parts')));
-      }
 
       const cardBorder = s ? 'none' : ('1px solid ' + LINE);
       const ringColor = s ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
+      const partsCount = parts.length;
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         style:{ background: s ? s.hex : SURF,
-          overflow:'visible', position:'relative',
+          overflow:'hidden', position:'relative',
           border: cardBorder,
-          boxShadow: s ? '0 1px 0 rgba(255,255,255,0.18) inset, 0 5px 14px rgba(22,23,50,0.13)' : SHADOW_SM,
-          borderRadius:'18px', padding:'0.85rem 0.95rem 0.9rem', cursor:'pointer',
+          boxShadow: s ? '0 10px 24px rgba(20,20,30,0.16)' : SHADOW_SM,
+          borderRadius:'26px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
-        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'18px', pointerEvents:'none',
-          backgroundImage:'linear-gradient(128deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.08) 26%, rgba(255,255,255,0) 48%, rgba(0,0,0,0.05) 100%)',
-          mixBlendMode:'overlay', opacity:0.85 } }),
+        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
+          backgroundImage:'linear-gradient(130deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0) 46%, rgba(0,0,0,0.06) 100%)',
+          mixBlendMode:'overlay', opacity:0.9 } }),
         j.locked ? e('div', { key:'ring', style:{
-          position:'absolute', inset:'3px', borderRadius:'15px', pointerEvents:'none',
+          position:'absolute', inset:'3px', borderRadius:'23px', pointerEvents:'none',
           border:'1px solid '+ringColor, zIndex:2 } }) : null,
-        e('div', { key:'body', style:{ position:'relative', overflow:'visible', borderRadius:'14px', zIndex:1 } }, children)
+        e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
+        /* Parts info sits in the bottom strip of the card, which is what peeks
+           out from behind it once the next card overlaps on top. */
+        e('div', { key:'parts', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.7rem',
+          fontSize:capSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
+          visibility: partsCount ? 'visible' : 'hidden' } },
+          partsCount + (partsCount===1?' part':' parts'))
       );
     } catch (err) {
       return e('div', {
-        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'18px', color:INK }
+        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'26px', color:INK }
       }, String((j && j.ticketNumber) || 'Ticket') + ' (couldn’t render details)');
     }
   };
 
-  const swipeCard = (j, i, ret, stagger, dayIndex) => e(SwipeCard, {
-      key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
-      locked: !!(j && j.locked),
-      radius:'18px',
-      glow: null,
-      onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
-      onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
-      onTap:()=>{ if (j) openEdit(j, ret); },
-      entryDelay: null
-    },
-    ticketDetailCard(j, i, dayIndex));
+  /* groupKey + stackIndex enable the overlapping-stack behaviour: cards after
+     the first in a group sit pulled up under the one before it (overlap),
+     until the group is "open" (tapped within the last 3s), at which point
+     they space out normally. The very first tap on a collapsed group just
+     opens it; a tap once it's already open behaves like a normal tap and
+     opens the ticket. Pass no groupKey to opt a list out of stacking. */
+  const swipeCard = (j, i, ret, stagger, dayIndex, groupKey, stackIndex) => {
+    const isOpen = groupKey ? !!stackOpen[groupKey] : true;
+    const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.75rem' : '-30px') : (stackIndex > 0 ? '0.75rem' : 0);
+    const card = e(SwipeCard, {
+        key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
+        locked: !!(j && j.locked),
+        radius:'26px',
+        glow: null,
+        onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
+        onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
+        onTap:()=>{
+          if (groupKey && !isOpen) { openStack(groupKey); return; }
+          if (groupKey) openStack(groupKey);
+          if (j) openEdit(j, ret);
+        },
+        entryDelay: null
+      },
+      ticketDetailCard(j, i, dayIndex));
+    if (!groupKey) return card;
+    return e('div', { key:'wrap-'+((j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i)),
+      style:{ marginTop: overlap, transition:'margin-top .38s cubic-bezier(.22,.9,.3,1)', position:'relative' } }, card);
+  };
 
   const dayCell = (dnum) => {
     const d = ms.days[dnum];
@@ -2278,18 +2311,21 @@ function App() {
         gap:'4px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
+      has ? e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'inherit', pointerEvents:'none',
+        backgroundImage:'linear-gradient(130deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0) 46%, rgba(0,0,0,0.06) 100%)',
+        mixBlendMode:'overlay', opacity:0.9 } }) : null,
       d && d.allLocked ? e('div', { key:'ring', style:{ position:'absolute', inset:'3px',
         borderRadius: weekend ? '10px' : '15px', border:'1px solid '+lockRingColor,
         pointerEvents:'none', zIndex:2 } }) : null,
       e('span', { style:{ fontSize: weekend ? '0.76rem' : '1rem', fontWeight: today?900:800, color:fg,
-        lineHeight:1, letterSpacing:'-0.25px', textShadow:'none' } }, String(dnum)),
-      has && !weekend ? e('div', { style:{ display:'flex', gap:'5px', alignItems:'center', justifyContent:'center', marginTop:'4px', flexWrap:'wrap', width:'100%' } },
+        lineHeight:1, letterSpacing:'-0.25px', textShadow:'none', position:'relative' } }, String(dnum)),
+      has && !weekend ? e('div', { style:{ display:'flex', gap:'5px', alignItems:'center', justifyContent:'center', marginTop:'4px', flexWrap:'wrap', width:'100%', position:'relative' } },
         sites.slice(0,4).map(sk => {
           const hex = (SITES[sk] && SITES[sk].hex) || '#888';
           return e('span', { key:sk, style:{ width:'8px', height:'8px', borderRadius:'999px', background:hex, flexShrink:0,
             border:'1.2px solid rgba(255,255,255,0.8)', boxShadow:'0 0 0 0.5px rgba(0,0,0,0.15)' } });
         }),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:800, color:'rgba(255,255,255,0.95)', marginTop:'1px', width:'100%', textAlign:'center' } },
+        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:400, color:'rgba(255,255,255,0.85)', marginTop:'1px', width:'100%', textAlign:'center' } },
           d.tickets.length+' jobs') : null) : null,
       has && weekend ? e('div', { style:{ display:'flex', gap:'3px' } },
         sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px',
@@ -2399,8 +2435,8 @@ function App() {
       mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
     mobileDayList.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
-      : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } },
-          mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex))),
+      : e('div', { style:{ display:'flex', flexDirection:'column' } },
+          mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))),
     mobileDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem' } },
       siteSeqRow(mobileDaySeq)));
 
@@ -3438,8 +3474,8 @@ function App() {
         siteSeqRow(desktopDaySeq)),
       desktopDayList.length === 0
         ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'2rem 0' } }, 'Nothing logged on this day')
-        : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.65rem' } },
-            desktopDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:desktopDayNum }, i, entry.dayIndex)))
+        : e('div', { style:{ display:'flex', flexDirection:'column' } },
+            desktopDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:desktopDayNum }, i, entry.dayIndex, 'desktop-day:'+ms.y+'-'+ms.m+'-'+desktopDayNum, i)))
     )
   );
 
