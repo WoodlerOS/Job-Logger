@@ -2692,47 +2692,55 @@ function App() {
       )
     );
 
+  /* Rendered as a standalone fixed element (see mobile render below), not as
+     part of monthView, specifically so it sits outside the view-transition
+     wrapper that animates on every view change — that animation is what was
+     making a merely-sticky header appear to drift. This one truly never
+     moves once shown. */
+  const topDateBar = e('div', { key:'topDateBar', style:{
+      position:'fixed', top:'env(safe-area-inset-top)', left:0, right:0, zIndex:34,
+      background:PAGE_BG, padding:'0.4rem 0.6rem 0.5rem' } },
+    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
+      e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
+        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
+      e('button', {
+        onClick:()=>{
+          if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
+          setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true);
+        },
+        onContextMenu:(ev)=>{ ev.preventDefault(); },
+        onTouchStart:(ev)=>{
+          window.__dateHoldTimer = setTimeout(() => {
+            window.__dateHoldTimer = null;
+            window.__dateLongPressed = true;
+            goToday();
+          }, 480);
+        },
+        onTouchEnd:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+        onTouchCancel:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+        onMouseDown:(ev)=>{
+          if (ev.button !== 0) return;
+          window.__dateHoldTimer = setTimeout(() => {
+            window.__dateHoldTimer = null;
+            window.__dateLongPressed = true;
+            goToday();
+          }, 480);
+        },
+        onMouseUp:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+        onMouseLeave:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
+        style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
+          borderRadius:'10px' }
+      },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } },
+          anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap month · hold today')
+      ),
+      e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
+        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
+
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem', padding:'0.4rem 0.6rem 0.5rem',
-        position:'sticky', top:0, zIndex:34, background:PAGE_BG, boxShadow:'0 6px 12px -4px rgba(20,20,30,0.06)' } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem' } },
-        e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-          display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
-        e('button', {
-          onClick:()=>{
-            if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
-            setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true);
-          },
-          onContextMenu:(ev)=>{ ev.preventDefault(); },
-          onTouchStart:(ev)=>{
-            window.__dateHoldTimer = setTimeout(() => {
-              window.__dateHoldTimer = null;
-              window.__dateLongPressed = true;
-              goToday();
-            }, 480);
-          },
-          onTouchEnd:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
-          onTouchCancel:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
-          onMouseDown:(ev)=>{
-            if (ev.button !== 0) return;
-            window.__dateHoldTimer = setTimeout(() => {
-              window.__dateHoldTimer = null;
-              window.__dateLongPressed = true;
-              goToday();
-            }, 480);
-          },
-          onMouseUp:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
-          onMouseLeave:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
-          style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
-            borderRadius:'10px' }
-        },
-          e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } },
-            anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-          e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap month · hold today')
-        ),
-        e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-          display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK)))),
+    e('div', { style:{ height:'3.6rem', flexShrink:0 } }),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -3534,7 +3542,8 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab, journeyIndicator
+    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab, journeyIndicator,
+    view === 'month' && !monthPickerOpen && !settingsOpen && !themesOpen && !backupsOpen ? topDateBar : null
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
