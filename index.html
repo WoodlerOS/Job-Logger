@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#FAFAFC">
+<meta name="theme-color" content="#F3E8D3">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -24,13 +24,13 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #FAFAFC);
+    background:var(--page-bg, #F3E8D3);
     background-attachment:fixed;
-    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #FAFAFC);
+    background:var(--page-bg, #F3E8D3);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -193,7 +193,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#FFFFFF; }
+    background:#F3E8D3; }
   #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
   #splash .splash-logo {
     width:120px; height:120px; border-radius:28px;
@@ -211,9 +211,9 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#FAFAFC; color:#0A0A0C; flex-direction:column;
+      background:#F3E8D3; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
-      font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
     }
     #root { display:none; }
   }
@@ -228,7 +228,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #FAFAFC);
+      background: var(--page-bg, #F3E8D3);
       overflow: hidden;
     }
     #root {
@@ -236,7 +236,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #FAFAFC);
+      background: var(--page-bg, #F3E8D3);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -285,7 +285,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #FAFAFC);
+      background: var(--page-bg, #F3E8D3);
     }
     .desktop-topbar {
       display: flex;
@@ -301,7 +301,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #FAFAFC);
+      background: var(--page-bg, #F3E8D3);
     }
     .desktop-split {
       display: grid;
@@ -443,51 +443,17 @@ const dbFS = firebase.firestore();
 try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (err) {}
 
 
-/* ---------- palette: clean white surface, Embers site colours, blue accent ---------- */
+/* ---------- palette: fixed, no theme picker — colours come straight from
+   the supplied colour chart. Middle chart colour is the app's surface/
+   background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#41436A', hex2:'#2E2F52' },
-  WS:   { label:'WS',   hex:'#984063', hex2:'#7A3350' },
-  RH:   { label:'RH',   hex:'#F64668', hex2:'#D6335A' },
-  MMUH: { label:'MMUH', hex:'#FE9677', hex2:'#E87856' }
+  NX:   { label:'NX',   hex:'#EB5B29', hex2:'#C64A20' },
+  WS:   { label:'WS',   hex:'#333333', hex2:'#1F1F1F' },
+  RH:   { label:'RH',   hex:'#BFE1DB', hex2:'#9FC9C1' },
+  MMUH: { label:'MMUH', hex:'#CCBFA1', hex2:'#B3A588' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
-const THEME_GROUPS = [
-  { name: 'Standard', themes: [
-    { name:'Default', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
-    { name:'Flag', accent:'#0F62FE', sites:['#0F62FE','#DA1E28','#24A148','#F1C21B'] },
-    { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#C9A12A'] },
-    { name:'Coastal', accent:'#0E7C86', sites:['#0E7C86','#E8735C','#E3B23C','#26415C'] },
-  ]},
-  { name: 'Bold', themes: [
-    { name:'Prism', accent:'#2A4B8D', sites:['#2A4B8D','#7B2FBF','#E8A63D','#D6483F'] },
-    { name:'Night City', accent:'#1A86B8', sites:['#B09E12','#B83278','#1A86B8','#141414'] },
-    { name:'Spectrum', accent:'#3DA5D9', sites:['#3DA5D9','#EE6C4D','#F4B942','#2E294E'] },
-    { name:'Neon Grid', accent:'#2B86C5', sites:['#FF3CAC','#784BA0','#2B86C5','#43E97B'] },
-  ]},
-  { name: 'Dark', themes: [
-    { name:'Midnight Navy', accent:'#1B2A4A', sites:['#1B2A4A','#2E1B4A','#1B4A3D','#4A1B2E'] },
-    { name:'Charcoal Ember', accent:'#3A2E2E', sites:['#3A2E2E','#2E3A2E','#2E2E3A','#3A2E3A'] },
-    { name:'Copper Slate', accent:'#4A3728', sites:['#2B2118','#4A3728','#6B4423','#8C6239'] },
-    { name:'Deep Forest', accent:'#0F2E1F', sites:['#0F2E1F','#0F1F2E','#2E0F1F','#1F2E0F'] },
-  ]},
-  { name: 'Pastel', themes: [
-    { name:'Cotton Candy', accent:'#F7C6D9', sites:['#F7C6D9','#C6E7F7','#FFF3C6','#D8C6F7'] },
-    { name:'Sorbet', accent:'#FFD9C2', sites:['#FFD9C2','#C2F0E0','#C2D9FF','#F0C2E8'] },
-    { name:'Powder Blue', accent:'#AEC5DC', sites:['#D7E3F0','#C3D4E6','#AEC5DC','#9AB6D2'] },
-    { name:'Rose Bloom', accent:'#EDB0A2', sites:['#F7DCD4','#F2C6BB','#EDB0A2','#E89A89'] },
-  ]},
-  { name: 'Monochrome', themes: [
-    { name:'Slate Shades', mono:true, accent:'#465364', sites:['#2A3542','#465364','#7C8A9C','#B7C0CB'] },
-    { name:'Teal Shades', mono:true, accent:'#146B61', sites:['#0B3B36','#146B61','#2CA398','#8ED9CE'] },
-    { name:'Terracotta Shades', mono:true, accent:'#8C4530', sites:['#5C2A1E','#8C4530','#C97350','#E8AD8E'] },
-    { name:'Plum Shades', mono:true, accent:'#65296B', sites:['#3B1A3E','#65296B','#9A4AA3','#CB8AD1'] },
-    { name:'Olive Shades', mono:true, accent:'#5C6130', sites:['#3A3D1E','#5C6130','#8B9349','#C3CB8C'] },
-    { name:'Navy Shades', mono:true, accent:'#233257', sites:['#131B33','#233257','#3E5590','#7C97C7'] },
-  ]},
-];
-
-const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
 
@@ -579,29 +545,6 @@ const hslToHex = (h,s,l) => {
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
 };
-/* Shifts a colour's true HSL lightness and saturation together, keeping hue
-   fixed — used by the theme draft's two sliders. lightDelta/satDelta each
-   run -50..50; scaled down so the sliders' full range stays usable without
-   blowing a colour out to white/grey at the extremes. */
-const adjustHexHsl = (hex, lightDelta, satDelta) => {
-  const [h, s, l] = hexToHsl(hex);
-  const l2 = Math.max(4, Math.min(96, l + (lightDelta||0) * 0.6));
-  const s2 = Math.max(0, Math.min(100, s + (satDelta||0) * 0.9));
-  return hslToHex(h, s2, l2);
-};
-/* Brings every colour in a theme to the same lightness/saturation (the
-   average of the set) while keeping each one's own hue, so the colours in
-   any given theme read as one cohesive family rather than a grab-bag of
-   differently-bright swatches. Monochrome themes skip this since their
-   varying lightness is the whole point. */
-const normalizeThemeSites = (sites, mono) => {
-  if (mono || !sites || !sites.length) return sites;
-  const hsls = sites.map(hexToHsl);
-  const avgS = hsls.reduce((a,c)=>a+c[1],0) / hsls.length;
-  const avgL = hsls.reduce((a,c)=>a+c[2],0) / hsls.length;
-  return hsls.map(([h]) => hslToHex(h, avgS, avgL));
-};
-
 let INK='#0A0A0C', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(10,10,12,0.13)';
 let VIOLET='#0A0A0C', APRICOT='#FFFFFF';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
@@ -629,10 +572,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#FFFFFF', SURF2='#F1F1F5', SURF3='#F5F5F8';
-let FIELDBG='#FFFFFF', EMPTY='#F7F7FA';
-let PAGE_BG='#FAFAFC';
-let CARD_BG='#FFFFFF';
+let SURF='#F3E8D3', SURF2='#F3E8D3', SURF3='#F3E8D3';
+let FIELDBG='#F3E8D3', EMPTY='#F3E8D3';
+let PAGE_BG='#F3E8D3';
+let CARD_BG='#F3E8D3';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -642,55 +585,33 @@ function mixHex(a, b, t) {
   const c = A.map((v,i) => Math.round(v + (B[i]-v)*t));
   return '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
 }
-function applySurfaceLightness(bgDim, cardDim, dark) {
-  BG_DIM = Math.max(0, Math.min(40, Number(bgDim)||0));
-  CARD_DIM = Math.max(0, Math.min(40, Number(cardDim)||0));
-  if (dark) {
-    PAGE_BG = '#101014';
-    CARD_BG = '#1C1C22';
-  } else {
-    PAGE_BG = mixHex('#FAFAFC', '#B8BBC6', BG_DIM / 40);
-    CARD_BG = mixHex('#FFFFFF', '#C5C8D2', CARD_DIM / 40);
-    SURF = CARD_BG;
-  }
+function applySurfaceLightness() {
+  /* Fixed colours only — background brightness/card brightness sliders were
+     removed along with the theme picker, so this always resolves to the
+     one cream surface colour from the chart, regardless of arguments. */
+  PAGE_BG = '#F3E8D3';
+  CARD_BG = '#F3E8D3';
+  SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
     document.documentElement.style.setProperty('--card-bg', CARD_BG);
-    document.documentElement.style.setProperty('--line', dark ? 'rgba(255,255,255,0.14)' : 'rgba(10,10,12,0.13)');
+    document.documentElement.style.setProperty('--line', 'rgba(10,10,12,0.13)');
     document.body.style.background = PAGE_BG;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
   } catch (err) {}
 }
 let DARK_MODE = false;
-function applyDarkMode(on) {
-  DARK_MODE = on;
-  if (on) {
-    INK='#F2F2F5'; MID='#B7B9C2'; GREY='#83858F'; LINE='rgba(255,255,255,0.14)';
-    VIOLET='#F2F2F5'; LOCKED='#F2F2F5'; LOCKEDBG='rgba(255,255,255,0.08)';
-    TRAVEL='#B7B9C2'; TRAVELBG='rgba(255,255,255,0.06)';
-    SURF='#1C1C22'; SURF2='#262631'; SURF3='#232330';
-    FIELDBG='#232330'; EMPTY='#1F1F27'; PAGE_BG='#101014'; CARD_BG='#1C1C22';
-    APRICOT='#FFFFFF';
-    applySurfaceLightness(BG_DIM, CARD_DIM, true);
-  } else {
-    INK='#0A0A0C'; MID='#5B5D66'; GREY='#8C8E96'; LINE='rgba(10,10,12,0.13)';
-    VIOLET='#0A0A0C'; LOCKED='#0A0A0C'; LOCKEDBG='rgba(10,10,12,0.06)';
-    TRAVEL='#5B5D66'; TRAVELBG='rgba(10,10,12,0.06)';
-    SURF2='#F1F1F5'; SURF3='#F5F5F8';
-    FIELDBG='#FFFFFF'; EMPTY='#F7F7FA';
-    APRICOT='#FFFFFF';
-    applySurfaceLightness(BG_DIM, CARD_DIM, false);
-    SURF = CARD_BG;
-    return;
-  }
-  applySurfaceLightness(BG_DIM, CARD_DIM, true);
-  try { document.body.style.color = INK; } catch (err) {}
+function applyDarkMode() {
+  /* Dark mode removed along with the theme picker — colours are fixed, so
+     this is a no-op kept only so any lingering call sites don't error. */
+  DARK_MODE = false;
+  applySurfaceLightness();
 }
 
-const SHADOW    = '0 6px 22px rgba(22,23,50,0.14), 0 2px 6px rgba(22,23,50,0.08)';
-const SHADOW_SM = '0 4px 14px rgba(22,23,50,0.12), 0 1px 3px rgba(22,23,50,0.07)';
-const SHADOW_BTN = '0 4px 12px rgba(22,23,50,0.12)';
+const SHADOW    = 'none';
+const SHADOW_SM = 'none';
+const SHADOW_BTN = 'none';
 const sheen = 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%)';
 const GLASS_BLUR = 'none';
 const glassPanel = (alpha) => ({ background:SURF, border:'1px solid '+LINE });
@@ -703,6 +624,11 @@ const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHAD
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
+/* Fixed text colour per the colour chart: very dark grey on every site
+   colour, except the near-black one (#333333) which flips to the chart's
+   orange so text doesn't disappear against it. Shared by ticket cards and
+   the calendar's coloured day cells. */
+const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#EB5B29' : '#2B2B2B';
 
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
@@ -1049,7 +975,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
   };
 
   return e('div', { style:{ position:'relative', borderRadius:radius, overflow:'visible',
-      boxShadow: glow || 'none', transition:'box-shadow .4s ease',
+      boxShadow: 'none', transition:'box-shadow .4s ease',
       animation: entryDelay != null ? 'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' : 'none',
       animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
     pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-58px', right:'6px', display:'flex', gap:'10px', zIndex:40, pointerEvents:'auto' } },
@@ -1060,7 +986,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
         className:'bubble-pop',
         style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'0s',
           background: locked ? GREY : INK, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)', WebkitTapHighlightColor:'transparent' } },
+          boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
         TickIcon(true, 18, APRICOT),
         e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
       e('button', { key:'del', type:'button',
@@ -1070,7 +996,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
         className:'bubble-pop',
         style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'.07s',
           background:RED, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'0 8px 20px rgba(179,38,30,0.35), 0 2px 6px rgba(179,38,30,0.2)', WebkitTapHighlightColor:'transparent' } },
+          boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
         TrashIcon(17, '#FFF'),
         e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
     e('div', {
@@ -1124,7 +1050,7 @@ function App() {
   const [form, setForm] = useState(blank());
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [themesOpen, setThemesOpen] = useState(false);
+  const themesOpen = false;
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [themeTick, setThemeTick] = useState(0);
   const [siteEdits, setSiteEdits] = useState([]);
@@ -1161,7 +1087,7 @@ function App() {
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
   const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, equipment: false, account: true });
-  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[], brightness: number, saturation: number }
+  const themeDraft = null;
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
@@ -1242,11 +1168,17 @@ function App() {
 
         const merged = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
         setSettings(merged);
-        BG_DIM = merged.bgDim || 0;
-        CARD_DIM = merged.cardDim || 0;
-        applyDarkMode(!!merged.darkMode);
-        if (!merged.darkMode) applySurfaceLightness(BG_DIM, CARD_DIM, false);
-        if (merged.sites && merged.sites.length) applySites(merged.sites);
+        applyDarkMode();
+        applySurfaceLightness();
+        /* Colours are fixed now (theme picker removed) — whatever hex values
+           were saved from earlier theme experiments get overwritten here
+           with the fixed chart palette, cycling by position, so existing
+           saved data can't reintroduce old colours. Site labels/keys/order
+           are preserved. */
+        const FIXED_SITE_PALETTE = ['#EB5B29', '#333333', '#BFE1DB', '#CCBFA1'];
+        const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
+        const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
+        applySites(fixedSites);
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
         TIME_ROUNDING = merged.timeRounding || 5;
         if (!appliedDefaultsRef.current) {
@@ -1969,7 +1901,7 @@ function App() {
         style:{ width:'100%', background:SURF2,
           borderRadius:'28px 28px 0 0', padding:'0 1rem calc(2rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.6rem', animation:'slideUp .38s cubic-bezier(.22,.9,.3,1)', maxHeight:'88vh', overflowY:'auto',
-          boxShadow:'0 -10px 34px rgba(22,23,50,0.16)', border:'1px solid rgba(255,255,255,0.7)', borderBottom:'none',
+          boxShadow:'none', border:'1px solid rgba(255,255,255,0.7)', borderBottom:'none',
           transform:'translateY('+sheetDY+'px)', transition: sheetDragging ? 'none' : 'transform .22s cubic-bezier(.22,.9,.3,1)' } },
         e('div', { style:{ padding:'0.85rem 0 0.5rem' } },
           e('div', { style:{ width:'40px', height:'5px', borderRadius:'999px', background:'rgba(65,67,106,0.22)', margin:'0 auto' } })),
@@ -2036,7 +1968,7 @@ function App() {
           background:'#0A0A0C', color:'#FFF',
           padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.15rem',
-          boxShadow:'12px 0 40px rgba(0,0,0,0.35)',
+          boxShadow:'none',
           transform: menuOpen ? 'translateX(0)' : 'translateX('+((-100 + menuSlide * 100))+'%)',
           transition: menuOpen ? 'transform .32s cubic-bezier(.22,.9,.3,1)' : (edgeSwipe.current.live ? 'none' : 'transform .22s ease'),
           willChange: 'transform'
@@ -2160,7 +2092,7 @@ function App() {
         width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer',
         background: INK, color: APRICOT,
         display:'flex', alignItems:'center', justifyContent:'center',
-        boxShadow:'0 10px 28px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.12)',
+        boxShadow:'none',
         transition:'transform .15s cubic-bezier(.22,.9,.3,1), opacity .12s ease, box-shadow .15s ease, filter .12s ease'
       }
     }, PlusIcon(26, APRICOT))
@@ -2172,7 +2104,7 @@ function App() {
     seq.length === 0
       ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
       : seq.map((s,i) => [
-          e('span', { key:'s'+i, style:{ background:siteGrad(s), color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
+          e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
           i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7 } }, '›') : null
         ]));
 
@@ -2187,7 +2119,7 @@ function App() {
   const ticketDetailCard = (j, i, dayIndex, overlapped) => {
     try {
       if (!j) {
-        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'32px', color:GREY } }, 'Empty ticket');
+        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'0px', color:GREY } }, 'Empty ticket');
       }
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
@@ -2201,8 +2133,11 @@ function App() {
       const segTravel2 = seg ? seg.travel2DateTime : j.travel2DateTime;
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
       const on = mins(segStart, segFinish);
-      const onC = s ? '#FFFFFF' : INK;
-      const faintC = s ? 'rgba(255,255,255,0.66)' : GREY;
+      /* Fixed text colour per the colour chart: very dark grey on every
+         card, except the near-black card (#333333) which flips to the
+         chart's orange so the text doesn't disappear against it. */
+      const onC = s ? siteOnColor(s.hex) : INK;
+      const faintC = s ? hexToRgba(onC, 0.66) : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
@@ -2225,7 +2160,7 @@ function App() {
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('div', { key:'badge', style:{
         width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
-        background: s ? 'rgba(255,255,255,0.24)' : 'rgba(10,10,12,0.08)',
+        background: s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)',
         display:'flex', alignItems:'center', justifyContent:'center',
         fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.2px', color:onC } }, badgeText);
 
@@ -2241,13 +2176,23 @@ function App() {
              card rather than a stray underline on otherwise-quiet text. */
           e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color: j.locked ? onC : faintC,
             whiteSpace:'nowrap', marginTop:'2px',
-            background: j.locked ? (s ? 'rgba(255,255,255,0.24)' : 'rgba(10,10,12,0.08)') : 'transparent',
+            background: j.locked ? (s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)') : 'transparent',
             borderRadius:'999px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
+        /* Start/finish times as three separate pieces rather than one string
+           with a baked-in hyphen: the separator gets real breathing room on
+           both sides and a much lighter weight than the bold times, so it
+           reads as a quiet divider instead of a thick dash crowding the
+           numbers. */
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
-          e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
-            whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart+'–'+tFinish),
+          e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
+              margin:'0 0.32em', whiteSpace:'nowrap' } }, '–'),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
           durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:800, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
@@ -2261,26 +2206,13 @@ function App() {
         style:{ background: s ? s.hex : SURF,
           overflow:'hidden', position:'relative',
           border: cardBorder,
-          boxShadow: !s ? SHADOW_SM : (overlapped ? '0 26px 48px rgba(10,10,20,0.40), 0 9px 18px rgba(10,10,20,0.30)' : SHADOW_SM),
-          borderRadius:'32px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
+          boxShadow: 'none',
+          borderRadius:'0px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
           minHeight:'56px',
-          transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
+          transition:'border-color .25s ease, transform .15s ease' }
       },
-        /* A soft top-to-bottom shade sits under the paper texture so a
-           card's own top and bottom edges read clearly differently from each
-           other — combined with the deeper shadow above, this is what gives
-           an overlapped card the feeling of floating just above the one
-           behind it. Plain alpha, no blend mode — mix-blend-mode is
-           unreliable on iOS Safari/WKWebView once an element sits inside a
-           transformed/animated ancestor (which these cards do, via the
-           press/swipe animation), so it can silently fail to render at all
-           rather than just looking subtle. */
-        s ? e('div', { key:'vgrad', style:{ position:'absolute', inset:0, borderRadius:'32px', pointerEvents:'none',
-          background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 32%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.24) 100%)' } }) : null,
-        /* Mild satin sheen: a soft diagonal highlight band, plain CSS
-           gradient — no images, no blend modes, so it always renders. */
-        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'32px', pointerEvents:'none',
-          background:'linear-gradient(125deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.09) 100%)' } }),
+        /* Completely flat now — no shading, no sheen, just the solid site
+           colour. */
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) and the multi-visit
@@ -2301,7 +2233,7 @@ function App() {
       );
     } catch (err) {
       return e('div', {
-        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'32px', color:INK }
+        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'0px', color:INK }
       }, String((j && j.ticketNumber) || 'Ticket') + ' (couldn’t render details)');
     }
   };
@@ -2326,7 +2258,7 @@ function App() {
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
         locked: !!(j && j.locked),
-        radius:'26px',
+        radius:'0px',
         glow: null,
         onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
         onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
@@ -2358,14 +2290,15 @@ function App() {
 
     let border = '1px solid rgba(10,10,12,0.10)';
     if (has) border = 'none';
-    if (selected) border = '2px solid '+(has ? '#FFFFFF' : INK);
+    const cellOnC = has && primary && SITES[primary] ? siteOnColor(SITES[primary].hex) : INK;
+    if (selected) border = '2px solid '+(has ? cellOnC : INK);
 
-    const fg = has ? '#FFFFFF' : (weekend ? GREY : INK);
-    const boxShadow = selected ? '0 0 0 2px '+(has ? 'rgba(255,255,255,0.55)' : 'rgba(10,10,12,0.2)') : 'none';
+    const fg = has ? cellOnC : (weekend ? GREY : INK);
+    const boxShadow = selected ? '0 0 0 2px '+(has ? hexToRgba(cellOnC, 0.55) : 'rgba(10,10,12,0.2)') : 'none';
     /* Same "complete" language as the day-view ticket cards: a thin ring inset
-       from the edge (white on a coloured cell, dark on a plain one) rather than
-       a thick outer border. */
-    const lockRingColor = has ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
+       from the edge (matching text colour on a coloured cell, dark on a plain
+       one) rather than a thick outer border. */
+    const lockRingColor = has ? hexToRgba(cellOnC, 0.9) : 'rgba(10,10,12,0.28)';
 
     return e('button', { key:dnum, className:'day-cell-btn', onClick:()=>{
         const clicked = new Date(ms.y, ms.m, dnum);
@@ -2448,9 +2381,10 @@ function App() {
     let bg = weekend ? SURF2 : EMPTY;
     if (primary && SITES[primary]) bg = SITES[primary].hex;
 
-    const fg = has ? '#FFF' : (weekend ? GREY : INK);
+    const weekCellOnC = has && primary && SITES[primary] ? siteOnColor(SITES[primary].hex) : INK;
+    const fg = has ? weekCellOnC : (weekend ? GREY : INK);
     const weekBorder = allLocked
-      ? (has ? '2px solid rgba(255,255,255,0.55)' : '2px solid rgba(10,10,12,0.16)')
+      ? (has ? '2px solid '+hexToRgba(weekCellOnC, 0.55) : '2px solid rgba(10,10,12,0.16)')
       : (has ? 'none' : '1px solid rgba(10,10,12,0.10)');
 
     return e('button', { key:i,
@@ -2462,11 +2396,11 @@ function App() {
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:'none' } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
-        e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?'rgba(255,255,255,0.85)':GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
+        e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?hexToRgba(weekCellOnC,0.85):GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
         e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg,
           textShadow:'none' } }, String(dt.getDate())),
         today ? e('span', { key:'td', style:{ display:'block', width:'5px', height:'5px', borderRadius:'999px',
-          background: has ? '#FFFFFF' : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
+          background: has ? weekCellOnC : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
       e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
         list.length === 0
           ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700 } }, '—')
@@ -2526,7 +2460,7 @@ function App() {
         mobileDaySeq.length === 0
           ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
           : mobileDaySeq.map((s,i) => [
-              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:'#FFF', padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, flexShrink:0 } }, SITES[s].label),
+              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, flexShrink:0 } }, SITES[s].label),
               i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7, flexShrink:0 } }, '›') : null
             ])));
 
@@ -2636,7 +2570,7 @@ function App() {
           position:'relative', width:'100%', maxWidth:'440px',
           background: SURF, borderRadius:'24px 24px 0 0',
           padding:'0.35rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
-          boxShadow:'0 -12px 40px rgba(0,0,0,'+(0.24 * (1 - mpProgress * 0.5))+')',
+          boxShadow:'none',
           transform: 'translateY('+Math.max(0, mpDY)+'px) scale('+(1 - mpProgress * 0.03)+')',
           transition: mpDragging ? 'none' : 'transform .28s cubic-bezier(.22,.9,.3,1)',
           maxHeight:'min(88vh, 640px)', overflowY: mpDragging ? 'hidden' : 'auto',
@@ -2830,7 +2764,7 @@ function App() {
           const s = SITES[k], on = siteFilter.includes(k);
           return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
             style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
-              border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):SURF2, color: on?'#FFF':INK } }, s.label);
+              border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):SURF2, color: on?siteOnColor(s.hex):INK } }, s.label);
         })),
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(EQUIP).map(k => {
@@ -2853,7 +2787,7 @@ function App() {
     e('div', { className: 'form-card form-section', style: {
         background: SURF, borderRadius:'20px', padding: corner ? '0.85rem 0.9rem 0.95rem' : '0.9rem 0.95rem 1rem',
         border: '1px solid '+LINE,
-        boxShadow: '0 6px 20px rgba(22,23,50,0.07), 0 1px 3px rgba(22,23,50,0.04)',
+        boxShadow: 'none',
         display:'flex', flexDirection:'column', gap:'0.55rem',
         position:'relative', overflow:'visible'
       } },
@@ -2978,7 +2912,7 @@ function App() {
       transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 4 ? '24px' : '0',
       touchAction: 'pan-y',
-      boxShadow: swipeX > 4 ? '-10px 0 28px rgba(22,23,50,0.18)' : 'none' } },
+      boxShadow: 'none' } },
 
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.05rem 0.1rem 0' } },
       e('button', { onClick:backOut, style:{ background:'none', border:'none', width:'36px', height:'36px',
@@ -3011,7 +2945,7 @@ function App() {
                 transition:'background .2s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:900, color: SITES[form.site] ? '#FFFFFF' : GREY } },
+                    fontSize:'0.82rem', fontWeight:900, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : GREY } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
@@ -3144,18 +3078,6 @@ function App() {
   const removeEquip = (idx) => commitEquip(equipEdits.filter((_,i)=>i!==idx));
   const addEquip = () => commitEquip([...equipEdits, { key:slugKey('EQ', equipEdits.map(x=>x.key)), label:'New equipment' }]);
 
-  const applyTheme = (theme) => {
-    const base = (siteEdits && siteEdits.length) ? siteEdits : sitesToList();
-    const nextSites = base.map((s, idx) => ({
-      ...s,
-      hex: theme.sites[idx % theme.sites.length]
-    }));
-    setSiteEdits(nextSites);
-    applySites(nextSites);
-    setThemeTick(t => t + 1);
-    saveSettings({ sites: nextSites });
-  };
-
   const toggleRow = (label, sub, value, onToggle) =>
     e('div', { key:label, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
       background:'transparent', border:'none', borderBottom:'1px solid rgba(10,10,12,0.06)', borderRadius:0, padding:'0.78rem 0.2rem' } },
@@ -3180,10 +3102,6 @@ function App() {
   /* Small icon badges for settings section headers — same round-badge shape
      used on ticket cards (EQ_BADGE_MAP), so Settings reads as part of the
      same visual family rather than a generic system screen. */
-  const paletteIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
-    e('circle', { cx:8, cy:8.5, r:4, fill:col, opacity:0.55 }),
-    e('circle', { cx:16, cy:8.5, r:4, fill:col, opacity:0.8 }),
-    e('circle', { cx:12, cy:15.5, r:4, fill:col }));
   const ticketIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
     e('path', { d:'M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.2a1.7 1.7 0 0 0 0 3.2v1.6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.6a1.7 1.7 0 0 0 0-3.2Z',
       fill:col, opacity:0.9 }),
@@ -3196,7 +3114,7 @@ function App() {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
         background: SURF, borderRadius:'26px', border:'none',
-        boxShadow:'0 8px 24px rgba(22,23,50,0.05)', overflow:'hidden', marginBottom:'0.65rem'
+        boxShadow:'none', overflow:'hidden', marginBottom:'0.65rem'
       } },
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
@@ -3221,31 +3139,6 @@ function App() {
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
       e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
-
-    collapseSection('appearance', 'Appearance', paletteIcon, [
-      e('button', { key:'themesRow', className:'d-hover', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
-        background:'rgba(10,10,12,0.04)', border:'none', borderRadius:'20px', padding:'0.85rem 0.95rem', cursor:'pointer', textAlign:'left', marginBottom:'0.4rem' } },
-        e('div', null,
-          e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Colour themes'),
-          e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' soft palettes')),
-        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
-          e('div', { style:{ display:'flex', gap:'3px' } },
-            sitesToList().slice(0,4).map((s,hi) =>
-              e('span', { key:hi, style:{ width:'14px', height:'14px', borderRadius:'999px', background:s.hex || '#888', display:'block', flexShrink:0 } }))),
-          e('span', { style:{ display:'inline-flex', transform:'rotate(180deg)' } }, ChevronLeft(14, GREY)))),
-      toggleRow('Dark mode', 'Dim the whole interface',
-        settings.darkMode, ()=>{ const next = !settings.darkMode; applyDarkMode(next); setThemeTick(t=>t+1); saveSettings({ darkMode: next }); }),
-      !settings.darkMode && e('div', { key:'bgdim', style:{ padding:'0.7rem 0.15rem 0.55rem', borderBottom:'1px solid rgba(10,10,12,0.06)' } },
-        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK, marginBottom:'0.45rem' } }, 'Background brightness'),
-        e('input', { type:'range', min:0, max:40, value:settings.bgDim||0,
-          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(v, settings.cardDim||0, false); setThemeTick(t=>t+1); saveSettings({ bgDim:v }); },
-          style:{ width:'100%', accentColor:INK, height:'28px' } })),
-      !settings.darkMode && e('div', { key:'carddim', style:{ padding:'0.7rem 0.15rem 0.55rem', borderBottom:'1px solid rgba(10,10,12,0.06)' } },
-        e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK, marginBottom:'0.45rem' } }, 'Card brightness'),
-        e('input', { type:'range', min:0, max:40, value:settings.cardDim||0,
-          onChange:(ev)=>{ const v = Number(ev.target.value); applySurfaceLightness(settings.bgDim||0, v, false); setThemeTick(t=>t+1); saveSettings({ cardDim:v }); },
-          style:{ width:'100%', accentColor:INK, height:'28px' } })),
-    ]),
 
     collapseSection('tickets', 'Tickets & cards', ticketIcon, [
       e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:900, color:INK, letterSpacing:'-0.15px',
@@ -3301,102 +3194,6 @@ function App() {
     )
   );
 
-  const themesView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.95rem' } },
-    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.2rem' } },
-      e('button', { className:'d-hover-btn', onClick:()=>setThemesOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Themes'),
-      e('span', { style:{ width:'36px' } })),
-    e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, padding:'0 0.25rem' } },
-      'Tap a palette to preview and rearrange colours for your sites.'),
-    ...THEME_GROUPS.map(group => e('div', { key:group.name, style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
-      e('div', { style:{ fontSize:'0.65rem', fontWeight:800, color:GREY, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0 0.35rem' } }, group.name),
-      e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.55rem' } },
-        group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{
-            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono), brightness: 0, saturation: 0 });
-          },
-          style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.7rem 0.65rem 0.75rem', borderRadius:'22px',
-            border: 'none',
-            background:'rgba(10,10,12,0.035)', cursor:'pointer', textAlign:'left',
-            boxShadow:'0 6px 16px rgba(22,23,50,0.04)' } },
-          e('div', { style:{ display:'flex', gap:'4px', width:'100%' } },
-            normalizeThemeSites(theme.sites || [], theme.mono).map((hex,hi) => e('span', { key:hi, style:{
-              flex:1, height:'20px', minWidth:0, borderRadius:'999px',
-              background: hex, display:'block', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.25)'
-            } }))),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:INK, padding:'0 0.15rem' } }, theme.name)))
-      )
-    )));
-
-  const themeDraftModal = themeDraft && e('div', {
-      key:'theme-draft',
-      style:{ position:'fixed', inset:0, zIndex:95, display:'flex', alignItems:'center', justifyContent:'center',
-        background:'rgba(0,0,0,0.45)', padding:'1.25rem', animation:'fadeIn .2s ease' }
-    },
-      e('div', {
-        style:{ width:'100%', maxWidth:'360px', background:SURF, borderRadius:'24px', padding:'1.15rem 1.1rem 1.2rem',
-          boxShadow:'0 20px 50px rgba(0,0,0,0.25)', animation:'popIn .28s cubic-bezier(.34,1.56,.64,1)' }
-      },
-        e('div', { style:{ fontSize:'1rem', fontWeight:900, color:INK, marginBottom:'0.25rem' } }, themeDraft.name),
-        e('div', { style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.85rem' } }, 'Reorder colours for your sites, adjust brightness and saturation, then apply.'),
-        e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem', marginBottom:'1rem' } },
-          themeDraft.sites.map((hex, i) => e('div', { key:i, style:{ display:'flex', alignItems:'center', gap:'0.55rem',
-            background:'rgba(10,10,12,0.04)', borderRadius:'14px', padding:'0.45rem 0.55rem' } },
-            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:adjustHexHsl(hex, themeDraft.brightness||0, themeDraft.saturation||0), flexShrink:0,
-              boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.08)' } }),
-            e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:800, color:INK } },
-              (sitesToList()[i] && sitesToList()[i].label) || ('Colour '+(i+1))),
-            e('button', { type:'button', disabled:i===0, onClick:()=>{
-              setThemeDraft(prev => {
-                const arr = prev.sites.slice();
-                if (i===0) return prev;
-                const t = arr[i-1]; arr[i-1]=arr[i]; arr[i]=t;
-                return { ...prev, sites: arr };
-              });
-            }, style:{ border:'none', background:'transparent', opacity:i===0?0.25:1, cursor:'pointer', padding:'4px' } }, '↑'),
-            e('button', { type:'button', disabled:i===themeDraft.sites.length-1, onClick:()=>{
-              setThemeDraft(prev => {
-                const arr = prev.sites.slice();
-                if (i>=arr.length-1) return prev;
-                const t = arr[i+1]; arr[i+1]=arr[i]; arr[i]=t;
-                return { ...prev, sites: arr };
-              });
-            }, style:{ border:'none', background:'transparent', opacity:i===themeDraft.sites.length-1?0.25:1, cursor:'pointer', padding:'4px' } }, '↓')
-          ))
-        ),
-        e('div', { style:{ marginBottom:'0.75rem' } },
-          e('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.4rem' } },
-            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, 'Brightness'),
-            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:GREY } },
-              (themeDraft.brightness||0) > 0 ? '+'+themeDraft.brightness : String(themeDraft.brightness||0))),
-          e('input', { type:'range', min:-50, max:50, value:themeDraft.brightness||0,
-            onChange:(ev)=>{ const v = Number(ev.target.value); setThemeDraft(prev => ({ ...prev, brightness:v })); },
-            style:{ width:'100%', accentColor:INK, height:'28px' } })
-        ),
-        e('div', { style:{ marginBottom:'1.1rem' } },
-          e('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.4rem' } },
-            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, 'Saturation'),
-            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:GREY } },
-              (themeDraft.saturation||0) > 0 ? '+'+themeDraft.saturation : String(themeDraft.saturation||0))),
-          e('input', { type:'range', min:-50, max:50, value:themeDraft.saturation||0,
-            onChange:(ev)=>{ const v = Number(ev.target.value); setThemeDraft(prev => ({ ...prev, saturation:v })); },
-            style:{ width:'100%', accentColor:INK, height:'28px' } })
-        ),
-        e('div', { style:{ display:'flex', gap:'0.5rem' } },
-          e('button', { type:'button', onClick:()=>setThemeDraft(null),
-            style:{ flex:1, border:'none', background:'rgba(10,10,12,0.06)', color:INK, borderRadius:'14px',
-              padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Cancel'),
-          e('button', { type:'button', onClick:()=>{
-              const finalSites = themeDraft.sites.map(hex => adjustHexHsl(hex, themeDraft.brightness||0, themeDraft.saturation||0));
-              applyTheme({ name: themeDraft.name, sites: finalSites });
-              setThemeDraft(null); setThemesOpen(false);
-            },
-            style:{ flex:1, border:'none', background:INK, color:APRICOT, borderRadius:'14px',
-              padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Apply')
-        )
-      )
-    );
-
   const backupsView = e('div', { style:{ padding:'0.8rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
       e('button', { onClick:()=>setBackupsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
@@ -3431,7 +3228,7 @@ function App() {
   if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
 
   const navTo = (target) => {
-    setSettingsOpen(false); setThemesOpen(false); setMenuOpen(false);
+    setSettingsOpen(false); setMenuOpen(false);
     if (target === 'settings') { setSettingsOpen(true); return; }
     if (target === 'list') { setView('list'); return; }
     setView('month');
@@ -3487,8 +3284,8 @@ function App() {
   );
 
   if (settingsOpen) {
-    const pane = themesOpen ? themesView : settingsView;
-    const settingsBody = e('div', { key: themesOpen ? 'themes' : 'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, pane);
+    const pane = settingsView;
+    const settingsBody = e('div', { key:'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, pane);
     return e('div', { className: 'desktop-shell' },
       desktopSidebar,
       e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
@@ -3496,7 +3293,7 @@ function App() {
         e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, settingsBody)
       ),
       e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
-        settingsBody, menu, themeDraftModal, chooserSheet, formSheet, fab)
+        settingsBody, menu, chooserSheet, formSheet, fab)
     );
   }
 
@@ -3566,8 +3363,8 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, themeDraftModal, chooserSheet, formSheet, swipeHint, fab, journeyIndicator,
-    view === 'month' && !monthPickerOpen && !settingsOpen && !themesOpen && !backupsOpen ? topDateBar : null
+    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator,
+    view === 'month' && !monthPickerOpen && !settingsOpen && !backupsOpen ? topDateBar : null
     ),
     /* sheets available on desktop too for export chooser etc */
     e('div', { className: 'desktop-only' }, chooserSheet, formSheet)
@@ -3591,7 +3388,7 @@ function BackupsLongPress({ onBackupNow, onOpenBackups }) {
         onClick:()=>setOpen(false),
         style:{ position:'fixed', inset:0, zIndex:99, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center', animation:'fadeIn .15s ease' }
       },
-      e('div', { onClick:(ev)=>ev.stopPropagation(), style:{ background:SURF, borderRadius:'18px', padding:'0.6rem', display:'flex', flexDirection:'column', gap:'0.35rem', minWidth:'220px', boxShadow:'0 12px 32px rgba(0,0,0,0.2)' } },
+      e('div', { onClick:(ev)=>ev.stopPropagation(), style:{ background:SURF, borderRadius:'18px', padding:'0.6rem', display:'flex', flexDirection:'column', gap:'0.35rem', minWidth:'220px', boxShadow:'none' } },
         e('button', { onClick:()=>{ setOpen(false); onBackupNow(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Back up now'),
         e('button', { onClick:()=>{ setOpen(false); onOpenBackups(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Restore from backup')
       )
