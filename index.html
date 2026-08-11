@@ -453,81 +453,35 @@ const SITES = {
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
 const THEME_GROUPS = [
-  { name: 'Themes', themes: [
-    { name:'iOS', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
-    { name:'Search', accent:'#4285F4', sites:['#4285F4','#EA4335','#D4A017','#2E9B4A'] },
-    { name:'Blocks', accent:'#4A7227', sites:['#4A7227','#573D26','#737373','#5A8ACC'] },
-    { name:'Starters', accent:'#C99200', sites:['#C43535','#2B5CDE','#2E9B3A','#C99200'] },
-    { name:'The One', accent:'#1A8F48', sites:['#1A8F48','#2F5FB0','#B03A42','#161616'] },
-    { name:'Night City', accent:'#1A86B8', sites:['#B09E12','#B83278','#1A86B8','#141414'] },
+  { name: 'Standard', themes: [
+    { name:'Default', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
     { name:'Shell', accent:'#1E6FFF', sites:['#1E6FFF','#C42828','#7A2DB0','#D49010'] },
     { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#C9A12A'] },
   ]},
-  { name: 'Digital Synopsis', themes: [
-    { name:'Purple Blue Pink Orange', accent:'#B48115', sites:['#B48115', '#7850AA', '#5ABEE6', '#E64682'] },
-    { name:'Coral Blush', accent:'#B4814F', sites:['#B4814F', '#AC9090', '#FA8C8C', '#BE6482'] },
-    { name:'Teal Amber', accent:'#F05032', sites:['#F05032', '#46A0A0', '#B47A24', '#64463C'] },
-    { name:'Ocean Blues', accent:'#46AAD2', sites:['#46AAD2', '#5078B4', '#5050BE', '#323C96'] },
-    { name:'Steel Lime', accent:'#3282C8', sites:['#3282C8', '#9E9E97', '#B4BE3C', '#505A64'] },
-    { name:'Storm Peach', accent:'#A5A590', sites:['#A5A590', '#AC7A48', '#323C50', '#E6645A'] },
-    { name:'Violet Bloom', accent:'#AA5AB4', sites:['#AA5AB4', '#E65A96', '#9790AC', '#3C32AA'] },
-    { name:'Navy Magenta', accent:'#ACA581', sites:['#ACA581', '#E60064', '#FA8C64', '#142878'] },
-    { name:'Berry Amber', accent:'#B49E81', sites:['#B49E81', '#B47A24', '#82286E', '#E63264'] },
-    { name:'Moss Orchid', accent:'#B4812B', sites:['#B4812B', '#6E3C96', '#F06E8C', '#8CB45A'] },
-    { name:'Pastel Rose', accent:'#A59781', sites:['#A59781', '#B4815D', '#E67896', '#6E1450'] },
-    { name:'Plum Citrus', accent:'#FA8278', sites:['#FA8278', '#A0286E', '#641E6E', '#E65064'] },
-    { name:'Citrus Sea', accent:'#E07830', sites:['#E07830', '#3A9A78', '#2A6A9A', '#4A4A4A'] },
-    { name:'Slate Sunrise', accent:'#6A7A8A', sites:['#6A7A8A', '#3A6A9A', '#E07840', '#5A5A5A'] },
-    { name:'Violet Horizon', accent:'#E07840', sites:['#E07840', '#3A6AAA', '#7A4A9A', '#4A4A6A'] },
-    { name:'Amethyst', accent:'#A57390', sites:['#A57390', '#E682B4', '#C864AA', '#965096'] },
-    { name:'Indigo Peach', accent:'#F08C8C', sites:['#F08C8C', '#A59788', '#3C468C', '#AA4678'] },
-    { name:'Royal Coral', accent:'#AC8848', sites:['#AC8848', '#6C9E9E', '#C8286E', '#322850'] },
-    { name:'Peach Blush', accent:'#ACA59E', sites:['#ACA59E', '#FA5078', '#DC508C', '#B49056'] },
-    { name:'Fuchsia Gold', accent:'#B48848', sites:['#B48848', '#DC64AA', '#FA6E96', '#7850B4'] },
-    { name:'Clay Ember', accent:'#ACA597', sites:['#ACA597', '#F08282', '#823C50', '#BE5A78'] },
-    { name:'Spectrum', accent:'#785096', sites:['#785096', '#BE5096', '#FA826E', '#B4902B'] },
-    { name:'Copper Sea', accent:'#3C96AA', sites:['#3C96AA', '#AC9E90', '#283C50', '#FA8C82'] },
-    { name:'Lagoon', accent:'#649E73', sites:['#649E73', '#32BEA0', '#3278BE', '#503C82'] },
-    { name:'Harvest', accent:'#28A08C', sites:['#28A08C', '#FA8C64', '#A59E90', '#BE3C64'] },
-    { name:'Lilac Sea', accent:'#2832AA', sites:['#2832AA', '#E65A96', '#0AB4E6', '#9646B4'] },
-    { name:'Espresso', accent:'#ACACA5', sites:['#ACACA5', '#AC9788', '#8C466E', '#502850'] },
-    { name:'Paper Blue', accent:'#96B4E6', sites:['#96B4E6', '#B4ACA5', '#B49090', '#FA9696'] },
-    { name:'Forest Rose', accent:'#9EACAC', sites:['#9EACAC', '#9E9E24', '#E65078', '#784664'] },
-    { name:'Garden Coral', accent:'#F08CAA', sites:['#F08CAA', '#B4ACA5', '#325064', '#B48173'] },
-    { name:'Desert Violet', accent:'#D08060', sites:['#D08060', '#C09080', '#7A4A9A', '#3A5A8A'] },
-    { name:'Orchid Grove', accent:'#7A4A9A', sites:['#7A4A9A', '#E07840', '#4A9A5A', '#5A5A4A'] },
-    { name:'Ash Crimson', accent:'#6A6A6A', sites:['#6A6A6A', '#C04050', '#8A8A8A', '#4A4A4A'] },
-    { name:'Prism', accent:'#3A6AAA', sites:['#3A6AAA', '#7A4A9A', '#D0A020', '#E07840'] },
-    { name:'Deep Teal', accent:'#1A5A6A', sites:['#1A5A6A', '#2A8A9A', '#3AAAAA', '#1A3A4A'] },
-    { name:'Coastal Clay', accent:'#3A6AAA', sites:['#3A6AAA', '#E07850', '#C09080', '#4A5A6A'] },
-    { name:'Orchid Pink', accent:'#7A4A9A', sites:['#7A4A9A', '#D06090', '#B05080', '#5A3A6A'] },
-    { name:'Emerald', accent:'#2A7A4A', sites:['#2A7A4A', '#3A9A5A', '#1A5A3A', '#4AAA6A'] },
-    { name:'Slate Crimson', accent:'#325064', sites:['#325064', '#78A0B4', '#ACA5A5', '#F0465A'] },
-    { name:'Timber Blue', accent:'#3CBED2', sites:['#3CBED2', '#ACAC9E', '#FA968C', '#AA3C5A'] },
+  { name: 'Bold', themes: [
+    { name:'Prism', accent:'#3A6AAA', sites:['#3A6AAA','#7A4A9A','#D0A020','#E07840'] },
+    { name:'Night City', accent:'#1A86B8', sites:['#B09E12','#B83278','#1A86B8','#141414'] },
+    { name:'Spectrum', accent:'#785096', sites:['#785096','#BE5096','#FA826E','#B4902B'] },
   ]},
   { name: 'Dark', themes: [
-    { name:'Midnight Navy', accent:'#1B2A4A', sites:['#1B2A4A', '#2E1B4A', '#1B4A3D', '#4A1B2E'] },
-    { name:'Charcoal Ember', accent:'#3A2E2E', sites:['#3A2E2E', '#2E3A2E', '#2E2E3A', '#3A2E3A'] },
-    { name:'Obsidian Jewel', accent:'#1F2937', sites:['#1F2937', '#3B0764', '#052E2B', '#4C0519'] },
-    { name:'Espresso Night', accent:'#2B1B12', sites:['#2B1B12', '#1B2B12', '#121B2B', '#2B121B'] },
-    { name:'Deep Forest', accent:'#0F2E1F', sites:['#0F2E1F', '#0F1F2E', '#2E0F1F', '#1F2E0F'] },
-    { name:'Storm Iron', accent:'#20242C', sites:['#20242C', '#2C2420', '#242C20', '#2C2028'] },
+    { name:'Midnight Navy', accent:'#1B2A4A', sites:['#1B2A4A','#2E1B4A','#1B4A3D','#4A1B2E'] },
+    { name:'Charcoal Ember', accent:'#3A2E2E', sites:['#3A2E2E','#2E3A2E','#2E2E3A','#3A2E3A'] },
+    { name:'Obsidian Jewel', accent:'#1F2937', sites:['#1F2937','#3B0764','#052E2B','#4C0519'] },
+    { name:'Deep Forest', accent:'#0F2E1F', sites:['#0F2E1F','#0F1F2E','#2E0F1F','#1F2E0F'] },
   ]},
   { name: 'Pastel', themes: [
-    { name:'Cotton Candy', accent:'#F7C6D9', sites:['#F7C6D9', '#C6E7F7', '#FFF3C6', '#D8C6F7'] },
-    { name:'Sorbet', accent:'#FFD9C2', sites:['#FFD9C2', '#C2F0E0', '#C2D9FF', '#F0C2E8'] },
-    { name:'Powder', accent:'#DCE8F7', sites:['#DCE8F7', '#F7DCE8', '#E8F7DC', '#F7F0DC'] },
-    { name:'Meadow Pastel', accent:'#D6F0D0', sites:['#D6F0D0', '#F0E4D0', '#D0E4F0', '#F0D0E4'] },
-    { name:'Blush Bloom', accent:'#F9D8D0', sites:['#F9D8D0', '#D0E9F9', '#F9F0D0', '#E3D0F9'] },
-    { name:'Seafoam Sand', accent:'#CFEEE6', sites:['#CFEEE6', '#F4E7C8', '#E6CFEE', '#EEE0CF'] },
+    { name:'Cotton Candy', accent:'#F7C6D9', sites:['#F7C6D9','#C6E7F7','#FFF3C6','#D8C6F7'] },
+    { name:'Sorbet', accent:'#FFD9C2', sites:['#FFD9C2','#C2F0E0','#C2D9FF','#F0C2E8'] },
+    { name:'Powder', accent:'#DCE8F7', sites:['#DCE8F7','#F7DCE8','#E8F7DC','#F7F0DC'] },
+    { name:'Blush Bloom', accent:'#F9D8D0', sites:['#F9D8D0','#D0E9F9','#F9F0D0','#E3D0F9'] },
   ]},
   { name: 'Monochrome', themes: [
-    { name:'Slate Shades', mono:true, accent:'#465364', sites:['#2A3542', '#465364', '#7C8A9C', '#B7C0CB'] },
-    { name:'Teal Shades', mono:true, accent:'#146B61', sites:['#0B3B36', '#146B61', '#2CA398', '#8ED9CE'] },
-    { name:'Terracotta Shades', mono:true, accent:'#8C4530', sites:['#5C2A1E', '#8C4530', '#C97350', '#E8AD8E'] },
-    { name:'Plum Shades', mono:true, accent:'#65296B', sites:['#3B1A3E', '#65296B', '#9A4AA3', '#CB8AD1'] },
-    { name:'Olive Shades', mono:true, accent:'#5C6130', sites:['#3A3D1E', '#5C6130', '#8B9349', '#C3CB8C'] },
-    { name:'Navy Shades', mono:true, accent:'#233257', sites:['#131B33', '#233257', '#3E5590', '#7C97C7'] },
+    { name:'Slate Shades', mono:true, accent:'#465364', sites:['#2A3542','#465364','#7C8A9C','#B7C0CB'] },
+    { name:'Teal Shades', mono:true, accent:'#146B61', sites:['#0B3B36','#146B61','#2CA398','#8ED9CE'] },
+    { name:'Terracotta Shades', mono:true, accent:'#8C4530', sites:['#5C2A1E','#8C4530','#C97350','#E8AD8E'] },
+    { name:'Plum Shades', mono:true, accent:'#65296B', sites:['#3B1A3E','#65296B','#9A4AA3','#CB8AD1'] },
+    { name:'Olive Shades', mono:true, accent:'#5C6130', sites:['#3A3D1E','#5C6130','#8B9349','#C3CB8C'] },
+    { name:'Navy Shades', mono:true, accent:'#233257', sites:['#131B33','#233257','#3E5590','#7C97C7'] },
   ]},
 ];
 
@@ -815,28 +769,47 @@ const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0
 const CopyIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('rect', { x:8, y:8, width:11, height:11, rx:2, fill:'none', stroke:col, strokeWidth:1.9 }),
   e('path', { d:'M6 15.5 V6.5 A1.5 1.5 0 0 1 7.5 5 H15.5', fill:'none', stroke:col, strokeWidth:1.9, strokeLinecap:'round' }));
-const GearIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('circle', { cx:12, cy:12, r:3.3, fill:'none', stroke:col, strokeWidth:2.3 }),
-  e('path', { d:'M19.4 13.5c.1-.5.1-1 0-1.5l1.6-1.2-1.5-2.6-1.9.6a6.6 6.6 0 0 0-1.3-.75L15.9 6h-3l-.4 2.05c-.47.18-.9.43-1.3.75l-1.9-.6-1.5 2.6 1.6 1.2c-.1.5-.1 1 0 1.5l-1.6 1.2 1.5 2.6 1.9-.6c.4.32.83.57 1.3.75L11.9 20h3l.4-2.05c.47-.18.9-.43 1.3-.75l1.9.6 1.5-2.6-1.6-1.2Z',
-    fill:'none', stroke:col, strokeWidth:1.9, strokeLinejoin:'round' }));
+/* A solid, filled cog rather than a thin outline — a ring (outer circle minus
+   inner circle, via evenodd) plus eight stubby teeth rotated around it. */
+const GearIcon = (size, col) => {
+  const teeth = Array.from({ length: 8 }, (_, i) => e('rect', {
+    key: 't'+i, x:10.3, y:1.6, width:3.4, height:4.2, rx:1.1, fill:col,
+    transform:'rotate('+(i*45)+' 12 12)'
+  }));
+  return e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+    teeth,
+    e('path', {
+      d:'M12 12 m -6.6 0 a 6.6 6.6 0 1 0 13.2 0 a 6.6 6.6 0 1 0 -13.2 0 M12 12 m -2.9 0 a 2.9 2.9 0 1 0 5.8 0 a 2.9 2.9 0 1 0 -5.8 0',
+      fill:col, fillRule:'evenodd'
+    }));
+};
+/* Two solid, chunky oval rings (each an outer ellipse minus a smaller inner
+   ellipse, via evenodd — same reliable technique as the gear's ring) so the
+   chain reads as bold interlocking links rather than thin outlined ovals. */
+const ellipseRing = (cx, cy, rxO, ryO, rxI, ryI) =>
+  'M '+(cx-rxO)+' '+cy+' A '+rxO+' '+ryO+' 0 1 0 '+(cx+rxO)+' '+cy+' A '+rxO+' '+ryO+' 0 1 0 '+(cx-rxO)+' '+cy+' Z '+
+  'M '+(cx-rxI)+' '+cy+' A '+rxI+' '+ryI+' 0 1 0 '+(cx+rxI)+' '+cy+' A '+rxI+' '+ryI+' 0 1 0 '+(cx-rxI)+' '+cy+' Z';
 const ChainIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('rect', { x:3.2, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:2.4, transform:'rotate(-32 7.7 12)' }),
-  e('rect', { x:11.8, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:2.4, transform:'rotate(-32 16.3 12)' }));
+  e('path', { d: ellipseRing(8.6, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 8.6 12)' }),
+  e('path', { d: ellipseRing(15.4, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 15.4 12)' }));
 
 /* Two layered SVG noise textures used together to fake watercolour-paper
    fibre: a coarse, blotchy low-frequency layer (the pulp/fibre clumping)
-   plus a fine high-frequency layer (surface tooth). Both tiled. */
+   plus a fine high-frequency layer (surface tooth). Both tiled.
+   color-interpolation-filters="sRGB" matters here — SVG filters default to
+   linearRGB, which mutes feTurbulence/feColorMatrix output considerably;
+   without it this texture looks far fainter than the numbers below suggest. */
 const PAPER_GRAIN_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>" +
-  "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>" +
-  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.32 0'/></filter>" +
+  "<filter id='n' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter>" +
   "<rect width='100%' height='100%' filter='url(#n)'/></svg>"
 );
 const NOISE_TEXTURE_URL = PAPER_GRAIN_URL;
 const PAPER_FIBER_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
-  "<filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='4' stitchTiles='stitch'/>" +
-  "<feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter>" +
+  "<filter id='f' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='4' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter>" +
   "<rect width='100%' height='100%' filter='url(#f)'/></svg>"
 );
 
@@ -1193,7 +1166,7 @@ function App() {
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
   const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, equipment: false, account: true });
-  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[] }
+  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[], brightness: number }
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
@@ -2320,18 +2293,18 @@ function App() {
           mixBlendMode:'overlay', opacity:1 } }),
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
-           next one overlaps on top of it. Parts (gear) on the left, the
-           multi-visit indicator (chain link) on the right. */
+           next one overlaps on top of it. Parts (gear) and the multi-visit
+           indicator (chain link) now sit together in the bottom-right. */
         e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.65rem',
-          display:'flex', alignItems:'center', justifyContent:'space-between' } },
+          display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px',
             visibility: partsCount ? 'visible' : 'hidden' } },
-            GearIcon(17, faintC),
+            GearIcon(20, faintC),
             e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC, letterSpacing:'0.1px' } },
               partsCount + (partsCount===1?' part':' parts'))),
           e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
             style:{ display:'flex', alignItems:'center', gap:'6px', visibility: multiCount ? 'visible' : 'hidden' } },
-            ChainIcon(17, faintC),
+            ChainIcon(20, faintC),
             e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC } }, String(multiCount)))
         )
       );
@@ -3288,54 +3261,6 @@ function App() {
       ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
         saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
       }),
-      e('div', { key:'fabGlowHead', style:{ fontSize:'0.72rem', fontWeight:900, color:INK, letterSpacing:'-0.15px',
-        margin:'0.85rem 0 0.45rem', padding:'0.15rem 0' } }, 'New button glow'),
-      e('div', { key:'fabGlowStyles', style:{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.45rem', marginBottom:'0.65rem' } },
-        [
-          { key:'halo', label:'Halo' },
-          { key:'drift', label:'Drift' },
-          { key:'dual', label:'Dual' },
-          { key:'nebula', label:'Nebula' }
-        ].map(opt => {
-          const on = (settings.fabGlowStyle || 'halo') === opt.key;
-          const col = settings.fabGlowColor || '#2890FF';
-          return e('button', {
-            key: opt.key,
-            type: 'button',
-            onClick: () => saveSettings({ fabGlowStyle: opt.key }),
-            style: {
-              display:'flex', flexDirection:'column', alignItems:'center', gap:'0.4rem',
-              padding:'0.55rem 0.25rem 0.5rem', borderRadius:'16px', cursor:'pointer',
-              border: on ? '2px solid '+INK : '1px solid '+LINE,
-              background: on ? (DARK_MODE ? 'rgba(255,255,255,0.08)' : 'rgba(10,10,12,0.04)') : 'transparent'
-            }
-          },
-            e('div', {
-              className: 'fab-style-preview',
-              style: { ['--fab-glow']: col, width:'40px', height:'40px' }
-            },
-              e('div', { className: 'fab-glow fab-glow-'+opt.key, style:{ position:'absolute' } }),
-              e('span', { style:{ position:'relative', zIndex:1, color:'#FFF', fontSize:'1.1rem', fontWeight:300, lineHeight:1 } }, '+')
-            ),
-            e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color: on ? INK : GREY } }, opt.label)
-          );
-        })
-      ),
-      e('div', { key:'fabGlowColor', style:{ display:'flex', alignItems:'center', gap:'0.75rem',
-        padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid rgba(10,10,12,0.06)' } },
-        e('div', { style:{ flex:1 } },
-          e('div', { style:{ fontSize:'0.8rem', fontWeight:800, color:INK } }, 'Glow colour'),
-          e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px' } }, 'Applies to all glow styles')),
-        e('input', {
-          type: 'color',
-          value: settings.fabGlowColor || '#2890FF',
-          onChange: (ev) => saveSettings({ fabGlowColor: ev.target.value }),
-          style: {
-            width:'42px', height:'42px', border:'none', padding:0, borderRadius:'12px',
-            background:'transparent', cursor:'pointer'
-          }
-        })
-      ),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
@@ -3392,7 +3317,7 @@ function App() {
       e('div', { style:{ fontSize:'0.65rem', fontWeight:800, color:GREY, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0 0.35rem' } }, group.name),
       e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.55rem' } },
         group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{
-            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono) });
+            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono), brightness: 0 });
           },
           style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.7rem 0.65rem 0.75rem', borderRadius:'22px',
             border: 'none',
@@ -3421,7 +3346,7 @@ function App() {
         e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem', marginBottom:'1rem' } },
           themeDraft.sites.map((hex, i) => e('div', { key:i, style:{ display:'flex', alignItems:'center', gap:'0.55rem',
             background:'rgba(10,10,12,0.04)', borderRadius:'14px', padding:'0.45rem 0.55rem' } },
-            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:hex, flexShrink:0,
+            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:shade(hex, (themeDraft.brightness||0)/100), flexShrink:0,
               boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.08)' } }),
             e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:800, color:INK } },
               (sitesToList()[i] && sitesToList()[i].label) || ('Colour '+(i+1))),
@@ -3443,12 +3368,22 @@ function App() {
             }, style:{ border:'none', background:'transparent', opacity:i===themeDraft.sites.length-1?0.25:1, cursor:'pointer', padding:'4px' } }, '↓')
           ))
         ),
+        e('div', { style:{ marginBottom:'1.1rem' } },
+          e('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.4rem' } },
+            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, 'Brightness'),
+            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:GREY } },
+              (themeDraft.brightness||0) > 0 ? '+'+themeDraft.brightness : String(themeDraft.brightness||0))),
+          e('input', { type:'range', min:-50, max:50, value:themeDraft.brightness||0,
+            onChange:(ev)=>{ const v = Number(ev.target.value); setThemeDraft(prev => ({ ...prev, brightness:v })); },
+            style:{ width:'100%', accentColor:INK, height:'28px' } })
+        ),
         e('div', { style:{ display:'flex', gap:'0.5rem' } },
           e('button', { type:'button', onClick:()=>setThemeDraft(null),
             style:{ flex:1, border:'none', background:'rgba(10,10,12,0.06)', color:INK, borderRadius:'14px',
               padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Cancel'),
           e('button', { type:'button', onClick:()=>{
-              applyTheme({ name: themeDraft.name, sites: themeDraft.sites });
+              const finalSites = themeDraft.sites.map(hex => shade(hex, (themeDraft.brightness||0)/100));
+              applyTheme({ name: themeDraft.name, sites: finalSites });
               setThemeDraft(null); setThemesOpen(false);
             },
             style:{ flex:1, border:'none', background:INK, color:APRICOT, borderRadius:'14px',
