@@ -505,6 +505,30 @@ const THEME_GROUPS = [
     { name:'Slate Crimson', accent:'#325064', sites:['#325064', '#78A0B4', '#ACA5A5', '#F0465A'] },
     { name:'Timber Blue', accent:'#3CBED2', sites:['#3CBED2', '#ACAC9E', '#FA968C', '#AA3C5A'] },
   ]},
+  { name: 'Dark', themes: [
+    { name:'Midnight Navy', accent:'#1B2A4A', sites:['#1B2A4A', '#2E1B4A', '#1B4A3D', '#4A1B2E'] },
+    { name:'Charcoal Ember', accent:'#3A2E2E', sites:['#3A2E2E', '#2E3A2E', '#2E2E3A', '#3A2E3A'] },
+    { name:'Obsidian Jewel', accent:'#1F2937', sites:['#1F2937', '#3B0764', '#052E2B', '#4C0519'] },
+    { name:'Espresso Night', accent:'#2B1B12', sites:['#2B1B12', '#1B2B12', '#121B2B', '#2B121B'] },
+    { name:'Deep Forest', accent:'#0F2E1F', sites:['#0F2E1F', '#0F1F2E', '#2E0F1F', '#1F2E0F'] },
+    { name:'Storm Iron', accent:'#20242C', sites:['#20242C', '#2C2420', '#242C20', '#2C2028'] },
+  ]},
+  { name: 'Pastel', themes: [
+    { name:'Cotton Candy', accent:'#F7C6D9', sites:['#F7C6D9', '#C6E7F7', '#FFF3C6', '#D8C6F7'] },
+    { name:'Sorbet', accent:'#FFD9C2', sites:['#FFD9C2', '#C2F0E0', '#C2D9FF', '#F0C2E8'] },
+    { name:'Powder', accent:'#DCE8F7', sites:['#DCE8F7', '#F7DCE8', '#E8F7DC', '#F7F0DC'] },
+    { name:'Meadow Pastel', accent:'#D6F0D0', sites:['#D6F0D0', '#F0E4D0', '#D0E4F0', '#F0D0E4'] },
+    { name:'Blush Bloom', accent:'#F9D8D0', sites:['#F9D8D0', '#D0E9F9', '#F9F0D0', '#E3D0F9'] },
+    { name:'Seafoam Sand', accent:'#CFEEE6', sites:['#CFEEE6', '#F4E7C8', '#E6CFEE', '#EEE0CF'] },
+  ]},
+  { name: 'Monochrome', themes: [
+    { name:'Slate Shades', mono:true, accent:'#465364', sites:['#2A3542', '#465364', '#7C8A9C', '#B7C0CB'] },
+    { name:'Teal Shades', mono:true, accent:'#146B61', sites:['#0B3B36', '#146B61', '#2CA398', '#8ED9CE'] },
+    { name:'Terracotta Shades', mono:true, accent:'#8C4530', sites:['#5C2A1E', '#8C4530', '#C97350', '#E8AD8E'] },
+    { name:'Plum Shades', mono:true, accent:'#65296B', sites:['#3B1A3E', '#65296B', '#9A4AA3', '#CB8AD1'] },
+    { name:'Olive Shades', mono:true, accent:'#5C6130', sites:['#3A3D1E', '#5C6130', '#8B9349', '#C3CB8C'] },
+    { name:'Navy Shades', mono:true, accent:'#233257', sites:['#131B33', '#233257', '#3E5590', '#7C97C7'] },
+  ]},
 ];
 
 const THEME_PRESETS = THEME_GROUPS.reduce((acc, g) => acc.concat(g.themes), []);
@@ -570,6 +594,47 @@ const shade = (hex, amt) => { const h=hex.replace('#',''); let r=parseInt(h.subs
   const t = amt<0 ? 0 : 255, p = Math.abs(amt);
   r=Math.round(r+(t-r)*p); g=Math.round(g+(t-g)*p); b=Math.round(b+(t-b)*p);
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); };
+
+const hexToHsl = (hex) => {
+  const h = hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16)/255, g=parseInt(h.substring(2,4),16)/255, b=parseInt(h.substring(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let hh=0, ss=0; const ll=(max+min)/2;
+  if (max !== min) {
+    const d = max-min;
+    ss = ll>0.5 ? d/(2-max-min) : d/(max+min);
+    if (max===r) hh=(g-b)/d+(g<b?6:0);
+    else if (max===g) hh=(b-r)/d+2;
+    else hh=(r-g)/d+4;
+    hh/=6;
+  }
+  return [hh*360, ss*100, ll*100];
+};
+const hslToHex = (h,s,l) => {
+  h/=360; s/=100; l/=100;
+  let r,g,b;
+  if (s===0) { r=g=b=l; }
+  else {
+    const hue2rgb=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6) return p+(q-p)*6*t; if(t<1/2) return q; if(t<2/3) return p+(q-p)*(2/3-t)*6; return p; };
+    const q = l<0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+  }
+  const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
+  return '#'+toHex(r)+toHex(g)+toHex(b);
+};
+/* Brings every colour in a theme to the same lightness/saturation (the
+   average of the set) while keeping each one's own hue, so the colours in
+   any given theme read as one cohesive family rather than a grab-bag of
+   differently-bright swatches. Monochrome themes skip this since their
+   varying lightness is the whole point. */
+const normalizeThemeSites = (sites, mono) => {
+  if (mono || !sites || !sites.length) return sites;
+  const hsls = sites.map(hexToHsl);
+  const avgS = hsls.reduce((a,c)=>a+c[1],0) / hsls.length;
+  const avgL = hsls.reduce((a,c)=>a+c[2],0) / hsls.length;
+  return hsls.map(([h]) => hslToHex(h, avgS, avgL));
+};
 
 let INK='#0A0A0C', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(10,10,12,0.13)';
 let VIOLET='#0A0A0C', APRICOT='#FFFFFF';
@@ -751,20 +816,28 @@ const CopyIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0
   e('rect', { x:8, y:8, width:11, height:11, rx:2, fill:'none', stroke:col, strokeWidth:1.9 }),
   e('path', { d:'M6 15.5 V6.5 A1.5 1.5 0 0 1 7.5 5 H15.5', fill:'none', stroke:col, strokeWidth:1.9, strokeLinecap:'round' }));
 const GearIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('circle', { cx:12, cy:12, r:3.3, fill:'none', stroke:col, strokeWidth:1.7 }),
+  e('circle', { cx:12, cy:12, r:3.3, fill:'none', stroke:col, strokeWidth:2.3 }),
   e('path', { d:'M19.4 13.5c.1-.5.1-1 0-1.5l1.6-1.2-1.5-2.6-1.9.6a6.6 6.6 0 0 0-1.3-.75L15.9 6h-3l-.4 2.05c-.47.18-.9.43-1.3.75l-1.9-.6-1.5 2.6 1.6 1.2c-.1.5-.1 1 0 1.5l-1.6 1.2 1.5 2.6 1.9-.6c.4.32.83.57 1.3.75L11.9 20h3l.4-2.05c.47-.18.9-.43 1.3-.75l1.9.6 1.5-2.6-1.6-1.2Z',
-    fill:'none', stroke:col, strokeWidth:1.3, strokeLinejoin:'round' }));
+    fill:'none', stroke:col, strokeWidth:1.9, strokeLinejoin:'round' }));
 const ChainIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
-  e('rect', { x:3.2, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:1.7, transform:'rotate(-32 7.7 12)' }),
-  e('rect', { x:11.8, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:1.7, transform:'rotate(-32 16.3 12)' }));
+  e('rect', { x:3.2, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:2.4, transform:'rotate(-32 7.7 12)' }),
+  e('rect', { x:11.8, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:2.4, transform:'rotate(-32 16.3 12)' }));
 
-/* Fine grain layered under the satin sheen so coloured cards read as a
-   textured material rather than a flat gradient. Tiny SVG noise, tiled. */
-const NOISE_TEXTURE_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
+/* Two layered SVG noise textures used together to fake watercolour-paper
+   fibre: a coarse, blotchy low-frequency layer (the pulp/fibre clumping)
+   plus a fine high-frequency layer (surface tooth). Both tiled. */
+const PAPER_GRAIN_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>" +
-  "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/>" +
-  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.13 0'/></filter>" +
+  "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.10 0'/></filter>" +
   "<rect width='100%' height='100%' filter='url(#n)'/></svg>"
+);
+const NOISE_TEXTURE_URL = PAPER_GRAIN_URL;
+const PAPER_FIBER_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
+  "<filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.016' numOctaves='4' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.16 0'/></filter>" +
+  "<rect width='100%' height='100%' filter='url(#f)'/></svg>"
 );
 
 const NEUTRAL_TILE = '#4A4E5A';
@@ -2166,10 +2239,10 @@ function App() {
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const numberSize = (0.74 * tScale).toFixed(3) + 'rem';
       const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
       const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.82 * tScale).toFixed(3) + 'rem';
       const durSize = (0.95 * tScale).toFixed(3) + 'rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
@@ -2185,7 +2258,6 @@ function App() {
       const badge = e('div', { key:'badge', style:{
         width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
         background: s ? 'rgba(255,255,255,0.24)' : 'rgba(10,10,12,0.08)',
-        border: j.locked ? '1.5px dashed '+onC : '1.5px solid transparent',
         display:'flex', alignItems:'center', justifyContent:'center',
         fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.2px', color:onC } }, badgeText);
 
@@ -2196,7 +2268,13 @@ function App() {
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:400, color:faintC, whiteSpace:'nowrap', paddingTop:'4px' } }, title)
+          /* Underline + a bolder weight is the "complete" signal now — quieter
+             than a border around the whole card, and it lives right on the
+             one piece of text that's otherwise the least important on the
+             card, so it doesn't compete with the times. */
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color:faintC,
+            whiteSpace:'nowrap', paddingTop:'4px',
+            textDecoration: j.locked ? 'underline' : 'none', textUnderlineOffset:'3px' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
@@ -2220,37 +2298,38 @@ function App() {
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
-        /* A stronger top-to-bottom shade sits under the satin sheen so a
+        /* A soft top-to-bottom shade sits under the paper texture so a
            card's own top and bottom edges read clearly differently from each
            other — combined with the deeper shadow above, this is what gives
            an overlapped card the feeling of floating just above the one
-           behind it, rather than the two fusing into a single flat shape. */
+           behind it, rather than the two fusing into a single flat shape.
+           Kept gentle so it reads as diffuse shading, not a glossy streak. */
         s ? e('div', { key:'vgrad', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
-          background:'linear-gradient(180deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0) 26%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.34) 100%)',
+          background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.26) 100%)',
           mixBlendMode:'soft-light' } }) : null,
-        /* Satin finish: a diagonal sheen gradient layered over a fine tiled
-           noise texture, both blended with 'overlay' so the card reads as a
-           textured material rather than a flat colour fill. */
+        /* Matte watercolour-paper finish: no gloss/sheen — just two layered
+           noise textures (coarse fibre clumping + fine surface tooth) blended
+           softly so the card reads as a textured paper stock, not plastic. */
         e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
-          backgroundImage:'url('+NOISE_TEXTURE_URL+'), linear-gradient(130deg, rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.14) 20%, rgba(255,255,255,0) 44%, rgba(0,0,0,0.14) 100%)',
-          backgroundRepeat:'repeat, no-repeat', backgroundSize:'110px 110px, 100% 100%',
-          backgroundBlendMode:'overlay',
-          mixBlendMode:'overlay', opacity:1 } }),
+          backgroundImage:'url('+PAPER_FIBER_URL+'), url('+PAPER_GRAIN_URL+')',
+          backgroundRepeat:'repeat, repeat', backgroundSize:'260px 260px, 110px 110px',
+          backgroundBlendMode:'multiply',
+          mixBlendMode:'soft-light', opacity:0.85 } }),
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) on the left, the
            multi-visit indicator (chain link) on the right. */
-        e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.7rem',
+        e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.65rem',
           display:'flex', alignItems:'center', justifyContent:'space-between' } },
-          e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'4px',
+          e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px',
             visibility: partsCount ? 'visible' : 'hidden' } },
-            GearIcon(12, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC, letterSpacing:'0.1px' } },
+            GearIcon(17, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC, letterSpacing:'0.1px' } },
               partsCount + (partsCount===1?' part':' parts'))),
           e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
-            style:{ display:'flex', alignItems:'center', gap:'4px', visibility: multiCount ? 'visible' : 'hidden' } },
-            ChainIcon(12, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(multiCount)))
+            style:{ display:'flex', alignItems:'center', gap:'6px', visibility: multiCount ? 'visible' : 'hidden' } },
+            ChainIcon(17, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC } }, String(multiCount)))
         )
       );
     } catch (err) {
@@ -2333,8 +2412,10 @@ function App() {
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
       has ? e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'inherit', pointerEvents:'none',
-        backgroundImage:'linear-gradient(130deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0) 46%, rgba(0,0,0,0.06) 100%)',
-        mixBlendMode:'overlay', opacity:0.9 } }) : null,
+        backgroundImage:'url('+PAPER_FIBER_URL+'), url('+PAPER_GRAIN_URL+')',
+        backgroundRepeat:'repeat, repeat', backgroundSize:'260px 260px, 110px 110px',
+        backgroundBlendMode:'multiply',
+        mixBlendMode:'soft-light', opacity:0.85 } }) : null,
       d && d.allLocked ? e('div', { key:'ring', style:{ position:'absolute', inset:'3px',
         borderRadius: weekend ? '10px' : '15px', border:'1px solid '+lockRingColor,
         pointerEvents:'none', zIndex:2 } }) : null,
@@ -3308,14 +3389,14 @@ function App() {
       e('div', { style:{ fontSize:'0.65rem', fontWeight:800, color:GREY, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0 0.35rem' } }, group.name),
       e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.55rem' } },
         group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{
-            setThemeDraft({ name: theme.name, sites: (theme.sites || []).slice() });
+            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono) });
           },
           style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.7rem 0.65rem 0.75rem', borderRadius:'22px',
             border: 'none',
             background:'rgba(10,10,12,0.035)', cursor:'pointer', textAlign:'left',
             boxShadow:'0 6px 16px rgba(22,23,50,0.04)' } },
           e('div', { style:{ display:'flex', gap:'4px', width:'100%' } },
-            (theme.sites || []).map((hex,hi) => e('span', { key:hi, style:{
+            normalizeThemeSites(theme.sites || [], theme.mono).map((hex,hi) => e('span', { key:hi, style:{
               flex:1, height:'20px', minWidth:0, borderRadius:'999px',
               background: hex, display:'block', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.25)'
             } }))),
