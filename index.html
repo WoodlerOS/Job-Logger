@@ -455,25 +455,27 @@ const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9
 const THEME_GROUPS = [
   { name: 'Standard', themes: [
     { name:'Default', accent:'#1A7AE8', sites:['#3DBB63','#1A7AE8','#F03D5E','#B56AE8'] },
-    { name:'Shell', accent:'#1E6FFF', sites:['#1E6FFF','#C42828','#7A2DB0','#D49010'] },
+    { name:'Flag', accent:'#0F62FE', sites:['#0F62FE','#DA1E28','#24A148','#F1C21B'] },
     { name:'Houses', accent:'#740001', sites:['#AE0001','#1A472A','#222F5B','#C9A12A'] },
+    { name:'Coastal', accent:'#0E7C86', sites:['#0E7C86','#E8735C','#E3B23C','#26415C'] },
   ]},
   { name: 'Bold', themes: [
-    { name:'Prism', accent:'#3A6AAA', sites:['#3A6AAA','#7A4A9A','#D0A020','#E07840'] },
+    { name:'Prism', accent:'#2A4B8D', sites:['#2A4B8D','#7B2FBF','#E8A63D','#D6483F'] },
     { name:'Night City', accent:'#1A86B8', sites:['#B09E12','#B83278','#1A86B8','#141414'] },
-    { name:'Spectrum', accent:'#785096', sites:['#785096','#BE5096','#FA826E','#B4902B'] },
+    { name:'Spectrum', accent:'#3DA5D9', sites:['#3DA5D9','#EE6C4D','#F4B942','#2E294E'] },
+    { name:'Neon Grid', accent:'#2B86C5', sites:['#FF3CAC','#784BA0','#2B86C5','#43E97B'] },
   ]},
   { name: 'Dark', themes: [
     { name:'Midnight Navy', accent:'#1B2A4A', sites:['#1B2A4A','#2E1B4A','#1B4A3D','#4A1B2E'] },
     { name:'Charcoal Ember', accent:'#3A2E2E', sites:['#3A2E2E','#2E3A2E','#2E2E3A','#3A2E3A'] },
-    { name:'Obsidian Jewel', accent:'#1F2937', sites:['#1F2937','#3B0764','#052E2B','#4C0519'] },
+    { name:'Copper Slate', accent:'#4A3728', sites:['#2B2118','#4A3728','#6B4423','#8C6239'] },
     { name:'Deep Forest', accent:'#0F2E1F', sites:['#0F2E1F','#0F1F2E','#2E0F1F','#1F2E0F'] },
   ]},
   { name: 'Pastel', themes: [
     { name:'Cotton Candy', accent:'#F7C6D9', sites:['#F7C6D9','#C6E7F7','#FFF3C6','#D8C6F7'] },
     { name:'Sorbet', accent:'#FFD9C2', sites:['#FFD9C2','#C2F0E0','#C2D9FF','#F0C2E8'] },
-    { name:'Powder', accent:'#DCE8F7', sites:['#DCE8F7','#F7DCE8','#E8F7DC','#F7F0DC'] },
-    { name:'Blush Bloom', accent:'#F9D8D0', sites:['#F9D8D0','#D0E9F9','#F9F0D0','#E3D0F9'] },
+    { name:'Powder Blue', accent:'#AEC5DC', sites:['#D7E3F0','#C3D4E6','#AEC5DC','#9AB6D2'] },
+    { name:'Rose Bloom', accent:'#EDB0A2', sites:['#F7DCD4','#F2C6BB','#EDB0A2','#E89A89'] },
   ]},
   { name: 'Monochrome', themes: [
     { name:'Slate Shades', mono:true, accent:'#465364', sites:['#2A3542','#465364','#7C8A9C','#B7C0CB'] },
@@ -576,6 +578,16 @@ const hslToHex = (h,s,l) => {
   }
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
+};
+/* Shifts a colour's true HSL lightness and saturation together, keeping hue
+   fixed — used by the theme draft's two sliders. lightDelta/satDelta each
+   run -50..50; scaled down so the sliders' full range stays usable without
+   blowing a colour out to white/grey at the extremes. */
+const adjustHexHsl = (hex, lightDelta, satDelta) => {
+  const [h, s, l] = hexToHsl(hex);
+  const l2 = Math.max(4, Math.min(96, l + (lightDelta||0) * 0.6));
+  const s2 = Math.max(0, Math.min(100, s + (satDelta||0) * 0.9));
+  return hslToHex(h, s2, l2);
 };
 /* Brings every colour in a theme to the same lightness/saturation (the
    average of the set) while keeping each one's own hue, so the colours in
@@ -792,26 +804,6 @@ const ellipseRing = (cx, cy, rxO, ryO, rxI, ryI) =>
 const ChainIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('path', { d: ellipseRing(8.6, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 8.6 12)' }),
   e('path', { d: ellipseRing(15.4, 12, 6.2, 4.4, 3.9, 2.2), fill:col, fillRule:'evenodd', transform:'rotate(-30 15.4 12)' }));
-
-/* Two layered SVG noise textures used together to fake watercolour-paper
-   fibre: a coarse, blotchy low-frequency layer (the pulp/fibre clumping)
-   plus a fine high-frequency layer (surface tooth). Both tiled.
-   color-interpolation-filters="sRGB" matters here — SVG filters default to
-   linearRGB, which mutes feTurbulence/feColorMatrix output considerably;
-   without it this texture looks far fainter than the numbers below suggest. */
-const PAPER_GRAIN_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>" +
-  "<filter id='n' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/>" +
-  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter>" +
-  "<rect width='100%' height='100%' filter='url(#n)'/></svg>"
-);
-const NOISE_TEXTURE_URL = PAPER_GRAIN_URL;
-const PAPER_FIBER_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
-  "<filter id='f' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='4' stitchTiles='stitch'/>" +
-  "<feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter>" +
-  "<rect width='100%' height='100%' filter='url(#f)'/></svg>"
-);
 
 const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
@@ -1166,7 +1158,7 @@ function App() {
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
   const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, equipment: false, account: true });
-  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[], brightness: number }
+  const [themeDraft, setThemeDraft] = useState(null); // { name, sites: hex[], brightness: number, saturation: number }
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
 
@@ -2192,7 +2184,7 @@ function App() {
   const ticketDetailCard = (j, i, dayIndex) => {
     try {
       if (!j) {
-        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'26px', color:GREY } }, 'Empty ticket');
+        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'32px', color:GREY } }, 'Empty ticket');
       }
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
@@ -2266,8 +2258,8 @@ function App() {
         style:{ background: s ? s.hex : SURF,
           overflow:'hidden', position:'relative',
           border: cardBorder,
-          boxShadow: s ? '0 18px 34px rgba(20,20,30,0.26), 0 5px 12px rgba(20,20,30,0.18)' : SHADOW_SM,
-          borderRadius:'26px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
+          boxShadow: s ? '0 26px 48px rgba(10,10,20,0.40), 0 9px 18px rgba(10,10,20,0.30)' : SHADOW_SM,
+          borderRadius:'32px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
@@ -2275,22 +2267,17 @@ function App() {
            card's own top and bottom edges read clearly differently from each
            other — combined with the deeper shadow above, this is what gives
            an overlapped card the feeling of floating just above the one
-           behind it, rather than the two fusing into a single flat shape.
-           Kept gentle so it reads as diffuse shading, not a glossy streak. */
-        s ? e('div', { key:'vgrad', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
-          background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.26) 100%)',
-          mixBlendMode:'soft-light' } }) : null,
-        /* Matte watercolour-paper finish: no gloss/sheen — just two layered
-           noise textures (coarse fibre clumping + fine surface tooth). Using
-           'overlay' to combine them (rather than 'multiply') keeps the
-           texture's contrast instead of the two layers dulling each other
-           down, and the div itself blends with 'overlay' too so it actually
-           reads at a glance rather than needing close inspection to notice. */
-        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
-          backgroundImage:'url('+PAPER_FIBER_URL+'), url('+PAPER_GRAIN_URL+')',
-          backgroundRepeat:'repeat, repeat', backgroundSize:'220px 220px, 90px 90px',
-          backgroundBlendMode:'overlay',
-          mixBlendMode:'overlay', opacity:1 } }),
+           behind it. Plain alpha, no blend mode — mix-blend-mode is
+           unreliable on iOS Safari/WKWebView once an element sits inside a
+           transformed/animated ancestor (which these cards do, via the
+           press/swipe animation), so it can silently fail to render at all
+           rather than just looking subtle. */
+        s ? e('div', { key:'vgrad', style:{ position:'absolute', inset:0, borderRadius:'32px', pointerEvents:'none',
+          background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 32%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.24) 100%)' } }) : null,
+        /* Mild satin sheen: a soft diagonal highlight band, plain CSS
+           gradient — no images, no blend modes, so it always renders. */
+        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'32px', pointerEvents:'none',
+          background:'linear-gradient(125deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.09) 100%)' } }),
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) and the multi-visit
@@ -2310,7 +2297,7 @@ function App() {
       );
     } catch (err) {
       return e('div', {
-        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'26px', color:INK }
+        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'32px', color:INK }
       }, String((j && j.ticketNumber) || 'Ticket') + ' (couldn’t render details)');
     }
   };
@@ -2388,10 +2375,7 @@ function App() {
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
       has ? e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'inherit', pointerEvents:'none',
-        backgroundImage:'url('+PAPER_FIBER_URL+'), url('+PAPER_GRAIN_URL+')',
-        backgroundRepeat:'repeat, repeat', backgroundSize:'220px 220px, 90px 90px',
-        backgroundBlendMode:'overlay',
-        mixBlendMode:'overlay', opacity:1 } }) : null,
+        background:'linear-gradient(125deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.09) 100%)' } }) : null,
       d && d.allLocked ? e('div', { key:'ring', style:{ position:'absolute', inset:'3px',
         borderRadius: weekend ? '10px' : '15px', border:'1px solid '+lockRingColor,
         pointerEvents:'none', zIndex:2 } }) : null,
@@ -3181,18 +3165,35 @@ function App() {
             background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
             fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
 
-  const collapseSection = (key, title, children) => {
+  /* Small icon badges for settings section headers — same round-badge shape
+     used on ticket cards (EQ_BADGE_MAP), so Settings reads as part of the
+     same visual family rather than a generic system screen. */
+  const paletteIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
+    e('circle', { cx:8, cy:8.5, r:4, fill:col, opacity:0.55 }),
+    e('circle', { cx:16, cy:8.5, r:4, fill:col, opacity:0.8 }),
+    e('circle', { cx:12, cy:15.5, r:4, fill:col }));
+  const ticketIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
+    e('path', { d:'M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.2a1.7 1.7 0 0 0 0 3.2v1.6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.6a1.7 1.7 0 0 0 0-3.2Z',
+      fill:col, opacity:0.9 }),
+    e('line', { x1:9, y1:6.7, x2:9, y2:17.3, stroke: DARK_MODE ? SURF : '#FFFFFF', strokeWidth:1.6, strokeDasharray:'2.4 2.4', opacity:0.7 }));
+  const personIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
+    e('circle', { cx:12, cy:8.6, r:3.6, fill:col }),
+    e('path', { d:'M4.5 19.2c1.1-3.6 4-5.4 7.5-5.4s6.4 1.8 7.5 5.4', stroke:col, strokeWidth:2.4, strokeLinecap:'round', fill:'none' }));
+
+  const collapseSection = (key, title, icon, children) => {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
-        background: SURF, borderRadius:'22px', border:'none',
+        background: SURF, borderRadius:'26px', border:'none',
         boxShadow:'0 8px 24px rgba(22,23,50,0.05)', overflow:'hidden', marginBottom:'0.65rem'
       } },
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
-        style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem',
-          background:'transparent', border:'none', padding:'0.95rem 1.05rem', cursor:'pointer', textAlign:'left' }
+        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
+          background:'transparent', border:'none', padding:'0.85rem 1.05rem', cursor:'pointer', textAlign:'left' }
       },
-        e('span', { style:{ fontSize:'0.9rem', fontWeight:900, color:INK, letterSpacing:'-0.25px' } }, title),
+        e('div', { style:{ width:'34px', height:'34px', borderRadius:'999px', background:INK, flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(18, APRICOT)),
+        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:900, color:INK, letterSpacing:'-0.25px' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.45
@@ -3209,9 +3210,9 @@ function App() {
       e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
-    collapseSection('appearance', 'Appearance', [
+    collapseSection('appearance', 'Appearance', paletteIcon, [
       e('button', { key:'themesRow', className:'d-hover', onClick:()=>setThemesOpen(true), style:{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between',
-        background:'rgba(10,10,12,0.04)', border:'none', borderRadius:'18px', padding:'0.85rem 0.95rem', cursor:'pointer', textAlign:'left', marginBottom:'0.4rem' } },
+        background:'rgba(10,10,12,0.04)', border:'none', borderRadius:'20px', padding:'0.85rem 0.95rem', cursor:'pointer', textAlign:'left', marginBottom:'0.4rem' } },
         e('div', null,
           e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Colour themes'),
           e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'1px' } }, THEME_PRESETS.length+' soft palettes')),
@@ -3234,24 +3235,7 @@ function App() {
           style:{ width:'100%', accentColor:INK, height:'28px' } })),
     ]),
 
-    collapseSection('tickets', 'Tickets & cards', [
-      e('div', { key:'preview', style:{ marginBottom:'0.85rem', pointerEvents:'none' } },
-        e('div', { style:{ fontSize:'0.68rem', fontWeight:800, color:GREY, marginBottom:'0.4rem', letterSpacing:'0.04em', textTransform:'uppercase' } }, 'Live preview'),
-        ticketDetailCard({
-          id: 'preview',
-          ticketNumber: 'JT-DEMO',
-          site: (sitesToList()[0] && sitesToList()[0].key) || '',
-          equipment: equipEdits[0] ? [equipEdits[0].key] : [],
-          startDateTime: todayISO() + 'T09:15:00',
-          finishDateTime: todayISO() + 'T11:40:00',
-          hasTravel: true, travelDateTime: todayISO() + 'T08:40:00',
-          hasTravel2: true, travel2DateTime: todayISO() + 'T12:10:00',
-          workDone: 'Example work notes shown on the card. Adjust options below to see how cards look.',
-          parts: [{ partNumber: 'PN-100', partDescription: 'Filter' }],
-          locked: !!settings.lockReadOnly,
-          extraDays: []
-        }, 0)
-      ),
+    collapseSection('tickets', 'Tickets & cards', ticketIcon, [
       e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:900, color:INK, letterSpacing:'-0.15px',
         margin:'0.15rem 0 0.35rem', padding:'0.15rem 0' } }, 'Ticket text'),
       chipSelect('Card text size', [
@@ -3277,7 +3261,7 @@ function App() {
         settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v }))
     ]),
 
-    collapseSection('equipment', 'Equipment', [
+    collapseSection('equipment', 'Equipment', GearIcon, [
       e('div', { key:'eqlist', style:{ display:'flex', flexDirection:'column', gap:'0.4rem', paddingTop:'0.15rem' } },
         equipEdits.map((x,idx) => e('div', { key:x.key, className:'d-hover', style:{ display:'flex', alignItems:'center', gap:'0.5rem',
           background:SURF2, borderRadius:'12px', padding:'0.45rem 0.55rem' } },
@@ -3290,7 +3274,7 @@ function App() {
           borderRadius:'12px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment'))
     ]),
 
-    collapseSection('account', 'Account', [
+    collapseSection('account', 'Account', personIcon, [
       e('div', { key:'acct', style:{ display:'flex', alignItems:'center', gap:'0.7rem', padding:'0.35rem 0.1rem 0.55rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Signed in'),
@@ -3317,7 +3301,7 @@ function App() {
       e('div', { style:{ fontSize:'0.65rem', fontWeight:800, color:GREY, letterSpacing:'0.08em', textTransform:'uppercase', padding:'0 0.35rem' } }, group.name),
       e('div', { className:'themes-desktop-grid', style:{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'0.55rem' } },
         group.themes.map(theme => e('button', { key:theme.name, className:'d-hover', onClick:()=>{
-            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono), brightness: 0 });
+            setThemeDraft({ name: theme.name, sites: normalizeThemeSites(theme.sites || [], theme.mono), brightness: 0, saturation: 0 });
           },
           style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.7rem 0.65rem 0.75rem', borderRadius:'22px',
             border: 'none',
@@ -3342,11 +3326,11 @@ function App() {
           boxShadow:'0 20px 50px rgba(0,0,0,0.25)', animation:'popIn .28s cubic-bezier(.34,1.56,.64,1)' }
       },
         e('div', { style:{ fontSize:'1rem', fontWeight:900, color:INK, marginBottom:'0.25rem' } }, themeDraft.name),
-        e('div', { style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.85rem' } }, 'Reorder colours for your sites, then apply.'),
+        e('div', { style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.85rem' } }, 'Reorder colours for your sites, adjust brightness and saturation, then apply.'),
         e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem', marginBottom:'1rem' } },
           themeDraft.sites.map((hex, i) => e('div', { key:i, style:{ display:'flex', alignItems:'center', gap:'0.55rem',
             background:'rgba(10,10,12,0.04)', borderRadius:'14px', padding:'0.45rem 0.55rem' } },
-            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:shade(hex, (themeDraft.brightness||0)/100), flexShrink:0,
+            e('span', { style:{ width:'28px', height:'28px', borderRadius:'999px', background:adjustHexHsl(hex, themeDraft.brightness||0, themeDraft.saturation||0), flexShrink:0,
               boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.08)' } }),
             e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:800, color:INK } },
               (sitesToList()[i] && sitesToList()[i].label) || ('Colour '+(i+1))),
@@ -3368,7 +3352,7 @@ function App() {
             }, style:{ border:'none', background:'transparent', opacity:i===themeDraft.sites.length-1?0.25:1, cursor:'pointer', padding:'4px' } }, '↓')
           ))
         ),
-        e('div', { style:{ marginBottom:'1.1rem' } },
+        e('div', { style:{ marginBottom:'0.75rem' } },
           e('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.4rem' } },
             e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, 'Brightness'),
             e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:GREY } },
@@ -3377,12 +3361,21 @@ function App() {
             onChange:(ev)=>{ const v = Number(ev.target.value); setThemeDraft(prev => ({ ...prev, brightness:v })); },
             style:{ width:'100%', accentColor:INK, height:'28px' } })
         ),
+        e('div', { style:{ marginBottom:'1.1rem' } },
+          e('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.4rem' } },
+            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, 'Saturation'),
+            e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:GREY } },
+              (themeDraft.saturation||0) > 0 ? '+'+themeDraft.saturation : String(themeDraft.saturation||0))),
+          e('input', { type:'range', min:-50, max:50, value:themeDraft.saturation||0,
+            onChange:(ev)=>{ const v = Number(ev.target.value); setThemeDraft(prev => ({ ...prev, saturation:v })); },
+            style:{ width:'100%', accentColor:INK, height:'28px' } })
+        ),
         e('div', { style:{ display:'flex', gap:'0.5rem' } },
           e('button', { type:'button', onClick:()=>setThemeDraft(null),
             style:{ flex:1, border:'none', background:'rgba(10,10,12,0.06)', color:INK, borderRadius:'14px',
               padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' } }, 'Cancel'),
           e('button', { type:'button', onClick:()=>{
-              const finalSites = themeDraft.sites.map(hex => shade(hex, (themeDraft.brightness||0)/100));
+              const finalSites = themeDraft.sites.map(hex => adjustHexHsl(hex, themeDraft.brightness||0, themeDraft.saturation||0));
               applyTheme({ name: themeDraft.name, sites: finalSites });
               setThemeDraft(null); setThemesOpen(false);
             },
