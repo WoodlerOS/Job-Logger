@@ -2115,9 +2115,6 @@ function App() {
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
       const ex = exOf(j);
-      /* When showing a specific visit (dayIndex > 1), use that day's own times
-         and notes instead of the ticket's primary day — this is what makes a
-         later visit's card actually reflect that day's work. */
       const seg = (dayIndex && dayIndex > 1 && ex[dayIndex-2]) ? ex[dayIndex-2] : null;
       const segStart = seg ? seg.startDateTime : j.startDateTime;
       const segFinish = seg ? seg.finishDateTime : j.finishDateTime;
@@ -2125,112 +2122,99 @@ function App() {
       const segTravel = seg ? seg.travelDateTime : j.travelDateTime;
       const segHasTravel2 = seg ? seg.hasTravel2 : j.hasTravel2;
       const segTravel2 = seg ? seg.travel2DateTime : j.travel2DateTime;
-      const segWorkRaw = seg ? (seg.notes == null ? '' : String(seg.notes)) : (j.workDone == null ? '' : String(j.workDone));
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
       const on = mins(segStart, segFinish);
       const onC = s ? '#FFFFFF' : INK;
-      const subC = s ? 'rgba(255,255,255,0.82)' : MID;
-      const bodyC = s ? 'rgba(255,255,255,0.95)' : INK;
-      const chipBg = s ? 'rgba(255,255,255,0.32)' : 'rgba(65,67,106,0.12)';
-      const workText = segWorkRaw.replace(/\s*\n+\s*/g, ' ').trim();
+      const faintC = s ? 'rgba(255,255,255,0.62)' : GREY;
+      const lineC = s ? 'rgba(255,255,255,0.4)' : LINE;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
-      /* Strong typography scale from settings */
+
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const titleSize = (0.98 * tScale).toFixed(3) + 'rem';
-      const bodySize = (0.82 * tScale).toFixed(3) + 'rem';
-      const timeSize = (0.80 * tScale).toFixed(3) + 'rem';
-      const pillSize = (0.64 * tScale).toFixed(3) + 'rem';
-      const titleWeight = 900;
+      const numberSize = (0.86 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.16 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.72 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.62 * tScale).toFixed(3) + 'rem';
 
-      /* Travel times without the word "Travel":  08:40 → 09:15–11:40 → 12:10 */
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
-      const tCore = fmtTime(segStart) + '–' + fmtTime(segFinish);
+      const tStart = fmtTime(segStart);
+      const tFinish = fmtTime(segFinish);
       const t2 = segHasTravel2 ? fmtTime(segTravel2) : '';
-      const timeParts = [];
-      if (t1) { timeParts.push(t1); timeParts.push('→'); }
-      timeParts.push(tCore);
-      if (t2) { timeParts.push('→'); timeParts.push(t2); }
       const durationLabel = (settings.showDurationOnCards !== false && on) ? hm(on) : '';
 
-      /* Complete = very thin white line just inside the card edge */
-      const cardBorder = s ? 'none' : ('1px solid ' + LINE);
-      const cardShadow = s ? 'none' : SHADOW_SM;
-      const ringColor = s ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
-      const pillBase = {
-        background: chipBg, color: onC, padding: '0.22rem 0.62rem', borderRadius: '999px',
-        fontSize: pillSize, fontWeight: 900, flexShrink: 0, lineHeight: '1.15',
-        whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        boxSizing: 'border-box', height: (22 * tScale).toFixed(1) + 'px', maxWidth: 'none', overflow: 'visible'
-      };
+      const StackIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block' } },
+        e('rect', { x:5, y:8, width:14, height:11, rx:2.5, fill:'none', stroke:col, strokeWidth:1.8 }),
+        e('path', { d:'M8 8 V6.5 A2.5 2.5 0 0 1 10.5 4 H13.5 A2.5 2.5 0 0 1 16 6.5 V8', fill:'none', stroke:col, strokeWidth:1.8, strokeLinecap:'round' }));
 
-      const leftHead = [];
-      if (i != null) leftHead.push(e('span', { key:'num', style: Object.assign({}, pillBase, {
-        width: '22px', minWidth: '22px', padding: '0', height: '22px'
-      }) }, String(i+1)));
-      const titleShow = title.length > 18 ? title.slice(0, 18) : title;
-      leftHead.push(e('span', { key:'tn', title: title, style:{ fontWeight:titleWeight, fontSize:titleSize, letterSpacing:'-0.2px', color:onC, maxWidth:'16ch', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'inline-block', lineHeight:1.2 } }, titleShow));
-      /* "+N day" only makes sense when we're showing the primary card — once
-         we're already rendering one specific extra day, it would be confusing. */
-      if (!seg && ex.length > 0) leftHead.push(e('span', { key:'ex', style: Object.assign({}, pillBase) }, '+'+ex.length+' day'));
+      const dayMarker = (!seg && ex.length > 0)
+        ? e('div', { key:'multi', title:(ex.length+1)+' visits', style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
+            StackIcon(14, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC } }, String(ex.length+1)))
+        : seg
+          ? e('div', { key:'dayn', title:'Day '+dayIndex, style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
+              StackIcon(14, faintC),
+              e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC } }, String(dayIndex)))
+          : null;
 
-      const rightPills = [];
-      if (s) rightPills.push(e('span', { key:'site', style: Object.assign({}, pillBase, { color: '#FFF' }) }, s.label || j.site));
-      eq.forEach((x, xi) => rightPills.push(e('span', { key:'eq'+xi, style: Object.assign({}, pillBase) }, String(x))));
+      const eqLabel = eq.length ? eq.join(' · ') : '';
+
+      const smallTravelStyle = { fontSize:smallTimeSize, fontWeight:700, color:faintC, whiteSpace:'nowrap' };
+      const bigTimeStyle = { fontSize:bigTimeSize, fontWeight:800, color:onC, whiteSpace:'nowrap', letterSpacing:'-0.3px' };
+      const arrowStyle = { fontSize:smallTimeSize, fontWeight:700, color:faintC, flexShrink:0 };
+
+      const timeRow = e('div', { key:'time', style:{ display:'flex', alignItems:'baseline', gap:'0.4rem',
+          marginTop:'0.65rem', overflow:'hidden' } },
+        t1 ? e('span', { key:'t1', style:smallTravelStyle }, t1) : null,
+        t1 ? e('span', { key:'a1', style:arrowStyle }, '→') : null,
+        e('span', { key:'ts', style:bigTimeStyle }, tStart),
+        e('span', { key:'dash', style:{ fontSize:smallTimeSize, color:faintC, fontWeight:700 } }, '–'),
+        e('span', { key:'tf', style:bigTimeStyle }, tFinish),
+        t2 ? e('span', { key:'a2', style:arrowStyle }, '→') : null,
+        t2 ? e('span', { key:'t2', style:smallTravelStyle }, t2) : null,
+        durationLabel ? e('span', { key:'dur', style:{ ...smallTravelStyle, marginLeft:'auto', flexShrink:0 } }, durationLabel) : null
+      );
+
+      const routeLine = e('div', { key:'route', style:{ height:'1.5px', borderRadius:'999px',
+        background:lineC, marginTop:'0.55rem', opacity:0.8 } });
 
       const children = [
-        e('div', { key:'head', style:{ display:'flex', alignItems:'center', gap:'0.45rem', marginBottom:'0.35rem', paddingRight: '2px' } },
-          e('div', { key:'left', style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem', flexWrap:'nowrap', overflow:'hidden' } }, leftHead),
-          rightPills.length > 0 && e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', flexShrink:0, marginLeft:'6px', marginRight: '2px' } }, rightPills)
+        e('div', { key:'head', style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:700, color:onC, letterSpacing:'-0.1px',
+            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, title),
+          e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.5rem', flexShrink:0 } },
+            eqLabel ? e('span', { key:'eq', style:{ fontSize:capSize, fontWeight:700, color:faintC, letterSpacing:'0.2px' } }, eqLabel) : null,
+            dayMarker
+          )
         ),
-        e('div', { key:'time', style:{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:timeSize, color:subC, fontWeight:700, textShadow:'none' } },
-          e('span', { key:'tl', style:{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, timeParts.length ? timeParts.join(' ') : '—'),
-          durationLabel ? e('span', { key:'dur', style:{ flexShrink:0, fontWeight:800, marginLeft:'auto' } }, durationLabel) : null)
+        timeRow,
+        routeLine
       ];
-      if (!seg && ex.length > 0) {
-        children.push(e('div', { key:'also', style:{ fontSize:'0.72rem', color:subC, fontWeight:700, marginTop:'0.25rem', textShadow:'none' } },
-          'Also: ' + ex.map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ')));
+
+      if (parts.length > 0) {
+        children.push(e('div', { key:'parts', style:{ marginTop:'0.5rem', fontSize:capSize, fontWeight:700, color:faintC } },
+          parts.length + (parts.length===1?' part':' parts')));
       }
-      if (workText) {
-        children.push(e('div', { key:'work', style:{
-          fontSize:bodySize, color:bodyC, margin:'0.45rem 0 0', paddingLeft:'0.45rem', lineHeight:1.4,
-          whiteSpace:'normal', textShadow:'none',
-          display:'-webkit-box', WebkitLineClamp:5, WebkitBoxOrient:'vertical', overflow:'hidden'
-        } }, workText));
-      }
-      /* Bottom row: parts count bottom-left, "Day N" indicator bottom-right —
-         a subtle marker that this card is another visit on the same ticket,
-         not a separate job, without any change to which ticket tapping opens. */
-      const partsBadge = parts.length > 0
-        ? e('span', { key:'partsbadge', style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800 } },
-            parts.length + (parts.length === 1 ? ' part' : ' parts'))
-        : null;
-      const dayBadge = seg
-        ? e('span', { key:'daybadge', style:{ background:chipBg, color:onC, padding:'0.22rem 0.6rem', borderRadius:'999px', fontSize:'0.68rem', fontWeight:800, marginLeft:'auto' } },
-            'Day ' + dayIndex)
-        : null;
-      if (partsBadge || dayBadge) {
-        children.push(e('div', { key:'bottomrow', style:{ marginTop:'0.75rem', display:'flex',
-          justifyContent: dayBadge ? 'flex-start' : 'flex-end', alignItems:'center', gap:'0.4rem' } },
-          partsBadge, dayBadge));
-      }
+
+      const cardBorder = s ? 'none' : ('1px solid ' + LINE);
+      const ringColor = s ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,12,0.28)';
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         style:{ background: s ? s.hex : SURF,
-          overflow:'visible',
-          position:'relative',
+          overflow:'visible', position:'relative',
           border: cardBorder,
-          boxShadow: cardShadow,
-          borderRadius:'18px', padding: '0.9rem 0.95rem', cursor:'pointer',
+          boxShadow: s ? '0 1px 0 rgba(255,255,255,0.18) inset, 0 5px 14px rgba(22,23,50,0.13)' : SHADOW_SM,
+          borderRadius:'18px', padding:'0.85rem 0.95rem 0.9rem', cursor:'pointer',
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
+        e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'18px', pointerEvents:'none',
+          backgroundImage:'linear-gradient(128deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.08) 26%, rgba(255,255,255,0) 48%, rgba(0,0,0,0.05) 100%)',
+          mixBlendMode:'overlay', opacity:0.85 } }),
         j.locked ? e('div', { key:'ring', style:{
           position:'absolute', inset:'3px', borderRadius:'15px', pointerEvents:'none',
-          border: '1px solid '+ringColor, boxShadow: 'none', zIndex: 2
-        }}) : null,
-        e('div', { key:'body', style:{ position:'relative', overflow:'visible', borderRadius:'14px', zIndex: 1 } }, children)
+          border:'1px solid '+ringColor, zIndex:2 } }) : null,
+        e('div', { key:'body', style:{ position:'relative', overflow:'visible', borderRadius:'14px', zIndex:1 } }, children)
       );
     } catch (err) {
       return e('div', {
