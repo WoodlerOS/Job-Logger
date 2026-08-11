@@ -750,6 +750,22 @@ const SearchIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0
 const CopyIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
   e('rect', { x:8, y:8, width:11, height:11, rx:2, fill:'none', stroke:col, strokeWidth:1.9 }),
   e('path', { d:'M6 15.5 V6.5 A1.5 1.5 0 0 1 7.5 5 H15.5', fill:'none', stroke:col, strokeWidth:1.9, strokeLinecap:'round' }));
+const GearIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('circle', { cx:12, cy:12, r:3.3, fill:'none', stroke:col, strokeWidth:1.7 }),
+  e('path', { d:'M19.4 13.5c.1-.5.1-1 0-1.5l1.6-1.2-1.5-2.6-1.9.6a6.6 6.6 0 0 0-1.3-.75L15.9 6h-3l-.4 2.05c-.47.18-.9.43-1.3.75l-1.9-.6-1.5 2.6 1.6 1.2c-.1.5-.1 1 0 1.5l-1.6 1.2 1.5 2.6 1.9-.6c.4.32.83.57 1.3.75L11.9 20h3l.4-2.05c.47-.18.9-.43 1.3-.75l1.9.6 1.5-2.6-1.6-1.2Z',
+    fill:'none', stroke:col, strokeWidth:1.3, strokeLinejoin:'round' }));
+const ChainIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
+  e('rect', { x:3.2, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:1.7, transform:'rotate(-32 7.7 12)' }),
+  e('rect', { x:11.8, y:8.5, width:9, height:7, rx:3.5, fill:'none', stroke:col, strokeWidth:1.7, transform:'rotate(-32 16.3 12)' }));
+
+/* Fine grain layered under the satin sheen so coloured cards read as a
+   textured material rather than a flat gradient. Tiny SVG noise, tiled. */
+const NOISE_TEXTURE_URL = "data:image/svg+xml;utf8," + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>" +
+  "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter>" +
+  "<rect width='100%' height='100%' filter='url(#n)'/></svg>"
+);
 
 const NEUTRAL_TILE = '#4A4E5A';
 const iconTile = (svgChildren, bg) => e('div', { style:{ width:'40px', height:'40px', borderRadius:'12px', flexShrink:0,
@@ -2162,19 +2178,8 @@ function App() {
       const t2 = segHasTravel2 ? fmtTime(segTravel2) : '';
       const durationLabel = (settings.showDurationOnCards !== false && on) ? hm(on) : '';
 
-      const StackIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block' } },
-        e('rect', { x:5, y:8, width:14, height:11, rx:2.5, fill:'none', stroke:col, strokeWidth:1.8 }),
-        e('path', { d:'M8 8 V6.5 A2.5 2.5 0 0 1 10.5 4 H13.5 A2.5 2.5 0 0 1 16 6.5 V8', fill:'none', stroke:col, strokeWidth:1.8, strokeLinecap:'round' }));
-
-      const dayMarker = (!seg && ex.length > 0)
-        ? e('div', { key:'multi', title:(ex.length+1)+' visits', style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
-            StackIcon(12, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(ex.length+1)))
-        : seg
-          ? e('div', { key:'dayn', title:'Day '+dayIndex, style:{ display:'flex', alignItems:'center', gap:'3px', flexShrink:0 } },
-              StackIcon(12, faintC),
-              e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(dayIndex)))
-          : null;
+      const isMulti = (!seg && ex.length > 0);
+      const multiCount = isMulti ? (ex.length + 1) : (seg ? dayIndex : 0);
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('div', { key:'badge', style:{
@@ -2190,10 +2195,7 @@ function App() {
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          e('div', { key:'right', style:{ display:'flex', alignItems:'center', gap:'0.5rem', paddingTop:'4px' } },
-            dayMarker,
-            e('span', { style:{ fontSize:numberSize, fontWeight:400, color:faintC, whiteSpace:'nowrap' } }, title)
-          )
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:400, color:faintC, whiteSpace:'nowrap', paddingTop:'4px' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
@@ -2218,19 +2220,33 @@ function App() {
           minHeight:'56px',
           transition:'box-shadow .25s ease, border-color .25s ease, transform .15s ease' }
       },
+        /* Satin finish: a diagonal sheen gradient layered over a fine tiled
+           noise texture, both blended with 'overlay' so the card reads as a
+           textured material rather than a flat colour fill. */
         e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'26px', pointerEvents:'none',
-          backgroundImage:'linear-gradient(130deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0) 46%, rgba(0,0,0,0.06) 100%)',
+          backgroundImage:'url('+NOISE_TEXTURE_URL+'), linear-gradient(130deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0) 46%, rgba(0,0,0,0.06) 100%)',
+          backgroundRepeat:'repeat, no-repeat', backgroundSize:'140px 140px, 100% 100%',
+          backgroundBlendMode:'overlay',
           mixBlendMode:'overlay', opacity:0.9 } }),
         j.locked ? e('div', { key:'ring', style:{
           position:'absolute', inset:'3px', borderRadius:'23px', pointerEvents:'none',
           border:'1px solid '+ringColor, zIndex:2 } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
-        /* Parts info sits in the bottom strip of the card, which is what peeks
-           out from behind it once the next card overlaps on top. */
-        e('div', { key:'parts', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.7rem',
-          fontSize:capSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
-          visibility: partsCount ? 'visible' : 'hidden' } },
-          partsCount + (partsCount===1?' part':' parts'))
+        /* Bottom strip: this is what peeks out from behind the card once the
+           next one overlaps on top of it. Parts (gear) on the left, the
+           multi-visit indicator (chain link) on the right. */
+        e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.7rem',
+          display:'flex', alignItems:'center', justifyContent:'space-between' } },
+          e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'4px',
+            visibility: partsCount ? 'visible' : 'hidden' } },
+            GearIcon(12, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC, letterSpacing:'0.1px' } },
+              partsCount + (partsCount===1?' part':' parts'))),
+          e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
+            style:{ display:'flex', alignItems:'center', gap:'4px', visibility: multiCount ? 'visible' : 'hidden' } },
+            ChainIcon(12, faintC),
+            e('span', { style:{ fontSize:capSize, fontWeight:400, color:faintC } }, String(multiCount)))
+        )
       );
     } catch (err) {
       return e('div', {
@@ -2332,7 +2348,7 @@ function App() {
           background: (SITES[s] && SITES[s].hex) || '#888', border:'1px solid rgba(255,255,255,0.8)' } }))) : null);
   };
 
-  const monthGrid = e('div', { style:{ ...PANEL(), padding:'1rem 0.85rem 1.15rem' } },
+  const monthGrid = e('div', { style:{ padding:'0.2rem 0.6rem 1.15rem' } },
     showWeekends ? [
       e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px', marginBottom:'12px' } },
         DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
@@ -2403,7 +2419,7 @@ function App() {
                 list.length + (list.length===1?' ticket':' tickets')) ]));
   };
 
-  const weekGrid = e('div', { style:{ ...PANEL(), padding:'0.9rem 0.85rem 1rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
+  const weekGrid = e('div', { style:{ padding:'0.2rem 0.6rem 1rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
     (showWeekends ? wk.dates : wk.dates.slice(0,5)).map((dt,i) => weekRow(dt,i)));
 
   const weekLabel = () => {
@@ -2430,14 +2446,14 @@ function App() {
       ? mobileDayBucket.siteSequence
       : dv.siteSequence;
 
-  const dayView = e('div', { style:{ ...PANEL(), padding:'1.1rem 1rem 1.2rem', display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700 } },
+  const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
+    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700, padding:'0 0.6rem' } },
       mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
     mobileDayList.length === 0
-      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0' } }, 'Nothing logged on this day')
+      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0.6rem' } }, 'Nothing logged on this day')
       : e('div', { style:{ display:'flex', flexDirection:'column' } },
           mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))),
-    mobileDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem' } },
+    mobileDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'14px', padding:'0.65rem 0.85rem', marginTop:'0.15rem', marginLeft:'0.6rem', marginRight:'0.6rem' } },
       siteSeqRow(mobileDaySeq)));
 
   const periodLabel = () => {
@@ -2655,9 +2671,9 @@ function App() {
       )
     );
 
-  const monthView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+  const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem' } },
+    e('div', { className:'ambient-wrap', style:{ display:'flex', flexDirection:'column', gap:'0.25rem', padding:'0 0.6rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem' } },
         e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
           display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
