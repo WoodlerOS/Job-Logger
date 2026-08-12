@@ -364,6 +364,10 @@
       min-height: 360px !important;
       height: 100%;
     }
+    .field-graphite::placeholder {
+      color: #4A4947;
+      opacity: 0.6;
+    }
     .form-card {
       background: var(--card-bg, #fff) !important;
       box-shadow: 0 4px 18px rgba(22,23,50,0.12), 0 1px 4px rgba(22,23,50,0.06) !important;
@@ -655,16 +659,13 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 /* Fixed text colour per the colour chart: Graphite (#4A4947) uses Desert
-   Clay for its text; Desert Clay and Celeste both use Graphite for theirs,
+   Clay for its text; every other site colour uses Graphite for theirs,
    pulling text colour from elsewhere in the same fixed palette rather than
-   a generic neutral; Beige is the one exception, keeping plain dark grey.
-   Shared by ticket cards, the form sections, and the calendar's coloured
-   day cells. */
+   a generic neutral. Shared by ticket cards, the form sections, and the
+   calendar's coloured day cells. */
 const siteOnColor = (hex) => {
   const h = hex && hex.toUpperCase();
-  if (h === '#4A4947') return '#B17457';
-  if (h === '#B17457' || h === '#A3B5B1') return '#4A4947';
-  return '#141414';
+  return h === '#4A4947' ? '#B17457' : '#4A4947';
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -2376,16 +2377,14 @@ function App() {
         setMonthPickerOpen(false);
         if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) setCalMode('day');
       },
-      style:{ minHeight: weekend ? '60px' : '92px', borderRadius: weekend ? '13px' : '18px',
+      style:{ minHeight: weekend ? '60px' : '92px', borderRadius: weekend ? '6px' : '6px',
         background:bg, border:border, padding: weekend ? '6px 4px' : '10px 6px 8px',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent: has ? 'flex-start' : 'center',
         gap:'4px', cursor:'pointer', overflow:'hidden', position:'relative',
         transition:'box-shadow .25s ease, border-color .25s ease, transform .12s ease',
         boxShadow:boxShadow, opacity: selected ? 1 : (has ? 1 : undefined) } },
-      has ? e('div', { key:'satin', style:{ position:'absolute', inset:0, borderRadius:'inherit', pointerEvents:'none',
-        background:'linear-gradient(125deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,0.09) 100%)' } }) : null,
       d && d.allLocked ? e('div', { key:'ring', style:{ position:'absolute', inset:'3px',
-        borderRadius: weekend ? '10px' : '15px', border:'1px solid '+lockRingColor,
+        borderRadius: '4px', border:'1px solid '+lockRingColor,
         pointerEvents:'none', zIndex:2 } }) : null,
       e('span', { style:{ fontSize: weekend ? '0.76rem' : '1rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.25px', textShadow:'none', position:'relative' } }, String(dnum)),
@@ -2402,12 +2401,12 @@ function App() {
           background: (SITES[s] && SITES[s].hex) || '#888', border:'1px solid rgba(255,255,255,0.8)' } }))) : null);
   };
 
-  const monthGrid = e('div', { style:{ padding:'0.2rem 0.6rem 1.15rem' } },
+  const monthGrid = e('div', { style:{ padding:'0.2rem 0.4rem 1.15rem' } },
     showWeekends ? [
-      e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px', marginBottom:'12px' } },
+      e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px', marginBottom:'8px' } },
         DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
           fontWeight:650, color: i<5 ? MID : GREY, letterSpacing:'0.5px' } }, i<5 ? d.toUpperCase() : d[0]))),
-      e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px' } },
+      e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'5px' } },
         [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
         [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1)))
     ] : (() => {
@@ -2415,10 +2414,10 @@ function App() {
         .filter(dnum => ((new Date(ms.y, ms.m, dnum).getDay()+6)%7) < 5);
       const blanks = weekdayNums.length ? ((new Date(ms.y, ms.m, weekdayNums[0]).getDay()+6)%7) : 0;
       return [
-        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'12px' } },
+        e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'5px', marginBottom:'8px' } },
           DOWF.slice(0,5).map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.6rem',
             fontWeight:650, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
-        e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px' } },
+        e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'5px' } },
           [...Array(blanks)].map((_,i) => e('div', { key:'b'+i })),
           weekdayNums.map(dnum => dayCell(dnum)))
       ];
@@ -2670,13 +2669,13 @@ function App() {
           } })
         ),
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
-          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, INK)),
+          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, '#4A4947')),
           e('div', { style:{ textAlign:'center' } },
-            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:INK } },
+            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:'#4A4947' } },
               anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-            e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:550 } }, String(anchorDate.getFullYear()))
+            e('div', { style:{ fontSize:'0.75rem', color:'#4A4947', opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
           ),
-          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))
+          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))
         ),
         /* Horizontal swipe changes month; vertical still goes to parent dismiss */
         e('div', {
@@ -2752,7 +2751,7 @@ function App() {
       background:PAGE_BG, padding:'0.4rem 0.6rem 0.5rem' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
+        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, '#4A4947')),
       e('button', {
         onClick:()=>{
           if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
@@ -2781,12 +2780,12 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.3px', color:INK } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.3px', color:'#4A4947' } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#4A4947', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
+        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, '#4A4947'))));
 
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
@@ -2857,7 +2856,7 @@ function App() {
         position:'relative'
       } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.78rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
       children
@@ -2867,7 +2866,7 @@ function App() {
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
         background: 'rgba(255,255,255,0.10)', borderRadius:'4px', padding:'0.45rem 0.65rem' } },
       PlaneIcon(13, '#B17457'),
-      e('span', { style:{ flex:1, fontSize:'0.7rem', color:'#F0E7D6', fontWeight:600 } }, label),
+      e('span', { style:{ flex:1, fontSize:'0.78rem', color:'#F0E7D6', fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
@@ -2884,12 +2883,12 @@ function App() {
         border:'none', background:'transparent', borderRadius:'4px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
       PlusIcon(10, '#B17457'),
-      e('span', { style:{ fontSize:'0.66rem', color:'#B17457', fontWeight:550 } }, label));
+      e('span', { style:{ fontSize:'0.74rem', color:'#B17457', fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
         background: 'rgba(255,255,255,0.08)', borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem' } },
-      e('span', { style:{ fontSize:'0.62rem', color:'#B17457', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
+      e('span', { style:{ fontSize:'0.7rem', color:'#B17457', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
@@ -2897,7 +2896,7 @@ function App() {
           fontSize:'1.35rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
 
   const durationCaption = (text) =>
-    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:'#B17457', padding:'2px 0' } }, text);
+    e('div', { style:{ textAlign:'center', fontSize:'0.7rem', fontWeight:600, color:'#B17457', padding:'2px 0' } }, text);
 
   const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
@@ -2914,8 +2913,8 @@ function App() {
     rows.push(e('div', { key:prefix+'sf', style:{ display:'flex', alignItems:'stretch', gap:'0.45rem' } },
       bigTimeBlock(d.start, 'start', 'Start', update),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 0.1rem', minWidth:'36px' } },
-        e('span', { style:{ fontSize:'0.7rem', color:'#B17457', fontWeight:650 } }, '→'),
-        onm ? e('span', { style:{ fontSize:'0.58rem', color:'#F0E7D6', fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
+        e('span', { style:{ fontSize:'0.78rem', color:'#B17457', fontWeight:650 } }, '→'),
+        onm ? e('span', { style:{ fontSize:'0.66rem', color:'#F0E7D6', fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
       ),
       bigTimeBlock(d.finish, 'finish', 'Finish', update)
     ));
@@ -2937,13 +2936,13 @@ function App() {
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:'#B17457', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
+          e('span', { style:{ fontSize:'0.8rem', fontWeight:600, color:'#B17457', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
             style:{ border:'none', background:'rgba(255,255,255,0.10)', borderRadius:'4px', outline:'none',
-              fontSize:'0.74rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
-          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#B17457', padding:0 } }, 'Remove') : null)),
+              fontSize:'0.82rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
+          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.74rem', color:'#B17457', padding:0 } }, 'Remove') : null)),
       e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
 
@@ -2997,7 +2996,7 @@ function App() {
 
         sectionShell('Ticket',
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
-            e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
+            e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.9rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:'#141414', letterSpacing:'-0.3px' } }),
@@ -3029,7 +3028,7 @@ function App() {
         sectionShell('Notes',
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
-            className: 'work-done-field',
+            className: 'work-done-field field-graphite',
             style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.8rem 0.95rem',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
               outline:'none', color:'#141414' } }),
@@ -3040,7 +3039,7 @@ function App() {
           dayPanel(d, (patch)=>updateExtra(i, patch), 'e'+i, 'Day ' + (i+2),
             ()=>setForm({ ...form, extra: form.extra.filter((_,x)=>x!==i) }), SITES[form.site]),
           sectionShell('Notes — Day ' + (i+2),
-            e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…',
+            e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…', className:'field-graphite',
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
               style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.85rem',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
@@ -3052,7 +3051,7 @@ function App() {
 
         e('button', { onClick:addExtraDay,
           style:{ alignSelf:'center', border:'none', background:SURF2, color:MID,
-            borderRadius:'4px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } },
+            borderRadius:'4px', padding:'0.45rem 0.9rem', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' } },
           '+ Another day')
       ),
 
@@ -3063,11 +3062,11 @@ function App() {
             e('datalist', { id:'partList' }, partHistory.map(([n,d]) => e('option', { key:n, value:n }, d))),
             form.parts.length > 0 && e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.3rem' } },
               form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
-                e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
+                e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
                   style:{ flex:'0 0 34%', minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:'#141414' } }),
-                e('input', { type:'text', value:p.partDescription, placeholder:'Description',
+                e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
                   style:{ flex:1, minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:'#141414' } }),
@@ -3075,7 +3074,7 @@ function App() {
                   style:{ border:'none', background:'none', color:'#141414', opacity:0.55, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
               style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:'#141414', opacity:0.75,
-                borderRadius:'4px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
+                borderRadius:'4px', padding:'0.25rem 0.15rem', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
           ),
           CopyBtn(
             (form.parts||[]).map(p => (p.partNumber||'').trim()).filter(Boolean).join('\n'),
@@ -3427,12 +3426,12 @@ function App() {
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
-        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, INK)),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, '#4A4947')),
         e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:INK } },
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:'#4A4947' } },
             anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:GREY, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
-        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:'#4A4947', opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))),
       monthGrid
     ),
     e('div', { className: 'desktop-panel', key: 'day-'+ms.y+'-'+ms.m+'-'+desktopDayNum },
