@@ -11,6 +11,9 @@
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
 <link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
 <link rel="icon" type="image/png" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -26,7 +29,8 @@
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
     background:var(--page-bg, #D1C8B5);
     background-attachment:fixed;
-    font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
+    font-family:"Jost", -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing:-0.01em;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
@@ -213,7 +217,7 @@
       display:flex; position:fixed; inset:0; z-index:9999;
       background:#D1C8B5; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
-      font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
+      font-family:"Jost", -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #root { display:none; }
   }
@@ -616,9 +620,9 @@ const sheen = 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%)';
 const GLASS_BLUR = 'none';
 const glassPanel = (alpha) => ({ background:SURF, border:'1px solid '+LINE });
 
-const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:800, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
+const LBL   = { display:'block', fontSize:'0.6rem', fontWeight:600, color:GREY, textTransform:'uppercase', letterSpacing:'0.7px' };
 const FIELD = () => ({ width:'100%', minWidth:0, padding:'0.72rem 0.85rem', border:'1.5px solid '+LINE, borderRadius:'14px', outline:'none', fontSize:'0.95rem', background:FIELDBG, color:INK });
-const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:700, padding:'6px 2px', cursor:'pointer', color:GREY };
+const TXTBTN = { background:'none', border:'none', fontSize:'0.85rem', fontWeight:550, padding:'6px 2px', cursor:'pointer', color:GREY };
 const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHADOW, borderRadius:'24px' });
 
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
@@ -988,7 +992,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
           background: locked ? GREY : INK, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
           boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
         TickIcon(true, 18, APRICOT),
-        e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
+        e('span', { style:{ fontSize:'0.62rem', fontWeight:600, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
       e('button', { key:'del', type:'button',
         onClick:fireDelete,
         onTouchEnd:fireDelete,
@@ -998,7 +1002,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
           background:RED, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
           boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
         TrashIcon(17, '#FFF'),
-        e('span', { style:{ fontSize:'0.62rem', fontWeight:800, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
+        e('span', { style:{ fontSize:'0.62rem', fontWeight:600, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
     e('div', {
       onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd,
       onMouseDown:onMouseDown, onClick:handleTap,
@@ -1018,7 +1022,7 @@ function SignInScreen({ onSignIn, busy, error }) {
       e('div', { style:{ textAlign:'center', marginBottom:'0.5rem' } },
         e('img', { src:'icon-180.png', alt:'Tickets', width:64, height:64,
           style:{ width:'64px', height:'64px', borderRadius:'16px', margin:'0 auto 0.75rem', display:'block', boxShadow:SHADOW_SM } }),
-        e('div', { style:{ fontSize:'1.15rem', fontWeight:900, color:INK } }, 'Tickets'),
+        e('div', { style:{ fontSize:'1.15rem', fontWeight:650, color:INK } }, 'Tickets'),
         e('div', { style:{ fontSize:'0.78rem', color:GREY, marginTop:'2px' } }, 'Sign in to sync your tickets')),
       e('div', null,
         e('label', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Email'),
@@ -1028,9 +1032,9 @@ function SignInScreen({ onSignIn, busy, error }) {
         e('label', { style:{ ...LBL, marginBottom:'0.4rem' } }, 'Password'),
         e('input', { type:'password', value:password, autoComplete:'current-password',
           onChange:(ev)=>setPassword(ev.target.value), style:{ ...FIELD() } })),
-      error && e('div', { style:{ fontSize:'0.75rem', color:RED, fontWeight:700, textAlign:'center' } }, error),
+      error && e('div', { style:{ fontSize:'0.75rem', color:RED, fontWeight:550, textAlign:'center' } }, error),
       e('button', { type:'submit', disabled:busy, style:{ padding:'0.85rem', borderRadius:'14px', border:'none',
-        background:VIOLET, color:'#FFFFFF', fontWeight:800, fontSize:'0.92rem', cursor: busy?'default':'pointer', opacity: busy?0.6:1 } },
+        background:VIOLET, color:'#FFFFFF', fontWeight:600, fontSize:'0.92rem', cursor: busy?'default':'pointer', opacity: busy?0.6:1 } },
         busy ? 'Signing in…' : 'Sign in')));
 }
 
@@ -1911,7 +1915,7 @@ function App() {
   const menuRow = (label, sub, onClick, colour) =>
     e('button', { key:label, onClick, style:{ width:'100%', textAlign:'left', padding:'0.85rem 1rem', borderRadius:'16px', border:'none',
       background:SURF2, cursor:'pointer', display:'flex', flexDirection:'column', gap:'0.12rem' } },
-      e('span', { style:{ fontSize:'0.93rem', fontWeight:700, color: colour || INK } }, label),
+      e('span', { style:{ fontSize:'0.93rem', fontWeight:550, color: colour || INK } }, label),
       e('span', { style:{ fontSize:'0.7rem', color:GREY } }, sub));
 
   const iconRow = (icon, label, sub, onClick) =>
@@ -1919,7 +1923,7 @@ function App() {
       background:SURF2, cursor:'pointer', display:'flex', alignItems:'center', gap:'0.75rem' } },
       icon,
       e('div', { style:{ flex:1, minWidth:0 } },
-        e('div', { style:{ fontSize:'0.87rem', fontWeight:800, color:INK } }, label),
+        e('div', { style:{ fontSize:'0.87rem', fontWeight:600, color:INK } }, label),
         e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, sub)));
 
   const menuResultRow = (j) => e('button', { key:j.id,
@@ -1929,13 +1933,13 @@ function App() {
     e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', flexShrink:0,
       background: SITES[j.site] ? siteGrad(j.site) : GREY } }),
     e('div', { style:{ flex:1, minWidth:0 } },
-      e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, j.ticketNumber),
+      e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, j.ticketNumber),
       e('div', { style:{ fontSize:'0.67rem', color:GREY, marginTop:'1px' } },
         fmtDate(j.startDateTime) + (SITES[j.site] ? '  ·  '+SITES[j.site].label : ''))));
 
   const closeBtn = (onClick) => e('button', { key:'close', onClick,
     style:{ marginTop:'0.3rem', padding:'0.9rem', borderRadius:'14px', border:'none', background:SURF2,
-      color:INK, fontWeight:700, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
+      color:INK, fontWeight:550, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
   const closeMenu = () => { setMenuOpen(false); setMenuSlide(0); setMenuSearch(''); };
@@ -1974,7 +1978,7 @@ function App() {
           willChange: 'transform'
         }
       },
-        e('div', { style:{ fontSize:'0.68rem', fontWeight:800, letterSpacing:'0.12em', textTransform:'uppercase',
+        e('div', { style:{ fontSize:'0.68rem', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase',
           color:'rgba(255,255,255,0.4)', marginBottom:'0.85rem' } }, 'Menu'),
 
         e('div', { style:{ position:'relative', marginBottom:'0.75rem' } },
@@ -1992,7 +1996,7 @@ function App() {
                     onClick: ()=>{ closeMenu(); openEdit(j, { view: 'list' }); },
                     style:{ textAlign:'left', border:'none', background:'rgba(255,255,255,0.06)', borderRadius:'12px',
                       padding:'0.7rem 0.8rem', color:'#FFF', cursor:'pointer' }
-                  }, e('div', { style:{ fontWeight:800, fontSize:'0.88rem' } }, j.ticketNumber || 'Ticket'),
+                  }, e('div', { style:{ fontWeight:600, fontSize:'0.88rem' } }, j.ticketNumber || 'Ticket'),
                      e('div', { style:{ fontSize:'0.7rem', color:'rgba(255,255,255,0.45)', marginTop:'2px' } },
                        (SITES[j.site] ? SITES[j.site].label : '') + (j.startDateTime ? ' · ' + fmtDay(j.startDateTime) : ''))
                   )))
@@ -2004,12 +2008,12 @@ function App() {
               sideMenuItem('Settings', ()=> openSettings()),
               settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
                 borderTop:'1px solid rgba(255,255,255,0.1)' } },
-                e('div', { style:{ fontSize:'0.65rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase',
+                e('div', { style:{ fontSize:'0.65rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase',
                   color:'rgba(255,255,255,0.35)', marginBottom:'0.55rem' } }, 'Sites'),
                 e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
                   Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.55rem' } },
                     e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', background:siteGrad(k), flexShrink:0 } }),
-                    e('span', { style:{ fontSize:'0.82rem', fontWeight:700, color:'rgba(255,255,255,0.85)' } }, SITES[k].label)
+                    e('span', { style:{ fontSize:'0.82rem', fontWeight:550, color:'rgba(255,255,255,0.85)' } }, SITES[k].label)
                   ))
                 )
               )
@@ -2018,7 +2022,7 @@ function App() {
         e('button', {
           onClick: closeMenu,
           style:{ marginTop:'auto', border:'none', background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)',
-            borderRadius:'12px', padding:'0.75rem', fontWeight:800, fontSize:'0.82rem', cursor:'pointer' }
+            borderRadius:'12px', padding:'0.75rem', fontWeight:600, fontSize:'0.82rem', cursor:'pointer' }
         }, 'Close')
       )
     );
@@ -2031,7 +2035,7 @@ function App() {
   ];
   const closeChooser = () => setChooser(null);
   const chooserSheet = chooser && sheet([
-    e('div', { key:'hd', style:{ fontSize:'1.05rem', fontWeight:900, letterSpacing:'-0.2px', padding:'0 0.1rem' } },
+    e('div', { key:'hd', style:{ fontSize:'1.05rem', fontWeight:650, letterSpacing:'-0.2px', padding:'0 0.1rem' } },
       chooser === 'excel' ? 'Export to Excel' : 'Copy as text'),
     e('div', { key:'opts', style:{ display:'flex', flexDirection:'column', gap:'0.5rem' } },
       chooserOptions.map(opt => menuRow(opt.label, opt.sub,
@@ -2102,10 +2106,10 @@ function App() {
 
   const siteSeqRow = (seq) => e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'wrap' } },
     seq.length === 0
-      ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
+      ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:550 } }, 'No site set')
       : seq.map((s,i) => [
-          e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800 } }, SITES[s].label),
-          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7 } }, '›') : null
+          e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:600 } }, SITES[s].label),
+          i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, opacity:0.7 } }, '›') : null
         ]));
 
   const isToday = (y,m,dnum) => { const t=new Date();
@@ -2143,7 +2147,7 @@ function App() {
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
       const numberSize = (0.74 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.75 * tScale).toFixed(3) + 'rem';
       const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
       const capSize = (0.82 * tScale).toFixed(3) + 'rem';
       const durSize = (0.95 * tScale).toFixed(3) + 'rem';
@@ -2162,7 +2166,7 @@ function App() {
         width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
         background: s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)',
         display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:'0.76rem', fontWeight:800, letterSpacing:'0.1px', color:onC } }, badgeText);
+        fontSize:'0.76rem', fontWeight:600, letterSpacing:'0.1px', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
@@ -2187,13 +2191,13 @@ function App() {
            numbers. */
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.01em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
               margin:'0 0.32em', whiteSpace:'nowrap' } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.4px',
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.01em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
-          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:800, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
+          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:500, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
       ];
@@ -2343,7 +2347,7 @@ function App() {
     showWeekends ? [
       e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px', marginBottom:'12px' } },
         DOWF.map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize: i<5 ? '0.58rem':'0.5rem',
-          fontWeight:900, color: i<5 ? MID : GREY, letterSpacing:'0.5px' } }, i<5 ? d.toUpperCase() : d[0]))),
+          fontWeight:650, color: i<5 ? MID : GREY, letterSpacing:'0.5px' } }, i<5 ? d.toUpperCase() : d[0]))),
       e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr) 0.55fr 0.55fr', gap:'10px' } },
         [...Array(ms.firstDow)].map((_,i) => e('div', { key:'b'+i })),
         [...Array(ms.daysInMonth)].map((_,i) => dayCell(i+1)))
@@ -2354,7 +2358,7 @@ function App() {
       return [
         e('div', { key:'hdr', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'12px' } },
           DOWF.slice(0,5).map((d,i) => e('div', { key:i, style:{ textAlign:'center', fontSize:'0.6rem',
-            fontWeight:900, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
+            fontWeight:650, color:MID, letterSpacing:'0.5px' } }, d.toUpperCase()))),
         e('div', { key:'grd', style:{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px' } },
           [...Array(blanks)].map((_,i) => e('div', { key:'b'+i })),
           weekdayNums.map(dnum => dayCell(dnum)))
@@ -2396,18 +2400,18 @@ function App() {
         transition:'box-shadow .25s ease, border-color .25s ease',
         boxShadow:'none' } },
       e('div', { style:{ width:'42px', flexShrink:0, textAlign:'center' } },
-        e('div', { style:{ fontSize:'0.5rem', fontWeight:900, color: has?hexToRgba(weekCellOnC,0.85):GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
+        e('div', { style:{ fontSize:'0.5rem', fontWeight:650, color: has?hexToRgba(weekCellOnC,0.85):GREY, letterSpacing:'0.5px' } }, DOWF[i].toUpperCase()),
         e('div', { style:{ fontSize: weekend?'0.95rem':'1.25rem', fontWeight: today?900:800, lineHeight:1.15, color:fg,
           textShadow:'none' } }, String(dt.getDate())),
         today ? e('span', { key:'td', style:{ display:'block', width:'5px', height:'5px', borderRadius:'999px',
           background: has ? weekCellOnC : INK, margin:'3px auto 0', animation:'dotPulse 2.4s ease-in-out infinite' } }) : null),
       e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', gap:'0.2rem' } },
         list.length === 0
-          ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700 } }, '—')
+          ? e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:550 } }, '—')
           : [ e('div', { key:'s', style:{ display:'flex', gap:'0.25rem', flexWrap:'wrap' } },
                 sites.map(s => e('span', { key:s, style:{ background:'rgba(255,255,255,0.22)', color:'#FFF',
-                  padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:900 } }, SITES[s] ? SITES[s].label : s))),
-              e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:700 } },
+                  padding:'0.14rem 0.5rem', borderRadius:'999px', fontSize:'0.55rem', fontWeight:650 } }, SITES[s] ? SITES[s].label : s))),
+              e('span', { key:'c', style:{ fontSize:'0.6rem', color:'rgba(255,255,255,0.88)', fontWeight:550 } },
                 list.length + (list.length===1?' ticket':' tickets')) ]));
   };
 
@@ -2439,7 +2443,7 @@ function App() {
       : dv.siteSequence;
 
   const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:700, padding:'0 0.05rem' } },
+    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:550, padding:'0 0.05rem' } },
       mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
     mobileDayList.length === 0
       ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0.05rem' } }, 'Nothing logged on this day')
@@ -2458,10 +2462,10 @@ function App() {
         display:'flex', alignItems:'center' } },
       e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
         mobileDaySeq.length === 0
-          ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:700 } }, 'No site set')
+          ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:550 } }, 'No site set')
           : mobileDaySeq.map((s,i) => [
-              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:800, flexShrink:0 } }, SITES[s].label),
-              i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, opacity:0.7, flexShrink:0 } }, '›') : null
+              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:600, flexShrink:0 } }, SITES[s].label),
+              i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, opacity:0.7, flexShrink:0 } }, '›') : null
             ])));
 
   const periodLabel = () => {
@@ -2609,9 +2613,9 @@ function App() {
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
           e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, INK)),
           e('div', { style:{ textAlign:'center' } },
-            e('div', { style:{ fontSize:'1rem', fontWeight:900, color:INK } },
+            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:INK } },
               anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-            e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:700 } }, String(anchorDate.getFullYear()))
+            e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:550 } }, String(anchorDate.getFullYear()))
           ),
           e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))
         ),
@@ -2674,7 +2678,7 @@ function App() {
         e('button', {
           onClick:()=>{ goToday(); closeMonthPicker(); },
           style:{ width:'100%', marginTop:'0.75rem', border:'none', background:SURF2, color:INK,
-            borderRadius:'14px', padding:'0.75rem', fontWeight:800, fontSize:'0.84rem', cursor:'pointer' }
+            borderRadius:'14px', padding:'0.75rem', fontWeight:600, fontSize:'0.84rem', cursor:'pointer' }
         }, 'Jump to today')
       )
     );
@@ -2718,9 +2722,9 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.3px', color:INK } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.3px', color:INK } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:700, marginTop:'1px' } }, 'Tap month · hold today')
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:GREY, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
@@ -2754,7 +2758,7 @@ function App() {
         style:{ flex:1, padding:'0.68rem 0.95rem', border:'1px solid '+LINE, borderRadius:'14px', outline:'none',
           fontSize:'0.88rem', background:FIELDBG, color:INK } }),
       e('button', { onClick:()=>setShowFilters(!showFilters),
-        style:{ padding:'0.62rem 0.95rem', borderRadius:'14px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:800,
+        style:{ padding:'0.62rem 0.95rem', borderRadius:'14px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:600,
           background: (siteFilter.length||equipFilter.length) ? VIOLET : SURF2,
           color: (siteFilter.length||equipFilter.length) ? APRICOT : INK } }, 'Filter')),
 
@@ -2763,20 +2767,20 @@ function App() {
         Object.keys(SITES).map(k => {
           const s = SITES[k], on = siteFilter.includes(k);
           return e('button', { key:k, onClick:()=>setSiteFilter(on ? siteFilter.filter(x=>x!==k) : [...siteFilter, k]),
-            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
+            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:600, cursor:'pointer', flexShrink:0,
               border: on ? 'none' : '1.5px solid '+LINE, background: on?siteGrad(k):SURF2, color: on?siteOnColor(s.hex):INK } }, s.label);
         })),
       e('div', { className:'chips', style:{ display:'flex', gap:'0.4rem', overflowX:'auto' } },
         Object.keys(EQUIP).map(k => {
           const on = equipFilter.includes(k);
           return e('button', { key:k, onClick:()=>setEquipFilter(on ? equipFilter.filter(x=>x!==k) : [...equipFilter, k]),
-            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:800, cursor:'pointer', flexShrink:0,
+            style:{ padding:'0.42rem 0.9rem', borderRadius:'10px', fontSize:'0.78rem', fontWeight:600, cursor:'pointer', flexShrink:0,
               border: on ? 'none' : '1.5px solid '+LINE, background: on?INK:SURF2, color: on?APRICOT:INK } }, k);
         })),
       (siteFilter.length || equipFilter.length || query) && e('button', { onClick:()=>{ setQuery(''); setSiteFilter([]); setEquipFilter([]); },
-        style:{ padding:'0.5rem', borderRadius:'10px', border:'none', background:SURF2, color:RED, fontWeight:800, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
+        style:{ padding:'0.5rem', borderRadius:'10px', border:'none', background:SURF2, color:RED, fontWeight:600, fontSize:'0.78rem', cursor:'pointer' } }, 'Clear filters')),
 
-    e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:700, paddingLeft:'0.4rem' } },
+    e('div', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, paddingLeft:'0.4rem' } },
       filtered.length + ' of ' + jobs.length + ' tickets'),
 
     filtered.length === 0
@@ -2792,7 +2796,7 @@ function App() {
         position:'relative', overflow:'visible'
       } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.78rem', fontWeight:900, color:INK, letterSpacing:'-0.2px' } }, title),
+        e('div', { style:{ fontSize:'0.78rem', fontWeight:650, color:INK, letterSpacing:'-0.2px' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
       children
@@ -2802,12 +2806,12 @@ function App() {
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
         background: SURF2, borderRadius:'14px', padding:'0.45rem 0.65rem' } },
       PlaneIcon(13, MID),
-      e('span', { style:{ flex:1, fontSize:'0.7rem', color:MID, fontWeight:800 } }, label),
+      e('span', { style:{ flex:1, fontSize:'0.7rem', color:MID, fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'0.92rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
+          fontSize:'0.92rem', fontWeight:600, color:INK, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
         style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:SURF3,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
@@ -2819,21 +2823,21 @@ function App() {
         border:'none', background:'transparent', borderRadius:'10px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
       PlusIcon(10, GREY),
-      e('span', { style:{ fontSize:'0.66rem', color:GREY, fontWeight:700 } }, label));
+      e('span', { style:{ fontSize:'0.66rem', color:GREY, fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
         background: FIELDBG, borderRadius:'16px', padding:'0.55rem 0.5rem 0.65rem',
         border: '1px solid '+LINE } },
-      e('span', { style:{ fontSize:'0.62rem', color:MID, fontWeight:800, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
+      e('span', { style:{ fontSize:'0.62rem', color:MID, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
-          fontSize:'1.35rem', fontWeight:800, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
+          fontSize:'1.35rem', fontWeight:600, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
 
   const durationCaption = (text) =>
-    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:800, color:GREY, padding:'2px 0' } }, text);
+    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:GREY, padding:'2px 0' } }, text);
 
   const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
@@ -2850,8 +2854,8 @@ function App() {
     rows.push(e('div', { key:prefix+'sf', style:{ display:'flex', alignItems:'stretch', gap:'0.45rem' } },
       bigTimeBlock(d.start, 'start', 'Start', update),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 0.1rem', minWidth:'36px' } },
-        e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:900 } }, '→'),
-        onm ? e('span', { style:{ fontSize:'0.58rem', color:MID, fontWeight:800, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
+        e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:650 } }, '→'),
+        onm ? e('span', { style:{ fontSize:'0.58rem', color:MID, fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
       ),
       bigTimeBlock(d.finish, 'finish', 'Finish', update)
     ));
@@ -2872,12 +2876,12 @@ function App() {
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:900, color:INK } }, title)),
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:650, color:INK } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
             style:{ border:'none', background:SURF, borderRadius:'10px', outline:'none',
-              fontSize:'0.74rem', fontWeight:800, color:INK, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer',
+              fontSize:'0.74rem', fontWeight:600, color:INK, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer',
               boxShadow:'0 0 0 1px '+LINE } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:GREY, padding:0 } }, 'Remove') : null)),
       e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
@@ -2917,7 +2921,7 @@ function App() {
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.05rem 0.1rem 0' } },
       e('button', { onClick:backOut, style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:650, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
       e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(17, INK))),
 
@@ -2935,7 +2939,7 @@ function App() {
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.9rem',
-                fontWeight:800, fontSize:'1.05rem', outline:'none', color:INK, letterSpacing:'-0.3px',
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:INK, letterSpacing:'-0.3px',
                 boxShadow:'inset 0 0 0 1px '+LINE } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
@@ -2945,7 +2949,7 @@ function App() {
                 transition:'background .2s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:900, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : GREY } },
+                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : GREY } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
@@ -2954,7 +2958,7 @@ function App() {
                   background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:800, color: form.equipment.length ? INK : GREY } },
+                    fontSize:'0.82rem', fontWeight:600, color: form.equipment.length ? INK : GREY } },
                   e('option', { value:'' }, 'Machine'),
                   Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))
             )
@@ -2988,7 +2992,7 @@ function App() {
 
         e('button', { onClick:addExtraDay,
           style:{ alignSelf:'center', border:'none', background:SURF2, color:MID,
-            borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } },
+            borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } },
           '+ Another day')
       ),
 
@@ -3002,7 +3006,7 @@ function App() {
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
                   style:{ flex:'0 0 34%', minWidth:0, border:'none', background:FIELDBG, borderRadius:'10px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:800, outline:'none', color:INK,
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:INK,
                     boxShadow:'inset 0 0 0 1px '+LINE } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
@@ -3010,10 +3014,10 @@ function App() {
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:INK,
                     boxShadow:'inset 0 0 0 1px '+LINE } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-                  style:{ border:'none', background:'none', color:GREY, fontSize:'0.75rem', fontWeight:800, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
+                  style:{ border:'none', background:'none', color:GREY, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
               style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:MID,
-                borderRadius:'8px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } }, '+ Add part')
+                borderRadius:'8px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
           ),
           CopyBtn(
             (form.parts||[]).map(p => (p.partNumber||'').trim()).filter(Boolean).join('\n'),
@@ -3082,7 +3086,7 @@ function App() {
     e('div', { key:label, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
       background:'transparent', border:'none', borderBottom:'1px solid rgba(10,10,12,0.06)', borderRadius:0, padding:'0.78rem 0.2rem' } },
       e('div', { style:{ flex:1, minWidth:0 } },
-        e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, label),
+        e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, label),
         sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px', lineHeight:1.35 } }, sub)),
       e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); onToggle(); },
         style:{ width:'48px', height:'28px', borderRadius:'999px', background: value?INK:SURF3,
@@ -3092,12 +3096,12 @@ function App() {
 
   const chipSelect = (label, options, value, onChange) =>
     e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid '+LINE } },
-      e('span', { style:{ fontSize:'0.72rem', fontWeight:800, color:MID } }, label),
+      e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:MID } }, label),
       e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
         options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>onChange(opt.key),
           style:{ padding:'0.38rem 0.7rem', borderRadius:'999px', border: value===opt.key?'none':'1px solid '+LINE,
             background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
-            fontSize:'0.72rem', fontWeight:800, cursor:'pointer' } }, opt.label))));
+            fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, opt.label))));
 
   /* Small icon badges for settings section headers — same round-badge shape
      used on ticket cards (EQ_BADGE_MAP), so Settings reads as part of the
@@ -3123,7 +3127,7 @@ function App() {
       },
         e('div', { style:{ width:'34px', height:'34px', borderRadius:'999px', background:INK, flexShrink:0,
           display:'flex', alignItems:'center', justifyContent:'center' } }, icon(18, APRICOT)),
-        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:900, color:INK, letterSpacing:'-0.25px' } }, title),
+        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:650, color:INK, letterSpacing:'-0.25px' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.45
@@ -3137,11 +3141,11 @@ function App() {
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.15rem 0.1rem 0.55rem' } },
       e('button', { className:'d-hover-btn', onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.95rem', fontWeight:900, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
+      e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
       e('span', { style:{ width:'36px' } })),
 
     collapseSection('tickets', 'Tickets & cards', ticketIcon, [
-      e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:900, color:INK, letterSpacing:'-0.15px',
+      e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:650, color:INK, letterSpacing:'-0.15px',
         margin:'0.15rem 0 0.35rem', padding:'0.15rem 0' } }, 'Ticket text'),
       chipSelect('Card text size', [
         {key:'normal', label:'Normal'},
@@ -3172,20 +3176,20 @@ function App() {
           background:SURF2, borderRadius:'12px', padding:'0.45rem 0.55rem' } },
           e('input', { type:'text', value:x.label, onChange:(ev)=>updateEquipLabel(idx, ev.target.value),
             onBlur:()=>commitEquip(equipEdits),
-            style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:800, color:INK } }),
+            style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:600, color:INK } }),
           e('button', { onClick:()=>removeEquip(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
             TrashIcon(16, GREY)))),
         e('button', { className:'d-hover-btn', onClick:addEquip, style:{ width:'100%', border:'none', background:SURF2, color:MID,
-          borderRadius:'12px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:800, cursor:'pointer' } }, '+ Add equipment'))
+          borderRadius:'12px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:600, cursor:'pointer' } }, '+ Add equipment'))
     ]),
 
     collapseSection('account', 'Account', personIcon, [
       e('div', { key:'acct', style:{ display:'flex', alignItems:'center', gap:'0.7rem', padding:'0.35rem 0.1rem 0.55rem' } },
         e('div', { style:{ flex:1, minWidth:0 } },
-          e('div', { style:{ fontSize:'0.84rem', fontWeight:800, color:INK } }, 'Signed in'),
+          e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, 'Signed in'),
           e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
         e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.45rem 0.85rem', borderRadius:'999px', border:'1px solid '+LINE,
-          background:SURF2, color:INK, fontWeight:800, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
+          background:SURF2, color:INK, fontWeight:600, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
     ]),
 
     /* Hidden long-press backups access: press and hold for options */
@@ -3198,7 +3202,7 @@ function App() {
     e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.1rem 0.15rem 0.3rem' } },
       e('button', { onClick:()=>setBackupsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:900, letterSpacing:'-0.2px' } }, 'Backups'),
+      e('span', { style:{ fontSize:'0.9rem', fontWeight:650, letterSpacing:'-0.2px' } }, 'Backups'),
       e('span', { style:{ width:'36px' } })),
     e('div', { style:{ fontSize:'0.72rem', color:GREY, fontWeight:600, padding:'0 0.15rem' } },
       'A dated snapshot is kept automatically once a day, for the last '+BACKUP_RETENTION+' days.'),
@@ -3211,10 +3215,10 @@ function App() {
               style:{ width:'100%', textAlign:'left', display:'flex', alignItems:'center', justifyContent:'space-between',
                 background:SURF, border:'1px solid '+LINE, borderRadius:'14px', padding:'0.75rem 0.9rem', cursor:'pointer' } },
               e('div', null,
-                e('div', { style:{ fontSize:'0.85rem', fontWeight:800, color:INK } },
+                e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:INK } },
                   new Date(b.savedAt).toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
                 e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px' } }, (b.count||0)+' ticket(s)')),
-              e('span', { style:{ fontSize:'0.72rem', color:MID, fontWeight:800 } }, 'Restore')))));
+              e('span', { style:{ fontSize:'0.72rem', color:MID, fontWeight:600 } }, 'Restore')))));
 
 
   if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
@@ -3239,7 +3243,7 @@ function App() {
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.55rem', padding:'0.35rem 0.85rem 1.25rem' } },
       e('img', { src:'icon-180.png', alt:'', width:32, height:32,
         style:{ width:'32px', height:'32px', borderRadius:'9px', display:'block' } }),
-      e('span', { style:{ fontWeight:900, fontSize:'1.05rem', letterSpacing:'-0.3px' } }, 'Tickets')),
+      e('span', { style:{ fontWeight:650, fontSize:'1.05rem', letterSpacing:'-0.3px' } }, 'Tickets')),
     e('button', { className: 'nav-item' + (view !== 'list' && view !== 'form' && !settingsOpen ? ' active' : ''),
       onClick: () => navTo('calendar') },
       e('span', null, '📅'), 'Calendar'),
@@ -3278,7 +3282,7 @@ function App() {
       style: {
         display: 'flex', alignItems: 'center', gap: '0.4rem',
         padding: '0.65rem 1.1rem', borderRadius: '12px', border: 'none',
-        background: INK, color: DARK_MODE ? '#0A0A0C' : APRICOT, fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer'
+        background: INK, color: DARK_MODE ? '#0A0A0C' : APRICOT, fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer'
       }
     }, e('span', { style:{ fontSize:'1.1rem', lineHeight:1 } }, '+'), 'New ticket')
   );
@@ -3326,16 +3330,16 @@ function App() {
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
         e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, INK)),
         e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:900, color:INK } },
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:INK } },
             anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
           e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:GREY, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
         e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'10px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
       monthGrid
     ),
     e('div', { className: 'desktop-panel', key: 'day-'+ms.y+'-'+ms.m+'-'+desktopDayNum },
-      e('div', { style:{ fontSize:'1.05rem', fontWeight:900, color:INK, marginBottom:'0.3rem' } },
+      e('div', { style:{ fontSize:'1.05rem', fontWeight:650, color:INK, marginBottom:'0.3rem' } },
         anchorDate.toLocaleDateString('en-GB',{ weekday:'long', day:'numeric', month:'long' })),
-      e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:700, marginBottom:'0.85rem' } },
+      e('div', { style:{ fontSize:'0.75rem', color:GREY, fontWeight:550, marginBottom:'0.85rem' } },
         desktopDayList.length + (desktopDayList.length===1?' ticket':' tickets')),
       desktopDayList.length > 0 && e('div', { style:{ background:SURF2, borderRadius:'12px', padding:'0.55rem 0.7rem', marginBottom:'0.75rem' } },
         siteSeqRow(desktopDaySeq)),
@@ -3389,8 +3393,8 @@ function BackupsLongPress({ onBackupNow, onOpenBackups }) {
         style:{ position:'fixed', inset:0, zIndex:99, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center', animation:'fadeIn .15s ease' }
       },
       e('div', { onClick:(ev)=>ev.stopPropagation(), style:{ background:SURF, borderRadius:'18px', padding:'0.6rem', display:'flex', flexDirection:'column', gap:'0.35rem', minWidth:'220px', boxShadow:'none' } },
-        e('button', { onClick:()=>{ setOpen(false); onBackupNow(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Back up now'),
-        e('button', { onClick:()=>{ setOpen(false); onOpenBackups(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:800, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Restore from backup')
+        e('button', { onClick:()=>{ setOpen(false); onBackupNow(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:600, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Back up now'),
+        e('button', { onClick:()=>{ setOpen(false); onOpenBackups(); }, style:{ textAlign:'left', border:'none', background:SURF2, borderRadius:'12px', padding:'0.65rem 0.8rem', fontWeight:600, fontSize:'0.82rem', color:INK, cursor:'pointer' } }, 'Restore from backup')
       )
     )
   );
