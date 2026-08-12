@@ -479,7 +479,7 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
 const SITES = {
   NX:   { label:'NX',   hex:'#B17457', hex2:'#A83F1C' },
   WS:   { label:'WS',   hex:'#4A4947', hex2:'#1F1F1F' },
-  RH:   { label:'RH',   hex:'#BDD3CE', hex2:'#A3BFB8' },
+  RH:   { label:'RH',   hex:'#A3B5B1', hex2:'#8CA49E' },
   MMUH: { label:'MMUH', hex:'#AFA48A', hex2:'#968C74' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
@@ -654,15 +654,16 @@ const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHAD
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
-/* Fixed text colour per the colour chart: very dark grey on every site
-   colour, except Graphite (#4A4947) which uses Desert Clay for text, and
-   Celeste (#BDD3CE) which uses its own matching navy — same rule the
-   reference cards use. Shared by ticket cards, the form sections, and the
-   calendar's coloured day cells. */
+/* Fixed text colour per the colour chart: Graphite (#4A4947) uses Desert
+   Clay for its text; Desert Clay and Celeste both use Graphite for theirs,
+   pulling text colour from elsewhere in the same fixed palette rather than
+   a generic neutral; Beige is the one exception, keeping plain dark grey.
+   Shared by ticket cards, the form sections, and the calendar's coloured
+   day cells. */
 const siteOnColor = (hex) => {
   const h = hex && hex.toUpperCase();
   if (h === '#4A4947') return '#B17457';
-  if (h === '#BDD3CE') return '#013D5A';
+  if (h === '#B17457' || h === '#A3B5B1') return '#4A4947';
   return '#141414';
 };
 
@@ -1191,7 +1192,7 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#B17457', '#4A4947', '#BDD3CE', '#AFA48A'];
+        const FIXED_SITE_PALETTE = ['#B17457', '#4A4947', '#A3B5B1', '#AFA48A'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -2148,7 +2149,7 @@ function App() {
     seq.length === 0
       ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:550 } }, 'No site set')
       : seq.map((s,i) => [
-          e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:600 } }, SITES[s].label),
+          e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'4px', fontSize:'0.6rem', fontWeight:600 } }, SITES[s].label),
           i < seq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, opacity:0.7 } }, '›') : null
         ]));
 
@@ -2515,14 +2516,14 @@ function App() {
     && e('div', { key:'journey', style:{
         position:'fixed', left:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
         maxWidth:'calc(100vw - 5.4rem)', zIndex:35,
-        background: SURF, boxShadow:SHADOW, borderRadius:'999px',
+        background: SURF, boxShadow:'none', borderRadius:'6px',
         padding:'0.55rem 0.9rem', overflowX:'auto',
         display:'flex', alignItems:'center' } },
       e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
         mobileDaySeq.length === 0
           ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:550 } }, 'No site set')
           : mobileDaySeq.map((s,i) => [
-              e('span', { key:'s'+i, style:{ background:siteGrad(s), color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'999px', fontSize:'0.6rem', fontWeight:600, flexShrink:0 } }, SITES[s].label),
+              e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'4px', fontSize:'0.6rem', fontWeight:600, flexShrink:0 } }, SITES[s].label),
               i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, opacity:0.7, flexShrink:0 } }, '›') : null
             ])));
 
