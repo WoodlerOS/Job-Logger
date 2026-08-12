@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -198,18 +198,42 @@
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
     background:#D1C8B5; }
-  #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
-  #splash .splash-logo {
-    width:120px; height:120px; border-radius:28px;
-    display:block;
-    animation:splashFloat .7s cubic-bezier(.22,.9,.3,1) both;
-    box-shadow: 0 8px 28px rgba(22,23,50,0.12), 0 2px 8px rgba(22,23,50,0.06);
+  /* Total splash lifetime now needs to cover the full write-then-full-stop
+     sequence (finishes ~2.2s in) plus a brief beat to actually see it,
+     before fading out — 2.9s total, fade starting at 86% (~2.5s). */
+  #splash.standalone-play { animation:splashHide 2.9s ease forwards; }
+  #splash .word-wrap { display:flex; align-items:baseline; }
+  #splash .word-text {
+    font-family:'Playwrite US Trad', cursive;
+    font-weight:400;
+    font-size:2.9rem;
+    color:#141414;
+    /* Playwrite is modelled on handwriting-practice strokes and stays fairly
+       light even at its heaviest weight — a text-stroke on top of that is
+       what actually makes it read as chunky rather than thin. */
+    -webkit-text-stroke:1.1px #141414;
+    text-stroke:1.1px #141414;
+    clip-path:inset(0 100% 0 0);
+    animation:splashWipe 1.7s cubic-bezier(.4,0,.2,1) .15s both;
   }
-  @keyframes splashFloat {
-    0%   { opacity:0; transform:translateY(18px) scale(0.96); }
-    100% { opacity:1; transform:translateY(0) scale(1); }
+  @keyframes splashWipe { to { clip-path:inset(0 0% 0 0); } }
+  #splash .full-stop {
+    font-family:'Playwrite US Trad', cursive;
+    font-weight:400;
+    font-size:2.9rem;
+    color:#141414;
+    -webkit-text-stroke:1.1px #141414;
+    text-stroke:1.1px #141414;
+    margin-left:0.15rem;
+    opacity:0;
+    transform:scale(0.2);
+    transform-origin:bottom center;
+    /* Lands ~150ms after the writing finishes (1.7s + 0.15s start delay) —
+       a quick overshoot-then-settle pop, like a pen tapping down. */
+    animation:splashDot .32s cubic-bezier(.3,1.6,.5,1) 2s forwards;
   }
-  @keyframes splashHide { 0%, 82% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
+  @keyframes splashDot { 0% { opacity:0; transform:scale(0.2); } 70% { opacity:1; transform:scale(1.25); } 100% { opacity:1; transform:scale(1); } }
+  @keyframes splashHide { 0%, 86% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
@@ -401,7 +425,9 @@
 </head>
 <body>
 <div id="splash">
-  <img class="splash-logo" src="icon-180.png" alt="Tickets" width="120" height="120">
+  <div class="word-wrap">
+    <span class="word-text">tickets</span><span class="full-stop">.</span>
+  </div>
 </div>
 <script>
 (function(){
@@ -412,7 +438,7 @@
     if (!standalone) { s.remove(); return; }
     var removeIt = function(){ if (s && s.parentNode) s.parentNode.removeChild(s); };
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
-    setTimeout(removeIt, 3000);
+    setTimeout(removeIt, 3400);
     s.classList.add('standalone-play');
   } catch (err) {
     var el = document.getElementById('splash');
