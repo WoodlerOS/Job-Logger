@@ -451,9 +451,9 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#CA4E23', hex2:'#A83F1C' },
-  WS:   { label:'WS',   hex:'#333333', hex2:'#1F1F1F' },
-  RH:   { label:'RH',   hex:'#A8C6C1', hex2:'#8CB1AA' },
+  NX:   { label:'NX',   hex:'#B17457', hex2:'#A83F1C' },
+  WS:   { label:'WS',   hex:'#4A4947', hex2:'#1F1F1F' },
+  RH:   { label:'RH',   hex:'#BDD3CE', hex2:'#A3BFB8' },
   MMUH: { label:'MMUH', hex:'#AFA48A', hex2:'#968C74' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
@@ -629,10 +629,16 @@ const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
 /* Fixed text colour per the colour chart: very dark grey on every site
-   colour, except the near-black one (#333333) which flips to the chart's
-   orange so text doesn't disappear against it. Shared by ticket cards and
-   the calendar's coloured day cells. */
-const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#CA4E23' : '#141414';
+   colour, except Graphite (#4A4947) which uses Desert Clay for text, and
+   Celeste (#BDD3CE) which uses its own matching navy — same rule the
+   reference cards use. Shared by ticket cards, the form sections, and the
+   calendar's coloured day cells. */
+const siteOnColor = (hex) => {
+  const h = hex && hex.toUpperCase();
+  if (h === '#4A4947') return '#B17457';
+  if (h === '#BDD3CE') return '#013D5A';
+  return '#141414';
+};
 
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
@@ -1159,7 +1165,7 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#CA4E23', '#333333', '#A8C6C1', '#AFA48A'];
+        const FIXED_SITE_PALETTE = ['#B17457', '#4A4947', '#BDD3CE', '#AFA48A'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -2164,7 +2170,7 @@ function App() {
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
       const on = mins(segStart, segFinish);
       /* Fixed text colour per the colour chart: very dark grey on every
-         card, except the near-black card (#333333) which flips to the
+         card, except the near-black card (#4A4947) which flips to the
          chart's orange so the text doesn't disappear against it. */
       const onC = s ? siteOnColor(s.hex) : INK;
       const faintC = s ? hexToRgba(onC, 0.88) : GREY;
@@ -2815,7 +2821,7 @@ function App() {
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: '#CA4E23', borderRadius:'6px',
+        background: '#B17457', borderRadius:'6px',
         border: 'none',
         boxShadow: 'none',
         overflow:'hidden',
@@ -2833,7 +2839,7 @@ function App() {
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
         background: 'rgba(255,255,255,0.10)', borderRadius:'4px', padding:'0.45rem 0.65rem' } },
-      PlaneIcon(13, '#CA4E23'),
+      PlaneIcon(13, '#B17457'),
       e('span', { style:{ flex:1, fontSize:'0.7rem', color:'#F0E7D6', fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
@@ -2850,13 +2856,13 @@ function App() {
       style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.35rem',
         border:'none', background:'transparent', borderRadius:'4px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
-      PlusIcon(10, '#CA4E23'),
-      e('span', { style:{ fontSize:'0.66rem', color:'#CA4E23', fontWeight:550 } }, label));
+      PlusIcon(10, '#B17457'),
+      e('span', { style:{ fontSize:'0.66rem', color:'#B17457', fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
         background: 'rgba(255,255,255,0.08)', borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem' } },
-      e('span', { style:{ fontSize:'0.62rem', color:'#CA4E23', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
+      e('span', { style:{ fontSize:'0.62rem', color:'#B17457', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
@@ -2864,7 +2870,7 @@ function App() {
           fontSize:'1.35rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
 
   const durationCaption = (text) =>
-    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:'#CA4E23', padding:'2px 0' } }, text);
+    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:'#B17457', padding:'2px 0' } }, text);
 
   const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
@@ -2881,7 +2887,7 @@ function App() {
     rows.push(e('div', { key:prefix+'sf', style:{ display:'flex', alignItems:'stretch', gap:'0.45rem' } },
       bigTimeBlock(d.start, 'start', 'Start', update),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 0.1rem', minWidth:'36px' } },
-        e('span', { style:{ fontSize:'0.7rem', color:'#CA4E23', fontWeight:650 } }, '→'),
+        e('span', { style:{ fontSize:'0.7rem', color:'#B17457', fontWeight:650 } }, '→'),
         onm ? e('span', { style:{ fontSize:'0.58rem', color:'#F0E7D6', fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
       ),
       bigTimeBlock(d.finish, 'finish', 'Finish', update)
@@ -2898,19 +2904,19 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: '#333333', borderRadius:'6px', overflow:'hidden',
+        background: '#4A4947', borderRadius:'6px', overflow:'hidden',
         padding:'0.6rem 0.7rem 0.7rem',
         display:'flex', flexDirection:'column', gap:'0.5rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:'#CA4E23', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:'#B17457', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
             style:{ border:'none', background:'rgba(255,255,255,0.10)', borderRadius:'4px', outline:'none',
               fontSize:'0.74rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
-          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#CA4E23', padding:0 } }, 'Remove') : null)),
+          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#B17457', padding:0 } }, 'Remove') : null)),
       e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
 
@@ -3149,10 +3155,10 @@ function App() {
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'#CA4E23', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
+          background:'#B17457', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#333333', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#CA4E23')),
+        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#4A4947', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#B17457')),
         e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
