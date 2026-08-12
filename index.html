@@ -1743,8 +1743,12 @@ function App() {
     if (savingRef.current) return; // already saving (button + swipe can't double-fire)
     savingRef.current = true;
     try {
-      if (form.ticketNumber.trim() && form.start) await commit();
-      goBack();
+      if (settingsOpen) {
+        setSettingsOpen(false);
+      } else {
+        if (form.ticketNumber.trim() && form.start) await commit();
+        goBack();
+      }
       setSavedGlow(1);
       setTimeout(() => setSavedGlow(0), 650);
     } finally {
@@ -1855,7 +1859,7 @@ function App() {
      completes, then fades out on its own. */
   const edgeGlowOpacity = savedGlow ? 1 : (swipeX > 4 ? 0.25 + progress * 0.55 : 0);
   const edgeGlowWidth = savedGlow ? 130 : (40 + progress * 60);
-  const swipeHint = (view === 'form' && (edgeGlowOpacity > 0)) && e('div', {
+  const swipeHint = ((view === 'form' || settingsOpen) && (edgeGlowOpacity > 0)) && e('div', {
     style:{ position:'fixed', left:0, top:0, bottom:0, width: edgeGlowWidth+'px', zIndex:40,
       pointerEvents:'none', opacity: edgeGlowOpacity,
       background:'linear-gradient(90deg, rgba(64,145,255,0.55) 0%, rgba(64,145,255,0) 100%)',
@@ -2816,14 +2820,15 @@ function App() {
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: SURF, borderRadius:'20px', padding: corner ? '0.85rem 0.9rem 0.95rem' : '0.9rem 0.95rem 1rem',
+        background: SURF, borderRadius:'6px', padding: corner ? '0.85rem 0.9rem 0.95rem 1.05rem' : '0.9rem 0.95rem 1rem 1.05rem',
         border: '1px solid '+LINE,
+        borderLeft: '3px solid #CA4E23',
         boxShadow: 'none',
         display:'flex', flexDirection:'column', gap:'0.55rem',
         position:'relative', overflow:'visible'
       } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.78rem', fontWeight:650, color:INK, letterSpacing:'-0.2px' } }, title),
+        e('div', { style:{ fontSize:'0.78rem', fontWeight:650, color:INK, letterSpacing:'-0.2px', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
       children
@@ -2831,7 +2836,7 @@ function App() {
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: SURF2, borderRadius:'14px', padding:'0.45rem 0.65rem' } },
+        background: SURF2, borderRadius:'4px', padding:'0.45rem 0.65rem' } },
       PlaneIcon(13, MID),
       e('span', { style:{ flex:1, fontSize:'0.7rem', color:MID, fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
@@ -2840,21 +2845,21 @@ function App() {
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
           fontSize:'0.92rem', fontWeight:600, color:INK, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-        style:{ width:'22px', height:'22px', borderRadius:'999px', border:'none', background:SURF3,
+        style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:SURF3,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
         XIcon(11, MID)));
 
   const addTravelBtn = (label, onClick) =>
     e('button', { onClick,
       style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.35rem',
-        border:'none', background:'transparent', borderRadius:'10px',
+        border:'none', background:'transparent', borderRadius:'4px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
       PlusIcon(10, GREY),
       e('span', { style:{ fontSize:'0.66rem', color:GREY, fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: FIELDBG, borderRadius:'16px', padding:'0.55rem 0.5rem 0.65rem',
+        background: FIELDBG, borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem',
         border: '1px solid '+LINE } },
       e('span', { style:{ fontSize:'0.62rem', color:MID, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
@@ -2898,16 +2903,17 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: SURF2, borderRadius:'16px', padding:'0.75rem 0.7rem 0.85rem',
+        background: SURF2, borderRadius:'6px', padding:'0.75rem 0.7rem 0.85rem 0.85rem',
+        borderLeft: '3px solid #333333',
         display:'flex', flexDirection:'column', gap:'0.5rem' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:650, color:INK } }, title)),
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:650, color:INK, textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:SURF, borderRadius:'10px', outline:'none',
+            style:{ border:'none', background:SURF, borderRadius:'4px', outline:'none',
               fontSize:'0.74rem', fontWeight:600, color:INK, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer',
               boxShadow:'0 0 0 1px '+LINE } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:GREY, padding:0 } }, 'Remove') : null)),
@@ -2941,7 +2947,7 @@ function App() {
     style:{ padding:'0.7rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem',
       transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
       transform:'translateX('+swipeX+'px)',
-      borderRadius: swipeX > 4 ? '24px' : '0',
+      borderRadius: swipeX > 4 ? '6px' : '0',
       touchAction: 'pan-y',
       boxShadow: 'none' } },
 
@@ -2965,12 +2971,12 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.9rem',
+              style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.75rem 0.9rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:INK, letterSpacing:'-0.3px',
                 boxShadow:'inset 0 0 0 1px '+LINE } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'12px', padding:'0 0.65rem',
+                borderRadius:'4px', padding:'0 0.65rem',
                 background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
                 boxShadow: SITES[form.site] ? 'none' : 'inset 0 0 0 1px '+LINE,
                 transition:'background .2s ease' } },
@@ -2980,7 +2986,7 @@ function App() {
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'12px', padding:'0 0.65rem', background:FIELDBG, boxShadow:'inset 0 0 0 1px '+LINE } },
+                borderRadius:'4px', padding:'0 0.65rem', background:FIELDBG, boxShadow:'inset 0 0 0 1px '+LINE } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
                   background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
@@ -2998,7 +3004,7 @@ function App() {
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
             className: 'work-done-field',
-            style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.8rem 0.95rem',
+            style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.8rem 0.95rem',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
               outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } }),
           CopyBtn(form.workDone, 'work')
@@ -3010,16 +3016,17 @@ function App() {
           sectionShell('Notes — Day ' + (i+2),
             e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…',
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
-              style:{ border:'none', background:FIELDBG, borderRadius:'14px', padding:'0.75rem 0.85rem',
+              style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.75rem 0.85rem',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } })
+                outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } }),
+            CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
 
 
         e('button', { onClick:addExtraDay,
           style:{ alignSelf:'center', border:'none', background:SURF2, color:MID,
-            borderRadius:'12px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } },
+            borderRadius:'4px', padding:'0.45rem 0.9rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } },
           '+ Another day')
       ),
 
@@ -3032,19 +3039,19 @@ function App() {
               form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:FIELDBG, borderRadius:'10px',
+                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:FIELDBG, borderRadius:'4px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:INK,
                     boxShadow:'inset 0 0 0 1px '+LINE } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-                  style:{ flex:1, minWidth:0, border:'none', background:FIELDBG, borderRadius:'10px',
+                  style:{ flex:1, minWidth:0, border:'none', background:FIELDBG, borderRadius:'4px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:INK,
                     boxShadow:'inset 0 0 0 1px '+LINE } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
                   style:{ border:'none', background:'none', color:GREY, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
               style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:MID,
-                borderRadius:'8px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
+                borderRadius:'4px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
           ),
           CopyBtn(
             (form.parts||[]).map(p => (p.partNumber||'').trim()).filter(Boolean).join('\n'),
@@ -3059,7 +3066,7 @@ function App() {
             title: form.locked ? 'Ready' : 'Mark complete',
             onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
             style:{
-              width:'36px', height:'36px', borderRadius:'999px', cursor:'pointer',
+              width:'36px', height:'36px', borderRadius:'6px', cursor:'pointer',
               display:'flex', alignItems:'center', justifyContent:'center',
               border: form.locked ? '2px solid #22C55E' : '2px solid rgba(10,10,12,0.18)',
               background: form.locked ? 'rgba(34,197,94,0.12)' : 'transparent',
@@ -3080,7 +3087,7 @@ function App() {
         title: form.locked ? 'Ready' : 'Mark complete',
         onClick:(ev)=>{ if (ev) { ev.preventDefault(); ev.stopPropagation(); } const next = !form.locked; setForm(f => ({ ...f, locked: next })); if (next) setBurst(b=>b+1); if (editingId != null) setJobLocked(editingId, next); },
         style:{
-          width:'40px', height:'40px', borderRadius:'999px', cursor:'pointer',
+          width:'40px', height:'40px', borderRadius:'6px', cursor:'pointer',
           display:'flex', alignItems:'center', justifyContent:'center',
           border: form.locked ? '2px solid #22C55E' : '2px solid rgba(10,10,12,0.18)',
           background: form.locked ? 'rgba(34,197,94,0.12)' : 'transparent',
@@ -3116,23 +3123,24 @@ function App() {
         e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, label),
         sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px', lineHeight:1.35 } }, sub)),
       e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); onToggle(); },
-        style:{ width:'48px', height:'28px', borderRadius:'999px', background: value?INK:SURF3,
+        style:{ width:'48px', height:'28px', borderRadius:'4px', background: value?INK:SURF3,
         border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0, padding:0, cursor:'pointer' } },
-        e('div', { style:{ position:'absolute', top:'3px', left: value?'24px':'3px', width:'20px', height:'20px', borderRadius:'999px',
-          background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:SHADOW_SM, transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
+        e('div', { style:{ position:'absolute', top:'3px', left: value?'24px':'3px', width:'20px', height:'20px', borderRadius:'2px',
+          background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:'none', transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
 
   const chipSelect = (label, options, value, onChange) =>
     e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid '+LINE } },
       e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:MID } }, label),
       e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
         options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>onChange(opt.key),
-          style:{ padding:'0.38rem 0.7rem', borderRadius:'999px', border: value===opt.key?'none':'1px solid '+LINE,
+          style:{ padding:'0.38rem 0.7rem', borderRadius:'4px', border: value===opt.key?'none':'1px solid '+LINE,
             background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
             fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, opt.label))));
 
-  /* Small icon badges for settings section headers — same round-badge shape
-     used on ticket cards (EQ_BADGE_MAP), so Settings reads as part of the
-     same visual family rather than a generic system screen. */
+  /* Small icon badges for settings section headers — squared off to match
+     the machine-code/card aesthetic elsewhere, with the same orange accent
+     bar used to mark a "section" in the ticket form, so Settings reads as
+     the same design language rather than a generic system screen. */
   const ticketIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none' },
     e('path', { d:'M3 8.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.2a1.7 1.7 0 0 0 0 3.2v1.6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.6a1.7 1.7 0 0 0 0-3.2Z',
       fill:col, opacity:0.9 }),
@@ -3144,7 +3152,8 @@ function App() {
   const collapseSection = (key, title, icon, children) => {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
-        background: SURF, borderRadius:'26px', border:'none',
+        background: SURF, borderRadius:'6px', border:'none',
+        borderLeft: '3px solid #CA4E23',
         boxShadow:'none', overflow:'hidden', marginBottom:'0.65rem'
       } },
       e('button', {
@@ -3152,9 +3161,9 @@ function App() {
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
           background:'transparent', border:'none', padding:'0.85rem 1.05rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'34px', height:'34px', borderRadius:'999px', background:INK, flexShrink:0,
+        e('div', { style:{ width:'34px', height:'34px', borderRadius:'6px', background:INK, flexShrink:0,
           display:'flex', alignItems:'center', justifyContent:'center' } }, icon(18, APRICOT)),
-        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:650, color:INK, letterSpacing:'-0.25px' } }, title),
+        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:650, color:INK, letterSpacing:'-0.25px', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.45
@@ -3200,14 +3209,14 @@ function App() {
     collapseSection('equipment', 'Equipment', GearIcon, [
       e('div', { key:'eqlist', style:{ display:'flex', flexDirection:'column', gap:'0.4rem', paddingTop:'0.15rem' } },
         equipEdits.map((x,idx) => e('div', { key:x.key, className:'d-hover', style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-          background:SURF2, borderRadius:'12px', padding:'0.45rem 0.55rem' } },
+          background:SURF2, borderRadius:'4px', padding:'0.45rem 0.55rem' } },
           e('input', { type:'text', value:x.label, onChange:(ev)=>updateEquipLabel(idx, ev.target.value),
             onBlur:()=>commitEquip(equipEdits),
             style:{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', fontSize:'0.84rem', fontWeight:600, color:INK } }),
           e('button', { onClick:()=>removeEquip(idx), style:{ border:'none', background:'none', cursor:'pointer', padding:'4px', flexShrink:0 } },
             TrashIcon(16, GREY)))),
         e('button', { className:'d-hover-btn', onClick:addEquip, style:{ width:'100%', border:'none', background:SURF2, color:MID,
-          borderRadius:'12px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:600, cursor:'pointer' } }, '+ Add equipment'))
+          borderRadius:'4px', padding:'0.55rem', fontSize:'0.76rem', fontWeight:600, cursor:'pointer' } }, '+ Add equipment'))
     ]),
 
     collapseSection('account', 'Account', personIcon, [
@@ -3215,7 +3224,7 @@ function App() {
         e('div', { style:{ flex:1, minWidth:0 } },
           e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, 'Signed in'),
           e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'1px', overflow:'hidden', textOverflow:'ellipsis' } }, user && user.email)),
-        e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.45rem 0.85rem', borderRadius:'999px', border:'1px solid '+LINE,
+        e('button', { className:'d-hover-btn', onClick:signOutUser, style:{ padding:'0.45rem 0.85rem', borderRadius:'4px', border:'1px solid '+LINE,
           background:SURF2, color:INK, fontWeight:600, fontSize:'0.75rem', cursor:'pointer' } }, 'Sign out'))
     ]),
 
@@ -3324,7 +3333,12 @@ function App() {
         e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, settingsBody)
       ),
       e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
-        settingsBody, menu, chooserSheet, formSheet, fab)
+        e('div', {
+          onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
+          style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
+        }, settingsBody),
+        menu, chooserSheet, formSheet, fab, swipeHint)
     );
   }
 
