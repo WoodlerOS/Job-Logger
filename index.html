@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#F3E8D3">
+<meta name="theme-color" content="#D1C8B5">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -24,13 +24,13 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #F3E8D3);
+    background:var(--page-bg, #D1C8B5);
     background-attachment:fixed;
     font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #F3E8D3);
+    background:var(--page-bg, #D1C8B5);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -193,7 +193,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#F3E8D3; }
+    background:#D1C8B5; }
   #splash.standalone-play { animation:splashHide 1.9s ease forwards; }
   #splash .splash-logo {
     width:120px; height:120px; border-radius:28px;
@@ -211,7 +211,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#F3E8D3; color:#0A0A0C; flex-direction:column;
+      background:#D1C8B5; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Courier New", Courier, "Cascadia Mono", "Consolas", monospace;
     }
@@ -228,7 +228,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #F3E8D3);
+      background: var(--page-bg, #D1C8B5);
       overflow: hidden;
     }
     #root {
@@ -236,7 +236,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #F3E8D3);
+      background: var(--page-bg, #D1C8B5);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -285,7 +285,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #F3E8D3);
+      background: var(--page-bg, #D1C8B5);
     }
     .desktop-topbar {
       display: flex;
@@ -301,7 +301,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #F3E8D3);
+      background: var(--page-bg, #D1C8B5);
     }
     .desktop-split {
       display: grid;
@@ -449,7 +449,7 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
 const SITES = {
   NX:   { label:'NX',   hex:'#EB5B29', hex2:'#C64A20' },
   WS:   { label:'WS',   hex:'#333333', hex2:'#1F1F1F' },
-  RH:   { label:'RH',   hex:'#BFE1DB', hex2:'#9FC9C1' },
+  RH:   { label:'RH',   hex:'#A8C6C1', hex2:'#8CB1AA' },
   MMUH: { label:'MMUH', hex:'#CCBFA1', hex2:'#B3A588' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
@@ -572,10 +572,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#F3E8D3', SURF2='#F3E8D3', SURF3='#F3E8D3';
-let FIELDBG='#F3E8D3', EMPTY='#F3E8D3';
-let PAGE_BG='#F3E8D3';
-let CARD_BG='#F3E8D3';
+let SURF='#D1C8B5', SURF2='#D1C8B5', SURF3='#D1C8B5';
+let FIELDBG='#D1C8B5', EMPTY='#D1C8B5';
+let PAGE_BG='#D1C8B5';
+let CARD_BG='#D1C8B5';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -589,8 +589,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#F3E8D3';
-  CARD_BG = '#F3E8D3';
+  PAGE_BG = '#D1C8B5';
+  CARD_BG = '#D1C8B5';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -628,7 +628,7 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    colour, except the near-black one (#333333) which flips to the chart's
    orange so text doesn't disappear against it. Shared by ticket cards and
    the calendar's coloured day cells. */
-const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#EB5B29' : '#2B2B2B';
+const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#EB5B29' : '#141414';
 
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
@@ -1175,7 +1175,7 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#EB5B29', '#333333', '#BFE1DB', '#CCBFA1'];
+        const FIXED_SITE_PALETTE = ['#EB5B29', '#333333', '#A8C6C1', '#CCBFA1'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -2119,7 +2119,7 @@ function App() {
   const ticketDetailCard = (j, i, dayIndex, overlapped) => {
     try {
       if (!j) {
-        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'0px', color:GREY } }, 'Empty ticket');
+        return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'6px', color:GREY } }, 'Empty ticket');
       }
       const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
       const eq = eqOf(j);
@@ -2137,7 +2137,7 @@ function App() {
          card, except the near-black card (#333333) which flips to the
          chart's orange so the text doesn't disappear against it. */
       const onC = s ? siteOnColor(s.hex) : INK;
-      const faintC = s ? hexToRgba(onC, 0.66) : GREY;
+      const faintC = s ? hexToRgba(onC, 0.88) : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
@@ -2162,7 +2162,7 @@ function App() {
         width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
         background: s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)',
         display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.2px', color:onC } }, badgeText);
+        fontSize:'0.76rem', fontWeight:800, letterSpacing:'0.1px', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
@@ -2207,7 +2207,7 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: 'none',
-          borderRadius:'0px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
+          borderRadius:'6px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
           minHeight:'56px',
           transition:'border-color .25s ease, transform .15s ease' }
       },
@@ -2233,7 +2233,7 @@ function App() {
       );
     } catch (err) {
       return e('div', {
-        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'0px', color:INK }
+        style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'6px', color:INK }
       }, String((j && j.ticketNumber) || 'Ticket') + ' (couldn’t render details)');
     }
   };
@@ -2258,7 +2258,7 @@ function App() {
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
         locked: !!(j && j.locked),
-        radius:'0px',
+        radius:'6px',
         glow: null,
         onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
         onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
