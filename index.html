@@ -897,44 +897,33 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
 function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entryDelay, glow, children }) {
-  const [pressed, setPressed] = useState(false);
   const [holding, setHolding] = useState(false);
   const timerRef = useRef(null);
-  const autoHideRef = useRef(null);
-  const extendedRef = useRef(null);
   const startRef = useRef({ x:0, y:0 });
   const movedRef = useRef(false);
   const suppressClickRef = useRef(false);
 
   const clearTimers = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-    if (autoHideRef.current) { clearTimeout(autoHideRef.current); autoHideRef.current = null; }
-    if (extendedRef.current) { clearTimeout(extendedRef.current); extendedRef.current = null; }
   };
 
   const beginHold = (x, y) => {
-    if (pressed) return;
     movedRef.current = false;
     startRef.current = { x, y };
     setHolding(true);
-    timerRef.current = setTimeout(() => {
-      timerRef.current = null;
-      setHolding(false);
-      suppressClickRef.current = true;
-      setPressed(true);
-      autoHideRef.current = setTimeout(() => setPressed(false), 4000);
-      /* Keep holding past the bubble appearing (~500ms further, so ~950ms
-         total) to toggle perspective mode instead — dismisses the bubble
-         rather than stacking both actions on one gesture. */
-      if (onLongPress) {
-        extendedRef.current = setTimeout(() => {
-          extendedRef.current = null;
-          setPressed(false);
-          if (autoHideRef.current) { clearTimeout(autoHideRef.current); autoHideRef.current = null; }
-          onLongPress();
-        }, 500);
-      }
-    }, 450);
+    /* A single long-press now does one thing: toggle perspective mode on
+       the stack this card belongs to. The lock/delete bubble that used to
+       appear here is gone — both actions are still reachable from the
+       ticket's own edit page (the complete-check button and the "…" menu's
+       Delete ticket). */
+    if (onLongPress) {
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        setHolding(false);
+        suppressClickRef.current = true;
+        onLongPress();
+      }, 550);
+    }
   };
   const moveHold = (x, y) => {
     if (!timerRef.current) return;
@@ -946,7 +935,6 @@ function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entry
   };
   const endHold = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-    if (extendedRef.current) { clearTimeout(extendedRef.current); extendedRef.current = null; }
     setHolding(false);
   };
 
@@ -974,56 +962,21 @@ function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entry
       if (ev && ev.preventDefault) ev.preventDefault();
       return;
     }
-    if (pressed) { setPressed(false); clearTimers(); return; }
     if (movedRef.current) return;
     if (onTap) onTap();
   };
 
   useEffect(() => () => clearTimers(), []);
 
-  const fireLock = (ev) => {
-    if (ev) { ev.stopPropagation(); ev.preventDefault(); }
-    setPressed(false); clearTimers();
-    if (typeof onLock === 'function') onLock();
-  };
-  const fireDelete = (ev) => {
-    if (ev) { ev.stopPropagation(); ev.preventDefault(); }
-    setPressed(false); clearTimers();
-    if (typeof onDelete === 'function') onDelete();
-  };
-
   return e('div', { style:{ position:'relative', borderRadius:radius, overflow:'visible',
       boxShadow: 'none', transition:'box-shadow .4s ease',
       animation: entryDelay != null ? 'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' : 'none',
       animationDelay: entryDelay != null ? entryDelay+'ms' : undefined } },
-    pressed && e('div', { key:'bub', style:{ position:'absolute', top:'-58px', right:'6px', display:'flex', gap:'10px', zIndex:40, pointerEvents:'auto' } },
-      e('button', { key:'lk', type:'button',
-        onClick:fireLock,
-        onTouchEnd:fireLock,
-        onMouseDown:(ev)=>{ ev.stopPropagation(); },
-        className:'bubble-pop',
-        style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'0s',
-          background: locked ? GREY : INK, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
-        TickIcon(true, 18, APRICOT),
-        e('span', { style:{ fontSize:'0.62rem', fontWeight:600, color:APRICOT, letterSpacing:'0.2px', lineHeight:1 } }, locked ? 'Unlock' : 'Ready')),
-      e('button', { key:'del', type:'button',
-        onClick:fireDelete,
-        onTouchEnd:fireDelete,
-        onMouseDown:(ev)=>{ ev.stopPropagation(); },
-        className:'bubble-pop',
-        style:{ height:'50px', minWidth:'76px', padding:'0 14px', borderRadius:'16px', border:'none', cursor:'pointer', animationDelay:'.07s',
-          background:RED, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'2px',
-          boxShadow:'none', WebkitTapHighlightColor:'transparent' } },
-        TrashIcon(17, '#FFF'),
-        e('span', { style:{ fontSize:'0.62rem', fontWeight:600, color:'#FFF', letterSpacing:'0.2px', lineHeight:1 } }, 'Delete'))),
     e('div', {
       onTouchStart:onStart, onTouchMove:onMove, onTouchEnd:onEnd, onTouchCancel:onEnd,
       onMouseDown:onMouseDown, onClick:handleTap,
-      onContextMenu:(ev)=>{ ev.preventDefault(); clearTimers(); suppressClickRef.current = true; setPressed(true);
-        if (autoHideRef.current) clearTimeout(autoHideRef.current);
-        autoHideRef.current = setTimeout(() => setPressed(false), 4000); },
-      style:{ transform: (holding || pressed) ? 'scale(0.965)' : 'scale(1)', transition:'transform .2s cubic-bezier(.22,.9,.3,1)', position:'relative', userSelect:'none' } },
+      onContextMenu:(ev)=>{ ev.preventDefault(); },
+      style:{ transform: holding ? 'scale(0.965)' : 'scale(1)', transition:'transform .2s cubic-bezier(.22,.9,.3,1)', position:'relative', userSelect:'none' } },
       children));
 }
 
@@ -2325,14 +2278,12 @@ function App() {
   const swipeCard = (j, i, ret, stagger, dayIndex, groupKey, stackIndex) => {
     const isOpen = groupKey ? !!stackOpen[groupKey] : true;
     const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.75rem' : '-30px') : (stackIndex > 0 ? '0.75rem' : 0);
-    /* Only truly "overlapped" (one card's edge tucked directly under the
-       next) when it's part of a collapsed stack — that's the one case where
-       the heavy shadow is doing real work (selling the floating-above
-       illusion). Once the stack opens back out to separated cards with
-       normal gaps, or for cards that were never in a stack at all, a lighter
-       shadow avoids a heavy dark band sitting in what's now open space
-       between cards. */
-    const overlapped = !!(groupKey && stackIndex > 0 && !isOpen);
+    /* Whether this card is currently part of a collapsed (unopened) stack —
+       drives the perspective taper. Every card in a collapsed stack tapers
+       together, including the front-most one (stackIndex 0); it was
+       previously excluded here by an unnecessary stackIndex>0 check, which
+       is why toggling perspective appeared to do nothing to the top card. */
+    const overlapped = !!(groupKey && !isOpen);
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
         locked: !!(j && j.locked),
@@ -2864,62 +2815,56 @@ function App() {
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: SURF, borderRadius:'6px',
-        border: '1px solid '+LINE,
+        background: '#CA4E23', borderRadius:'6px',
+        border: 'none',
         boxShadow: 'none',
         overflow:'hidden',
-        display:'flex', flexDirection:'column',
+        display:'flex', flexDirection:'column', gap:'0.6rem',
+        padding: corner ? '0.9rem 0.95rem 1rem' : '0.9rem 0.95rem 1rem',
         position:'relative'
       } },
-      /* Solid orange header block — the same colour and text rule as the
-         real orange ticket card — rather than a thin accent line. This is
-         meant to actually look like a piece cut from that card's language,
-         not just gesture at it. */
-      e('div', { style:{ background:'#CA4E23', padding:'0.55rem 0.9rem', display:'flex', alignItems:'center',
-          justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
         e('div', { style:{ fontSize:'0.78rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
-      e('div', { style:{ padding: corner ? '0.85rem 0.9rem 0.95rem' : '0.9rem 0.95rem 1rem',
-          display:'flex', flexDirection:'column', gap:'0.55rem' } }, children)
+      children
     );
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: SURF2, borderRadius:'4px', padding:'0.45rem 0.65rem' } },
-      PlaneIcon(13, MID),
-      e('span', { style:{ flex:1, fontSize:'0.7rem', color:MID, fontWeight:600 } }, label),
+        background: 'rgba(255,255,255,0.10)', borderRadius:'4px', padding:'0.45rem 0.65rem' } },
+      PlaneIcon(13, '#CA4E23'),
+      e('span', { style:{ flex:1, fontSize:'0.7rem', color:'#F0E7D6', fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'0.92rem', fontWeight:600, color:INK, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
+          fontSize:'0.92rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-        style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:SURF3,
+        style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:'rgba(255,255,255,0.12)',
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
-        XIcon(11, MID)));
+        XIcon(11, '#F0E7D6')));
 
   const addTravelBtn = (label, onClick) =>
     e('button', { onClick,
       style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.35rem',
         border:'none', background:'transparent', borderRadius:'4px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
-      PlusIcon(10, GREY),
-      e('span', { style:{ fontSize:'0.66rem', color:GREY, fontWeight:550 } }, label));
+      PlusIcon(10, '#CA4E23'),
+      e('span', { style:{ fontSize:'0.66rem', color:'#CA4E23', fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: FIELDBG, borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem',
-        border: '1px solid '+LINE } },
-      e('span', { style:{ fontSize:'0.62rem', color:MID, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
+        background: 'rgba(255,255,255,0.08)', borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem' } },
+      e('span', { style:{ fontSize:'0.62rem', color:'#CA4E23', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
-          fontSize:'1.35rem', fontWeight:600, color:INK, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
+          fontSize:'1.35rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
 
   const durationCaption = (text) =>
-    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:GREY, padding:'2px 0' } }, text);
+    e('div', { style:{ textAlign:'center', fontSize:'0.62rem', fontWeight:600, color:'#CA4E23', padding:'2px 0' } }, text);
 
   const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
@@ -2936,8 +2881,8 @@ function App() {
     rows.push(e('div', { key:prefix+'sf', style:{ display:'flex', alignItems:'stretch', gap:'0.45rem' } },
       bigTimeBlock(d.start, 'start', 'Start', update),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 0.1rem', minWidth:'36px' } },
-        e('span', { style:{ fontSize:'0.7rem', color:GREY, fontWeight:650 } }, '→'),
-        onm ? e('span', { style:{ fontSize:'0.58rem', color:MID, fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
+        e('span', { style:{ fontSize:'0.7rem', color:'#CA4E23', fontWeight:650 } }, '→'),
+        onm ? e('span', { style:{ fontSize:'0.58rem', color:'#F0E7D6', fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
       ),
       bigTimeBlock(d.finish, 'finish', 'Finish', update)
     ));
@@ -2953,23 +2898,21 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: SURF2, borderRadius:'6px', overflow:'hidden',
-        display:'flex', flexDirection:'column' } },
-      /* Solid black header block, orange text — the exact colour/text rule
-         the near-black ticket card uses. Reusing it here (rather than a
-         thin border) is what actually ties this to the card language. */
-      e('div', { style:{ background:'#333333', padding:'0.55rem 0.7rem', display:'flex', alignItems:'center',
-          justifyContent:'space-between', gap:'0.5rem' } },
+        background: '#333333', borderRadius:'6px', overflow:'hidden',
+        padding:'0.6rem 0.7rem 0.7rem',
+        display:'flex', flexDirection:'column', gap:'0.5rem' } },
+      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
           e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:'#CA4E23', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:'rgba(255,255,255,0.12)', borderRadius:'4px', outline:'none',
+            style:{ border:'none', background:'rgba(255,255,255,0.10)', borderRadius:'4px', outline:'none',
               fontSize:'0.74rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#CA4E23', padding:0 } }, 'Remove') : null)),
-      e('div', { style:{ padding:'0.75rem 0.7rem 0.85rem', display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
+      e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
+
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
   /* Editing an extra day's date also keeps that day's notes prefix in sync — the
@@ -3023,27 +2966,25 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.75rem 0.9rem',
-                fontWeight:600, fontSize:'1.05rem', outline:'none', color:INK, letterSpacing:'-0.3px',
-                boxShadow:'inset 0 0 0 1px '+LINE } }),
+              style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.9rem',
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:'#141414', letterSpacing:'-0.3px' } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'4px', padding:'0 0.65rem',
-                background: SITES[form.site] ? SITES[form.site].hex : FIELDBG,
-                boxShadow: SITES[form.site] ? 'none' : 'inset 0 0 0 1px '+LINE,
+                background: SITES[form.site] ? SITES[form.site].hex : 'rgba(20,20,20,0.10)',
                 transition:'background .2s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : GREY } },
+                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : '#141414' } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'4px', padding:'0 0.65rem', background:FIELDBG, boxShadow:'inset 0 0 0 1px '+LINE } },
+                borderRadius:'4px', padding:'0 0.65rem', background:'rgba(20,20,20,0.10)' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-                  background: form.equipment.length ? VIOLET : 'rgba(65,67,106,0.18)' } }),
+                  background: form.equipment.length ? '#141414' : 'rgba(20,20,20,0.25)' } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:600, color: form.equipment.length ? INK : GREY } },
+                    fontSize:'0.82rem', fontWeight:600, color: '#141414' } },
                   e('option', { value:'' }, 'Machine'),
                   Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))
             )
@@ -3056,9 +2997,9 @@ function App() {
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
             className: 'work-done-field',
-            style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.8rem 0.95rem',
+            style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.8rem 0.95rem',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
-              outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } }),
+              outline:'none', color:'#141414' } }),
           CopyBtn(form.workDone, 'work')
         ),
 
@@ -3068,9 +3009,9 @@ function App() {
           sectionShell('Notes — Day ' + (i+2),
             e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…',
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
-              style:{ border:'none', background:FIELDBG, borderRadius:'4px', padding:'0.75rem 0.85rem',
+              style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.85rem',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:INK, boxShadow:'inset 0 0 0 1px '+LINE } }),
+                outline:'none', color:'#141414' } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
@@ -3091,18 +3032,16 @@ function App() {
               form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:FIELDBG, borderRadius:'4px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:INK,
-                    boxShadow:'inset 0 0 0 1px '+LINE } }),
+                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:'#141414' } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-                  style:{ flex:1, minWidth:0, border:'none', background:FIELDBG, borderRadius:'4px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:INK,
-                    boxShadow:'inset 0 0 0 1px '+LINE } }),
+                  style:{ flex:1, minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:'#141414' } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-                  style:{ border:'none', background:'none', color:GREY, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
+                  style:{ border:'none', background:'none', color:'#141414', opacity:0.55, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
-              style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:MID,
+              style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:'#141414', opacity:0.75,
                 borderRadius:'4px', padding:'0.25rem 0.15rem', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
           ),
           CopyBtn(
