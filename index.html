@@ -281,7 +281,7 @@
       transition: background .15s ease, color .15s ease;
     }
     .desktop-sidebar .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-    .desktop-sidebar .nav-item.active { background: rgba(65,67,106,0.85); color: #fff; }
+    .desktop-sidebar .nav-item.active { background: rgba(255,255,255,0.14); color: #fff; }
     .desktop-main {
       flex: 1;
       min-width: 0;
@@ -299,7 +299,7 @@
       border-bottom: 1px solid var(--line, rgba(10,10,12,0.1));
       background: var(--card-bg, #fff);
       flex-shrink: 0;
-      box-shadow: 0 2px 12px rgba(22,23,50,0.08);
+      box-shadow: none;
     }
     .desktop-content {
       flex: 1;
@@ -1113,7 +1113,13 @@ function App() {
   const [swipeX, setSwipeX] = useState(0);
   const [burst, setBurst] = useState(0);
   const [swiping, setSwiping] = useState(false);
-  const touch = useRef({ x:0, y:0, live:false });
+  const touch = useRef({ x:0, y:0, live:false, locked:false });
+  /* Shared by both the swipe-to-save gesture AND the header back button —
+     whichever fires backOut() first "wins" and the other is ignored, so a
+     swipe that ends near the back button can no longer trigger two saves
+     for one gesture. */
+  const savingRef = useRef(false);
+  const [savedGlow, setSavedGlow] = useState(0); // 0=off, 1=confirming save
   const SWIPE_TRIGGER = 95;
 
   const [calDX, setCalDX] = useState(0);
@@ -1734,8 +1740,16 @@ function App() {
   };
 
   const backOut = async () => {
-    if (form.ticketNumber.trim() && form.start) await commit();
-    goBack();
+    if (savingRef.current) return; // already saving (button + swipe can't double-fire)
+    savingRef.current = true;
+    try {
+      if (form.ticketNumber.trim() && form.start) await commit();
+      goBack();
+      setSavedGlow(1);
+      setTimeout(() => setSavedGlow(0), 650);
+    } finally {
+      savingRef.current = false;
+    }
   };
 
   const remove = (id) => {
@@ -1782,8 +1796,9 @@ function App() {
   const onTouchStart = (ev) => {
     const tag = ((ev.target && ev.target.tagName) || '').toUpperCase();
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { touch.current.live = false; return; }
+    if (savingRef.current) { touch.current.live = false; return; } // don't start a new swipe mid-save
     const t = ev.touches[0];
-    touch.current = { x:t.clientX, y:t.clientY, live:true };
+    touch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
     setSwiping(true);
   };
   const onTouchMove = (ev) => {
@@ -1791,8 +1806,23 @@ function App() {
     const t = ev.touches[0];
     const dx = t.clientX - touch.current.x;
     const dy = t.clientY - touch.current.y;
-    if (Math.abs(dy) > Math.abs(dx) + 8) { touch.current.live = false; setSwiping(false); setSwipeX(0); return; }
-    setSwipeX(dx > 0 ? Math.min(dx * 0.85, 170) : 0);
+    if (!touch.current.locked) {
+      /* Direction is decided once, a few pixels into the gesture, and then
+         committed for the rest of it — the old version re-checked this on
+         every single move event, so a gesture that wavered even slightly
+         would flicker in and out of "swiping", which is what made it feel
+         jerky. A few px of dead zone also stops accidental taps from
+         registering as a swipe at all. */
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (Math.abs(dy) > Math.abs(dx)) { touch.current.live = false; setSwiping(false); setSwipeX(0); return; }
+      touch.current.locked = true;
+    }
+    /* Rubber-band easing: linear-ish up to ~130px, then increasingly
+       resistant rather than hard-clamping at the cap — a hard clamp is what
+       made the gesture feel like it "hit a wall" right at the trigger point. */
+    const raw = Math.max(0, dx);
+    const eased = raw <= 130 ? raw * 0.85 : 130 * 0.85 + (raw - 130) * 0.15;
+    setSwipeX(Math.min(eased, 170));
   };
   const onTouchEnd = () => {
     if (!touch.current.live) { setSwiping(false); setSwipeX(0); return; }
@@ -1819,13 +1849,17 @@ function App() {
   const progress = Math.min(swipeX / SWIPE_TRIGGER, 1);
   const armed = swipeX >= SWIPE_TRIGGER;
 
-  const swipeHint = view === 'form' && swipeX > 4 && e('div', { className:'swipe-hint',
-    style:{ position:'fixed', left:'10px', top:'50%', transform:'translateY(-50%) scale('+(0.7+progress*0.5)+')',
-      zIndex:40, width:'44px', height:'44px', borderRadius:'12px',
-      background: armed ? INK : SURF2, boxShadow:SHADOW,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      opacity: 0.3 + progress*0.7, transition:'background .12s ease' } },
-    ChevronLeft(24, armed ? APRICOT : GREY));
+  /* A soft glow along the left edge of the screen rather than a chevron
+     icon: it grows with the drag (so there's still feedback while swiping)
+     and briefly brightens/widens as a "saved" confirmation once the gesture
+     completes, then fades out on its own. */
+  const edgeGlowOpacity = savedGlow ? 1 : (swipeX > 4 ? 0.25 + progress * 0.55 : 0);
+  const edgeGlowWidth = savedGlow ? 130 : (40 + progress * 60);
+  const swipeHint = (view === 'form' && (edgeGlowOpacity > 0)) && e('div', {
+    style:{ position:'fixed', left:0, top:0, bottom:0, width: edgeGlowWidth+'px', zIndex:40,
+      pointerEvents:'none', opacity: edgeGlowOpacity,
+      background:'linear-gradient(90deg, rgba(64,145,255,0.55) 0%, rgba(64,145,255,0) 100%)',
+      transition: savedGlow ? 'opacity .55s ease, width .55s ease' : (swiping ? 'none' : 'opacity .2s ease, width .2s ease') } });
 
   const shift = (n) => {
     const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
@@ -2077,24 +2111,20 @@ function App() {
     else setMenuSlide(0);
   };
 
-  const fabGlowStyle = settings.fabGlowStyle || 'halo';
-  const fabGlowColor = settings.fabGlowColor || '#2890FF';
   const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('div', {
     className: 'fab-wrap',
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
-      width:'56px', height:'56px', zIndex:35,
-      ['--fab-glow']: fabGlowColor
+      width:'56px', height:'56px', zIndex:35
     }
   },
-    e('div', { className: 'fab-glow fab-glow-'+fabGlowStyle, 'aria-hidden': true }),
     e('button', {
       className: 'fab-btn',
       onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
       style: {
         position:'relative', zIndex:1,
         width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer',
-        background: INK, color: APRICOT,
+        background: '#3D3D3D', color: APRICOT,
         display:'flex', alignItems:'center', justifyContent:'center',
         boxShadow:'none',
         transition:'transform .15s cubic-bezier(.22,.9,.3,1), opacity .12s ease, box-shadow .15s ease, filter .12s ease'
@@ -2147,7 +2177,7 @@ function App() {
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
       const numberSize = (0.74 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.95 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
       const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
       const capSize = (0.82 * tScale).toFixed(3) + 'rem';
       const durSize = (0.95 * tScale).toFixed(3) + 'rem';
@@ -3321,6 +3351,41 @@ function App() {
       ? desktopDayBucket.siteSequence
       : dv.siteSequence;
 
+  /* A deliberately different, plainer treatment for desktop: a dense
+     information row rather than the mobile card. No full-bleed site colour
+     (a small dot carries the colour instead), no shadows or big rounded
+     chrome — this is meant to read like a clean list/table, not a mirror of
+     the phone UI. */
+  const desktopTicketRow = (entry, i) => {
+    const j = entry.j, seg = entry.seg;
+    const s = (j.site && SITES[j.site]) ? SITES[j.site] : null;
+    const eq = eqOf(j);
+    const on = mins(seg.startDateTime, seg.finishDateTime);
+    const durationLabel = on ? hm(on) : '';
+    const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
+    return e('div', {
+      key: 'drow-'+(j.id != null ? j.id : i)+(entry.dayIndex ? '-d'+entry.dayIndex : ''),
+      className: 'd-hover',
+      onClick: () => openEdit(j, { view:'month', day:desktopDayNum }),
+      style:{ display:'flex', alignItems:'center', gap:'0.65rem', padding:'0.5rem 0.4rem',
+        borderBottom:'1px solid rgba(10,10,12,0.08)', cursor:'pointer' }
+    },
+      e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
+        background: s ? s.hex : GREY } }),
+      e('span', { style:{ width:'40px', flexShrink:0, fontSize:'0.68rem', fontWeight:550, color:MID } },
+        eq.length ? badgeLabelFor(eq[0]) : '—'),
+      e('span', { style:{ width:'72px', flexShrink:0, fontSize:'0.78rem', fontWeight: j.locked ? 650 : 400, color:INK,
+        whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, j.ticketNumber || 'Ticket'),
+      e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:500, color:INK, fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap' } },
+        fmtTime(seg.startDateTime) + ' – ' + fmtTime(seg.finishDateTime)),
+      durationLabel ? e('span', { style:{ width:'56px', flexShrink:0, fontSize:'0.72rem', fontWeight:500, color:MID, textAlign:'right' } }, durationLabel) : e('span', { style:{ width:'56px', flexShrink:0 } }),
+      e('span', { style:{ width:'70px', flexShrink:0, fontSize:'0.68rem', fontWeight:500, color:GREY, textAlign:'right' } },
+        parts.length ? (parts.length + ' pt') : ''),
+      e('span', { style:{ width:'16px', flexShrink:0, textAlign:'right' } },
+        j.locked ? e('span', { style:{ fontSize:'0.62rem', color:MID } }, '✓') : null)
+    );
+  };
+
   /* Desktop: month calendar left + selected day tickets right (no week/day modes) */
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
@@ -3343,7 +3408,7 @@ function App() {
       desktopDayList.length === 0
         ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'2rem 0' } }, 'Nothing logged on this day')
         : e('div', { style:{ display:'flex', flexDirection:'column' } },
-            desktopDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:desktopDayNum }, i, entry.dayIndex, 'desktop-day:'+ms.y+'-'+ms.m+'-'+desktopDayNum, i)))
+            desktopDayList.map((entry,i) => desktopTicketRow(entry, i)))
     )
   );
 
