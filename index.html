@@ -2201,14 +2201,14 @@ function App() {
          card, except the near-black card (#4A4947) which flips to the
          chart's orange so the text doesn't disappear against it. */
       const onC = s ? siteOnColor(s.hex) : INK;
-      const faintC = s ? hexToRgba(onC, 0.88) : GREY;
+      const faintC = s ? hexToRgba(onC, 0.97) : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.74 * tScale).toFixed(3) + 'rem';
+      const numberSize = (0.84 * tScale).toFixed(3) + 'rem';
       const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.78 * tScale).toFixed(3) + 'rem';
       const capSize = (0.82 * tScale).toFixed(3) + 'rem';
       const durSize = (0.95 * tScale).toFixed(3) + 'rem';
 
@@ -2223,10 +2223,10 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.86rem', fontWeight:600, letterSpacing:'0.01em', color:onC } }, badgeText);
+        flexShrink:0, fontSize:'0.86rem', fontWeight:700, letterSpacing:'0.01em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
-        fontSize:smallTimeSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
+        fontSize:smallTimeSize, fontWeight:600, color:faintC, letterSpacing:'0.1px',
         [marginProp]:'0.3rem' } }, text);
 
       const children = [
@@ -2237,7 +2237,7 @@ function App() {
              card's own radius rather than being a pill, so it reads as a
              tag cut from the same cloth as the card rather than a chip
              floating on top of it. */
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:400, color:faintC,
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:600, color:faintC,
             whiteSpace:'nowrap', letterSpacing:'0.01em',
             background: j.locked ? hexToRgba(onC, 0.10) : 'transparent',
             borderRadius:'6px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
@@ -2250,13 +2250,13 @@ function App() {
            numbers. */
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.035em',
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
               margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.035em',
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
-          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:500, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
+          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:650, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
       ];
@@ -2289,11 +2289,11 @@ function App() {
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC, letterSpacing:'0.1px' } }, String(partsCount))) : null,
+            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC, letterSpacing:'0.1px' } }, String(partsCount))) : null,
           multiCount ? e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
             style:{ display:'flex', alignItems:'center', gap:'6px' } },
             ChainIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:600, color:faintC } }, String(multiCount))) : null
+            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC } }, String(multiCount))) : null
         )
       );
     } catch (err) {
@@ -2388,17 +2388,9 @@ function App() {
         pointerEvents:'none', zIndex:2 } }) : null,
       e('span', { style:{ fontSize: weekend ? '0.76rem' : '1rem', fontWeight: today?900:800, color:fg,
         lineHeight:1, letterSpacing:'-0.25px', textShadow:'none', position:'relative' } }, String(dnum)),
-      has && !weekend ? e('div', { style:{ display:'flex', gap:'5px', alignItems:'center', justifyContent:'center', marginTop:'4px', flexWrap:'wrap', width:'100%', position:'relative' } },
-        sites.slice(0,4).map(sk => {
-          const hex = (SITES[sk] && SITES[sk].hex) || '#888';
-          return e('span', { key:sk, style:{ width:'8px', height:'8px', borderRadius:'999px', background:hex, flexShrink:0,
-            border:'1.2px solid rgba(255,255,255,0.8)', boxShadow:'0 0 0 0.5px rgba(0,0,0,0.15)' } });
-        }),
-        d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:400, color:'rgba(255,255,255,0.85)', marginTop:'1px', width:'100%', textAlign:'center' } },
-          d.tickets.length+' jobs') : null) : null,
-      has && weekend ? e('div', { style:{ display:'flex', gap:'3px' } },
-        sites.slice(0,3).map(s => e('span', { key:s, style:{ width:'5px', height:'5px', borderRadius:'999px',
-          background: (SITES[s] && SITES[s].hex) || '#888', border:'1px solid rgba(255,255,255,0.8)' } }))) : null);
+      has && !weekend && d.tickets.length > 1 ? e('span', { key:'n', style:{ fontSize:'0.55rem', fontWeight:600, color:fg, opacity:0.75,
+        marginTop:'4px', width:'100%', textAlign:'center', position:'relative' } },
+        d.tickets.length+' jobs') : null);
   };
 
   const monthGrid = e('div', { style:{ padding:'0.2rem 0.4rem 1.15rem' } },
@@ -2780,7 +2772,7 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.3px', color:'#4A4947' } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:'#4A4947' } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
         e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#4A4947', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
