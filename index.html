@@ -896,11 +896,12 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
   e('path', { d:'M4 7 H20 M9 7 V5a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 V7 M6 7 L7 20 a1 1 0 0 0 1 1 h8 a1 1 0 0 0 1-1 L18 7',
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
-function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, children }) {
+function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entryDelay, glow, children }) {
   const [pressed, setPressed] = useState(false);
   const [holding, setHolding] = useState(false);
   const timerRef = useRef(null);
   const autoHideRef = useRef(null);
+  const extendedRef = useRef(null);
   const startRef = useRef({ x:0, y:0 });
   const movedRef = useRef(false);
   const suppressClickRef = useRef(false);
@@ -908,6 +909,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
   const clearTimers = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     if (autoHideRef.current) { clearTimeout(autoHideRef.current); autoHideRef.current = null; }
+    if (extendedRef.current) { clearTimeout(extendedRef.current); extendedRef.current = null; }
   };
 
   const beginHold = (x, y) => {
@@ -921,6 +923,17 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
       suppressClickRef.current = true;
       setPressed(true);
       autoHideRef.current = setTimeout(() => setPressed(false), 4000);
+      /* Keep holding past the bubble appearing (~500ms further, so ~950ms
+         total) to toggle perspective mode instead — dismisses the bubble
+         rather than stacking both actions on one gesture. */
+      if (onLongPress) {
+        extendedRef.current = setTimeout(() => {
+          extendedRef.current = null;
+          setPressed(false);
+          if (autoHideRef.current) { clearTimeout(autoHideRef.current); autoHideRef.current = null; }
+          onLongPress();
+        }, 500);
+      }
     }, 450);
   };
   const moveHold = (x, y) => {
@@ -933,6 +946,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, radius, entryDelay, glow, 
   };
   const endHold = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    if (extendedRef.current) { clearTimeout(extendedRef.current); extendedRef.current = null; }
     setHolding(false);
   };
 
@@ -1099,6 +1113,13 @@ function App() {
      apart, no overlap). A group auto-collapses back to an overlapping stack
      3s after the last tap on any card within it. */
   const [stackOpen, setStackOpen] = useState({});
+  /* Toggled by an extended long-press on a card (past the point where the
+     lock/delete bubble already appears) — while on, cards that are actually
+     overlapping another card in a collapsed stack get a subtle tapered
+     shape so same-colour neighbours stay visually distinct at the seam.
+     Cards that aren't currently overlapped (stack opened, or standalone)
+     always render as plain rectangles regardless of this toggle. */
+  const [cardPerspective, setCardPerspective] = useState(false);
   const stackTimers = useRef({});
   const openStack = (groupKey) => {
     setStackOpen(prev => (prev[groupKey] ? prev : { ...prev, [groupKey]: true }));
@@ -2154,6 +2175,24 @@ function App() {
   const EQ_BADGE_MAP = { I:'AI', C:'CC' };
   const badgeLabelFor = (eqCode) => EQ_BADGE_MAP[eqCode] || eqCode;
 
+  /* Rounded-corner + taper card outline as one clip-path polygon, so the two
+     states (normal / perspective) can be smoothly CSS-transitioned between —
+     clip-path only animates cleanly when both states have the same point
+     count, so "normal" is just this same 8-point shape with taper=0 rather
+     than a separate border-radius mechanism. Verified by rendering both
+     states before wiring this in: C≈3px reads as the existing 6px radius at
+     this scale, and taper must exceed the stack's actual 30px overlap to
+     ever be the *chosen* differentiator rather than borrowed from it — here
+     it's deliberately subtle (6px) since it's a supplementary manual toggle,
+     not the primary anti-blend mechanism. */
+  const cardClipPath = (taper) => {
+    const C = 3, T = taper;
+    return 'polygon(' +
+      C+'px 0, calc(100% - '+C+'px) 0, 100% '+C+'px, ' +
+      'calc(100% - '+T+'px) calc(100% - '+C+'px), calc(100% - '+(T+C)+'px) 100%, ' +
+      (T+C)+'px 100%, '+T+'px calc(100% - '+C+'px), 0 '+C+'px)';
+  };
+
   const ticketDetailCard = (j, i, dayIndex, overlapped) => {
     try {
       if (!j) {
@@ -2206,13 +2245,15 @@ function App() {
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          /* A background pill, same treatment as the equipment badge used to
-             have, is the "complete" signal now — reads as a quiet chip on
-             the card rather than a stray underline on otherwise-quiet text. */
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color: j.locked ? onC : faintC,
+          /* The only signal for "complete" now is the background — no font
+             weight or colour change alongside it — and its corners match the
+             card's own radius rather than being a pill, so it reads as a
+             tag cut from the same cloth as the card rather than a chip
+             floating on top of it. */
+          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:400, color:faintC,
             whiteSpace:'nowrap', letterSpacing:'0.01em',
-            background: j.locked ? hexToRgba(onC, 0.16) : 'transparent',
-            borderRadius:'999px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
+            background: j.locked ? hexToRgba(onC, 0.10) : 'transparent',
+            borderRadius:'6px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
         /* Start/finish times as three separate pieces rather than one string
@@ -2235,6 +2276,7 @@ function App() {
 
       const cardBorder = s ? 'none' : ('1px solid ' + LINE);
       const partsCount = parts.length;
+      const taperOn = cardPerspective && overlapped;
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
@@ -2242,9 +2284,10 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: 'none',
-          borderRadius:'6px', padding:'0.6rem 0.65rem 1.9rem', cursor:'pointer',
+          borderRadius:'6px', clipPath: cardClipPath(taperOn ? 6 : 0),
+          padding:'0.6rem 0.65rem 2.35rem', cursor:'pointer',
           minHeight:'56px',
-          transition:'border-color .25s ease, transform .15s ease' }
+          transition:'border-color .25s ease, transform .15s ease, clip-path .22s cubic-bezier(.22,.9,.3,1)' }
       },
         /* Completely flat now — no shading, no sheen, just the solid site
            colour. */
@@ -2297,6 +2340,7 @@ function App() {
         glow: null,
         onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
         onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
+        onLongPress: groupKey ? (() => setCardPerspective(p => !p)) : null,
         onTap:()=>{
           if (groupKey && !isOpen) { openStack(groupKey); return; }
           if (groupKey) openStack(groupKey);
@@ -2820,18 +2864,24 @@ function App() {
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: SURF, borderRadius:'6px', padding: corner ? '0.85rem 0.9rem 0.95rem 1.05rem' : '0.9rem 0.95rem 1rem 1.05rem',
+        background: SURF, borderRadius:'6px',
         border: '1px solid '+LINE,
-        borderLeft: '3px solid #CA4E23',
         boxShadow: 'none',
-        display:'flex', flexDirection:'column', gap:'0.55rem',
-        position:'relative', overflow:'visible'
+        overflow:'hidden',
+        display:'flex', flexDirection:'column',
+        position:'relative'
       } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.78rem', fontWeight:650, color:INK, letterSpacing:'-0.2px', textTransform:'uppercase' } }, title),
+      /* Solid orange header block — the same colour and text rule as the
+         real orange ticket card — rather than a thin accent line. This is
+         meant to actually look like a piece cut from that card's language,
+         not just gesture at it. */
+      e('div', { style:{ background:'#CA4E23', padding:'0.55rem 0.9rem', display:'flex', alignItems:'center',
+          justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
+        e('div', { style:{ fontSize:'0.78rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
-      children
+      e('div', { style:{ padding: corner ? '0.85rem 0.9rem 0.95rem' : '0.9rem 0.95rem 1rem',
+          display:'flex', flexDirection:'column', gap:'0.55rem' } }, children)
     );
 
   const travelBlock = (time, field, label, update) =>
@@ -2903,21 +2953,23 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: SURF2, borderRadius:'6px', padding:'0.75rem 0.7rem 0.85rem 0.85rem',
-        borderLeft: '3px solid #333333',
-        display:'flex', flexDirection:'column', gap:'0.5rem' } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
+        background: SURF2, borderRadius:'6px', overflow:'hidden',
+        display:'flex', flexDirection:'column' } },
+      /* Solid black header block, orange text — the exact colour/text rule
+         the near-black ticket card uses. Reusing it here (rather than a
+         thin border) is what actually ties this to the card language. */
+      e('div', { style:{ background:'#333333', padding:'0.55rem 0.7rem', display:'flex', alignItems:'center',
+          justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.72rem', fontWeight:650, color:INK, textTransform:'uppercase' } }, title)),
-        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem' } },
+          e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:'#CA4E23', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
+        e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:SURF, borderRadius:'4px', outline:'none',
-              fontSize:'0.74rem', fontWeight:600, color:INK, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer',
-              boxShadow:'0 0 0 1px '+LINE } }),
-          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:GREY, padding:0 } }, 'Remove') : null)),
-      e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
+            style:{ border:'none', background:'rgba(255,255,255,0.12)', borderRadius:'4px', outline:'none',
+              fontSize:'0.74rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
+          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.66rem', color:'#CA4E23', padding:0 } }, 'Remove') : null)),
+      e('div', { style:{ padding:'0.75rem 0.7rem 0.85rem', display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
   /* Editing an extra day's date also keeps that day's notes prefix in sync — the
@@ -3153,23 +3205,22 @@ function App() {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
         background: SURF, borderRadius:'6px', border:'none',
-        borderLeft: '3px solid #CA4E23',
         boxShadow:'none', overflow:'hidden', marginBottom:'0.65rem'
       } },
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'transparent', border:'none', padding:'0.85rem 1.05rem', cursor:'pointer', textAlign:'left' }
+          background:'#CA4E23', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'34px', height:'34px', borderRadius:'6px', background:INK, flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(18, APRICOT)),
-        e('span', { style:{ flex:1, fontSize:'0.9rem', fontWeight:650, color:INK, letterSpacing:'-0.25px', textTransform:'uppercase' } }, title),
+        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#333333', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#CA4E23')),
+        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
-          transition:'transform .22s ease', opacity:0.45
-        } }, ChevronLeft(16, GREY))
+          transition:'transform .22s ease', opacity:0.6
+        } }, ChevronLeft(16, '#141414'))
       ),
-      open && e('div', { style:{ padding:'0 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
+      open && e('div', { style:{ padding:'0.9rem 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
     );
   };
 
