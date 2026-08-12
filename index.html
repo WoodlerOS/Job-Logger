@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -29,7 +29,7 @@
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
     background:var(--page-bg, #D1C8B5);
     background-attachment:fixed;
-    font-family:"Jost", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
@@ -217,7 +217,7 @@
       display:flex; position:fixed; inset:0; z-index:9999;
       background:#D1C8B5; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
-      font-family:"Jost", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #root { display:none; }
   }
@@ -451,10 +451,10 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#EB5B29', hex2:'#C64A20' },
+  NX:   { label:'NX',   hex:'#CA4E23', hex2:'#A83F1C' },
   WS:   { label:'WS',   hex:'#333333', hex2:'#1F1F1F' },
   RH:   { label:'RH',   hex:'#A8C6C1', hex2:'#8CB1AA' },
-  MMUH: { label:'MMUH', hex:'#CCBFA1', hex2:'#B3A588' }
+  MMUH: { label:'MMUH', hex:'#AFA48A', hex2:'#968C74' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
@@ -632,7 +632,7 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    colour, except the near-black one (#333333) which flips to the chart's
    orange so text doesn't disappear against it. Shared by ticket cards and
    the calendar's coloured day cells. */
-const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#EB5B29' : '#141414';
+const siteOnColor = (hex) => (hex && hex.toUpperCase() === '#333333') ? '#CA4E23' : '#141414';
 
 const multiSiteBg = (siteKeys) => {
   const keys = (siteKeys || []).filter(k => SITES[k]);
@@ -1179,7 +1179,7 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#EB5B29', '#333333', '#A8C6C1', '#CCBFA1'];
+        const FIXED_SITE_PALETTE = ['#CA4E23', '#333333', '#A8C6C1', '#AFA48A'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -2147,7 +2147,7 @@ function App() {
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
       const numberSize = (0.74 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.75 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.95 * tScale).toFixed(3) + 'rem';
       const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
       const capSize = (0.82 * tScale).toFixed(3) + 'rem';
       const durSize = (0.95 * tScale).toFixed(3) + 'rem';
@@ -2162,25 +2162,22 @@ function App() {
       const multiCount = isMulti ? (ex.length + 1) : (seg ? dayIndex : 0);
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
-      const badge = e('div', { key:'badge', style:{
-        width:'34px', height:'34px', borderRadius:'999px', flexShrink:0,
-        background: s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:'0.76rem', fontWeight:600, letterSpacing:'0.1px', color:onC } }, badgeText);
+      const badge = e('span', { key:'badge', style:{
+        flexShrink:0, fontSize:'0.86rem', fontWeight:600, letterSpacing:'0.01em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, color:faintC, letterSpacing:'0.1px',
         [marginProp]:'0.3rem' } }, text);
 
       const children = [
-        e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
+        e('div', { key:'top', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          /* A background pill, same treatment as the equipment badge, is the
-             "complete" signal now — reads as a matched pair of chips on the
-             card rather than a stray underline on otherwise-quiet text. */
+          /* A background pill, same treatment as the equipment badge used to
+             have, is the "complete" signal now — reads as a quiet chip on
+             the card rather than a stray underline on otherwise-quiet text. */
           e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight: j.locked ? 700 : 400, color: j.locked ? onC : faintC,
-            whiteSpace:'nowrap', marginTop:'2px',
-            background: j.locked ? (s ? hexToRgba(onC, 0.16) : 'rgba(10,10,12,0.08)') : 'transparent',
+            whiteSpace:'nowrap', letterSpacing:'0.01em',
+            background: j.locked ? hexToRgba(onC, 0.16) : 'transparent',
             borderRadius:'999px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
         ),
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
@@ -2191,11 +2188,11 @@ function App() {
            numbers. */
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.01em',
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.035em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
-              margin:'0 0.32em', whiteSpace:'nowrap' } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.01em',
+              margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.035em',
               whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
           durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:500, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
@@ -2211,7 +2208,7 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: 'none',
-          borderRadius:'6px', padding:'0.95rem 1.05rem 2.15rem', cursor:'pointer',
+          borderRadius:'6px', padding:'0.6rem 0.65rem 1.9rem', cursor:'pointer',
           minHeight:'56px',
           transition:'border-color .25s ease, transform .15s ease' }
       },
@@ -2224,7 +2221,7 @@ function App() {
            each is only rendered when it has something to show, so with just
            one of the two present it sits flush in the corner; they only
            shift apart when both are present at once. */
-        e('div', { key:'strip', style:{ position:'absolute', left:'1.05rem', right:'1.05rem', bottom:'0.65rem',
+        e('div', { key:'strip', style:{ position:'absolute', left:'0.65rem', right:'0.65rem', bottom:'0.5rem',
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
