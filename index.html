@@ -365,7 +365,7 @@
       height: 100%;
     }
     .field-graphite::placeholder {
-      color: #4A4947;
+      color: var(--ph-color, #4A4947);
       opacity: 0.6;
     }
     .form-card {
@@ -658,14 +658,13 @@ const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHAD
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
-/* Fixed text colour per the colour chart: Graphite (#4A4947) uses Desert
-   Clay for its text; every other site colour uses Graphite for theirs,
-   pulling text colour from elsewhere in the same fixed palette rather than
-   a generic neutral. Shared by ticket cards, the form sections, and the
-   calendar's coloured day cells. */
+/* Fixed text colour per the colour chart: the black/Graphite card uses the
+   app's own cream background colour for its text (rather than a copper
+   accent); every other site colour uses plain black. Shared by ticket
+   cards, the form sections, and the calendar's coloured day cells. */
 const siteOnColor = (hex) => {
   const h = hex && hex.toUpperCase();
-  return h === '#4A4947' ? '#B17457' : '#4A4947';
+  return h === '#4A4947' ? '#D1C8B5' : '#000000';
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -1325,9 +1324,9 @@ function App() {
       alert('Copy failed — clipboard access blocked.');
     }
   };
-  const CopyBtn = (text, key, light) => {
+  const CopyBtn = (text, key, color) => {
     const done = copiedKey === key;
-    const idleCol = light ? 'rgba(255,255,255,0.9)' : '#3A3A42';
+    const idleCol = color || '#3A3A42';
     return e('button', {
       type: 'button',
       title: done ? 'Copied' : 'Copy',
@@ -2663,9 +2662,9 @@ function App() {
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
           e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, '#4A4947')),
           e('div', { style:{ textAlign:'center' } },
-            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:'#4A4947' } },
+            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:'#000000' } },
               anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-            e('div', { style:{ fontSize:'0.75rem', color:'#4A4947', opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
+            e('div', { style:{ fontSize:'0.75rem', color:'#000000', opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
           ),
           e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))
         ),
@@ -2772,9 +2771,9 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:'#4A4947' } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:'#000000' } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#4A4947', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#000000', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, '#4A4947'))));
@@ -2837,18 +2836,31 @@ function App() {
       ? e('div', { style:{ textAlign:'center', padding:'2.5rem 1rem', color:GREY, fontSize:'0.9rem' } }, 'Nothing matches')
       : e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.75rem' } }, filtered.map((j,i)=>swipeCard(j, null, {view:'list'}, i))));
 
+  /* The whole creation form now shares ONE background colour — whichever
+     site is currently selected, updating live as it's changed — rather than
+     orange-for-content / black-for-day-panels. Before a site is chosen it
+     falls back to Graphite. Text/icon colour always follows the same fixed
+     rule the real ticket cards use, so contrast is guaranteed regardless of
+     which site is active, and the form looks like the card you'll review
+     afterwards. */
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#4A4947';
+  const formOnC = siteOnColor(formSiteHex);
+  const formFieldBg = hexToRgba(formOnC, 0.10);
+  const formFieldBg2 = hexToRgba(formOnC, 0.08);
+
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: '#B17457', borderRadius:'6px',
+        background: formSiteHex, borderRadius:'6px',
         border: 'none',
         boxShadow: 'none',
         overflow:'hidden',
         display:'flex', flexDirection:'column', gap:'0.6rem',
         padding: corner ? '0.9rem 0.95rem 1rem' : '0.9rem 0.95rem 1rem',
-        position:'relative'
+        position:'relative',
+        transition:'background .2s ease'
       } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
       children
@@ -2856,39 +2868,39 @@ function App() {
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: 'rgba(255,255,255,0.10)', borderRadius:'4px', padding:'0.45rem 0.65rem' } },
-      PlaneIcon(13, '#B17457'),
-      e('span', { style:{ flex:1, fontSize:'0.78rem', color:'#F0E7D6', fontWeight:600 } }, label),
+        background: formFieldBg, borderRadius:'4px', padding:'0.45rem 0.65rem', transition:'background .2s ease' } },
+      PlaneIcon(13, formOnC),
+      e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'0.92rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
+          fontSize:'0.92rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
-        style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:'rgba(255,255,255,0.12)',
+        style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:formFieldBg2,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
-        XIcon(11, '#F0E7D6')));
+        XIcon(11, formOnC)));
 
   const addTravelBtn = (label, onClick) =>
     e('button', { onClick,
       style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'0.35rem',
         border:'none', background:'transparent', borderRadius:'4px',
         padding:'0.35rem 0.2rem', cursor:'pointer' } },
-      PlusIcon(10, '#B17457'),
-      e('span', { style:{ fontSize:'0.74rem', color:'#B17457', fontWeight:550 } }, label));
+      PlusIcon(10, formOnC),
+      e('span', { style:{ fontSize:'0.74rem', color:formOnC, fontWeight:550 } }, label));
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: 'rgba(255,255,255,0.08)', borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem' } },
-      e('span', { style:{ fontSize:'0.7rem', color:'#B17457', fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
+        background: formFieldBg2, borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem', transition:'background .2s ease' } },
+      e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
-          fontSize:'1.35rem', fontWeight:600, color:'#F0E7D6', fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
+          fontSize:'1.35rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
 
   const durationCaption = (text) =>
-    e('div', { style:{ textAlign:'center', fontSize:'0.7rem', fontWeight:600, color:'#B17457', padding:'2px 0' } }, text);
+    e('div', { style:{ textAlign:'center', fontSize:'0.7rem', fontWeight:600, color:formOnC, padding:'2px 0' } }, text);
 
   const buildTimes = (d, update, prefix) => {
     const legMins = (a, b) => { if (!a || !b) return 0; const c = composeTimes(d.date, [a, b]); return mins(c[0], c[1]); };
@@ -2905,8 +2917,8 @@ function App() {
     rows.push(e('div', { key:prefix+'sf', style:{ display:'flex', alignItems:'stretch', gap:'0.45rem' } },
       bigTimeBlock(d.start, 'start', 'Start', update),
       e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'0 0.1rem', minWidth:'36px' } },
-        e('span', { style:{ fontSize:'0.78rem', color:'#B17457', fontWeight:650 } }, '→'),
-        onm ? e('span', { style:{ fontSize:'0.66rem', color:'#F0E7D6', fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
+        e('span', { style:{ fontSize:'0.78rem', color:formOnC, fontWeight:650 } }, '→'),
+        onm ? e('span', { style:{ fontSize:'0.66rem', color:formOnC, fontWeight:600, marginTop:'2px', whiteSpace:'nowrap' } }, hm(onm)) : null
       ),
       bigTimeBlock(d.finish, 'finish', 'Finish', update)
     ));
@@ -2922,19 +2934,19 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: '#4A4947', borderRadius:'6px', overflow:'hidden',
+        background: formSiteHex, borderRadius:'6px', overflow:'hidden',
         padding:'0.6rem 0.7rem 0.7rem',
-        display:'flex', flexDirection:'column', gap:'0.5rem' } },
+        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .2s ease' } },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
-          site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:site.hex, flexShrink:0 } }),
-          e('span', { style:{ fontSize:'0.8rem', fontWeight:600, color:'#B17457', letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
+          site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:formOnC, opacity:0.6, flexShrink:0 } }),
+          e('span', { style:{ fontSize:'0.8rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:'rgba(255,255,255,0.10)', borderRadius:'4px', outline:'none',
-              fontSize:'0.82rem', fontWeight:600, color:'#F0E7D6', padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
-          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.74rem', color:'#B17457', padding:0 } }, 'Remove') : null)),
+            style:{ border:'none', background:formFieldBg, borderRadius:'4px', outline:'none',
+              fontSize:'0.82rem', fontWeight:600, color:formOnC, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
+          onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.74rem', color:formOnC, padding:0 } }, 'Remove') : null)),
       e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
 
@@ -2990,25 +3002,25 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.9rem',
-                fontWeight:600, fontSize:'1.05rem', outline:'none', color:'#141414', letterSpacing:'-0.3px' } }),
+              style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.75rem 0.9rem',
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'4px', padding:'0 0.65rem',
-                background: SITES[form.site] ? SITES[form.site].hex : 'rgba(20,20,20,0.10)',
+                background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
                 transition:'background .2s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : '#141414' } },
+                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : formOnC } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'4px', padding:'0 0.65rem', background:'rgba(20,20,20,0.10)' } },
+                borderRadius:'4px', padding:'0 0.65rem', background:formFieldBg, transition:'background .2s ease' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
-                  background: form.equipment.length ? '#141414' : 'rgba(20,20,20,0.25)' } }),
+                  background: form.equipment.length ? formOnC : hexToRgba(formOnC, 0.3) } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:600, color: '#141414' } },
+                    fontSize:'0.82rem', fontWeight:600, color: formOnC } },
                   e('option', { value:'' }, 'Machine'),
                   Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))
             )
@@ -3021,9 +3033,9 @@ function App() {
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
             className: 'work-done-field field-graphite',
-            style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.8rem 0.95rem',
+            style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.8rem 0.95rem',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
-              outline:'none', color:'#141414' } }),
+              outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
           CopyBtn(form.workDone, 'work')
         ),
 
@@ -3033,9 +3045,9 @@ function App() {
           sectionShell('Notes — Day ' + (i+2),
             e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…', className:'field-graphite',
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
-              style:{ border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px', padding:'0.75rem 0.85rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.75rem 0.85rem',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:'#141414' } }),
+                outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
@@ -3056,16 +3068,16 @@ function App() {
               form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:'#141414' } }),
+                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:formFieldBg, borderRadius:'4px',
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-                  style:{ flex:1, minWidth:0, border:'none', background:'rgba(20,20,20,0.10)', borderRadius:'4px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:'#141414' } }),
+                  style:{ flex:1, minWidth:0, border:'none', background:formFieldBg, borderRadius:'4px',
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
-                  style:{ border:'none', background:'none', color:'#141414', opacity:0.55, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
+                  style:{ border:'none', background:'none', color:formOnC, opacity:0.6, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
-              style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:'#141414', opacity:0.75,
+              style:{ alignSelf:'flex-start', border:'none', background:'transparent', color:formOnC, opacity:0.8,
                 borderRadius:'4px', padding:'0.25rem 0.15rem', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' } }, '+ Add part')
           ),
           CopyBtn(
@@ -3420,9 +3432,9 @@ function App() {
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
         e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, '#4A4947')),
         e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:'#4A4947' } },
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:'#000000' } },
             anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:'#4A4947', opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:'#000000', opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
         e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))),
       monthGrid
     ),
