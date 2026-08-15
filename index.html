@@ -365,7 +365,7 @@
       height: 100%;
     }
     .field-graphite::placeholder {
-      color: var(--ph-color, #4A4947);
+      color: var(--ph-color, #20383C);
       opacity: 0.6;
     }
     .form-card {
@@ -481,10 +481,10 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#B17457', hex2:'#A83F1C' },
-  WS:   { label:'WS',   hex:'#4A4947', hex2:'#1F1F1F' },
-  RH:   { label:'RH',   hex:'#A3B5B1', hex2:'#8CA49E' },
-  MMUH: { label:'MMUH', hex:'#AFA48A', hex2:'#968C74' }
+  NX:   { label:'NX',   hex:'#20383C', hex2:'#1B3033' },
+  WS:   { label:'WS',   hex:'#F1E3C2', hex2:'#CFC3A6' },
+  RH:   { label:'RH',   hex:'#B2A667', hex2:'#998E58' },
+  MMUH: { label:'MMUH', hex:'#393028', hex2:'#312922' }
 };
 const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
 
@@ -658,13 +658,20 @@ const PANEL = () => ({ background:SURF, border:'1px solid '+LINE, boxShadow:SHAD
 const grad = (a,b,deg) => 'linear-gradient('+(deg||155)+'deg,'+a+' 0%,'+b+' 100%)';
 const siteGrad = (k) => grad(SITES[k].hex, SITES[k].hex2);
 const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
-/* Fixed text colour per the colour chart: the black/Graphite card uses the
-   app's own cream background colour for its text (rather than a copper
-   accent); every other site colour uses plain black. Shared by ticket
-   cards, the form sections, and the calendar's coloured day cells. */
+/* Fixed text colour per the colour chart: each site colour pairs with
+   another colour from the same fixed set for its text — Deep Pine and
+   Sandstone are each other's text colour, and Olive Clay and Dark Bark are
+   each other's — rather than one universal rule. Shared by ticket cards,
+   the form sections, and the calendar's coloured day cells. */
+const SITE_TEXT_PAIRS = {
+  '#20383C': '#F1E3C2', // Deep Pine -> Sandstone
+  '#F1E3C2': '#20383C', // Sandstone -> Deep Pine
+  '#B2A667': '#393028', // Olive Clay -> Dark Bark
+  '#393028': '#B2A667', // Dark Bark -> Olive Clay
+};
 const siteOnColor = (hex) => {
   const h = hex && hex.toUpperCase();
-  return h === '#4A4947' ? '#D1C8B5' : '#000000';
+  return SITE_TEXT_PAIRS[h] || '#000000';
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -1192,7 +1199,7 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#B17457', '#4A4947', '#A3B5B1', '#AFA48A'];
+        const FIXED_SITE_PALETTE = ['#20383C', '#F1E3C2', '#B2A667', '#393028'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -2196,9 +2203,9 @@ function App() {
       const segTravel2 = seg ? seg.travel2DateTime : j.travel2DateTime;
       const parts = Array.isArray(j.parts) ? j.parts.filter(p => p && (p.partNumber || p.partDescription)) : [];
       const on = mins(segStart, segFinish);
-      /* Fixed text colour per the colour chart: very dark grey on every
-         card, except the near-black card (#4A4947) which flips to the
-         chart's orange so the text doesn't disappear against it. */
+      /* Text colour comes from siteOnColor's reciprocal pairing (see its
+         definition) — each site colour uses another colour from the same
+         fixed set as its text. */
       const onC = s ? siteOnColor(s.hex) : INK;
       const faintC = s ? hexToRgba(onC, 0.97) : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
@@ -2660,13 +2667,13 @@ function App() {
           } })
         ),
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
-          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, '#4A4947')),
+          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, '#000000')),
           e('div', { style:{ textAlign:'center' } },
             e('div', { style:{ fontSize:'1rem', fontWeight:650, color:'#000000' } },
               anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
             e('div', { style:{ fontSize:'0.75rem', color:'#000000', opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
           ),
-          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))
+          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#000000'))
         ),
         /* Horizontal swipe changes month; vertical still goes to parent dismiss */
         e('div', {
@@ -2742,7 +2749,7 @@ function App() {
       background:PAGE_BG, padding:'0.4rem 0.6rem 0.5rem' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, '#4A4947')),
+        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, '#000000')),
       e('button', {
         onClick:()=>{
           if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
@@ -2776,7 +2783,7 @@ function App() {
         e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#000000', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, '#4A4947'))));
+        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, '#000000'))));
 
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
@@ -2843,7 +2850,7 @@ function App() {
      rule the real ticket cards use, so contrast is guaranteed regardless of
      which site is active, and the form looks like the card you'll review
      afterwards. */
-  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#4A4947';
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#20383C';
   const formOnC = siteOnColor(formSiteHex);
   const formFieldBg = hexToRgba(formOnC, 0.10);
   const formFieldBg2 = hexToRgba(formOnC, 0.08);
@@ -3185,15 +3192,15 @@ function App() {
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'#B17457', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
+          background:'#20383C', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#4A4947', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#B17457')),
-        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#141414', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#393028', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#B2A667')),
+        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#F1E3C2', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.6
-        } }, ChevronLeft(16, '#141414'))
+        } }, ChevronLeft(16, '#F1E3C2'))
       ),
       open && e('div', { style:{ padding:'0.9rem 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
     );
@@ -3430,12 +3437,12 @@ function App() {
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
-        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, '#4A4947')),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, '#000000')),
         e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
           e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:'#000000' } },
             anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
           e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:'#000000', opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
-        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#4A4947'))),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#000000'))),
       monthGrid
     ),
     e('div', { className: 'desktop-panel', key: 'day-'+ms.y+'-'+ms.m+'-'+desktopDayNum },
