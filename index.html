@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#AAB4B6">
+<meta name="theme-color" content="#06141B">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -27,14 +27,14 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #AAB4B6);
+    background:var(--page-bg, #06141B);
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
-    color:#0A0A0C; -webkit-tap-highlight-color:transparent;
+    color:#9BA8AB; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #AAB4B6);
+    background:var(--page-bg, #06141B);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -162,7 +162,7 @@
 
   /* Premium: frosted surfaces */
   .glass-bar {
-    background: color-mix(in srgb, var(--page-bg, #AAB4B6) 72%, transparent) !important;
+    background: color-mix(in srgb, var(--page-bg, #06141B) 72%, transparent) !important;
     backdrop-filter: blur(16px) saturate(1.25);
     -webkit-backdrop-filter: blur(16px) saturate(1.25);
     border-bottom: 1px solid rgba(255,255,255,0.28);
@@ -242,7 +242,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#AAB4B6; }
+    background:#06141B; }
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
@@ -284,7 +284,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#AAB4B6; color:#0A0A0C; flex-direction:column;
+      background:#06141B; color:#9BA8AB; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -301,7 +301,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #AAB4B6);
+      background: var(--page-bg, #06141B);
       overflow: hidden;
     }
     #root {
@@ -309,7 +309,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #AAB4B6);
+      background: var(--page-bg, #06141B);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -358,7 +358,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #AAB4B6);
+      background: var(--page-bg, #06141B);
     }
     .desktop-topbar {
       display: flex;
@@ -374,7 +374,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #AAB4B6);
+      background: var(--page-bg, #06141B);
     }
     .desktop-split {
       display: grid;
@@ -526,12 +526,12 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#2E3E4D', hex2:'#253440' },
-  WS:   { label:'WS',   hex:'#4A5A66', hex2:'#3E4C57' },
-  RH:   { label:'RH',   hex:'#1A2834', hex2:'#141F28' },
-  MMUH: { label:'MMUH', hex:'#586872', hex2:'#4A5962' }
+  NX:   { label:'NX',   hex:'#11212D', hex2:'#0C1A24' },
+  WS:   { label:'WS',   hex:'#253745', hex2:'#1C2C38' },
+  RH:   { label:'RH',   hex:'#4A5C6A', hex2:'#3A4A56' },
+  MMUH: { label:'MMUH', hex:'#9BA8AB', hex2:'#8A989B' }
 };
-const EXTRA_SITE_HUES = ['#3A4A56','#6A7A84','#243440','#4E5E68','#1E2C38','#64747E','#334450','#52626C'];
+const EXTRA_SITE_HUES = ['#1A2A36','#2E4050','#3E5060','#5A6C7A','#70808A','#1E3040','#334858','#465868'];
 
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -624,10 +624,10 @@ const hslToHex = (h,s,l) => {
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
 };
-let INK='#0A0A0C', MID='#5B5D66', GREY='#8C8E96', LINE='rgba(10,10,12,0.13)';
-let VIOLET='#0A0A0C', APRICOT='#FFFFFF';
+let INK='#9BA8AB', MID='#7A8A90', GREY='#6A7A82', LINE='rgba(155,168,171,0.22)';
+let VIOLET='#9BA8AB', APRICOT='#9BA8AB';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
-let LOCKED='#0A0A0C', LOCKEDBG='rgba(10,10,12,0.06)';
+let LOCKED='#9BA8AB', LOCKEDBG='rgba(155,168,171,0.12)';
 
 function applySites(list) {
   Object.keys(SITES).forEach(k => delete SITES[k]);
@@ -651,10 +651,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#AAB4B6', SURF2='#AAB4B6', SURF3='#AAB4B6';
-let FIELDBG='#AAB4B6', EMPTY='#AAB4B6';
-let PAGE_BG='#AAB4B6';
-let CARD_BG='#AAB4B6';
+let SURF='#06141B', SURF2='#11212D', SURF3='#11212D';
+let FIELDBG='#11212D', EMPTY='#11212D';
+let PAGE_BG='#06141B';
+let CARD_BG='#11212D';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -668,8 +668,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#AAB4B6';
-  CARD_BG = '#AAB4B6';
+  PAGE_BG = '#06141B';
+  CARD_BG = '#11212D';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -709,25 +709,24 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    each other's — rather than one universal rule. Shared by ticket cards,
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
-  '#2E3E4D': '#D2D8DA',
-  '#4A5A66': '#D2D8DA',
-  '#1A2834': '#D2D8DA',
-  '#586872': '#D2D8DA',
-  '#253440': '#D2D8DA',
-  '#3E4C57': '#D2D8DA',
-  '#141F28': '#D2D8DA',
-  '#4A5962': '#D2D8DA'
+  '#11212D': '#9BA8AB',
+  '#253745': '#9BA8AB',
+  '#4A5C6A': '#9BA8AB',
+  '#9BA8AB': '#06141B',
+  '#0C1A24': '#9BA8AB',
+  '#1C2C38': '#9BA8AB',
+  '#3A4A56': '#9BA8AB',
+  '#8A989B': '#06141B'
 };
 const siteOnColor = (hex) => {
-  if (!hex) return '#D2D8DA';
+  if (!hex) return '#9BA8AB';
   const h = hex.toUpperCase();
   if (SITE_TEXT_PAIRS[h]) return SITE_TEXT_PAIRS[h];
-  /* fallback: light palette text on darker cards, dark navy on light surfaces */
   try {
     const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
     const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
-    return lum > 0.55 ? '#1A2834' : '#D2D8DA';
-  } catch (err) { return '#D2D8DA'; }
+    return lum > 0.48 ? '#06141B' : '#9BA8AB';
+  } catch (err) { return '#9BA8AB'; }
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -1446,7 +1445,7 @@ function App() {
      for one gesture. */
   const savingRef = useRef(false);
   const [savedGlow, setSavedGlow] = useState(0); // 0=off, 1=confirming save
-  const SWIPE_TRIGGER = 95;
+  const SWIPE_TRIGGER = 88;
 
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
@@ -2203,8 +2202,9 @@ function App() {
        resistant rather than hard-clamping at the cap — a hard clamp is what
        made the gesture feel like it "hit a wall" right at the trigger point. */
     const raw = Math.max(0, dx);
-    const eased = raw <= 130 ? raw * 0.85 : 130 * 0.85 + (raw - 130) * 0.15;
-    setSwipeX(Math.min(eased, 170));
+    /* gentler follow + soft resistance past the trigger — less 'snap' */
+    const eased = raw <= 110 ? raw * 0.72 : 110 * 0.72 + (raw - 110) * 0.12;
+    setSwipeX(Math.min(eased, 140));
   };
   const onTouchEnd = () => {
     if (!touch.current.live) { setSwiping(false); setSwipeX(0); return; }
@@ -2235,13 +2235,13 @@ function App() {
      icon: it grows with the drag (so there's still feedback while swiping)
      and briefly brightens/widens as a "saved" confirmation once the gesture
      completes, then fades out on its own. */
-  const edgeGlowOpacity = savedGlow ? 1 : (swipeX > 4 ? 0.25 + progress * 0.55 : 0);
-  const edgeGlowWidth = savedGlow ? 130 : (40 + progress * 60);
+  const edgeGlowOpacity = savedGlow ? 0.35 : (swipeX > 8 ? 0.08 + progress * 0.22 : 0);
+  const edgeGlowWidth = savedGlow ? 72 : (28 + progress * 36);
   const swipeHint = ((view === 'form' || settingsOpen) && (edgeGlowOpacity > 0)) && e('div', {
     style:{ position:'fixed', left:0, top:0, bottom:0, width: edgeGlowWidth+'px', zIndex:40,
       pointerEvents:'none', opacity: edgeGlowOpacity,
-      background:'linear-gradient(90deg, rgba(64,145,255,0.55) 0%, rgba(64,145,255,0) 100%)',
-      transition: savedGlow ? 'opacity .55s ease, width .55s ease' : (swiping ? 'none' : 'opacity .2s ease, width .2s ease') } });
+      background:'linear-gradient(90deg, rgba(155,168,171,0.28) 0%, rgba(155,168,171,0) 100%)',
+      transition: savedGlow ? 'opacity .7s ease, width .7s ease' : (swiping ? 'none' : 'opacity .35s ease, width .35s ease') } });
 
   const shift = (n) => {
     const isDesktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
@@ -2507,16 +2507,16 @@ function App() {
       style: {
         position:'relative', zIndex:1,
         width:'56px', height:'56px', borderRadius:'50%', cursor:'pointer',
-        background: 'rgba(255,255,255,0.28)',
-        color: '#1A2834',
-        border: '1px solid rgba(255,255,255,0.55)',
+        background: 'rgba(155,168,171,0.18)',
+        color: '#9BA8AB',
+        border: '1px solid rgba(155,168,171,0.35)',
         display:'flex', alignItems:'center', justifyContent:'center',
         backdropFilter: 'blur(18px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
         boxShadow: '0 8px 28px rgba(10,20,28,0.18), 0 2px 8px rgba(10,20,28,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
         transition:'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease'
       }
-    }, PlusIcon(26, '#1A2834'))
+    }, PlusIcon(26, '#9BA8AB'))
   );
 
 
@@ -3265,7 +3265,7 @@ function App() {
      rule the real ticket cards use, so contrast is guaranteed regardless of
      which site is active, and the form looks like the card you'll review
      afterwards. */
-  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#2E3E4D';
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#11212D';
   const formOnC = siteOnColor(formSiteHex);
   const formFieldBg = hexToRgba(formOnC, 0.10);
   const formFieldBg2 = hexToRgba(formOnC, 0.08);
@@ -3408,9 +3408,9 @@ function App() {
   const formView = e('div', {
     onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
     style:{ padding:'0.7rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem',
-      transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
+      transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
       transform:'translateX('+swipeX+'px)',
-      borderRadius: swipeX > 4 ? '6px' : '0',
+      borderRadius: swipeX > 6 ? '12px' : '0',
       touchAction: 'pan-y',
       boxShadow: 'none' } },
 
@@ -3995,7 +3995,7 @@ function App() {
         e('div', {
           onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
-            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, stockBody),
         menu, chooserSheet, formSheet, swipeHint, saveToast)
     );
@@ -4014,7 +4014,7 @@ function App() {
         e('div', {
           onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
-            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, settingsBody),
         menu, chooserSheet, formSheet, fab, swipeHint, saveToast)
     );
