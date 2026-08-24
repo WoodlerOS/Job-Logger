@@ -1315,6 +1315,9 @@ function App() {
   const [form, setForm] = useState(blank());
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
+  const [stockQuery, setStockQuery] = useState('');
+  const [stockSort, setStockSort] = useState('name'); /* name | qty | short | part */
   const themesOpen = false;
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [themeTick, setThemeTick] = useState(0);
@@ -1506,6 +1509,57 @@ function App() {
       if (next[pn] > 0) { next[pn] = next[pn] - 1; changed = true; }
     });
     if (changed) saveSettings({ stockRemaining: next });
+  };
+
+  const stockRowsAll = () => {
+    const remaining = getStockRemaining();
+    return STOCK_PARTS.filter(p => STOCK_REMAINING_DEFAULT[p.partNumber] != null).map(p => ({
+      ...p,
+      remaining: remaining[p.partNumber] != null ? remaining[p.partNumber] : (STOCK_REMAINING_DEFAULT[p.partNumber] || 0),
+      start: STOCK_REMAINING_DEFAULT[p.partNumber] || 0,
+      kind: p.available > p.actual ? 'short' : 'extra'
+    }));
+  };
+
+  const exportStockExcel = async () => {
+    if (typeof ExcelJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
+    try {
+      const rows = stockRowsAll().filter(p => p.remaining > 0);
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Remaining stock');
+      ws.columns = [
+        { header: 'Part Number', key: 'pn', width: 22 },
+        { header: 'Description', key: 'desc', width: 48 },
+        { header: 'Remaining', key: 'rem', width: 12 },
+        { header: 'Original discrepancy', key: 'start', width: 18 },
+        { header: 'Type', key: 'kind', width: 10 },
+        { header: 'System qty', key: 'avail', width: 12 },
+        { header: 'Had in stock', key: 'actual', width: 14 }
+      ];
+      ws.getRow(1).font = { bold: true };
+      rows.sort((a,b) => a.partNumber.localeCompare(b.partNumber)).forEach(p => {
+        ws.addRow({
+          pn: p.partNumber, desc: p.description, rem: p.remaining, start: p.start,
+          kind: p.kind === 'short' ? 'Short' : 'Extra', avail: p.available, actual: p.actual
+        });
+      });
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const name = 'Stock-remaining-' + todayISO() + '.xlsx';
+      if (navigator.share && navigator.canShare) {
+        try {
+          const file = new File([blob], name, { type: blob.type });
+          if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+        } catch (err) {}
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (err) {
+      alert('Export failed: ' + (err && err.message ? err.message : err));
+    }
   };
 
   const persist = async (next) => {
@@ -2053,7 +2107,213 @@ function App() {
     if (savingRef.current) return; // already saving (button + swipe can't double-fire)
     savingRef.current = true;
     try {
-      if (settingsOpen) {
+    
+  const stockView = (() => {
+    const q = (stockQuery || '').trim().toLowerCase();
+    let rows = stockRowsAll();
+    if (q) {
+      rows = rows.filter(p =>
+        (p.partNumber || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+      );
+    }
+    const sortKey = stockSort || 'name';
+    const sorter = (a, b) => {
+      if (sortKey === 'qty') return (b.remaining - a.remaining) || a.partNumber.localeCompare(b.partNumber);
+      if (sortKey === 'short') {
+        if (a.kind !== b.kind) return a.kind === 'short' ? -1 : 1;
+        return b.remaining - a.remaining;
+      }
+      if (sortKey === 'part') return a.partNumber.localeCompare(b.partNumber);
+      /* name = description */
+      return (a.description || '').localeCompare(b.description || '') || a.partNumber.localeCompare(b.partNumber);
+    };
+    const active = rows.filter(p => p.remaining > 0).sort(sorter);
+    const cleared = rows.filter(p => p.remaining <= 0).sort(sorter);
+    const sortChips = [
+      { key: 'name', label: 'Name' },
+      { key: 'part', label: 'Part no.' },
+      { key: 'qty', label: 'Qty left' },
+      { key: 'short', label: 'Short first' }
+    ];
+
+    const renderRow = (p, clearedRow) => e('div', {
+      key: p.partNumber,
+      style: {
+        display: 'flex', alignItems: 'stretch', gap: '0.75rem',
+        background: clearedRow ? 'rgba(46, 160, 90, 0.12)' : SURF,
+        border: clearedRow ? '1.5px solid rgba(46, 160, 90, 0.45)' : '1px solid ' + LINE,
+        borderRadius: '14px',
+        padding: '0.85rem 0.9rem',
+        opacity: clearedRow ? 0.92 : 1
+      }
+    },
+      e('div', { style: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.28rem' } },
+        e('div', { style: {
+          fontSize: '0.95rem', fontWeight: 700, color: INK, letterSpacing: '-0.2px',
+          lineHeight: 1.25, wordBreak: 'break-word'
+        } }, p.description),
+        e('div', { style: {
+          fontSize: '0.78rem', fontWeight: 650, color: MID,
+          fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.1px'
+        } }, p.partNumber),
+        e('div', { style: { fontSize: '0.68rem', color: GREY, fontWeight: 550, marginTop: '2px' } },
+          (p.kind === 'short' ? 'Short by ' : 'Extra ') + p.start +
+          '  ·  system ' + p.available + '  ·  had ' + p.actual +
+          (clearedRow ? '  ·  cleared from stock' : '')
+        )
+      ),
+      e('div', {
+        style: {
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: '0.35rem', flexShrink: 0
+        }
+      },
+        e('div', {
+          style: {
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            background: clearedRow ? 'rgba(46,160,90,0.15)' : SURF2,
+            borderRadius: '999px', padding: '0.25rem',
+            border: '1px solid ' + (clearedRow ? 'rgba(46,160,90,0.35)' : LINE)
+          }
+        },
+          e('button', {
+            type: 'button',
+            onClick: () => adjustStockPart(p.partNumber, -1),
+            disabled: p.remaining <= 0,
+            style: {
+              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
+              background: p.remaining > 0 ? INK : LINE,
+              color: p.remaining > 0 ? (DARK_MODE ? '#0A0A0C' : '#FFF') : GREY,
+              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining > 0 ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+            }
+          }, '\u2212'),
+          e('span', {
+            style: {
+              minWidth: '32px', textAlign: 'center', fontSize: '1.05rem', fontWeight: 750,
+              color: clearedRow ? '#1B7A3D' : INK, fontVariantNumeric: 'tabular-nums'
+            }
+          }, String(p.remaining)),
+          e('button', {
+            type: 'button',
+            onClick: () => adjustStockPart(p.partNumber, 1),
+            disabled: p.remaining >= p.start,
+            style: {
+              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
+              background: p.remaining < p.start ? SURF : 'transparent', color: MID,
+              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining < p.start ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+            }
+          }, '+')
+        )
+      )
+    );
+
+    return e('div', { style: { padding: '0.75rem 0.85rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
+      e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.1rem 0.05rem 0.2rem' } },
+        e('button', {
+          className: 'd-hover-btn',
+          onClick: () => setStockOpen(false),
+          style: { background: 'none', border: 'none', width: '36px', height: '36px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
+        }, ChevronLeft(18, INK)),
+        e('span', { style: { fontSize: '0.95rem', fontWeight: 650, letterSpacing: '-0.25px', color: INK } }, 'Stock'),
+        e('button', {
+          className: 'd-hover-btn',
+          onClick: exportStockExcel,
+          title: 'Export remaining to Excel',
+          style: {
+            background: SURF2, border: '1px solid ' + LINE, borderRadius: '10px',
+            padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, color: INK, cursor: 'pointer'
+          }
+        }, 'Excel')
+      ),
+
+      e('div', { style: { fontSize: '0.74rem', color: GREY, fontWeight: 550, lineHeight: 1.4, padding: '0 0.1rem' } },
+        'Book parts off with − as you use them. Zero means cleared from your stock — they move to the bottom. Saving a ticket with these part numbers also reduces the count.'),
+
+      e('input', {
+        type: 'search',
+        value: stockQuery,
+        placeholder: 'Search part name or number…',
+        onChange: (ev) => setStockQuery(ev.target.value),
+        style: {
+          width: '100%', padding: '0.75rem 0.9rem', borderRadius: '12px',
+          border: '1px solid ' + LINE, background: FIELDBG, color: INK,
+          fontSize: '0.9rem', outline: 'none', fontWeight: 500
+        }
+      }),
+
+      e('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.35rem' } },
+        sortChips.map(c => e('button', {
+          key: c.key,
+          type: 'button',
+          onClick: () => setStockSort(c.key),
+          style: {
+            border: 'none', borderRadius: '999px', padding: '0.4rem 0.75rem',
+            fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+            background: sortKey === c.key ? INK : SURF2,
+            color: sortKey === c.key ? (DARK_MODE ? '#0A0A0C' : '#FFF') : MID
+          }
+        }, c.label))
+      ),
+
+      e('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0.1rem 0' } },
+        e('span', { style: { fontSize: '0.72rem', fontWeight: 700, color: MID, letterSpacing: '0.04em', textTransform: 'uppercase' } },
+          'Still to clear  ·  ' + active.length),
+        e('button', {
+          type: 'button',
+          onClick: () => {
+            if (window.confirm('Reset all stock counts to the August 2026 spreadsheet values?')) {
+              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT) });
+            }
+          },
+          style: { border: 'none', background: 'none', color: GREY, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }
+        }, 'Reset')
+      ),
+
+      active.length === 0 && !q
+        ? e('div', { style: { textAlign: 'center', padding: '1.5rem 0.5rem', color: GREY, fontSize: '0.88rem', fontWeight: 550 } },
+            'Nothing left to clear')
+        : active.length === 0 && q
+          ? e('div', { style: { textAlign: 'center', padding: '1rem', color: GREY, fontSize: '0.85rem' } }, 'No matches in open items')
+          : e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
+              active.map(p => renderRow(p, false))
+            ),
+
+      cleared.length > 0 && e('div', { style: { marginTop: '0.85rem' } },
+        e('div', { style: {
+          fontSize: '0.72rem', fontWeight: 700, color: '#1B7A3D', letterSpacing: '0.04em',
+          textTransform: 'uppercase', marginBottom: '0.55rem', padding: '0 0.1rem'
+        } }, 'Cleared from stock  ·  ' + cleared.length),
+        e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
+          cleared.map(p => renderRow(p, true))
+        )
+      )
+    );
+  })();
+
+
+  if (stockOpen) {
+    const stockBody = e('div', { key:'stock', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, stockView);
+    return e('div', { className: 'desktop-shell' },
+      desktopSidebar,
+      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
+        desktopTopbar,
+        e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, stockBody)
+      ),
+      e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
+        e('div', {
+          onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
+          style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
+        }, stockBody),
+        menu, chooserSheet, formSheet, swipeHint)
+    );
+  }
+
+  if (settingsOpen) {
         setSettingsOpen(false);
       } else {
         if (form.ticketNumber.trim() && form.start) await commit();
@@ -2353,6 +2613,7 @@ function App() {
               sideMenuItem(view === 'list' ? 'Calendar' : 'All tickets', ()=>{ setView(view === 'list' ? 'month' : 'list'); window.scrollTo(0,0); }),
               sideMenuItem('Export to Excel', ()=> setChooser('excel')),
               sideMenuItem('Copy as text', ()=> setChooser('text')),
+              sideMenuItem('Stock', ()=> { setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
               sideMenuItem('Settings', ()=> openSettings()),
               settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
                 borderTop:'1px solid rgba(255,255,255,0.1)' } },
@@ -2405,7 +2666,7 @@ function App() {
 
   /* Edge-swipe from left to open the black side menu (home / list only) */
   const onEdgeStart = (ev) => {
-    if (view === 'form' || settingsOpen || themesOpen || backupsOpen || monthPickerOpen) return;
+    if (view === 'form' || settingsOpen || stockOpen || themesOpen || backupsOpen || monthPickerOpen) return;
     const t = ev.touches[0];
     if (t.clientX > 28) { edgeSwipe.current.live = false; return; }
     edgeSwipe.current = { live:true, x:t.clientX, y:t.clientY };
@@ -2425,7 +2686,7 @@ function App() {
     else setMenuSlide(0);
   };
 
-  const fab = (view !== 'form' && !settingsOpen && !backupsOpen && !themesOpen) && e('div', {
+  const fab = (view !== 'form' && !settingsOpen && !stockOpen && !backupsOpen && !themesOpen) && e('div', {
     className: 'fab-wrap',
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
@@ -3430,7 +3691,7 @@ function App() {
     )
   );
 
-  const openSettings = () => { setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setSettingsOpen(true); };
+  const openSettings = () => { setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(true); };
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list }); };
   const commitEquip = (list) => { setEquipEdits(list); applyEquip(list); setThemeTick(t=>t+1); saveSettings({ equipment:list }); };
@@ -3539,94 +3800,6 @@ function App() {
         settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v }))
     ]),
 
-    collapseSection('stock', 'Stock discrepancies', stockIcon, [
-      e('div', { key:'stockIntro', style:{ fontSize:'0.72rem', color:GREY, fontWeight:550, marginBottom:'0.65rem', lineHeight:1.4 } },
-        'Only parts where system qty does not match what you have. Use − / + like a basket to book them off down to zero. Saving a ticket with these part numbers also reduces the count.'),
-      (() => {
-        const remaining = getStockRemaining();
-        const rows = STOCK_PARTS.filter(p => {
-          const r = remaining[p.partNumber];
-          return r != null && r > 0;
-        }).map(p => ({
-          ...p,
-          remaining: remaining[p.partNumber],
-          start: STOCK_REMAINING_DEFAULT[p.partNumber] || 0,
-          kind: p.available > p.actual ? 'short' : 'extra'
-        })).sort((a,b) => a.partNumber.localeCompare(b.partNumber));
-        if (!rows.length) {
-          return e('div', { key:'stockEmpty', style:{ textAlign:'center', padding:'1.25rem 0.5rem', color:GREY, fontSize:'0.84rem', fontWeight:550 } },
-            'All discrepancies cleared');
-        }
-        return e('div', { key:'stockList', style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-          rows.map(p => e('div', {
-            key: p.partNumber,
-            style: {
-              display:'flex', alignItems:'center', gap:'0.55rem',
-              background: SURF2, borderRadius:'12px', padding:'0.65rem 0.7rem'
-            }
-          },
-            e('div', { style:{ flex:1, minWidth:0 } },
-              e('div', { style:{ fontSize:'0.8rem', fontWeight:700, color:INK, letterSpacing:'-0.15px',
-                whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, p.partNumber),
-              e('div', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:500, marginTop:'2px',
-                whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, p.description),
-              e('div', { style:{ fontSize:'0.62rem', color:MID, fontWeight:600, marginTop:'3px' } },
-                (p.kind === 'short' ? 'Short ' : 'Extra ') + p.start + ' · sys ' + p.available + ' / have ' + p.actual)
-            ),
-            e('div', {
-              style: {
-                display:'flex', alignItems:'center', gap:'0.25rem',
-                background: SURF, borderRadius:'999px', padding:'0.2rem',
-                border: '1px solid ' + LINE, flexShrink:0
-              }
-            },
-              e('button', {
-                type:'button',
-                onClick: () => adjustStockPart(p.partNumber, -1),
-                disabled: p.remaining <= 0,
-                style: {
-                  width:'32px', height:'32px', borderRadius:'999px', border:'none',
-                  background: p.remaining > 0 ? INK : LINE, color: p.remaining > 0 ? (DARK_MODE ? '#0A0A0C' : '#FFF') : GREY,
-                  fontSize:'1.15rem', fontWeight:500, cursor: p.remaining > 0 ? 'pointer' : 'default',
-                  display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1
-                }
-              }, '\u2212'),
-              e('span', {
-                style: {
-                  minWidth:'28px', textAlign:'center', fontSize:'0.9rem', fontWeight:700,
-                  color:INK, fontVariantNumeric:'tabular-nums'
-                }
-              }, String(p.remaining)),
-              e('button', {
-                type:'button',
-                onClick: () => adjustStockPart(p.partNumber, 1),
-                disabled: p.remaining >= p.start,
-                style: {
-                  width:'32px', height:'32px', borderRadius:'999px', border:'none',
-                  background: p.remaining < p.start ? SURF2 : 'transparent', color: MID,
-                  fontSize:'1.15rem', fontWeight:500, cursor: p.remaining < p.start ? 'pointer' : 'default',
-                  display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1
-                }
-              }, '+')
-            )
-          )),
-          e('button', {
-            key:'resetStock',
-            className:'d-hover-btn',
-            onClick: () => {
-              if (window.confirm('Reset all stock discrepancies to the August 2026 spreadsheet values?')) {
-                saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT) });
-              }
-            },
-            style: {
-              marginTop:'0.35rem', border:'none', background:'transparent', color:GREY,
-              fontSize:'0.72rem', fontWeight:600, cursor:'pointer', padding:'0.4rem'
-            }
-          }, 'Reset to spreadsheet')
-        );
-      })()
-    ]),
-
     collapseSection('equipment', 'Equipment', GearIcon, [
       e('div', { key:'eqlist', style:{ display:'flex', flexDirection:'column', gap:'0.4rem', paddingTop:'0.15rem' } },
         equipEdits.map((x,idx) => e('div', { key:x.key, className:'d-hover', style:{ display:'flex', alignItems:'center', gap:'0.5rem',
@@ -3689,8 +3862,9 @@ function App() {
   if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
 
   const navTo = (target) => {
-    setSettingsOpen(false); setMenuOpen(false);
+    setSettingsOpen(false); setStockOpen(false); setMenuOpen(false);
     if (target === 'settings') { setSettingsOpen(true); return; }
+    if (target === 'stock') { setStockOpen(true); return; }
     if (target === 'list') { setView('list'); return; }
     setView('month');
     if (window.matchMedia && window.matchMedia('(min-width: 900px)').matches) setCalMode('month');
@@ -3701,12 +3875,15 @@ function App() {
       e('img', { src:'icon-180.png', alt:'', width:32, height:32,
         style:{ width:'32px', height:'32px', borderRadius:'9px', display:'block' } }),
       e('span', { style:{ fontWeight:650, fontSize:'1.05rem', letterSpacing:'-0.3px' } }, 'Tickets')),
-    e('button', { className: 'nav-item' + (view !== 'list' && view !== 'form' && !settingsOpen ? ' active' : ''),
+    e('button', { className: 'nav-item' + (view !== 'list' && view !== 'form' && !settingsOpen && !stockOpen ? ' active' : ''),
       onClick: () => navTo('calendar') },
       e('span', null, '📅'), 'Calendar'),
-    e('button', { className: 'nav-item' + (view === 'list' && !settingsOpen ? ' active' : ''),
+    e('button', { className: 'nav-item' + (view === 'list' && !settingsOpen && !stockOpen ? ' active' : ''),
       onClick: () => navTo('list') },
       e('span', null, '☰'), 'All tickets'),
+    e('button', { className: 'nav-item' + (stockOpen && !settingsOpen ? ' active' : ''),
+      onClick: () => { setSettingsOpen(false); setStockOpen(true); setMenuOpen(false); } },
+      e('span', null, '📦'), 'Stock'),
     e('button', { className: 'nav-item' + (settingsOpen ? ' active' : ''),
       onClick: () => navTo('settings') },
       e('span', null, '⚙'), 'Settings'),
@@ -3743,6 +3920,212 @@ function App() {
       }
     }, e('span', { style:{ fontSize:'1.1rem', lineHeight:1 } }, '+'), 'New ticket')
   );
+
+
+  const stockView = (() => {
+    const q = (stockQuery || '').trim().toLowerCase();
+    let rows = stockRowsAll();
+    if (q) {
+      rows = rows.filter(p =>
+        (p.partNumber || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+      );
+    }
+    const sortKey = stockSort || 'name';
+    const sorter = (a, b) => {
+      if (sortKey === 'qty') return (b.remaining - a.remaining) || a.partNumber.localeCompare(b.partNumber);
+      if (sortKey === 'short') {
+        if (a.kind !== b.kind) return a.kind === 'short' ? -1 : 1;
+        return b.remaining - a.remaining;
+      }
+      if (sortKey === 'part') return a.partNumber.localeCompare(b.partNumber);
+      /* name = description */
+      return (a.description || '').localeCompare(b.description || '') || a.partNumber.localeCompare(b.partNumber);
+    };
+    const active = rows.filter(p => p.remaining > 0).sort(sorter);
+    const cleared = rows.filter(p => p.remaining <= 0).sort(sorter);
+    const sortChips = [
+      { key: 'name', label: 'Name' },
+      { key: 'part', label: 'Part no.' },
+      { key: 'qty', label: 'Qty left' },
+      { key: 'short', label: 'Short first' }
+    ];
+
+    const renderRow = (p, clearedRow) => e('div', {
+      key: p.partNumber,
+      style: {
+        display: 'flex', alignItems: 'stretch', gap: '0.75rem',
+        background: clearedRow ? 'rgba(46, 160, 90, 0.12)' : SURF,
+        border: clearedRow ? '1.5px solid rgba(46, 160, 90, 0.45)' : '1px solid ' + LINE,
+        borderRadius: '14px',
+        padding: '0.85rem 0.9rem',
+        opacity: clearedRow ? 0.92 : 1
+      }
+    },
+      e('div', { style: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.28rem' } },
+        e('div', { style: {
+          fontSize: '0.95rem', fontWeight: 700, color: INK, letterSpacing: '-0.2px',
+          lineHeight: 1.25, wordBreak: 'break-word'
+        } }, p.description),
+        e('div', { style: {
+          fontSize: '0.78rem', fontWeight: 650, color: MID,
+          fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.1px'
+        } }, p.partNumber),
+        e('div', { style: { fontSize: '0.68rem', color: GREY, fontWeight: 550, marginTop: '2px' } },
+          (p.kind === 'short' ? 'Short by ' : 'Extra ') + p.start +
+          '  ·  system ' + p.available + '  ·  had ' + p.actual +
+          (clearedRow ? '  ·  cleared from stock' : '')
+        )
+      ),
+      e('div', {
+        style: {
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: '0.35rem', flexShrink: 0
+        }
+      },
+        e('div', {
+          style: {
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            background: clearedRow ? 'rgba(46,160,90,0.15)' : SURF2,
+            borderRadius: '999px', padding: '0.25rem',
+            border: '1px solid ' + (clearedRow ? 'rgba(46,160,90,0.35)' : LINE)
+          }
+        },
+          e('button', {
+            type: 'button',
+            onClick: () => adjustStockPart(p.partNumber, -1),
+            disabled: p.remaining <= 0,
+            style: {
+              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
+              background: p.remaining > 0 ? INK : LINE,
+              color: p.remaining > 0 ? (DARK_MODE ? '#0A0A0C' : '#FFF') : GREY,
+              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining > 0 ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+            }
+          }, '\u2212'),
+          e('span', {
+            style: {
+              minWidth: '32px', textAlign: 'center', fontSize: '1.05rem', fontWeight: 750,
+              color: clearedRow ? '#1B7A3D' : INK, fontVariantNumeric: 'tabular-nums'
+            }
+          }, String(p.remaining)),
+          e('button', {
+            type: 'button',
+            onClick: () => adjustStockPart(p.partNumber, 1),
+            disabled: p.remaining >= p.start,
+            style: {
+              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
+              background: p.remaining < p.start ? SURF : 'transparent', color: MID,
+              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining < p.start ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+            }
+          }, '+')
+        )
+      )
+    );
+
+    return e('div', { style: { padding: '0.75rem 0.85rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
+      e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.1rem 0.05rem 0.2rem' } },
+        e('button', {
+          className: 'd-hover-btn',
+          onClick: () => setStockOpen(false),
+          style: { background: 'none', border: 'none', width: '36px', height: '36px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
+        }, ChevronLeft(18, INK)),
+        e('span', { style: { fontSize: '0.95rem', fontWeight: 650, letterSpacing: '-0.25px', color: INK } }, 'Stock'),
+        e('button', {
+          className: 'd-hover-btn',
+          onClick: exportStockExcel,
+          title: 'Export remaining to Excel',
+          style: {
+            background: SURF2, border: '1px solid ' + LINE, borderRadius: '10px',
+            padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, color: INK, cursor: 'pointer'
+          }
+        }, 'Excel')
+      ),
+
+      e('div', { style: { fontSize: '0.74rem', color: GREY, fontWeight: 550, lineHeight: 1.4, padding: '0 0.1rem' } },
+        'Book parts off with − as you use them. Zero means cleared from your stock — they move to the bottom. Saving a ticket with these part numbers also reduces the count.'),
+
+      e('input', {
+        type: 'search',
+        value: stockQuery,
+        placeholder: 'Search part name or number…',
+        onChange: (ev) => setStockQuery(ev.target.value),
+        style: {
+          width: '100%', padding: '0.75rem 0.9rem', borderRadius: '12px',
+          border: '1px solid ' + LINE, background: FIELDBG, color: INK,
+          fontSize: '0.9rem', outline: 'none', fontWeight: 500
+        }
+      }),
+
+      e('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.35rem' } },
+        sortChips.map(c => e('button', {
+          key: c.key,
+          type: 'button',
+          onClick: () => setStockSort(c.key),
+          style: {
+            border: 'none', borderRadius: '999px', padding: '0.4rem 0.75rem',
+            fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+            background: sortKey === c.key ? INK : SURF2,
+            color: sortKey === c.key ? (DARK_MODE ? '#0A0A0C' : '#FFF') : MID
+          }
+        }, c.label))
+      ),
+
+      e('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0.1rem 0' } },
+        e('span', { style: { fontSize: '0.72rem', fontWeight: 700, color: MID, letterSpacing: '0.04em', textTransform: 'uppercase' } },
+          'Still to clear  ·  ' + active.length),
+        e('button', {
+          type: 'button',
+          onClick: () => {
+            if (window.confirm('Reset all stock counts to the August 2026 spreadsheet values?')) {
+              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT) });
+            }
+          },
+          style: { border: 'none', background: 'none', color: GREY, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }
+        }, 'Reset')
+      ),
+
+      active.length === 0 && !q
+        ? e('div', { style: { textAlign: 'center', padding: '1.5rem 0.5rem', color: GREY, fontSize: '0.88rem', fontWeight: 550 } },
+            'Nothing left to clear')
+        : active.length === 0 && q
+          ? e('div', { style: { textAlign: 'center', padding: '1rem', color: GREY, fontSize: '0.85rem' } }, 'No matches in open items')
+          : e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
+              active.map(p => renderRow(p, false))
+            ),
+
+      cleared.length > 0 && e('div', { style: { marginTop: '0.85rem' } },
+        e('div', { style: {
+          fontSize: '0.72rem', fontWeight: 700, color: '#1B7A3D', letterSpacing: '0.04em',
+          textTransform: 'uppercase', marginBottom: '0.55rem', padding: '0 0.1rem'
+        } }, 'Cleared from stock  ·  ' + cleared.length),
+        e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
+          cleared.map(p => renderRow(p, true))
+        )
+      )
+    );
+  })();
+
+
+  if (stockOpen) {
+    const stockBody = e('div', { key:'stock', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, stockView);
+    return e('div', { className: 'desktop-shell' },
+      desktopSidebar,
+      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
+        desktopTopbar,
+        e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, stockBody)
+      ),
+      e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
+        e('div', {
+          onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
+          style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
+        }, stockBody),
+        menu, chooserSheet, formSheet, swipeHint)
+    );
+  }
 
   if (settingsOpen) {
     const pane = settingsView;
