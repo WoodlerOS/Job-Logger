@@ -1090,7 +1090,6 @@ const DEFAULT_SETTINGS = {
   defaultCalMode: 'day',
   hideWeekendsDefault: true,
   timeRounding: 5,
-  autoBackupEnabled: false,
   bgDim: 0,
   cardDim: 0,
   confirmDelete: true,
@@ -1415,7 +1414,7 @@ function App() {
 
   function blank(date) {
     const d = date || todayISO();
-    return { ticketNumber:'', site:'', equipment:[], date:d,
+    return { ticketNumber:'', summary:'', site:'', equipment:[], date:d,
       t1:'', start:'00:00', finish:'00:00', t2:'', extra:[],
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
@@ -1496,19 +1495,6 @@ function App() {
     const max = STOCK_REMAINING_DEFAULT[partNumber] != null ? STOCK_REMAINING_DEFAULT[partNumber] : 0;
     const nextVal = Math.max(0, Math.min(max, (cur[partNumber] != null ? cur[partNumber] : max) + delta));
     saveSettings({ stockRemaining: { ...cur, [partNumber]: nextVal } });
-  };
-
-  const applyPartsToStock = (partsList) => {
-    if (!partsList || !partsList.length) return;
-    const cur = getStockRemaining();
-    let changed = false;
-    const next = { ...cur };
-    partsList.forEach(p => {
-      const pn = (p.partNumber || '').trim();
-      if (!pn || next[pn] == null) return;
-      if (next[pn] > 0) { next[pn] = next[pn] - 1; changed = true; }
-    });
-    if (changed) saveSettings({ stockRemaining: next });
   };
 
   const stockRowsAll = () => {
@@ -1727,7 +1713,7 @@ function App() {
       { header:'Finish', key:'finish', width:8 }, { header:'Travel 2', key:'t2', width:9 },
       { header:'On site', key:'onsite', width:10 }, { header:'Travel mins', key:'travelmins', width:11 },
       { header:'Extra days', key:'extra', width:30 }, { header:'Signed off', key:'signed', width:11 },
-      { header:'Work Done', key:'workdone', width:52 }, { header:'Parts Used', key:'parts', width:36 } ];
+      { header:'Summary', key:'summary', width:28 }, { header:'Work Done', key:'workdone', width:52 }, { header:'Parts Used', key:'parts', width:36 } ];
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Tickets', { views:[{ state:'frozen', ySplit:1 }] });
@@ -1748,7 +1734,7 @@ function App() {
       }).join(' | ');
       const workdone = (j.workDone||'').trim();
       const row = ws.addRow({
-        ticket:j.ticketNumber, site: SITES[j.site]?SITES[j.site].label:'', machine: eqOf(j).map(x=>EQUIP[x]||x).join(', '),
+        ticket:j.ticketNumber, summary: j.summary || '', site: SITES[j.site]?SITES[j.site].label:'', machine: eqOf(j).map(x=>EQUIP[x]||x).join(', '),
         date: fmtDate(j.startDateTime), t1: j.hasTravel?fmtTime(j.travelDateTime):'', start: fmtTime(j.startDateTime),
         finish: fmtTime(j.finishDateTime), t2: j.hasTravel2?fmtTime(j.travel2DateTime):'', onsite: on?hm(on):'',
         travelmins: tr||'', extra: ex, signed: j.locked ? 'Ready' : '', workdone, parts });
@@ -1790,27 +1776,6 @@ function App() {
     catch (err) { if (err && err.name==='AbortError') return true; }
     return false;
   };
-
-  const doAutoBackup = (label) => {
-    if (!jobsRef.current.length) return;
-    const blob = new Blob([JSON.stringify({ app:'tickets', version:9, exported:new Date().toISOString(), auto:true, jobs:jobsRef.current }, null, 2)], { type:'application/json' });
-    download(blob, label+' Auto backup.json');
-  };
-  useEffect(() => {
-    if (!ready || !settings.autoBackupEnabled) return;
-    const check = () => {
-      const t = todayISO();
-      let last = null;
-      try { last = localStorage.getItem(AUTO_BACKUP_KEY); } catch (err) {}
-      if (last !== t) {
-        doAutoBackup(last || t);
-        try { localStorage.setItem(AUTO_BACKUP_KEY, t); } catch (err) {}
-      }
-    };
-    check();
-    const iv = setInterval(check, 5*60*1000);
-    return () => clearInterval(iv);
-  }, [ready, settings.autoBackupEnabled]);
 
   const scopeTickets = (scope) => {
     if (scope === 'day') return dv.list;
@@ -1888,6 +1853,7 @@ function App() {
         const ex = exOf(j).map(x => fmtDay(x.startDateTime)+' '+fmtTime(x.startDateTime)+'–'+fmtTime(x.finishDateTime)).join(', ');
         const lines = [
           'Ticket: ' + j.ticketNumber,
+          j.summary ? 'Summary: ' + j.summary : null,
           SITES[j.site] ? 'Site: ' + SITES[j.site].label : null,
           eqOf(j).length ? 'Machine: ' + eqOf(j).join(', ') : null,
           'Date: ' + fmtDate(j.startDateTime),
@@ -1913,7 +1879,7 @@ function App() {
       if (siteFilter.length && !siteFilter.includes(j.site)) return false;
       if (equipFilter.length && !eqOf(j).some(x => equipFilter.includes(x))) return false;
       if (!q) return true;
-      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+      const hay = [ j.ticketNumber, j.summary, j.workDone, SITES[j.site]?SITES[j.site].label:'',
         ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x]+' '+x : x),
         ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
       return hay.includes(q);
@@ -1924,7 +1890,7 @@ function App() {
     const q = menuSearch.trim().toLowerCase();
     if (!q) return [];
     return jobs.filter(j => {
-      const hay = [ j.ticketNumber, j.workDone, SITES[j.site]?SITES[j.site].label:'',
+      const hay = [ j.ticketNumber, j.summary, j.workDone, SITES[j.site]?SITES[j.site].label:'',
         ...eqOf(j).map(x => EQUIP[x] ? EQUIP[x]+' '+x : x),
         ...(j.parts||[]).map(p => (p.partNumber||'')+' '+(p.partDescription||'')) ].join(' ').toLowerCase();
       return hay.includes(q);
@@ -1933,7 +1899,6 @@ function App() {
 
   const partHistory = useMemo(() => {
     const set = new Map();
-    STOCK_PARTS.forEach(p => { if (p.partNumber) set.set(p.partNumber, p.description || ''); });
     jobs.forEach(j => (j.parts||[]).forEach(p => {
       if (p.partNumber && p.partNumber.trim()) set.set(p.partNumber.trim(), p.partDescription||'');
     }));
@@ -2029,6 +1994,7 @@ function App() {
   const openEdit = (j, ret) => {
     setForm({
       ticketNumber: j.ticketNumber || '',
+      summary: j.summary || '',
       site: j.site || '',
       equipment: eqOf(j),
       date: (j.startDateTime||'').slice(0,10) || todayISO(),
@@ -2068,6 +2034,7 @@ function App() {
     return {
       id: editingId || Date.now(),
       ticketNumber: form.ticketNumber.trim(),
+      summary: (form.summary || '').trim(),
       site: form.site,
       equipment: form.equipment,
       ...pack(form),
@@ -2088,18 +2055,7 @@ function App() {
     if (!form.start) { alert('Set a start time to save.'); return; }
     const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
     if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
-    const rec = packRec();
-    const prev = editingId ? jobs.find(j => j.id === editingId) : null;
-    const prevParts = prev && Array.isArray(prev.parts) ? prev.parts.map(p => (p.partNumber||'').trim()).filter(Boolean) : [];
-    const newParts = (rec.parts || []).filter(p => {
-      const pn = (p.partNumber||'').trim();
-      if (!pn) return false;
-      const idx = prevParts.indexOf(pn);
-      if (idx >= 0) { prevParts.splice(idx, 1); return false; }
-      return true;
-    });
     await commit();
-    if (newParts.length) applyPartsToStock(newParts);
     goBack();
   };
 
@@ -2107,214 +2063,10 @@ function App() {
     if (savingRef.current) return; // already saving (button + swipe can't double-fire)
     savingRef.current = true;
     try {
-    
-  const stockView = (() => {
-    const q = (stockQuery || '').trim().toLowerCase();
-    let rows = stockRowsAll();
-    if (q) {
-      rows = rows.filter(p =>
-        (p.partNumber || '').toLowerCase().includes(q) ||
-        (p.description || '').toLowerCase().includes(q)
-      );
-    }
-    const sortKey = stockSort || 'name';
-    const sorter = (a, b) => {
-      if (sortKey === 'qty') return (b.remaining - a.remaining) || a.partNumber.localeCompare(b.partNumber);
-      if (sortKey === 'short') {
-        if (a.kind !== b.kind) return a.kind === 'short' ? -1 : 1;
-        return b.remaining - a.remaining;
-      }
-      if (sortKey === 'part') return a.partNumber.localeCompare(b.partNumber);
-      /* name = description */
-      return (a.description || '').localeCompare(b.description || '') || a.partNumber.localeCompare(b.partNumber);
-    };
-    const active = rows.filter(p => p.remaining > 0).sort(sorter);
-    const cleared = rows.filter(p => p.remaining <= 0).sort(sorter);
-    const sortChips = [
-      { key: 'name', label: 'Name' },
-      { key: 'part', label: 'Part no.' },
-      { key: 'qty', label: 'Qty left' },
-      { key: 'short', label: 'Short first' }
-    ];
-
-    const renderRow = (p, clearedRow) => e('div', {
-      key: p.partNumber,
-      style: {
-        display: 'flex', alignItems: 'stretch', gap: '0.75rem',
-        background: clearedRow ? 'rgba(46, 160, 90, 0.12)' : SURF,
-        border: clearedRow ? '1.5px solid rgba(46, 160, 90, 0.45)' : '1px solid ' + LINE,
-        borderRadius: '14px',
-        padding: '0.85rem 0.9rem',
-        opacity: clearedRow ? 0.92 : 1
-      }
-    },
-      e('div', { style: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.28rem' } },
-        e('div', { style: {
-          fontSize: '0.95rem', fontWeight: 700, color: INK, letterSpacing: '-0.2px',
-          lineHeight: 1.25, wordBreak: 'break-word'
-        } }, p.description),
-        e('div', { style: {
-          fontSize: '0.78rem', fontWeight: 650, color: MID,
-          fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.1px'
-        } }, p.partNumber),
-        e('div', { style: { fontSize: '0.68rem', color: GREY, fontWeight: 550, marginTop: '2px' } },
-          (p.kind === 'short' ? 'Short by ' : 'Extra ') + p.start +
-          '  ·  system ' + p.available + '  ·  had ' + p.actual +
-          (clearedRow ? '  ·  cleared from stock' : '')
-        )
-      ),
-      e('div', {
-        style: {
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: '0.35rem', flexShrink: 0
-        }
-      },
-        e('div', {
-          style: {
-            display: 'flex', alignItems: 'center', gap: '0.3rem',
-            background: clearedRow ? 'rgba(46,160,90,0.15)' : SURF2,
-            borderRadius: '999px', padding: '0.25rem',
-            border: '1px solid ' + (clearedRow ? 'rgba(46,160,90,0.35)' : LINE)
-          }
-        },
-          e('button', {
-            type: 'button',
-            onClick: () => adjustStockPart(p.partNumber, -1),
-            disabled: p.remaining <= 0,
-            style: {
-              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
-              background: p.remaining > 0 ? INK : LINE,
-              color: p.remaining > 0 ? (DARK_MODE ? '#0A0A0C' : '#FFF') : GREY,
-              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining > 0 ? 'pointer' : 'default',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
-            }
-          }, '\u2212'),
-          e('span', {
-            style: {
-              minWidth: '32px', textAlign: 'center', fontSize: '1.05rem', fontWeight: 750,
-              color: clearedRow ? '#1B7A3D' : INK, fontVariantNumeric: 'tabular-nums'
-            }
-          }, String(p.remaining)),
-          e('button', {
-            type: 'button',
-            onClick: () => adjustStockPart(p.partNumber, 1),
-            disabled: p.remaining >= p.start,
-            style: {
-              width: '36px', height: '36px', borderRadius: '999px', border: 'none',
-              background: p.remaining < p.start ? SURF : 'transparent', color: MID,
-              fontSize: '1.2rem', fontWeight: 500, cursor: p.remaining < p.start ? 'pointer' : 'default',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
-            }
-          }, '+')
-        )
-      )
-    );
-
-    return e('div', { style: { padding: '0.75rem 0.85rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
-      e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.1rem 0.05rem 0.2rem' } },
-        e('button', {
-          className: 'd-hover-btn',
-          onClick: () => setStockOpen(false),
-          style: { background: 'none', border: 'none', width: '36px', height: '36px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
-        }, ChevronLeft(18, INK)),
-        e('span', { style: { fontSize: '0.95rem', fontWeight: 650, letterSpacing: '-0.25px', color: INK } }, 'Stock'),
-        e('button', {
-          className: 'd-hover-btn',
-          onClick: exportStockExcel,
-          title: 'Export remaining to Excel',
-          style: {
-            background: SURF2, border: '1px solid ' + LINE, borderRadius: '10px',
-            padding: '0.4rem 0.65rem', fontSize: '0.72rem', fontWeight: 700, color: INK, cursor: 'pointer'
-          }
-        }, 'Excel')
-      ),
-
-      e('div', { style: { fontSize: '0.74rem', color: GREY, fontWeight: 550, lineHeight: 1.4, padding: '0 0.1rem' } },
-        'Book parts off with − as you use them. Zero means cleared from your stock — they move to the bottom. Saving a ticket with these part numbers also reduces the count.'),
-
-      e('input', {
-        type: 'search',
-        value: stockQuery,
-        placeholder: 'Search part name or number…',
-        onChange: (ev) => setStockQuery(ev.target.value),
-        style: {
-          width: '100%', padding: '0.75rem 0.9rem', borderRadius: '12px',
-          border: '1px solid ' + LINE, background: FIELDBG, color: INK,
-          fontSize: '0.9rem', outline: 'none', fontWeight: 500
-        }
-      }),
-
-      e('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '0.35rem' } },
-        sortChips.map(c => e('button', {
-          key: c.key,
-          type: 'button',
-          onClick: () => setStockSort(c.key),
-          style: {
-            border: 'none', borderRadius: '999px', padding: '0.4rem 0.75rem',
-            fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-            background: sortKey === c.key ? INK : SURF2,
-            color: sortKey === c.key ? (DARK_MODE ? '#0A0A0C' : '#FFF') : MID
-          }
-        }, c.label))
-      ),
-
-      e('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0.1rem 0' } },
-        e('span', { style: { fontSize: '0.72rem', fontWeight: 700, color: MID, letterSpacing: '0.04em', textTransform: 'uppercase' } },
-          'Still to clear  ·  ' + active.length),
-        e('button', {
-          type: 'button',
-          onClick: () => {
-            if (window.confirm('Reset all stock counts to the August 2026 spreadsheet values?')) {
-              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT) });
-            }
-          },
-          style: { border: 'none', background: 'none', color: GREY, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }
-        }, 'Reset')
-      ),
-
-      active.length === 0 && !q
-        ? e('div', { style: { textAlign: 'center', padding: '1.5rem 0.5rem', color: GREY, fontSize: '0.88rem', fontWeight: 550 } },
-            'Nothing left to clear')
-        : active.length === 0 && q
-          ? e('div', { style: { textAlign: 'center', padding: '1rem', color: GREY, fontSize: '0.85rem' } }, 'No matches in open items')
-          : e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
-              active.map(p => renderRow(p, false))
-            ),
-
-      cleared.length > 0 && e('div', { style: { marginTop: '0.85rem' } },
-        e('div', { style: {
-          fontSize: '0.72rem', fontWeight: 700, color: '#1B7A3D', letterSpacing: '0.04em',
-          textTransform: 'uppercase', marginBottom: '0.55rem', padding: '0 0.1rem'
-        } }, 'Cleared from stock  ·  ' + cleared.length),
-        e('div', { style: { display: 'flex', flexDirection: 'column', gap: '0.55rem' } },
-          cleared.map(p => renderRow(p, true))
-        )
-      )
-    );
-  })();
-
-
-  if (stockOpen) {
-    const stockBody = e('div', { key:'stock', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, stockView);
-    return e('div', { className: 'desktop-shell' },
-      desktopSidebar,
-      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
-        desktopTopbar,
-        e('div', { className: 'desktop-content', style:{ flex:1, overflow:'auto', padding:'1.25rem 1.35rem 1.5rem' } }, stockBody)
-      ),
-      e('div', { className: 'mobile-only', style:{ width:'100%', minHeight:'100vh', overflow:'auto' } },
-        e('div', {
-          onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
-          style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
-            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 4 ? '6px' : '0', touchAction:'pan-y' }
-        }, stockBody),
-        menu, chooserSheet, formSheet, swipeHint)
-    );
-  }
-
-  if (settingsOpen) {
+      if (settingsOpen) {
         setSettingsOpen(false);
+      } else if (stockOpen) {
+        setStockOpen(false);
       } else {
         if (form.ticketNumber.trim() && form.start) await commit();
         goBack();
@@ -2792,20 +2544,26 @@ function App() {
         fontSize:smallTimeSize, fontWeight:600, color:faintC, letterSpacing:'0.1px',
         [marginProp]:'0.3rem' } }, text);
 
+      const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
       const children = [
-        e('div', { key:'top', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem' } },
+        e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
-          /* The only signal for "complete" now is the background — no font
-             weight or colour change alongside it — and its corners match the
-             card's own radius rather than being a pill, so it reads as a
-             tag cut from the same cloth as the card rather than a chip
-             floating on top of it. */
-          e('span', { key:'tn', style:{ fontSize:numberSize, fontWeight:600, color:faintC,
-            whiteSpace:'nowrap', letterSpacing:'0.01em',
-            background: j.locked ? hexToRgba(onC, 0.10) : 'transparent',
-            borderRadius:'6px', padding: j.locked ? '0.2rem 0.6rem' : '0.2rem 0' } }, title)
+          e('div', { key:'tnblock', style:{ textAlign:'right', minWidth:0, maxWidth:'70%' } },
+            e('div', { style:{ fontSize:numberSize, fontWeight:700, color:faintC,
+              whiteSpace:'nowrap', letterSpacing:'0.01em', overflow:'hidden', textOverflow:'ellipsis',
+              background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
+              borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
+              display:'inline-block', maxWidth:'100%' } }, title),
+            summaryText ? e('div', { style:{
+              fontSize: (0.68 * tScale).toFixed(3) + 'rem',
+              fontWeight: 550, color: faintC, opacity: 0.88,
+              marginTop: '0.22rem', lineHeight: 1.25,
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden', wordBreak: 'break-word'
+            } }, summaryText) : null
+          )
         ),
-        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height:'0.55rem' } }),
+        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.4rem' : '0.55rem' } }),
         /* Start/finish times as three separate pieces rather than one string
            with a baked-in hyphen: the separator gets real breathing room on
            both sides and a much lighter weight than the bold times, so it
@@ -2824,23 +2582,32 @@ function App() {
         t2 ? travelLine(t2, 'marginTop') : null
       ];
 
-      const cardBorder = s ? 'none' : ('1px solid ' + LINE);
       const partsCount = parts.length;
       const taperOn = cardPerspective && overlapped;
+      /* Depth: soft elevation always; stronger when stacked so edges stay readable */
+      const cardShadow = overlapped
+        ? '0 6px 18px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.18)'
+        : '0 4px 14px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.16)';
+      const cardBorder = s
+        ? ('1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08))
+        : ('1px solid ' + LINE);
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         style:{ background: s ? s.hex : SURF,
           overflow:'hidden', position:'relative',
           border: cardBorder,
-          boxShadow: 'none',
-          borderRadius:'6px', clipPath: cardClipPath(taperOn ? 6 : 0),
-          padding:'0.6rem 0.65rem 2.35rem', cursor:'pointer',
-          minHeight:'56px',
-          transition:'border-color .25s ease, transform .15s ease, clip-path .22s cubic-bezier(.22,.9,.3,1)' }
+          boxShadow: cardShadow,
+          borderRadius:'14px', clipPath: cardClipPath(taperOn ? 10 : 0),
+          padding:'0.7rem 0.75rem 2.4rem', cursor:'pointer',
+          minHeight:'60px',
+          transition:'box-shadow .22s ease, border-color .22s ease, transform .15s ease, clip-path .22s cubic-bezier(.22,.9,.3,1)' }
       },
-        /* Completely flat now — no shading, no sheen, just the solid site
-           colour. */
+        /* Soft top sheen for depth without looking plastic */
+        s ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+          position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
+          background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+        } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) and the multi-visit
@@ -2874,17 +2641,13 @@ function App() {
      opens the ticket. Pass no groupKey to opt a list out of stacking. */
   const swipeCard = (j, i, ret, stagger, dayIndex, groupKey, stackIndex) => {
     const isOpen = groupKey ? !!stackOpen[groupKey] : true;
-    const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.75rem' : '-30px') : (stackIndex > 0 ? '0.75rem' : 0);
-    /* Whether this card is currently part of a collapsed (unopened) stack —
-       drives the perspective taper. Every card in a collapsed stack tapers
-       together, including the front-most one (stackIndex 0); it was
-       previously excluded here by an unnecessary stackIndex>0 check, which
-       is why toggling perspective appeared to do nothing to the top card. */
+    /* Collapsed stack: stronger peek so edges stay visible; open: comfortable gap */
+    const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.85rem' : '-22px') : (stackIndex > 0 ? '0.85rem' : 0);
     const overlapped = !!(groupKey && !isOpen);
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
         locked: !!(j && j.locked),
-        radius:'6px',
+        radius:'14px',
         glow: null,
         onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
         onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
@@ -2898,8 +2661,16 @@ function App() {
       },
       ticketDetailCard(j, i, dayIndex, overlapped));
     if (!groupKey) return card;
-    return e('div', { key:'wrap-'+((j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i)),
-      style:{ marginTop: overlap, transition:'margin-top .38s cubic-bezier(.22,.9,.3,1)', position:'relative' } }, card);
+    return e('div', {
+      key:'wrap-'+((j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i)),
+      style:{
+        marginTop: overlap,
+        transition:'margin-top .38s cubic-bezier(.22,.9,.3,1)',
+        position:'relative',
+        zIndex: 10 + (stackIndex || 0),
+        filter: overlapped && stackIndex > 0 ? 'brightness(0.97)' : 'none'
+      }
+    }, card);
   };
 
   const dayCell = (dnum) => {
@@ -3566,8 +3337,14 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.75rem 0.9rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'10px', padding:'0.75rem 0.9rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+            e('input', { type:'text', value:form.summary || '', placeholder:'Short description (optional)', className:'field-graphite',
+              onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
+              maxLength: 80,
+              style:{ border:'none', background:formFieldBg, borderRadius:'10px', padding:'0.55rem 0.9rem',
+                fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
+                transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'4px', padding:'0 0.65rem',
@@ -4045,7 +3822,7 @@ function App() {
       ),
 
       e('div', { style: { fontSize: '0.74rem', color: GREY, fontWeight: 550, lineHeight: 1.4, padding: '0 0.1rem' } },
-        'Book parts off with − as you use them. Zero means cleared from your stock — they move to the bottom. Saving a ticket with these part numbers also reduces the count.'),
+        'Isolated checklist for discrepancy parts — independent of tickets. Use − to clear items; zero moves them to the bottom. Tickets do not change these counts.'),
 
       e('input', {
         type: 'search',
