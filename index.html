@@ -253,39 +253,34 @@
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
-  #splash.standalone-play { animation:splashHide 2.9s ease forwards; }
+  #splash.standalone-play { animation:splashHide 1.7s ease forwards; cursor:pointer; }
   #splash .word-wrap { display:flex; align-items:baseline; }
   #splash .word-text {
     font-family:'Playwrite US Trad', cursive;
     font-weight:400;
-    font-size:2.9rem;
-    color:#141414;
-    /* Playwrite is modelled on handwriting-practice strokes and stays fairly
-       light even at its heaviest weight — a text-stroke on top of that is
-       what actually makes it read as chunky rather than thin. */
-    -webkit-text-stroke:1.1px #141414;
-    text-stroke:1.1px #141414;
+    font-size:2.7rem;
+    color:#E3E3E3;
+    -webkit-text-stroke:1px #E3E3E3;
+    text-stroke:1px #E3E3E3;
     clip-path:inset(0 100% 0 0);
-    animation:splashWipe 1.7s cubic-bezier(.4,0,.2,1) .15s both;
+    animation:splashWipe 0.95s cubic-bezier(.4,0,.2,1) .08s both;
   }
   @keyframes splashWipe { to { clip-path:inset(0 0% 0 0); } }
   #splash .full-stop {
     font-family:'Playwrite US Trad', cursive;
     font-weight:400;
-    font-size:2.9rem;
-    color:#141414;
-    -webkit-text-stroke:1.1px #141414;
-    text-stroke:1.1px #141414;
+    font-size:2.7rem;
+    color:#E3E3E3;
+    -webkit-text-stroke:1px #E3E3E3;
+    text-stroke:1px #E3E3E3;
     margin-left:0.15rem;
     opacity:0;
     transform:scale(0.2);
     transform-origin:bottom center;
-    /* Lands ~150ms after the writing finishes (1.7s + 0.15s start delay) —
-       a quick overshoot-then-settle pop, like a pen tapping down. */
-    animation:splashDot .32s cubic-bezier(.3,1.6,.5,1) 2s forwards;
+    animation:splashDot .28s cubic-bezier(.3,1.6,.5,1) 1.1s forwards;
   }
-  @keyframes splashDot { 0% { opacity:0; transform:scale(0.2); } 70% { opacity:1; transform:scale(1.25); } 100% { opacity:1; transform:scale(1); } }
-  @keyframes splashHide { 0%, 86% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
+  @keyframes splashDot { 0% { opacity:0; transform:scale(0.2); } 70% { opacity:1; transform:scale(1.2); } 100% { opacity:1; transform:scale(1); } }
+  @keyframes splashHide { 0%, 78% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
@@ -490,11 +485,18 @@
   try {
     var s = document.getElementById('splash');
     if (!s) return;
-    var standalone = window.navigator && window.navigator.standalone === true;
-    if (!standalone) { s.remove(); return; }
-    var removeIt = function(){ if (s && s.parentNode) s.parentNode.removeChild(s); };
+    var done = false;
+    var removeIt = function(){
+      if (done) return; done = true;
+      if (!s || !s.parentNode) return;
+      s.style.opacity = '0';
+      s.style.transition = 'opacity .2s ease';
+      setTimeout(function(){ if (s && s.parentNode) s.parentNode.removeChild(s); }, 220);
+    };
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
-    setTimeout(removeIt, 3400);
+    s.addEventListener('click', removeIt);
+    s.addEventListener('touchstart', function(ev){ try { ev.preventDefault(); } catch(e){} removeIt(); }, { passive:false });
+    setTimeout(removeIt, 1900);
     s.classList.add('standalone-play');
   } catch (err) {
     var el = document.getElementById('splash');
@@ -534,9 +536,9 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
   NX:   { label:'NX',   hex:'#3E3E3E', hex2:'#2E2E2E' },
-  WS:   { label:'WS',   hex:'#696969', hex2:'#5A5A5A' },
-  RH:   { label:'RH',   hex:'#A8A8A8', hex2:'#989898' },
-  MMUH: { label:'MMUH', hex:'#E3E3E3', hex2:'#D0D0D0' }
+  WS:   { label:'WS',   hex:'#525252', hex2:'#454545' },
+  RH:   { label:'RH',   hex:'#6B6B6B', hex2:'#5A5A5A' },
+  MMUH: { label:'MMUH', hex:'#858585', hex2:'#737373' }
 };
 const EXTRA_SITE_HUES = ['#2A2A2A','#4A4A4A','#7A7A7A','#9A9A9A','#B8B8B8','#333333','#555555','#888888'];
 
@@ -717,13 +719,13 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
   '#3E3E3E': '#E3E3E3',
-  '#696969': '#E3E3E3',
-  '#A8A8A8': '#121212',
-  '#E3E3E3': '#121212',
+  '#525252': '#E3E3E3',
+  '#6B6B6B': '#E3E3E3',
+  '#858585': '#121212',
   '#2E2E2E': '#E3E3E3',
+  '#454545': '#E3E3E3',
   '#5A5A5A': '#E3E3E3',
-  '#989898': '#121212',
-  '#D0D0D0': '#121212'
+  '#737373': '#E3E3E3'
 };
 const siteOnColor = (hex) => {
   if (!hex) return '#E3E3E3';
@@ -1431,6 +1433,7 @@ function App() {
      Cards that aren't currently overlapped (stack opened, or standalone)
      always render as plain rectangles regardless of this toggle. */
   const [cardPerspective, setCardPerspective] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState(null);
   const stackTimers = useRef({});
   const openStack = (groupKey) => {
     setStackOpen(prev => (prev[groupKey] ? prev : { ...prev, [groupKey]: true }));
@@ -1443,6 +1446,7 @@ function App() {
   useEffect(() => () => { Object.values(stackTimers.current).forEach(clearTimeout); }, []);
 
   const [swipeX, setSwipeX] = useState(0);
+  const swipeXRef = useRef(0);
   const [burst, setBurst] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touch = useRef({ x:0, y:0, live:false, locked:false });
@@ -1452,7 +1456,7 @@ function App() {
      for one gesture. */
   const savingRef = useRef(false);
   const [savedGlow, setSavedGlow] = useState(0); // 0=off, 1=confirming save
-  const SWIPE_TRIGGER = 88;
+  const SWIPE_TRIGGER = 72;
 
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
@@ -1522,7 +1526,7 @@ function App() {
            are preserved. */
         /* Greyscale theme from palette image — always force these hexes so
            older saved site colours cannot reappear after load. */
-        const FIXED_SITE_PALETTE = ['#3E3E3E', '#696969', '#A8A8A8', '#E3E3E3'];
+        const FIXED_SITE_PALETTE = ['#3E3E3E', '#525252', '#6B6B6B', '#858585'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -1616,6 +1620,15 @@ function App() {
     setJobs(next);
     if (PREVIEW_MODE || !user) return;
     try { await dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+  };
+  const patchJob = (id, patch) => {
+    setJobs(prev => {
+      const next = prev.map(j => j.id === id ? { ...j, ...patch } : j);
+      if (!PREVIEW_MODE && user) {
+        try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+      }
+      return next;
+    });
   };
 
   /* ---------- cloud snapshots: a safety net independent of the live document ----------
@@ -2213,13 +2226,17 @@ function App() {
     const raw = Math.max(0, dx);
     /* gentler follow + soft resistance past the trigger — less 'snap' */
     const eased = raw <= 110 ? raw * 0.72 : 110 * 0.72 + (raw - 110) * 0.12;
-    setSwipeX(Math.min(eased, 140));
+    const nextX = Math.min(eased, 130);
+    swipeXRef.current = nextX;
+    setSwipeX(nextX);
   };
   const onTouchEnd = () => {
-    if (!touch.current.live) { setSwiping(false); setSwipeX(0); return; }
+    const x = swipeXRef.current || 0;
     touch.current.live = false;
     setSwiping(false);
-    if (swipeX >= SWIPE_TRIGGER) backOut(); else setSwipeX(0);
+    swipeXRef.current = 0;
+    setSwipeX(0);
+    if (x >= SWIPE_TRIGGER) backOut();
   };
 
   /* Safety net: if iOS ever claims the gesture for native scroll mid-swipe and
@@ -2231,9 +2248,10 @@ function App() {
     if (!swiping) return;
     const t = setTimeout(() => {
       touch.current.live = false;
+      swipeXRef.current = 0;
       setSwiping(false);
       setSwipeX(0);
-    }, 3000);
+    }, 900);
     return () => clearTimeout(t);
   }, [swiping]);
 
@@ -2394,10 +2412,12 @@ function App() {
       e('div', {
         style:{
           position:'relative', width:'min(300px, 84vw)', height:'100%',
-          background:'#0A0A0C', color:'#FFF',
+          background:'rgba(18,18,18,0.78)', color:'#E3E3E3',
+          backdropFilter:'blur(28px) saturate(1.25)', WebkitBackdropFilter:'blur(28px) saturate(1.25)',
+          borderRight:'1px solid rgba(227,227,227,0.10)',
           padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.15rem',
-          boxShadow:'none',
+          boxShadow:'8px 0 40px rgba(0,0,0,0.35)',
           transform: menuOpen ? 'translateX(0)' : 'translateX('+((-100 + menuSlide * 100))+'%)',
           transition: menuOpen ? 'transform .32s cubic-bezier(.22,.9,.3,1)' : (edgeSwipe.current.live ? 'none' : 'transform .22s ease'),
           willChange: 'transform'
@@ -2587,7 +2607,7 @@ function App() {
       (T+C)+'px 100%, '+T+'px calc(100% - '+C+'px), 0 '+C+'px)';
   };
 
-  const ticketDetailCard = (j, i, dayIndex, overlapped) => {
+  const ticketDetailCard = (j, i, dayIndex, overlapped, expandKey) => {
     try {
       if (!j) {
         return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'6px', color:GREY } }, 'Empty ticket');
@@ -2613,11 +2633,11 @@ function App() {
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.84 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.78 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.82 * tScale).toFixed(3) + 'rem';
-      const durSize = (0.95 * tScale).toFixed(3) + 'rem';
+      const numberSize = (0.72 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.05 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.68 * tScale).toFixed(3) + 'rem';
+      const durSize = (0.78 * tScale).toFixed(3) + 'rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -2630,7 +2650,7 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.86rem', fontWeight:700, letterSpacing:'0.01em', color:onC } }, badgeText);
+        flexShrink:0, fontSize:'0.72rem', fontWeight:650, letterSpacing:'0.01em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:600, color:faintC, letterSpacing:'0.1px',
@@ -2647,10 +2667,10 @@ function App() {
               borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
               display:'inline-block', maxWidth:'100%' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: (0.68 * tScale).toFixed(3) + 'rem',
-              fontWeight: 550, color: faintC, opacity: 0.88,
-              marginTop: '0.22rem', lineHeight: 1.25,
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              fontSize: (0.62 * tScale).toFixed(3) + 'rem',
+              fontWeight: 500, color: faintC, opacity: 0.88,
+              marginTop: '0.12rem', lineHeight: 1.2,
+              display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
               overflow: 'hidden', wordBreak: 'break-word'
             } }, summaryText) : null
           )
@@ -2669,6 +2689,92 @@ function App() {
         t2 ? travelLine(t2, 'marginTop') : null
       ];
 
+      const isExpanded = expandKey && expandedCardId === expandKey;
+      const canEdit = isExpanded && !(j.locked && settings.lockReadOnly);
+
+      if (isExpanded) {
+        const fieldStyle = {
+          width:'100%', border:'1px solid rgba(227,227,227,0.12)', background:'rgba(227,227,227,0.08)',
+          borderRadius:'10px', padding:'0.5rem 0.65rem', outline:'none', color:onC, fontSize:'0.82rem',
+          fontWeight:550, fontFamily:'inherit'
+        };
+        children.push(
+          e('div', { key:'exp', style:{ marginTop:'0.65rem', display:'flex', flexDirection:'column', gap:'0.45rem',
+            borderTop:'1px solid rgba(227,227,227,0.12)', paddingTop:'0.55rem' } },
+            e('div', { style:{ display:'flex', gap:'0.35rem' } },
+              e('select', {
+                value: j.site || '',
+                disabled: !canEdit,
+                onClick:(ev)=>ev.stopPropagation(),
+                onChange:(ev)=>{ if (canEdit) patchJob(j.id, { site: ev.target.value }); },
+                style:{ ...fieldStyle, flex:1 }
+              }, e('option', { value:'' }, 'Site'),
+                Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label))),
+              e('select', {
+                value: (eq[0] || ''),
+                disabled: !canEdit,
+                onClick:(ev)=>ev.stopPropagation(),
+                onChange:(ev)=>{ if (canEdit) patchJob(j.id, { equipment: ev.target.value ? [ev.target.value] : [] }); },
+                style:{ ...fieldStyle, flex:1 }
+              }, e('option', { value:'' }, 'Machine'),
+                Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k])))
+            ),
+            e('div', { style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
+              e('input', { type:'time', value: (segStart||'').slice(11,16) || '', disabled:!canEdit,
+                onClick:(ev)=>ev.stopPropagation(),
+                onChange:(ev)=>{
+                  if (!canEdit) return;
+                  const d = (segStart||j.startDateTime||'').slice(0,10) || todayISO();
+                  const val = d + 'T' + ev.target.value;
+                  if (seg) {
+                    const nextEx = ex.map((x,xi)=> xi===dayIndex-2 ? { ...x, startDateTime: val } : x);
+                    patchJob(j.id, { extraDays: nextEx });
+                  } else patchJob(j.id, { startDateTime: val });
+                },
+                style:{ ...fieldStyle, flex:1 } }),
+              e('span', { style:{ color:onC, opacity:0.5 } }, '–'),
+              e('input', { type:'time', value: (segFinish||'').slice(11,16) || '', disabled:!canEdit,
+                onClick:(ev)=>ev.stopPropagation(),
+                onChange:(ev)=>{
+                  if (!canEdit) return;
+                  const d = (segFinish||j.finishDateTime||'').slice(0,10) || todayISO();
+                  const val = d + 'T' + ev.target.value;
+                  if (seg) {
+                    const nextEx = ex.map((x,xi)=> xi===dayIndex-2 ? { ...x, finishDateTime: val } : x);
+                    patchJob(j.id, { extraDays: nextEx });
+                  } else patchJob(j.id, { finishDateTime: val });
+                },
+                style:{ ...fieldStyle, flex:1 } })
+            ),
+            e('textarea', {
+              value: j.workDone || '',
+              disabled: !canEdit,
+              placeholder: 'Work notes…',
+              rows: 4,
+              onClick:(ev)=>ev.stopPropagation(),
+              onChange:(ev)=>{ if (canEdit) patchJob(j.id, { workDone: ev.target.value }); },
+              style:{ ...fieldStyle, resize:'vertical', minHeight:'4.5rem', lineHeight:1.35, fontWeight:500 }
+            }),
+            parts.length ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.25rem' } },
+              parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.72rem', color:faintC, fontWeight:550 } },
+                (p.partNumber || '') + (p.partDescription ? ' — ' + p.partDescription : '')))
+            ) : null,
+            e('div', { style:{ display:'flex', gap:'0.4rem', marginTop:'0.15rem' } },
+              e('button', {
+                onClick:(ev)=>{ ev.stopPropagation(); setExpandedCardId(null); },
+                style:{ flex:1, border:'1px solid rgba(227,227,227,0.14)', background:'rgba(227,227,227,0.08)',
+                  color:onC, borderRadius:'10px', padding:'0.5rem', fontWeight:600, fontSize:'0.75rem', cursor:'pointer' }
+              }, 'Done'),
+              e('button', {
+                onClick:(ev)=>{ ev.stopPropagation(); setExpandedCardId(null); openEdit(j, { view:'month' }); },
+                style:{ flex:1, border:'none', background:'rgba(227,227,227,0.16)',
+                  color:onC, borderRadius:'10px', padding:'0.5rem', fontWeight:600, fontSize:'0.75rem', cursor:'pointer' }
+              }, 'Full editor')
+            )
+          )
+        );
+      }
+
       const partsCount = parts.length;
       const taperOn = cardPerspective && overlapped;
       /* Depth: soft elevation always; stronger when stacked so edges stay readable */
@@ -2685,10 +2791,10 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'14px', clipPath: cardClipPath(taperOn ? 10 : 0),
-          padding:'0.7rem 0.75rem 2.4rem', cursor:'pointer',
-          minHeight:'60px',
-          transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), clip-path .28s cubic-bezier(.22,1.1,.35,1)' }
+          borderRadius:'12px', clipPath: cardClipPath(taperOn ? 8 : 0),
+          padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem', cursor:'pointer',
+          minHeight: isExpanded ? 'auto' : '48px',
+          transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), clip-path .28s cubic-bezier(.22,1.1,.35,1), padding .25s ease' }
       },
         /* Soft top sheen for depth without looking plastic */
         s ? e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -2742,11 +2848,13 @@ function App() {
         onTap:()=>{
           if (groupKey && !isOpen) { openStack(groupKey); return; }
           if (groupKey) openStack(groupKey);
-          if (j) openEdit(j, ret);
+          if (!j || j.id == null) return;
+          const key = String(j.id) + (dayIndex ? '-d'+dayIndex : '');
+          setExpandedCardId(prev => prev === key ? null : key);
         },
         entryDelay: null
       },
-      ticketDetailCard(j, i, dayIndex, overlapped));
+      ticketDetailCard(j, i, dayIndex, overlapped, String(j && j.id != null ? j.id : i) + (dayIndex ? '-d'+dayIndex : '')));
     if (!groupKey) return card;
     return e('div', {
       key:'wrap-'+((j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i)),
@@ -2927,17 +3035,20 @@ function App() {
      scrolling away with it. */
   const journeyIndicator = (view === 'month' && !monthPickerOpen && !settingsOpen && !themesOpen && !backupsOpen && mobileDayList.length > 0)
     && e('div', { key:'journey', style:{
-        position:'fixed', left:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
-        maxWidth:'calc(100vw - 5.4rem)', zIndex:35,
-        background: SURF, boxShadow:'none', borderRadius:'6px',
-        padding:'0.55rem 0.9rem', overflowX:'auto',
+        position:'fixed', left:'0.75rem', bottom:'calc(0.85rem + env(safe-area-inset-bottom))',
+        maxWidth:'calc(100vw - 5.2rem)', zIndex:35,
+        background: 'rgba(18,18,18,0.35)',
+        backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+        boxShadow:'none', borderRadius:'999px',
+        border: '1px solid rgba(227,227,227,0.06)',
+        padding:'0.28rem 0.45rem', overflowX:'auto',
         display:'flex', alignItems:'center' } },
-      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.3rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
+      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.18rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
         mobileDaySeq.length === 0
-          ? e('span', { style:{ fontSize:'0.68rem', color:GREY, fontWeight:550 } }, 'No site set')
+          ? e('span', { style:{ fontSize:'0.58rem', color:GREY, fontWeight:550, padding:'0 0.2rem' } }, 'No site')
           : mobileDaySeq.map((s,i) => [
-              e('span', { key:'s'+i, style:{ background:SITES[s].hex, color:siteOnColor(SITES[s].hex), padding:'0.2rem 0.6rem', borderRadius:'4px', fontSize:'0.6rem', fontWeight:600, flexShrink:0 } }, SITES[s].label),
-              i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.7rem', color:GREY, fontWeight:550, opacity:0.7, flexShrink:0 } }, '›') : null
+              e('span', { key:'s'+i, style:{ background:SITES[s] ? SITES[s].hex : '#3E3E3E', color:SITES[s] ? siteOnColor(SITES[s].hex) : '#E3E3E3', padding:'0.12rem 0.4rem', borderRadius:'999px', fontSize:'0.52rem', fontWeight:650, flexShrink:0, letterSpacing:'0.02em' } }, SITES[s] ? SITES[s].label : s),
+              i < mobileDaySeq.length-1 ? e('span', { key:'a'+i, style:{ fontSize:'0.55rem', color:GREY, fontWeight:500, opacity:0.55, flexShrink:0 } }, '›') : null
             ])));
 
   const periodLabel = () => {
@@ -3290,7 +3401,7 @@ function App() {
         display:'flex', flexDirection:'column', gap:'0.65rem',
         padding: '0.95rem 1rem 1.05rem',
         position:'relative',
-        transition:'background .2s ease, box-shadow .22s ease',
+        transition:'background .35s ease, color .35s ease, box-shadow .22s ease',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)'
       } },
@@ -3307,7 +3418,7 @@ function App() {
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
+        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
@@ -3330,7 +3441,7 @@ function App() {
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
+        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
@@ -3377,7 +3488,7 @@ function App() {
         padding:'0.75rem 0.85rem 0.85rem',
         border: '1px solid rgba(227,227,227,0.14)',
         boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
-        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .2s ease',
+        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .35s ease, color .35s ease',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } },
       e('div', { 'aria-hidden':true, style:{
         position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
@@ -3450,26 +3561,26 @@ function App() {
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
-                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
             e('input', { type:'text', value:form.summary || '', placeholder:'Short description (optional)', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
               maxLength: 80,
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
-                transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+                transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'12px', padding:'0 0.65rem',
                 border:'1px solid rgba(227,227,227,0.12)',
                 background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
-                transition:'background .2s ease' } },
+                transition:'background .35s ease, color .35s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
                     fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : formOnC } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
+                borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
                   background: form.equipment.length ? formOnC : hexToRgba(formOnC, 0.3) } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
@@ -3489,7 +3600,7 @@ function App() {
             className: 'work-done-field field-graphite',
             style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.8rem 0.95rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
-              outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+              outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
           CopyBtn(form.workDone, 'work')
         ),
 
@@ -3501,7 +3612,7 @@ function App() {
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
               style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.85rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+                outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
@@ -3523,11 +3634,11 @@ function App() {
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
                   style:{ flex:'0 0 34%', minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
                   style:{ flex:1, minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
                   style:{ border:'none', background:'none', color:formOnC, opacity:0.6, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
@@ -3637,23 +3748,29 @@ function App() {
   const collapseSection = (key, title, icon, children) => {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
-        background: SURF, borderRadius:'6px', border:'none',
-        boxShadow:'none', overflow:'hidden', marginBottom:'0.65rem'
+        background: 'rgba(62,62,62,0.42)',
+        borderRadius:'16px',
+        border:'1px solid rgba(227,227,227,0.10)',
+        boxShadow:'0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
+        overflow:'hidden', marginBottom:'0.7rem',
+        backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)'
       } },
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'#3E3E3E', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
+          background:'rgba(227,227,227,0.06)', border:'none', padding:'0.7rem 0.95rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#696969', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#E3E3E3')),
-        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#E3E3E3', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { style:{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(227,227,227,0.10)', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          border:'1px solid rgba(227,227,227,0.08)' } }, icon(15, '#E3E3E3')),
+        e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:600, color:'#E3E3E3', letterSpacing:'0.04em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
-          transition:'transform .22s ease', opacity:0.6
-        } }, ChevronLeft(16, '#E3E3E3'))
+          transition:'transform .22s ease', opacity:0.55
+        } }, ChevronLeft(15, '#E3E3E3'))
       ),
-      open && e('div', { style:{ padding:'0.9rem 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
+      open && e('div', { style:{ padding:'0.85rem 1rem 1rem', display:'flex', flexDirection:'column',
+        borderTop:'1px solid rgba(227,227,227,0.06)' } }, children)
     );
   };
 
