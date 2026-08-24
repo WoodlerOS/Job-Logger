@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#D1C8B5">
+<meta name="theme-color" content="#AAB4B6">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600;700;800&family=Playwrite+US+Trad:wght@100..400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -27,14 +27,14 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #D1C8B5);
+    background:var(--page-bg, #AAB4B6);
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
     color:#0A0A0C; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #D1C8B5);
+    background:var(--page-bg, #AAB4B6);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -162,7 +162,7 @@
 
   /* Premium: frosted surfaces */
   .glass-bar {
-    background: color-mix(in srgb, var(--page-bg, #D1C8B5) 72%, transparent) !important;
+    background: color-mix(in srgb, var(--page-bg, #AAB4B6) 72%, transparent) !important;
     backdrop-filter: blur(16px) saturate(1.25);
     -webkit-backdrop-filter: blur(16px) saturate(1.25);
     border-bottom: 1px solid rgba(255,255,255,0.28);
@@ -191,14 +191,13 @@
     filter: brightness(0.94);
   }
   .fab-btn {
-    box-shadow: 0 6px 18px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12) !important;
     transition: transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease !important;
   }
   .fab-btn:active {
-    transform: scale(0.86) !important;
-    opacity: 0.92;
-    filter: brightness(1.08);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.12) !important;
+    transform: scale(0.88) !important;
+    opacity: 0.95;
+    filter: brightness(1.05);
+    box-shadow: 0 3px 12px rgba(10,20,28,0.16), inset 0 1px 0 rgba(255,255,255,0.4) !important;
   }
   /* Premium: stack spring */
   .stack-wrap {
@@ -243,7 +242,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#D1C8B5; }
+    background:#AAB4B6; }
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
@@ -285,7 +284,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#D1C8B5; color:#0A0A0C; flex-direction:column;
+      background:#AAB4B6; color:#0A0A0C; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -302,7 +301,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #D1C8B5);
+      background: var(--page-bg, #AAB4B6);
       overflow: hidden;
     }
     #root {
@@ -310,7 +309,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #D1C8B5);
+      background: var(--page-bg, #AAB4B6);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -359,7 +358,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #D1C8B5);
+      background: var(--page-bg, #AAB4B6);
     }
     .desktop-topbar {
       display: flex;
@@ -375,7 +374,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #D1C8B5);
+      background: var(--page-bg, #AAB4B6);
     }
     .desktop-split {
       display: grid;
@@ -527,12 +526,12 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#20383C', hex2:'#1B3033' },
-  WS:   { label:'WS',   hex:'#F1E3C2', hex2:'#CFC3A6' },
-  RH:   { label:'RH',   hex:'#B2A667', hex2:'#998E58' },
-  MMUH: { label:'MMUH', hex:'#393028', hex2:'#312922' }
+  NX:   { label:'NX',   hex:'#2E3E4D', hex2:'#253440' },
+  WS:   { label:'WS',   hex:'#4A5A66', hex2:'#3E4C57' },
+  RH:   { label:'RH',   hex:'#1A2834', hex2:'#141F28' },
+  MMUH: { label:'MMUH', hex:'#586872', hex2:'#4A5962' }
 };
-const EXTRA_SITE_HUES = ['#2E7D6B','#7A5DC7','#C77A2E','#2E6BC7','#B0396B','#4E9A4A','#C74B7A','#5A6B8A'];
+const EXTRA_SITE_HUES = ['#3A4A56','#6A7A84','#243440','#4E5E68','#1E2C38','#64747E','#334450','#52626C'];
 
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -652,10 +651,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#D1C8B5', SURF2='#D1C8B5', SURF3='#D1C8B5';
-let FIELDBG='#D1C8B5', EMPTY='#D1C8B5';
-let PAGE_BG='#D1C8B5';
-let CARD_BG='#D1C8B5';
+let SURF='#AAB4B6', SURF2='#AAB4B6', SURF3='#AAB4B6';
+let FIELDBG='#AAB4B6', EMPTY='#AAB4B6';
+let PAGE_BG='#AAB4B6';
+let CARD_BG='#AAB4B6';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -669,8 +668,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#D1C8B5';
-  CARD_BG = '#D1C8B5';
+  PAGE_BG = '#AAB4B6';
+  CARD_BG = '#AAB4B6';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -710,14 +709,25 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    each other's — rather than one universal rule. Shared by ticket cards,
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
-  '#20383C': '#F1E3C2', // Deep Pine -> Sandstone
-  '#F1E3C2': '#20383C', // Sandstone -> Deep Pine
-  '#B2A667': '#393028', // Olive Clay -> Dark Bark
-  '#393028': '#B2A667', // Dark Bark -> Olive Clay
+  '#2E3E4D': '#D2D8DA',
+  '#4A5A66': '#D2D8DA',
+  '#1A2834': '#D2D8DA',
+  '#586872': '#D2D8DA',
+  '#253440': '#D2D8DA',
+  '#3E4C57': '#D2D8DA',
+  '#141F28': '#D2D8DA',
+  '#4A5962': '#D2D8DA'
 };
 const siteOnColor = (hex) => {
-  const h = hex && hex.toUpperCase();
-  return SITE_TEXT_PAIRS[h] || '#000000';
+  if (!hex) return '#D2D8DA';
+  const h = hex.toUpperCase();
+  if (SITE_TEXT_PAIRS[h]) return SITE_TEXT_PAIRS[h];
+  /* fallback: light palette text on darker cards, dark navy on light surfaces */
+  try {
+    const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
+    const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+    return lum > 0.55 ? '#1A2834' : '#D2D8DA';
+  } catch (err) { return '#D2D8DA'; }
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -2484,29 +2494,29 @@ function App() {
     else setMenuSlide(0);
   };
 
-  const fabGlowStyle = (settings.fabGlowStyle || 'halo');
-  const fabGlowColor = settings.fabGlowColor || '#2890FF';
   const fab = (view !== 'form' && !settingsOpen && !stockOpen && !backupsOpen && !themesOpen) && e('div', {
     className: 'fab-wrap',
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
-      width:'56px', height:'56px', zIndex:35,
-      ['--fab-glow']: fabGlowColor
+      width:'56px', height:'56px', zIndex:35
     }
   },
-    e('div', { className: 'fab-glow fab-glow-' + fabGlowStyle, 'aria-hidden': true }),
     e('button', {
       className: 'fab-btn',
       onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
       style: {
         position:'relative', zIndex:1,
-        width:'56px', height:'56px', borderRadius:'50%', border:'none', cursor:'pointer',
-        background: '#2A2A2C', color: APRICOT,
+        width:'56px', height:'56px', borderRadius:'50%', cursor:'pointer',
+        background: 'rgba(255,255,255,0.28)',
+        color: '#1A2834',
+        border: '1px solid rgba(255,255,255,0.55)',
         display:'flex', alignItems:'center', justifyContent:'center',
-        boxShadow:'0 6px 18px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12)',
+        backdropFilter: 'blur(18px) saturate(1.4)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+        boxShadow: '0 8px 28px rgba(10,20,28,0.18), 0 2px 8px rgba(10,20,28,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
         transition:'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease'
       }
-    }, PlusIcon(26, APRICOT))
+    }, PlusIcon(26, '#1A2834'))
   );
 
 
@@ -2594,14 +2604,11 @@ function App() {
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.92 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.58 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.72 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.72 * tScale).toFixed(3) + 'rem';
-      const durSize = (0.78 * tScale).toFixed(3) + 'rem';
-      const FONT_TIME = '"Outfit", -apple-system, sans-serif';
-      const FONT_TICKET = '"Syne", "Outfit", sans-serif';
-      const FONT_NOTE = '"Fraunces", "Playwrite US Trad", Georgia, serif';
+      const numberSize = (0.84 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.78 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.82 * tScale).toFixed(3) + 'rem';
+      const durSize = (0.95 * tScale).toFixed(3) + 'rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -2614,47 +2621,41 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:(0.68 * tScale).toFixed(3)+'rem', fontWeight:700,
-        letterSpacing:'0.12em', textTransform:'uppercase', color:onC,
-        fontFamily: FONT_TICKET, opacity: 0.92 } }, badgeText);
+        flexShrink:0, fontSize:'0.86rem', fontWeight:700, letterSpacing:'0.01em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
-        fontSize:smallTimeSize, fontWeight:500, color:faintC, letterSpacing:'0.04em',
-        fontFamily: FONT_TIME, fontVariantNumeric:'tabular-nums', opacity: 0.78,
-        [marginProp]:'0.22rem' } }, text);
+        fontSize:smallTimeSize, fontWeight:600, color:faintC, letterSpacing:'0.1px',
+        [marginProp]:'0.3rem' } }, text);
 
       const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
           e('div', { key:'tnblock', style:{ textAlign:'right', minWidth:0, maxWidth:'70%' } },
-            e('div', { style:{ fontSize:numberSize, fontWeight:800, color:faintC,
-              whiteSpace:'nowrap', letterSpacing:'-0.03em', overflow:'hidden', textOverflow:'ellipsis',
-              fontFamily: FONT_TICKET, lineHeight: 1.05,
+            e('div', { style:{ fontSize:numberSize, fontWeight:700, color:faintC,
+              whiteSpace:'nowrap', letterSpacing:'0.01em', overflow:'hidden', textOverflow:'ellipsis',
               background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
-              borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.08rem 0',
+              borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
               display:'inline-block', maxWidth:'100%' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: (0.74 * tScale).toFixed(3) + 'rem',
-              fontWeight: 400, fontStyle: 'italic', fontFamily: FONT_NOTE,
-              color: faintC, opacity: 0.9,
-              marginTop: '0.18rem', lineHeight: 1.3,
+              fontSize: (0.68 * tScale).toFixed(3) + 'rem',
+              fontWeight: 550, color: faintC, opacity: 0.88,
+              marginTop: '0.22rem', lineHeight: 1.25,
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
               overflow: 'hidden', wordBreak: 'break-word'
             } }, summaryText) : null
           )
         ),
-        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.38rem' : '0.5rem' } }),
-        e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'1px' } },
+        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.4rem' : '0.55rem' } }),
+        e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.055em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFamily: FONT_TIME, lineHeight: 0.95 } }, tStart),
-            e('span', { style:{ fontSize:(1.15 * tScale).toFixed(3)+'rem', fontWeight:300, color:onC, opacity:0.38,
-              margin:'0 0.22em', whiteSpace:'nowrap', fontFamily: FONT_TIME } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.055em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFamily: FONT_TIME, lineHeight: 0.95 } }, tFinish)),
-          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:700, color:onC, opacity:0.78, whiteSpace:'nowrap', flexShrink:0,
-            fontFamily: FONT_TICKET, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' } }, durationLabel) : null
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
+              margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
+          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:650, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
       ];
@@ -2696,13 +2697,11 @@ function App() {
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC, letterSpacing:'-0.02em',
-              fontFamily: FONT_TICKET, fontVariantNumeric:'tabular-nums' } }, String(partsCount))) : null,
+            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC, letterSpacing:'0.1px' } }, String(partsCount))) : null,
           multiCount ? e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
             style:{ display:'flex', alignItems:'center', gap:'6px' } },
             ChainIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC,
-              fontFamily: FONT_TICKET, fontVariantNumeric:'tabular-nums' } }, String(multiCount))) : null
+            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC } }, String(multiCount))) : null
         )
       );
     } catch (err) {
@@ -3266,27 +3265,31 @@ function App() {
      rule the real ticket cards use, so contrast is guaranteed regardless of
      which site is active, and the form looks like the card you'll review
      afterwards. */
-  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#20383C';
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#2E3E4D';
   const formOnC = siteOnColor(formSiteHex);
   const formFieldBg = hexToRgba(formOnC, 0.10);
   const formFieldBg2 = hexToRgba(formOnC, 0.08);
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: formSiteHex, borderRadius:'6px',
-        border: 'none',
-        boxShadow: 'none',
+        background: formSiteHex, borderRadius:'14px',
+        border: '1.5px solid ' + hexToRgba('#000000', 0.10),
+        boxShadow: '0 5px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',
         overflow:'hidden',
         display:'flex', flexDirection:'column', gap:'0.6rem',
-        padding: corner ? '0.9rem 0.95rem 1rem' : '0.9rem 0.95rem 1rem',
+        padding: '0.9rem 0.95rem 1rem',
         position:'relative',
-        transition:'background .2s ease'
+        transition:'background .2s ease, box-shadow .22s ease'
       } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
+      e('div', { 'aria-hidden':true, style:{
+        position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
+        background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+      } }),
+      e('div', { style:{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
         e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
-      children
+      e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.6rem' } }, children)
     );
 
   const travelBlock = (time, field, label, update) =>
@@ -3357,20 +3360,26 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: formSiteHex, borderRadius:'6px', overflow:'hidden',
-        padding:'0.6rem 0.7rem 0.7rem',
+        background: formSiteHex, borderRadius:'14px', overflow:'hidden', position:'relative',
+        padding:'0.7rem 0.8rem 0.8rem',
+        border: '1.5px solid ' + hexToRgba('#000000', 0.10),
+        boxShadow: '0 5px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',
         display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .2s ease' } },
-      e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
+      e('div', { 'aria-hidden':true, style:{
+        position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
+        background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+      } }),
+      e('div', { style:{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
           site && e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', background:formOnC, opacity:0.6, flexShrink:0 } }),
           e('span', { style:{ fontSize:'0.8rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title)),
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:formFieldBg, borderRadius:'4px', outline:'none',
+            style:{ border:'none', background:formFieldBg, borderRadius:'8px', outline:'none',
               fontSize:'0.82rem', fontWeight:600, color:formOnC, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.74rem', color:formOnC, padding:0 } }, 'Remove') : null)),
-      e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
+      e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
 
   const updateMain  = (patch) => setForm({ ...form, ...patch });
