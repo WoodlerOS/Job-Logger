@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600;700;800&family=Playwrite+US+Trad:wght@100..400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -2594,11 +2594,14 @@ function App() {
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
-      const numberSize = (0.84 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.32 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.78 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.82 * tScale).toFixed(3) + 'rem';
-      const durSize = (0.95 * tScale).toFixed(3) + 'rem';
+      const numberSize = (0.92 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = (1.58 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.72 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.72 * tScale).toFixed(3) + 'rem';
+      const durSize = (0.78 * tScale).toFixed(3) + 'rem';
+      const FONT_TIME = '"Outfit", -apple-system, sans-serif';
+      const FONT_TICKET = '"Syne", "Outfit", sans-serif';
+      const FONT_NOTE = '"Fraunces", "Playwrite US Trad", Georgia, serif';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -2611,46 +2614,47 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.86rem', fontWeight:700, letterSpacing:'0.01em', color:onC } }, badgeText);
+        flexShrink:0, fontSize:(0.68 * tScale).toFixed(3)+'rem', fontWeight:700,
+        letterSpacing:'0.12em', textTransform:'uppercase', color:onC,
+        fontFamily: FONT_TICKET, opacity: 0.92 } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
-        fontSize:smallTimeSize, fontWeight:600, color:faintC, letterSpacing:'0.1px',
-        [marginProp]:'0.3rem' } }, text);
+        fontSize:smallTimeSize, fontWeight:500, color:faintC, letterSpacing:'0.04em',
+        fontFamily: FONT_TIME, fontVariantNumeric:'tabular-nums', opacity: 0.78,
+        [marginProp]:'0.22rem' } }, text);
 
       const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
       const children = [
         e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
           badge,
           e('div', { key:'tnblock', style:{ textAlign:'right', minWidth:0, maxWidth:'70%' } },
-            e('div', { style:{ fontSize:numberSize, fontWeight:700, color:faintC,
-              whiteSpace:'nowrap', letterSpacing:'0.01em', overflow:'hidden', textOverflow:'ellipsis',
+            e('div', { style:{ fontSize:numberSize, fontWeight:800, color:faintC,
+              whiteSpace:'nowrap', letterSpacing:'-0.03em', overflow:'hidden', textOverflow:'ellipsis',
+              fontFamily: FONT_TICKET, lineHeight: 1.05,
               background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
-              borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
+              borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.08rem 0',
               display:'inline-block', maxWidth:'100%' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: (0.68 * tScale).toFixed(3) + 'rem',
-              fontWeight: 550, color: faintC, opacity: 0.88,
-              marginTop: '0.22rem', lineHeight: 1.25,
+              fontSize: (0.74 * tScale).toFixed(3) + 'rem',
+              fontWeight: 400, fontStyle: 'italic', fontFamily: FONT_NOTE,
+              color: faintC, opacity: 0.9,
+              marginTop: '0.18rem', lineHeight: 1.3,
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
               overflow: 'hidden', wordBreak: 'break-word'
             } }, summaryText) : null
           )
         ),
-        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.4rem' : '0.55rem' } }),
-        /* Start/finish times as three separate pieces rather than one string
-           with a baked-in hyphen: the separator gets real breathing room on
-           both sides and a much lighter weight than the bold times, so it
-           reads as a quiet divider instead of a thick dash crowding the
-           numbers. */
-        e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
+        t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.38rem' : '0.5rem' } }),
+        e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'1px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
-              margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
-          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:650, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.055em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFamily: FONT_TIME, lineHeight: 0.95 } }, tStart),
+            e('span', { style:{ fontSize:(1.15 * tScale).toFixed(3)+'rem', fontWeight:300, color:onC, opacity:0.38,
+              margin:'0 0.22em', whiteSpace:'nowrap', fontFamily: FONT_TIME } }, '–'),
+            e('span', { style:{ fontSize:bigTimeSize, fontWeight:800, color:onC, letterSpacing:'-0.055em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFamily: FONT_TIME, lineHeight: 0.95 } }, tFinish)),
+          durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:700, color:onC, opacity:0.78, whiteSpace:'nowrap', flexShrink:0,
+            fontFamily: FONT_TICKET, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
       ];
@@ -2692,11 +2696,13 @@ function App() {
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC, letterSpacing:'0.1px' } }, String(partsCount))) : null,
+            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC, letterSpacing:'-0.02em',
+              fontFamily: FONT_TICKET, fontVariantNumeric:'tabular-nums' } }, String(partsCount))) : null,
           multiCount ? e('div', { key:'multi', title: isMulti ? (multiCount+' visits') : (seg ? 'Day '+dayIndex : ''),
             style:{ display:'flex', alignItems:'center', gap:'6px' } },
             ChainIcon(17, faintC),
-            e('span', { style:{ fontSize:capSize, fontWeight:700, color:faintC } }, String(multiCount))) : null
+            e('span', { style:{ fontSize:capSize, fontWeight:800, color:faintC,
+              fontFamily: FONT_TICKET, fontVariantNumeric:'tabular-nums' } }, String(multiCount))) : null
         )
       );
     } catch (err) {
