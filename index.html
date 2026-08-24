@@ -417,7 +417,7 @@
       height: 100%;
     }
     .field-graphite::placeholder {
-      color: var(--ph-color, #20383C);
+      color: var(--ph-color, #E3E3E3);
       opacity: 0.6;
     }
     .form-card {
@@ -1520,7 +1520,9 @@ function App() {
            with the fixed chart palette, cycling by position, so existing
            saved data can't reintroduce old colours. Site labels/keys/order
            are preserved. */
-        const FIXED_SITE_PALETTE = ['#20383C', '#F1E3C2', '#B2A667', '#393028'];
+        /* Greyscale theme from palette image — always force these hexes so
+           older saved site colours cannot reappear after load. */
+        const FIXED_SITE_PALETTE = ['#3E3E3E', '#696969', '#A8A8A8', '#E3E3E3'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -3641,15 +3643,15 @@ function App() {
       e('button', {
         onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'#20383C', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
+          background:'#3E3E3E', border:'none', padding:'0.6rem 0.9rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#393028', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#B2A667')),
-        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#F1E3C2', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { style:{ width:'30px', height:'30px', borderRadius:'6px', background:'#696969', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center' } }, icon(16, '#E3E3E3')),
+        e('span', { style:{ flex:1, fontSize:'0.86rem', fontWeight:600, color:'#E3E3E3', letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.6
-        } }, ChevronLeft(16, '#F1E3C2'))
+        } }, ChevronLeft(16, '#E3E3E3'))
       ),
       open && e('div', { style:{ padding:'0.9rem 1.05rem 1rem', display:'flex', flexDirection:'column' } }, children)
     );
