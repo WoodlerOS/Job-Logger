@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#06141B">
+<meta name="theme-color" content="#121212">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -27,14 +27,14 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #06141B);
+    background:var(--page-bg, #121212);
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
-    color:#9BA8AB; -webkit-tap-highlight-color:transparent;
+    color:#E3E3E3; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #06141B);
+    background:var(--page-bg, #121212);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -162,18 +162,25 @@
 
   /* Premium: frosted surfaces */
   .glass-bar {
-    background: color-mix(in srgb, var(--page-bg, #06141B) 72%, transparent) !important;
-    backdrop-filter: blur(16px) saturate(1.25);
-    -webkit-backdrop-filter: blur(16px) saturate(1.25);
-    border-bottom: 1px solid rgba(255,255,255,0.28);
+    background: rgba(18,18,18,0.72) !important;
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border-bottom: 1px solid rgba(227,227,227,0.12);
   }
   .glass-sheet {
-    background: color-mix(in srgb, #FFFFFF 78%, transparent) !important;
-    backdrop-filter: blur(22px) saturate(1.35);
-    -webkit-backdrop-filter: blur(22px) saturate(1.35);
-    border: 1px solid rgba(255,255,255,0.45);
+    background: rgba(62,62,62,0.55) !important;
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border: 1px solid rgba(227,227,227,0.14);
     border-bottom: none;
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.14), 0 -2px 10px rgba(0,0,0,0.06) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.35), 0 -2px 10px rgba(0,0,0,0.2) !important;
+  }
+  .glass-field {
+    background: rgba(227,227,227,0.08) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(227,227,227,0.12) !important;
+    border-radius: 12px !important;
   }
   /* Premium: save pulse */
   @keyframes savedPulse {
@@ -242,7 +249,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#06141B; }
+    background:#121212; }
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
@@ -284,7 +291,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#06141B; color:#9BA8AB; flex-direction:column;
+      background:#121212; color:#E3E3E3; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -301,7 +308,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #06141B);
+      background: var(--page-bg, #121212);
       overflow: hidden;
     }
     #root {
@@ -309,7 +316,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #06141B);
+      background: var(--page-bg, #121212);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -358,7 +365,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #06141B);
+      background: var(--page-bg, #121212);
     }
     .desktop-topbar {
       display: flex;
@@ -374,7 +381,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #06141B);
+      background: var(--page-bg, #121212);
     }
     .desktop-split {
       display: grid;
@@ -526,12 +533,12 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#11212D', hex2:'#0C1A24' },
-  WS:   { label:'WS',   hex:'#253745', hex2:'#1C2C38' },
-  RH:   { label:'RH',   hex:'#4A5C6A', hex2:'#3A4A56' },
-  MMUH: { label:'MMUH', hex:'#9BA8AB', hex2:'#8A989B' }
+  NX:   { label:'NX',   hex:'#3E3E3E', hex2:'#2E2E2E' },
+  WS:   { label:'WS',   hex:'#696969', hex2:'#5A5A5A' },
+  RH:   { label:'RH',   hex:'#A8A8A8', hex2:'#989898' },
+  MMUH: { label:'MMUH', hex:'#E3E3E3', hex2:'#D0D0D0' }
 };
-const EXTRA_SITE_HUES = ['#1A2A36','#2E4050','#3E5060','#5A6C7A','#70808A','#1E3040','#334858','#465868'];
+const EXTRA_SITE_HUES = ['#2A2A2A','#4A4A4A','#7A7A7A','#9A9A9A','#B8B8B8','#333333','#555555','#888888'];
 
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -624,10 +631,10 @@ const hslToHex = (h,s,l) => {
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
 };
-let INK='#9BA8AB', MID='#7A8A90', GREY='#6A7A82', LINE='rgba(155,168,171,0.22)';
-let VIOLET='#9BA8AB', APRICOT='#9BA8AB';
+let INK='#E3E3E3', MID='#A8A8A8', GREY='#696969', LINE='rgba(227,227,227,0.16)';
+let VIOLET='#E3E3E3', APRICOT='#E3E3E3';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
-let LOCKED='#9BA8AB', LOCKEDBG='rgba(155,168,171,0.12)';
+let LOCKED='#E3E3E3', LOCKEDBG='rgba(227,227,227,0.10)';
 
 function applySites(list) {
   Object.keys(SITES).forEach(k => delete SITES[k]);
@@ -651,10 +658,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#06141B', SURF2='#11212D', SURF3='#11212D';
-let FIELDBG='#11212D', EMPTY='#11212D';
-let PAGE_BG='#06141B';
-let CARD_BG='#11212D';
+let SURF='#121212', SURF2='#3E3E3E', SURF3='#3E3E3E';
+let FIELDBG='rgba(227,227,227,0.08)', EMPTY='#3E3E3E';
+let PAGE_BG='#121212';
+let CARD_BG='#3E3E3E';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -668,8 +675,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#06141B';
-  CARD_BG = '#11212D';
+  PAGE_BG = '#121212';
+  CARD_BG = '#3E3E3E';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -709,24 +716,24 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    each other's — rather than one universal rule. Shared by ticket cards,
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
-  '#11212D': '#9BA8AB',
-  '#253745': '#9BA8AB',
-  '#4A5C6A': '#9BA8AB',
-  '#9BA8AB': '#06141B',
-  '#0C1A24': '#9BA8AB',
-  '#1C2C38': '#9BA8AB',
-  '#3A4A56': '#9BA8AB',
-  '#8A989B': '#06141B'
+  '#3E3E3E': '#E3E3E3',
+  '#696969': '#E3E3E3',
+  '#A8A8A8': '#121212',
+  '#E3E3E3': '#121212',
+  '#2E2E2E': '#E3E3E3',
+  '#5A5A5A': '#E3E3E3',
+  '#989898': '#121212',
+  '#D0D0D0': '#121212'
 };
 const siteOnColor = (hex) => {
-  if (!hex) return '#9BA8AB';
+  if (!hex) return '#E3E3E3';
   const h = hex.toUpperCase();
   if (SITE_TEXT_PAIRS[h]) return SITE_TEXT_PAIRS[h];
   try {
     const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
     const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
-    return lum > 0.48 ? '#06141B' : '#9BA8AB';
-  } catch (err) { return '#9BA8AB'; }
+    return lum > 0.45 ? '#121212' : '#E3E3E3';
+  } catch (err) { return '#E3E3E3'; }
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -2240,7 +2247,7 @@ function App() {
   const swipeHint = ((view === 'form' || settingsOpen) && (edgeGlowOpacity > 0)) && e('div', {
     style:{ position:'fixed', left:0, top:0, bottom:0, width: edgeGlowWidth+'px', zIndex:40,
       pointerEvents:'none', opacity: edgeGlowOpacity,
-      background:'linear-gradient(90deg, rgba(155,168,171,0.28) 0%, rgba(155,168,171,0) 100%)',
+      background:'linear-gradient(90deg, rgba(227,227,227,0.22) 0%, rgba(227,227,227,0) 100%)',
       transition: savedGlow ? 'opacity .7s ease, width .7s ease' : (swiping ? 'none' : 'opacity .35s ease, width .35s ease') } });
 
   const shift = (n) => {
@@ -2508,7 +2515,7 @@ function App() {
         position:'relative', zIndex:1,
         width:'56px', height:'56px', borderRadius:'50%', cursor:'pointer',
         background: 'rgba(155,168,171,0.18)',
-        color: '#9BA8AB',
+        color: '#E3E3E3',
         border: '1px solid rgba(155,168,171,0.35)',
         display:'flex', alignItems:'center', justifyContent:'center',
         backdropFilter: 'blur(18px) saturate(1.4)',
@@ -2516,7 +2523,7 @@ function App() {
         boxShadow: '0 8px 28px rgba(10,20,28,0.18), 0 2px 8px rgba(10,20,28,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
         transition:'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease'
       }
-    }, PlusIcon(26, '#9BA8AB'))
+    }, PlusIcon(26, '#E3E3E3'))
   );
 
 
@@ -3035,7 +3042,7 @@ function App() {
         className: (mpJustOpened ? 'sheet-slide-up ' : '') + 'glass-sheet',
         style:{
           position:'relative', width:'100%', maxWidth:'440px',
-          background: 'color-mix(in srgb, #FFFFFF 82%, transparent)',
+          background: 'rgba(62,62,62,0.55)',
           borderRadius:'24px 24px 0 0',
           padding:'0.35rem 0.85rem calc(1.2rem + env(safe-area-inset-bottom))',
           boxShadow:'0 -8px 40px rgba(0,0,0,0.14), 0 -2px 10px rgba(0,0,0,0.06)',
@@ -3050,7 +3057,7 @@ function App() {
           animation: mpDragging ? 'none' : undefined,
           backdropFilter: 'blur(22px) saturate(1.35)',
           WebkitBackdropFilter: 'blur(22px) saturate(1.35)',
-          border: '1px solid rgba(255,255,255,0.5)',
+          border: '1px solid rgba(227,227,227,0.14)',
           borderBottom: 'none'
         }
       },
@@ -3079,13 +3086,13 @@ function App() {
           } })
         ),
         e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.55rem', padding:'0 0.15rem' } },
-          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, '#000000')),
+          e('button', { onClick:()=>shiftMonth(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px' } }, ChevronLeft(18, INK)),
           e('div', { style:{ textAlign:'center' } },
-            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:'#000000' } },
+            e('div', { style:{ fontSize:'1rem', fontWeight:650, color:INK } },
               anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-            e('div', { style:{ fontSize:'0.75rem', color:'#000000', opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
+            e('div', { style:{ fontSize:'0.75rem', color:INK, opacity:0.65, fontWeight:550 } }, String(anchorDate.getFullYear()))
           ),
-          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#000000'))
+          e('button', { onClick:()=>shiftMonth(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'6px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))
         ),
         /* Horizontal swipe changes month; vertical still goes to parent dismiss */
         e('div', {
@@ -3158,13 +3165,13 @@ function App() {
      moves once shown. */
   const topDateBar = e('div', { key:'topDateBar', className:'glass-bar', style:{
       position:'fixed', top:'env(safe-area-inset-top)', left:0, right:0, zIndex:34,
-      background:'color-mix(in srgb, '+PAGE_BG+' 70%, transparent)',
-      backdropFilter:'blur(16px) saturate(1.25)', WebkitBackdropFilter:'blur(16px) saturate(1.25)',
-      borderBottom:'1px solid rgba(255,255,255,0.28)',
+      background:'rgba(18,18,18,0.75)',
+      backdropFilter:'blur(18px) saturate(1.2)', WebkitBackdropFilter:'blur(18px) saturate(1.2)',
+      borderBottom:'1px solid rgba(227,227,227,0.12)',
       padding:'0.4rem 0.6rem 0.55rem' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, '#000000')),
+        display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
       e('button', {
         onClick:()=>{
           if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
@@ -3193,12 +3200,12 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:'#000000' } },
+        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:INK } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:'#000000', opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:INK, opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
-        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, '#000000'))));
+        display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
 
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
@@ -3265,25 +3272,29 @@ function App() {
      rule the real ticket cards use, so contrast is guaranteed regardless of
      which site is active, and the form looks like the card you'll review
      afterwards. */
-  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#11212D';
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#3E3E3E';
   const formOnC = siteOnColor(formSiteHex);
-  const formFieldBg = hexToRgba(formOnC, 0.10);
-  const formFieldBg2 = hexToRgba(formOnC, 0.08);
+  /* Translucent glass fields over the site-coloured section shell */
+  const formFieldBg = 'rgba(227,227,227,0.10)';
+  const formFieldBg2 = 'rgba(227,227,227,0.07)';
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: formSiteHex, borderRadius:'14px',
-        border: '1.5px solid ' + hexToRgba('#000000', 0.10),
-        boxShadow: '0 5px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',
+        background: formSiteHex,
+        borderRadius:'16px',
+        border: '1px solid rgba(227,227,227,0.14)',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
         overflow:'hidden',
-        display:'flex', flexDirection:'column', gap:'0.6rem',
-        padding: '0.9rem 0.95rem 1rem',
+        display:'flex', flexDirection:'column', gap:'0.65rem',
+        padding: '0.95rem 1rem 1.05rem',
         position:'relative',
-        transition:'background .2s ease, box-shadow .22s ease'
+        transition:'background .2s ease, box-shadow .22s ease',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       } },
       e('div', { 'aria-hidden':true, style:{
         position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
-        background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+        background:'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 45%)'
       } }),
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
         e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
@@ -3294,7 +3305,7 @@ function App() {
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: formFieldBg, borderRadius:'4px', padding:'0.45rem 0.65rem', transition:'background .2s ease' } },
+        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
       e('input', { type:'time', value:time,
@@ -3317,7 +3328,7 @@ function App() {
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: formFieldBg2, borderRadius:'4px', padding:'0.55rem 0.5rem 0.65rem', transition:'background .2s ease' } },
+        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time,
         onChange:(ev)=>update({ [field]:ev.target.value }),
@@ -3360,14 +3371,15 @@ function App() {
 
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
-        background: formSiteHex, borderRadius:'14px', overflow:'hidden', position:'relative',
-        padding:'0.7rem 0.8rem 0.8rem',
-        border: '1.5px solid ' + hexToRgba('#000000', 0.10),
-        boxShadow: '0 5px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18)',
-        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .2s ease' } },
+        background: formSiteHex, borderRadius:'16px', overflow:'hidden', position:'relative',
+        padding:'0.75rem 0.85rem 0.85rem',
+        border: '1px solid rgba(227,227,227,0.14)',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
+        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .2s ease',
+        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } },
       e('div', { 'aria-hidden':true, style:{
         position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
-        background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+        background:'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 45%)'
       } }),
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } },
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.4rem' } },
@@ -3376,8 +3388,9 @@ function App() {
         e('div', { style:{ display:'flex', alignItems:'center', gap:'0.6rem' } },
           e('input', { type:'date', value:d.date, onChange:(ev)=>update({ date:ev.target.value }),
             onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-            style:{ border:'none', background:formFieldBg, borderRadius:'8px', outline:'none',
-              fontSize:'0.82rem', fontWeight:600, color:formOnC, padding:'0.35rem 0.5rem', maxWidth:'138px', cursor:'pointer' } }),
+            style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', outline:'none',
+              fontSize:'0.82rem', fontWeight:600, color:formOnC, padding:'0.4rem 0.55rem', maxWidth:'138px', cursor:'pointer',
+              backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)' } }),
           onRemove ? e('button', { onClick:onRemove, style:{ ...TXTBTN, fontSize:'0.74rem', color:formOnC, padding:0 } }, 'Remove') : null)),
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
@@ -3434,17 +3447,18 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:formFieldBg, borderRadius:'10px', padding:'0.75rem 0.9rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             e('input', { type:'text', value:form.summary || '', placeholder:'Short description (optional)', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
               maxLength: 80,
-              style:{ border:'none', background:formFieldBg, borderRadius:'10px', padding:'0.55rem 0.9rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
                 transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'4px', padding:'0 0.65rem',
+                borderRadius:'12px', padding:'0 0.65rem',
+                border:'1px solid rgba(227,227,227,0.12)',
                 background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
                 transition:'background .2s ease' } },
                 e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
@@ -3453,7 +3467,7 @@ function App() {
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'4px', padding:'0 0.65rem', background:formFieldBg, transition:'background .2s ease' } },
+                borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .2s ease' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
                   background: form.equipment.length ? formOnC : hexToRgba(formOnC, 0.3) } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
@@ -3471,7 +3485,7 @@ function App() {
           e('textarea', { value:form.workDone, placeholder:'What was done…',
             onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
             className: 'work-done-field field-graphite',
-            style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.8rem 0.95rem',
+            style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.8rem 0.95rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
               outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
           CopyBtn(form.workDone, 'work')
@@ -3483,7 +3497,7 @@ function App() {
           sectionShell('Notes — Day ' + (i+2),
             e('textarea', { key:'notes-e'+i, value:d.notes||'', placeholder:'What was done on this day…', className:'field-graphite',
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
-              style:{ border:'none', background:formFieldBg, borderRadius:'4px', padding:'0.75rem 0.85rem',
+              style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.85rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
                 outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
@@ -3506,11 +3520,11 @@ function App() {
               form.parts.map((p,i) => e('div', { key:i, style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
-                  style:{ flex:'0 0 34%', minWidth:0, border:'none', background:formFieldBg, borderRadius:'4px',
+                  style:{ flex:'0 0 34%', minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
-                  style:{ flex:1, minWidth:0, border:'none', background:formFieldBg, borderRadius:'4px',
+                  style:{ flex:1, minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
                     padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .2s ease, color .2s ease', ['--ph-color']:formOnC } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
                   style:{ border:'none', background:'none', color:formOnC, opacity:0.6, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
@@ -4082,12 +4096,12 @@ function App() {
   const desktopCalSplit = view === 'month' && e('div', { className: 'desktop-split' },
     e('div', { className: 'desktop-panel' },
       e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.85rem' } },
-        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, '#000000')),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(-1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px' } }, ChevronLeft(18, INK)),
         e('button', { className:'d-hover-btn', onClick:goToday, style:{ background:'none', border:'none', cursor:'pointer', flex:1, textAlign:'center' } },
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:'#000000' } },
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:650, color:INK } },
             anchorDate.toLocaleDateString('en-GB',{ month:'long' })),
-          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:'#000000', opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
-        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, '#000000'))),
+          e('span', { style:{ fontSize:'1.08rem', fontWeight:400, color:INK, opacity:0.65, marginLeft:'0.3rem' } }, String(anchorDate.getFullYear()))),
+        e('button', { className:'d-hover-btn', onClick:()=>shift(1), style:{ background:SURF2, border:'1px solid '+LINE, borderRadius:'6px', cursor:'pointer', padding:'6px 8px', transform:'rotate(180deg)' } }, ChevronLeft(18, INK))),
       monthGrid
     ),
     e('div', { className: 'desktop-panel', key: 'day-'+ms.y+'-'+ms.m+'-'+desktopDayNum },
