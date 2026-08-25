@@ -894,7 +894,7 @@ function slugKey(label, existingKeys) {
 }
 
 let SURF='#F5F4F1', SURF2='#FFFFFF', SURF3='#FFFFFF';
-let FIELDBG='rgba(31,21,30,0.06)', EMPTY='#FFEDDC';
+let FIELDBG='rgba(31,21,30,0.06)', EMPTY='#FFFFFF';
 let PAGE_BG='#F5F4F1';
 let CARD_BG='#FFFFFF';
 let BG_DIM = 0;
@@ -1676,7 +1676,7 @@ function App() {
   const [mpMonthDragging, setMpMonthDragging] = useState(false);
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
-  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, equipment: false, account: true });
+  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, export: true, equipment: false, account: true });
   const themeDraft = null;
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
@@ -1701,14 +1701,26 @@ function App() {
   const pullRef = useRef({ y:0, live:false });
   const [headerCollapse, setHeaderCollapse] = useState(0);
   const stackTimers = useRef({});
-  const openStack = (groupKey) => {
-    setStackOpen(prev => (prev[groupKey] ? prev : { ...prev, [groupKey]: true }));
+  const openStack = (groupKey, sticky) => {
+    setStackOpen(prev => ({ ...prev, [groupKey]: true }));
     if (stackTimers.current[groupKey]) clearTimeout(stackTimers.current[groupKey]);
+    if (sticky) {
+      delete stackTimers.current[groupKey];
+      return;
+    }
     stackTimers.current[groupKey] = setTimeout(() => {
       setStackOpen(prev => ({ ...prev, [groupKey]: false }));
       delete stackTimers.current[groupKey];
     }, 3000);
   };
+  useEffect(() => {
+    if (expandedCardId) {
+      Object.keys(stackTimers.current).forEach(k => {
+        clearTimeout(stackTimers.current[k]);
+        delete stackTimers.current[k];
+      });
+    }
+  }, [expandedCardId]);
   useEffect(() => () => { Object.values(stackTimers.current).forEach(clearTimeout); }, []);
 
   const [swipeX, setSwipeX] = useState(0);
@@ -1727,7 +1739,7 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 26;
+  const CAL_TRIGGER = 52;
 
   const jobsRef = useRef(jobs);
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
@@ -2428,12 +2440,36 @@ function App() {
     await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
   };
 
+
+  const formWorthSaving = () => {
+    if ((form.ticketNumber || '').trim()) return true;
+    if (form.site) return true;
+    if ((form.equipment || []).length) return true;
+    if ((form.summary || '').trim()) return true;
+    if ((form.parts || []).some(p => p && (p.partNumber || p.partDescription))) return true;
+    if (form.t1 || form.t2) return true;
+    if ((form.extra || []).length) return true;
+    if (form.start && form.start !== '00:00') return true;
+    if (form.finish && form.finish !== '00:00') return true;
+    const wd = (form.workDone || '').trim();
+    try {
+      const header = ukDate(form.date || todayISO()).trim();
+      if (wd && wd !== header && wd.replace(header, '').trim()) return true;
+    } catch (err) {
+      if (wd.length > 12) return true;
+    }
+    return false;
+  };
+
   const saveAndClose = async () => {
     haptic('success');
-    if (!form.ticketNumber.trim()) { alert('Enter a ticket number to save.'); return; }
-    if (!form.start) { alert('Set a start time to save.'); return; }
-    const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
-    if (dupe && !window.confirm('Ticket "'+form.ticketNumber+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
+    if (!formWorthSaving()) { goBack(); return; }
+    if (!form.start) { form.start = form.finish || '06:00'; }
+    const tn = form.ticketNumber.trim();
+    if (tn) {
+      const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === tn.toLowerCase());
+      if (dupe && !window.confirm('Ticket "'+tn+'" already exists ('+fmtDate(dupe.startDateTime)+'). Save anyway?')) return;
+    }
     await commit();
     goBack();
   };
@@ -2448,7 +2484,7 @@ function App() {
       } else if (stockOpen) {
         setStockOpen(false);
       } else {
-        if (form.ticketNumber.trim() && form.start) await commit();
+        if (formWorthSaving()) await commit();
         goBack();
       }
       setSavedGlow(1);
@@ -2626,21 +2662,37 @@ function App() {
   const goToday = () => { haptic('selection'); setAnchorDate(new Date()); setPinnedDay(null); };
 
   const onCalTouchStart = (ev) => {
-    if (monthPickerOpen || menuOpen) return;
+    if (monthPickerOpen || menuOpen || expandedCardId) return;
     const t = ev.touches[0];
-    calTouch.current = { x:t.clientX, y:t.clientY, live:true };
-    setCalDragging(true);
+    calTouch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
+    setCalDragging(false);
   };
   const onCalTouchMove = (ev) => {
     if (!calTouch.current.live) return;
     const t = ev.touches[0];
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
-    if (Math.abs(dy) > Math.abs(dx) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
-    setCalDX(Math.max(-80, Math.min(80, dx)));
+    if (!calTouch.current.locked) {
+      /* Require clearer horizontal intent so vertical scrolling never jiggles days */
+      if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
+      if (Math.abs(dy) >= Math.abs(dx) * 0.65 || Math.abs(dy) > 14) {
+        calTouch.current.live = false;
+        setCalDragging(false);
+        setCalDX(0);
+        return;
+      }
+      calTouch.current.locked = true;
+      setCalDragging(true);
+    }
+    setCalDX(Math.max(-72, Math.min(72, dx * 0.55)));
   };
   const onCalTouchEnd = () => {
-    if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
+    if (!calTouch.current.live || !calTouch.current.locked) {
+      calTouch.current.live = false;
+      setCalDragging(false);
+      setCalDX(0);
+      return;
+    }
     calTouch.current.live = false;
     setCalDragging(false);
     if (calDX <= -CAL_TRIGGER) shift(1);
@@ -2788,9 +2840,6 @@ function App() {
                   )))
               : e('div', { style:{ fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', padding:'1rem 0' } }, 'No matches'))
           : e('div', { style:{ display:'flex', flexDirection:'column', flex:1, overflowY:'auto' } },
-              sideMenuItem(view === 'list' ? 'Calendar' : 'All tickets', ()=>{ setView(view === 'list' ? 'month' : 'list'); window.scrollTo(0,0); }),
-              sideMenuItem('Export to Excel', ()=> setChooser('excel')),
-              sideMenuItem('Copy as text', ()=> setChooser('text')),
               sideMenuItem('Stock', ()=> { haptic('open'); setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
               sideMenuItem('Settings', ()=> openSettings()),
               settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
@@ -3088,41 +3137,23 @@ function App() {
       const isExpanded = expandKey && expandedCardId === expandKey;
 
       if (isExpanded) {
-        const labelS = { fontSize:'0.62rem', fontWeight:650, letterSpacing:'0.06em', textTransform:'uppercase',
-          color:onC, opacity:0.55, marginBottom:'0.18rem' };
-        const bodyS = { fontSize:'0.84rem', fontWeight:550, color:onC, lineHeight:1.4, whiteSpace:'pre-wrap', wordBreak:'break-word' };
-        const row = (label, content) => content ? e('div', { key:label, style:{ marginTop:'0.45rem' } },
-          e('div', { style:labelS }, label),
-          e('div', { style:bodyS }, content)
-        ) : null;
-        const siteLabel = s ? s.label : (j.site || '—');
+        const siteLabel = s ? s.label : (j.site || '');
         const machLabel = eq.length ? eq.map(x => EQUIP[x] || x).join(', ') : '';
-        const dateLabel = segStart ? fmtDay(segStart) : (j.startDateTime ? fmtDay(j.startDateTime) : '');
-        const timeLine = [t1 && ('Travel ' + t1), (tStart && tFinish) ? (tStart + ' – ' + tFinish) : (tStart || tFinish || ''), t2 && ('Travel ' + t2)].filter(Boolean).join('  ·  ');
+        const metaLine = [siteLabel, machLabel, durationLabel].filter(Boolean).join('  ·  ');
         const notes = (j.workDone != null && String(j.workDone).trim()) ? String(j.workDone).trim() : '';
         const partsLines = parts.map(p => (p.partNumber || '') + (p.partDescription ? ' — ' + p.partDescription : '')).filter(Boolean);
         children.push(
-          e('div', { key:'exp', className:'card-expand-body', style:{ marginTop:'0.55rem', display:'flex', flexDirection:'column',
-            borderTop:'1px solid ' + hexToRgba(onC, 0.18), paddingTop:'0.5rem', paddingBottom:'0.15rem' } },
-            e('div', { style:{ display:'flex', flexWrap:'wrap', gap:'0.35rem 0.75rem' } },
-              e('div', null, e('div', { style:labelS }, 'Site'), e('div', { style:bodyS }, siteLabel)),
-              machLabel ? e('div', null, e('div', { style:labelS }, 'Machine'), e('div', { style:bodyS }, machLabel)) : null,
-              dateLabel ? e('div', null, e('div', { style:labelS }, 'Date'), e('div', { style:bodyS }, dateLabel)) : null,
-              durationLabel ? e('div', null, e('div', { style:labelS }, 'Duration'), e('div', { style:bodyS }, durationLabel)) : null
-            ),
-            timeLine ? row('Times', timeLine) : null,
-            summaryText ? row('Description', summaryText) : null,
-            notes ? row('Notes', notes) : null,
-            partsLines.length ? e('div', { key:'parts', style:{ marginTop:'0.45rem' } },
-              e('div', { style:labelS }, 'Parts'),
-              e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.2rem' } },
-                partsLines.map((line, pi) => e('div', { key:pi, style:{ ...bodyS, fontSize:'0.8rem' } }, line)))
+          e('div', { key:'exp', className:'card-expand-body', style:{ marginTop:'0.5rem', display:'flex', flexDirection:'column', gap:'0.55rem',
+            borderTop:'1px solid ' + hexToRgba(onC, 0.16), paddingTop:'0.55rem', paddingBottom:'0.1rem' } },
+            metaLine ? e('div', { style:{ fontSize:'0.72rem', fontWeight:600, color:onC, opacity:0.72, letterSpacing:'0.01em' } }, metaLine) : null,
+            summaryText ? e('div', { style:{ fontSize:'0.92rem', fontWeight:650, color:onC, lineHeight:1.3 } }, summaryText) : null,
+            notes ? e('div', { style:{ fontSize:'0.84rem', fontWeight:450, color:onC, lineHeight:1.45, whiteSpace:'pre-wrap', wordBreak:'break-word', opacity:0.95 } }, notes) : null,
+            partsLines.length ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.18rem' } },
+              partsLines.map((line, pi) => e('div', { key:pi, style:{ fontSize:'0.74rem', fontWeight:550, color:onC, opacity:0.8 } }, line))
             ) : null,
-            e('div', { style:{ marginTop:'0.55rem', fontSize:'0.62rem', color:onC, opacity:0.5, fontWeight:550 } },
-              'Hold to edit')
+            e('div', { style:{ fontSize:'0.6rem', color:onC, opacity:0.45, fontWeight:550, marginTop:'0.1rem' } }, 'Hold to edit')
           )
         );
-        // mark expand block for CSS animation via class on last child — applied below on body wrap
       }
 
       const partsCount = parts.length;
@@ -3201,11 +3232,17 @@ function App() {
           setContextMenu({ j, ret: ret || { view:'month' }, x: Math.min(window.innerWidth - 240, Math.max(16, (window.__lastTouchX||40))), y: Math.min(window.innerHeight - 260, Math.max(80, (window.__lastTouchY||120))) });
         },
         onTap:()=>{
-          if (groupKey && !isOpen) { openStack(groupKey); return; }
-          if (groupKey) openStack(groupKey);
+          if (groupKey && !isOpen) { openStack(groupKey, true); return; }
           if (!j || j.id == null) return;
           const key = String(j.id) + (dayIndex ? '-d'+dayIndex : '');
-          setExpandedCardId(prev => prev === key ? null : key);
+          setExpandedCardId(prev => {
+            if (prev === key) {
+              if (groupKey) openStack(groupKey, false);
+              return null;
+            }
+            if (groupKey) openStack(groupKey, true);
+            return key;
+          });
         },
         entryDelay: null
       },
@@ -3377,27 +3414,13 @@ function App() {
       ? mobileDayBucket.siteSequence
       : dv.siteSequence;
 
-  const dayCompleteCount = mobileDayList.filter(entry => entry.j && entry.j.locked).length;
   const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', padding:'0 0.05rem' } },
-      settings.showJobCount !== false
-        ? e('div', { className:'status-chip' },
-            mobileDayList.length + (mobileDayList.length===1?' job':' jobs'),
-            mobileDayList.length ? e('span', { style:{ opacity:0.55 } }, '·') : null,
-            mobileDayList.length ? e('span', null, dayCompleteCount + ' complete') : null
-          )
-        : e('span'),
-      e('div', { className:'seg' },
-        e('button', { className: view !== 'list' ? 'on' : '', onClick:()=>{ haptic('selection'); setView('month'); } }, 'Day'),
-        e('button', { className: view === 'list' ? 'on' : '', onClick:()=>{ haptic('selection'); setView('list'); window.scrollTo(0,0); } }, 'All')
-      )
-    ),
     mobileDayList.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.2rem 0.5rem 1.5rem', color:GREY } },
           e('svg', { className:'empty-art', width:72, height:72, viewBox:'0 0 72 72', fill:'none' },
             e('rect', { x:16, y:10, width:40, height:52, rx:6, stroke:GREY, strokeWidth:2 }),
             e('path', { d:'M24 22h24M24 32h24M24 42h16', stroke:GREY, strokeWidth:2, strokeLinecap:'round' }),
-            e('circle', { cx:48, cy:48, r:10, fill:'#F5F4F1', stroke:GREY, strokeWidth:2 }),
+            e('circle', { cx:48, cy:48, r:10, fill:'#FFFFFF', stroke:GREY, strokeWidth:2 }),
             e('path', { d:'M48 44v8M44 48h8', stroke:GREY, strokeWidth:2, strokeLinecap:'round' })
           ),
           e('div', { style:{ fontSize:'0.95rem', fontWeight:650, color:INK, marginBottom:'0.25rem' } }, 'Nothing logged'),
@@ -3413,7 +3436,7 @@ function App() {
     && e('div', { key:'journey', style:{
         position:'fixed', left:'0.75rem', bottom:'calc(0.85rem + env(safe-area-inset-bottom))',
         maxWidth:'calc(100vw - 5.2rem)', zIndex:35,
-        background: 'rgba(255,237,220,0.75)',
+        background: 'rgba(255,255,255,0.88)',
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
         boxShadow:'0 2px 10px rgba(31,21,30,0.08)', borderRadius:'999px',
         border: '1px solid rgba(31,21,30,0.08)',
@@ -3801,7 +3824,7 @@ function App() {
         background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
-      e('input', { type:'time', value:time,
+      e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
@@ -3823,7 +3846,7 @@ function App() {
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
         background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
-      e('input', { type:'time', value:time,
+      e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
         onChange:(ev)=>update({ [field]:ev.target.value }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
@@ -4185,6 +4208,21 @@ function App() {
         settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
       chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'All'}],
         settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v }))
+    ]),
+
+    collapseSection('export', 'Export', ticketIcon, [
+      e('div', { key:'exhint', style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.45rem', lineHeight:1.35 } },
+        'Download or copy tickets for the scope you choose next.'),
+      e('button', { key:'exexcel', className:'d-hover-btn', onClick:()=>{ setSettingsOpen(false); setChooser('excel'); },
+        style:{ width:'100%', textAlign:'left', border:'1px solid '+LINE, background:SURF2, borderRadius:'12px',
+          padding:'0.75rem 0.9rem', marginBottom:'0.45rem', cursor:'pointer' } },
+        e('div', { style:{ fontSize:'0.86rem', fontWeight:650, color:INK } }, 'Export to Excel'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'2px' } }, 'Spreadsheet of tickets')),
+      e('button', { key:'extext', className:'d-hover-btn', onClick:()=>{ setSettingsOpen(false); setChooser('text'); },
+        style:{ width:'100%', textAlign:'left', border:'1px solid '+LINE, background:SURF2, borderRadius:'12px',
+          padding:'0.75rem 0.9rem', cursor:'pointer' } },
+        e('div', { style:{ fontSize:'0.86rem', fontWeight:650, color:INK } }, 'Copy as text'),
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'2px' } }, 'Plain text for email or notes'))
     ]),
 
     collapseSection('equipment', 'Equipment', GearIcon, [
