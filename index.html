@@ -683,27 +683,6 @@
     text-align: center; font-size: 0.7rem; font-weight: 600; color: #839CB6;
     height: 0; overflow: hidden; transition: height .2s ease;
   }
-  /* Dark mode (system) */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --page-bg: #12141A;
-      --ink: #F2EEE8;
-      --line: rgba(255,237,220,0.12);
-      --glass-bar: rgba(18,20,26,0.78);
-      --glass-sheet: rgba(28,30,38,0.92);
-      --glass-field: rgba(255,255,255,0.06);
-      --scrim: rgba(0,0,0,0.55);
-      --shadow-card: 0 10px 28px rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
-      --shadow-card-stack: 0 14px 36px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-    body { color: #F2EEE8; }
-    .ctx-menu { background: rgba(28,30,38,0.94); }
-    .ctx-menu button { color: #F2EEE8; border-bottom-color: rgba(255,255,255,0.06); }
-    .seg { background: rgba(255,255,255,0.08); }
-    .seg button { color: rgba(255,255,255,0.5); }
-    .seg button.on { background: rgba(255,255,255,0.14); color: #FFEDDC; }
-    .status-chip { background: rgba(131,156,182,0.15); color: #839CB6; border-color: rgba(131,156,182,0.25); }
-  }
 
 </style>
 </head>
@@ -781,29 +760,39 @@ const THEME_PRESETS = [
     text: ['#FFEDDC', '#1F151E', '#FFF7ED', '#1F151E']
   },
   {
-    id: 'harbour', name: 'Harbour',
-    colors: ['#0F2C4C', '#5B8FB9', '#B45309', '#FCD34D'],
-    text: ['#E8F1F8', '#0A1628', '#FFFBEB', '#1C1917']
+    id: 'arctic', name: 'Arctic',
+    colors: ['#0C4A6E', '#7DD3FC', '#334155', '#F1F5F9'],
+    text: ['#E0F2FE', '#0C4A6E', '#F8FAFC', '#0F172A']
   },
   {
-    id: 'ember', name: 'Ember',
-    colors: ['#1C1917', '#78716C', '#C2410C', '#FDBA74'],
-    text: ['#FAFAF9', '#FAFAF9', '#FFF7ED', '#1C1917']
+    id: 'terracotta', name: 'Terracotta',
+    colors: ['#7C2D12', '#EA580C', '#44403C', '#D6D3D1'],
+    text: ['#FFEDD5', '#FFF7ED', '#FAFAF9', '#1C1917']
   },
   {
-    id: 'slate', name: 'Slate',
-    colors: ['#1E293B', '#64748B', '#94A3B8', '#E2E8F0'],
-    text: ['#F8FAFC', '#F8FAFC', '#0F172A', '#0F172A']
+    id: 'orchid', name: 'Orchid',
+    colors: ['#581C87', '#C026D3', '#0F766E', '#99F6E4'],
+    text: ['#F3E8FF', '#FAE8FF', '#CCFBF1', '#134E4A']
   },
   {
-    id: 'forest', name: 'Forest',
-    colors: ['#14532D', '#3F6212', '#A3E635', '#D9F99D'],
-    text: ['#ECFDF5', '#ECFDF5', '#14532D', '#14532D']
+    id: 'meadow', name: 'Meadow',
+    colors: ['#14532D', '#65A30D', '#854D0E', '#FEF08A'],
+    text: ['#DCFCE7', '#14532D', '#FEF9C3', '#422006']
   },
   {
-    id: 'dusk', name: 'Dusk',
-    colors: ['#312E81', '#6366F1', '#C026D3', '#F0ABFC'],
-    text: ['#EEF2FF', '#EEF2FF', '#FAF5FF', '#3B0764']
+    id: 'midnight', name: 'Midnight',
+    colors: ['#1E1B4B', '#4F46E5', '#BE123C', '#FDA4AF'],
+    text: ['#E0E7FF', '#EEF2FF', '#FFE4E6', '#4C0519']
+  },
+  {
+    id: 'sandstorm', name: 'Sandstorm',
+    colors: ['#44403C', '#A8A29E', '#B45309', '#FDE68A'],
+    text: ['#FAFAF9', '#1C1917', '#FFFBEB', '#451A03']
+  },
+  {
+    id: 'lagoon', name: 'Lagoon',
+    colors: ['#164E63', '#06B6D4', '#BE185D', '#F9A8D4'],
+    text: ['#CFFAFE', '#083344', '#FCE7F3', '#500724']
   }
 ];
 function applyThemePreset(preset, siteList) {
@@ -1457,7 +1446,9 @@ const DEFAULT_SETTINGS = {
   cardTextScale: 'normal', /* normal | large | xl */
   fabGlowStyle: 'halo', /* halo | drift | dual | nebula */
   fabGlowColor: '#2890FF',
-  stockRemaining: null
+  stockRemaining: null,
+  themeId: 'coastal',
+  customThemes: []
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -1741,6 +1732,8 @@ function App() {
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
   const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, themes: true, export: false, equipment: false, account: true });
+  const [themePreviewIdx, setThemePreviewIdx] = useState(0);
+  const [themeNameDraft, setThemeNameDraft] = useState('');
   const themeDraft = null;
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
@@ -1895,11 +1888,15 @@ function App() {
            older saved site colours cannot reappear after load. */
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const themeId = merged.themeId || 'coastal';
-        if (themeId !== 'custom') {
-          const preset = THEME_PRESETS.find(t => t.id === themeId) || THEME_PRESETS[0];
-          applySites(applyThemePreset(preset, baseSites));
+        const customList = Array.isArray(merged.customThemes) ? merged.customThemes : [];
+        const fromCustom = customList.find(t => t.id === themeId);
+        const fromPreset = THEME_PRESETS.find(t => t.id === themeId);
+        if (fromCustom) {
+          applySites(applyThemePreset(fromCustom, baseSites));
+        } else if (fromPreset) {
+          applySites(applyThemePreset(fromPreset, baseSites));
         } else {
-          applySites(baseSites.map(s => ({ ...s, on: s.on || readableOn(s.hex) })));
+          applySites(baseSites.map(st => ({ ...st, on: st.on || readableOn(st.hex) })));
         }
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
         TIME_ROUNDING = merged.timeRounding || 5;
@@ -3846,7 +3843,7 @@ function App() {
         display:'flex', flexDirection:'column', gap:'0.65rem',
         padding: '0.95rem 1rem 1.05rem',
         position:'relative',
-        transition:'background .35s ease, color .35s ease, box-shadow .22s ease',
+        transition:'background .08s linear, color .08s linear, box-shadow .15s ease',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)'
       } },
@@ -3863,7 +3860,7 @@ function App() {
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
+        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
       e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
@@ -3886,7 +3883,7 @@ function App() {
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
+        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
         onChange:(ev)=>update({ [field]:snapWorkTime(ev.target.value) }),
@@ -3933,7 +3930,7 @@ function App() {
         padding:'0.75rem 0.85rem 0.85rem',
         border: '1px solid rgba(227,227,227,0.14)',
         boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
-        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .35s ease, color .35s ease',
+        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .08s linear, color .08s linear',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } },
       e('div', { 'aria-hidden':true, style:{
         position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
@@ -4006,33 +4003,43 @@ function App() {
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
-                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
             e('input', { type:'text', value:form.summary || '', placeholder:'Description', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
               maxLength: 80,
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
-                transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
-            e('div', { style:{ display:'flex', gap:'0.4rem' } },
-              e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'12px', padding:'0 0.65rem',
-                border:'1px solid rgba(227,227,227,0.12)',
-                background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
-                transition:'background .35s ease, color .35s ease' } },
-                e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
-                  style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
-                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : formOnC } },
-                  e('option', { value:'' }, 'Site'),
-                  Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
-              e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
-                borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
+                transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+            e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
+              e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
+                Object.keys(SITES).map(k => {
+                  const sc = SITES[k];
+                  const on = form.site === k;
+                  return e('button', {
+                    key:k, type:'button',
+                    onClick:()=>setForm({ ...form, site:k }),
+                    style:{
+                      padding:'0.48rem 0.72rem', borderRadius:'10px', cursor:'pointer',
+                      border: on ? '2px solid '+siteOnColor(sc.hex) : '2px solid transparent',
+                      background: sc.hex, color: siteOnColor(sc.hex),
+                      fontSize:'0.78rem', fontWeight:700, letterSpacing:'0.02em',
+                      boxShadow: on ? '0 2px 10px rgba(0,0,0,0.18)' : 'none',
+                      transition:'transform .1s ease, box-shadow .1s ease'
+                    }
+                  }, sc.label);
+                })
+              ),
+              e('div', { style:{ display:'flex', alignItems:'center', gap:'0.35rem',
+                borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)',
+                backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
                   background: form.equipment.length ? formOnC : hexToRgba(formOnC, 0.3) } }),
                 e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
                     fontSize:'0.82rem', fontWeight:600, color: formOnC } },
                   e('option', { value:'' }, 'Machine'),
-                  Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k]))))
+                  Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k])))
+              )
             )
           )
         ),
@@ -4045,7 +4052,7 @@ function App() {
             className: 'work-done-field field-graphite',
             style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.8rem 0.95rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
-              outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
+              outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
           CopyBtn(form.workDone, 'work')
         ),
 
@@ -4057,7 +4064,7 @@ function App() {
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
               style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.85rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
+                outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
@@ -4079,11 +4086,11 @@ function App() {
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
                   style:{ flex:'0 0 34%', minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
                   style:{ flex:1, minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
                   style:{ border:'none', background:'none', color:formOnC, opacity:0.6, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
@@ -4141,13 +4148,13 @@ function App() {
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list, themeId: 'custom' }); };
   const applyThemeId = (id) => {
-    if (id === 'custom') {
-      saveSettings({ themeId: 'custom' });
+    const customList = settings.customThemes || [];
+    const preset = THEME_PRESETS.find(t => t.id === id) || customList.find(t => t.id === id);
+    if (!preset) {
+      saveSettings({ themeId: id });
       setThemeTick(t=>t+1);
       return;
     }
-    const preset = THEME_PRESETS.find(t => t.id === id);
-    if (!preset) return;
     const next = applyThemePreset(preset, siteEdits.length ? siteEdits : sitesToList());
     setSiteEdits(next);
     applySites(next);
@@ -4155,7 +4162,31 @@ function App() {
     saveSettings({ sites: next, themeId: id });
     haptic('success');
   };
-  const updateSiteOnColour = (idx, val) => commitSites(siteEdits.map((s,i)=> i===idx?{...s,on:val}:s));
+  const updateSiteOnColour = (idx, val) => commitSites(siteEdits.map((st,i)=> i===idx?{...st,on:val}:st));
+  const saveNamedTheme = () => {
+    const name = (themeNameDraft || '').trim();
+    if (!name) { alert('Give your theme a name'); return; }
+    const list = siteEdits.length ? siteEdits : sitesToList();
+    const id = 'user_' + Date.now();
+    const theme = {
+      id, name,
+      colors: list.map(st => st.hex),
+      text: list.map(st => st.on || readableOn(st.hex))
+    };
+    const customThemes = [ ...(settings.customThemes || []), theme ];
+    applySites(list);
+    setThemeTick(t=>t+1);
+    saveSettings({ customThemes, themeId: id, sites: list });
+    setThemeNameDraft('');
+    haptic('success');
+  };
+  const deleteCustomTheme = (id) => {
+    const customThemes = (settings.customThemes || []).filter(t => t.id !== id);
+    const nextId = settings.themeId === id ? 'coastal' : settings.themeId;
+    saveSettings({ customThemes, themeId: nextId });
+    if (nextId === 'coastal') applyThemeId('coastal');
+    haptic('medium');
+  };
   const commitEquip = (list) => { setEquipEdits(list); applyEquip(list); setThemeTick(t=>t+1); saveSettings({ equipment:list }); };
   const updateSiteLabel = (idx, val) => setSiteEdits(prev => prev.map((s,i)=> i===idx?{...s,label:val}:s));
   const updateSiteColour = (idx, val) => commitSites(siteEdits.map((s,i)=> i===idx?{...s,hex:val}:s));
@@ -4271,69 +4302,129 @@ function App() {
 
     collapseSection('themes', 'Themes', ticketIcon, [
       e('div', { key:'thint', style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.55rem', lineHeight:1.35 } },
-        'Colour palettes for ticket cards. All presets are tuned for readable text.'),
-      e('div', { key:'grid', style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
-        THEME_PRESETS.map(p => {
-          const active = (settings.themeId || 'coastal') === p.id;
-          return e('button', {
-            key: p.id,
-            onClick: ()=>applyThemeId(p.id),
-            style: {
-              textAlign:'left', border: active ? '2px solid #203B59' : '1px solid '+LINE,
-              background: SURF2, borderRadius:'14px', padding:'0.65rem 0.7rem', cursor:'pointer'
-            }
-          },
-            e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK, marginBottom:'0.45rem' } }, p.name),
-            e('div', { style:{ display:'flex', gap:'4px' } },
-              p.colors.map((c,i) => e('div', {
-                key:i,
-                style:{ flex:1, height:'22px', borderRadius:'6px', background:c,
-                  color:p.text[i], fontSize:'0.55rem', fontWeight:700,
-                  display:'flex', alignItems:'center', justifyContent:'center' }
-              }, 'Aa'))
+        'Tap a palette, then fine-tune the live card. Save your own themes to the list.'),
+
+      /* Live interactive preview card */
+      e('div', { key:'live', style:{ marginBottom:'0.85rem' } },
+        (() => {
+          const list = siteEdits.length ? siteEdits : sitesToList();
+          const idx = Math.min(themePreviewIdx, Math.max(0, list.length - 1));
+          const cur = list[idx] || { hex:'#203B59', on:'#FFEDDC', label:'Site', key:'X' };
+          const onC = cur.on || readableOn(cur.hex);
+          return e('div', null,
+            e('div', {
+              style:{
+                background: cur.hex, color: onC, borderRadius:'16px', padding:'0.85rem 0.95rem 1rem',
+                boxShadow:'0 12px 28px rgba(31,21,30,0.14), inset 0 1px 0 rgba(255,255,255,0.2)',
+                transition:'background .12s linear, color .12s linear',
+                border:'1px solid rgba(0,0,0,0.06)'
+              }
+            },
+              e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0.55rem' } },
+                e('span', { style:{ fontSize:'0.72rem', fontWeight:700, opacity:0.85 } }, 'Alinity C'),
+                e('span', { style:{ fontSize:'0.78rem', fontWeight:700 } }, 'JT-1042')
+              ),
+              e('div', { style:{ fontSize:'1.15rem', fontWeight:700, letterSpacing:'-0.03em', fontVariantNumeric:'tabular-nums' } }, '09:00 – 11:30'),
+              e('div', { style:{ fontSize:'0.72rem', fontWeight:550, opacity:0.8, marginTop:'0.35rem' } }, (cur.label || cur.key) + ' · Preview'),
+              e('div', { style:{ fontSize:'0.7rem', opacity:0.7, marginTop:'0.55rem', lineHeight:1.35 } }, 'Sample notes appear like this on the card.')
+            ),
+            e('div', { style:{ display:'flex', gap:'0.35rem', marginTop:'0.55rem', flexWrap:'wrap' } },
+              list.map((st, i) => e('button', {
+                key: st.key + i, type:'button',
+                onClick:()=>setThemePreviewIdx(i),
+                style:{
+                  padding:'0.35rem 0.65rem', borderRadius:'999px', cursor:'pointer',
+                  border: i===idx ? '2px solid #203B59' : '1px solid '+LINE,
+                  background: st.hex, color: st.on || readableOn(st.hex),
+                  fontSize:'0.68rem', fontWeight:700
+                }
+              }, st.label || st.key))
+            ),
+            e('div', { style:{ display:'flex', gap:'0.85rem', marginTop:'0.65rem', alignItems:'center', flexWrap:'wrap' } },
+              e('label', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.72rem', fontWeight:600, color:INK } },
+                'Card',
+                e('input', { type:'color', value: cur.hex || '#203B59',
+                  onChange:(ev)=>{
+                    const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, hex:ev.target.value, on: st.on || readableOn(ev.target.value) } : st);
+                    setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
+                    saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
+                  },
+                  style:{ width:'42px', height:'32px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
+              ),
+              e('label', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.72rem', fontWeight:600, color:INK } },
+                'Text',
+                e('input', { type:'color', value: cur.on || readableOn(cur.hex),
+                  onChange:(ev)=>{
+                    const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, on:ev.target.value } : st);
+                    setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
+                    saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
+                  },
+                  style:{ width:'42px', height:'32px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
+              ),
+              e('button', {
+                type:'button',
+                onClick:()=>{
+                  const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, on: readableOn(st.hex) } : st);
+                  setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
+                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
+                },
+                style:{ border:'1px solid '+LINE, background:SURF2, borderRadius:'8px', padding:'0.35rem 0.55rem',
+                  fontSize:'0.68rem', fontWeight:600, color:INK, cursor:'pointer' }
+              }, 'Auto text')
             )
           );
+        })()
+      ),
+
+      /* Save current as named theme */
+      e('div', { key:'saveRow', style:{ display:'flex', gap:'0.4rem', marginBottom:'0.85rem' } },
+        e('input', {
+          type:'text', value:themeNameDraft, placeholder:'Name this theme…',
+          onChange:(ev)=>setThemeNameDraft(ev.target.value),
+          style:{ flex:1, border:'1px solid '+LINE, borderRadius:'12px', padding:'0.55rem 0.75rem',
+            fontSize:'0.84rem', background:SURF2, color:INK, outline:'none' }
+        }),
+        e('button', {
+          type:'button', onClick:saveNamedTheme,
+          style:{ border:'none', background:'#203B59', color:'#FFEDDC', borderRadius:'12px',
+            padding:'0.55rem 0.85rem', fontWeight:700, fontSize:'0.78rem', cursor:'pointer', whiteSpace:'nowrap' }
+        }, 'Save')
+      ),
+
+      /* Preset + saved list */
+      e('div', { key:'listHead', style:{ fontSize:'0.68rem', fontWeight:700, color:GREY, letterSpacing:'0.04em',
+        textTransform:'uppercase', marginBottom:'0.4rem' } }, 'Palettes'),
+      e('div', { key:'grid', style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
+        [...THEME_PRESETS, ...(settings.customThemes || [])].map(p => {
+          const active = (settings.themeId || 'coastal') === p.id;
+          const isUser = String(p.id).indexOf('user_') === 0;
+          return e('div', { key: p.id, style:{ position:'relative' } },
+            e('button', {
+              type:'button',
+              onClick: ()=>applyThemeId(p.id),
+              style: {
+                width:'100%', textAlign:'left', border: active ? '2px solid #203B59' : '1px solid '+LINE,
+                background: SURF2, borderRadius:'14px', padding:'0.65rem 0.7rem', cursor:'pointer'
+              }
+            },
+              e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK, marginBottom:'0.45rem' } }, p.name),
+              e('div', { style:{ display:'flex', gap:'4px' } },
+                (p.colors || []).map((c,i) => e('div', {
+                  key:i,
+                  style:{ flex:1, height:'22px', borderRadius:'6px', background:c,
+                    color:(p.text && p.text[i]) || readableOn(c), fontSize:'0.55rem', fontWeight:700,
+                    display:'flex', alignItems:'center', justifyContent:'center' }
+                }, 'Aa'))
+              )
+            ),
+            isUser ? e('button', {
+              type:'button',
+              onClick:(ev)=>{ ev.stopPropagation(); deleteCustomTheme(p.id); },
+              style:{ position:'absolute', top:'6px', right:'6px', border:'none', background:'rgba(31,21,30,0.08)',
+                borderRadius:'999px', width:'22px', height:'22px', fontSize:'0.7rem', cursor:'pointer', color:INK }
+            }, '×') : null
+          );
         })
-      ),
-      e('button', {
-        key:'custom',
-        onClick: ()=>applyThemeId('custom'),
-        style: {
-          marginTop:'0.65rem', width:'100%', textAlign:'left',
-          border: (settings.themeId === 'custom') ? '2px solid #203B59' : '1px solid '+LINE,
-          background: SURF2, borderRadius:'14px', padding:'0.7rem 0.85rem', cursor:'pointer'
-        }
-      },
-        e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK } }, 'Custom'),
-        e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px' } }, 'Pick card and text colours per site')
-      ),
-      (settings.themeId === 'custom' || true) && e('div', { key:'customEditor', style:{ marginTop:'0.75rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
-        siteEdits.map((site, idx) => e('div', {
-          key: site.key + idx,
-          style:{ background:'rgba(31,21,30,0.04)', borderRadius:'12px', padding:'0.65rem 0.75rem',
-            border:'1px solid '+LINE }
-        },
-          e('div', { style:{ fontSize:'0.75rem', fontWeight:700, color:INK, marginBottom:'0.4rem' } }, site.label || site.key),
-          e('div', { style:{ display:'flex', gap:'0.75rem', alignItems:'center', flexWrap:'wrap' } },
-            e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.68rem', color:GREY, fontWeight:600 } },
-              'Card',
-              e('input', { type:'color', value: site.hex || '#203B59',
-                onChange:(ev)=>updateSiteColour(idx, ev.target.value),
-                style:{ width:'36px', height:'28px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
-            ),
-            e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.68rem', color:GREY, fontWeight:600 } },
-              'Text',
-              e('input', { type:'color', value: site.on || readableOn(site.hex),
-                onChange:(ev)=>updateSiteOnColour(idx, ev.target.value),
-                style:{ width:'36px', height:'28px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
-            ),
-            e('div', {
-              style:{ flex:1, minWidth:'72px', borderRadius:'8px', padding:'0.4rem 0.55rem',
-                background: site.hex, color: site.on || readableOn(site.hex),
-                fontSize:'0.72rem', fontWeight:700, textAlign:'center' }
-            }, 'Preview')
-          )
-        ))
       )
     ]),
 
