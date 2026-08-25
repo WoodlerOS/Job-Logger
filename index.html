@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#121212">
+<meta name="theme-color" content="#E5D0BB">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -27,14 +27,14 @@
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #121212);
+    background:var(--page-bg, #E5D0BB);
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
-    color:#E3E3E3; -webkit-tap-highlight-color:transparent;
+    color:#1F151E; -webkit-tap-highlight-color:transparent;
   }
   #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #121212);
+    background:var(--page-bg, #E5D0BB);
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
@@ -162,24 +162,24 @@
 
   /* Premium: frosted surfaces */
   .glass-bar {
-    background: rgba(18,18,18,0.72) !important;
+    background: rgba(229,208,187,0.82) !important;
     backdrop-filter: blur(18px) saturate(1.2);
     -webkit-backdrop-filter: blur(18px) saturate(1.2);
-    border-bottom: 1px solid rgba(227,227,227,0.12);
+    border-bottom: 1px solid rgba(31,21,30,0.10);
   }
   .glass-sheet {
-    background: rgba(62,62,62,0.55) !important;
+    background: rgba(255,237,220,0.88) !important;
     backdrop-filter: blur(24px) saturate(1.3);
     -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    border: 1px solid rgba(227,227,227,0.14);
+    border: 1px solid rgba(31,21,30,0.10);
     border-bottom: none;
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.35), 0 -2px 10px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 -8px 40px rgba(31,21,30,0.12), 0 -2px 10px rgba(31,21,30,0.06) !important;
   }
   .glass-field {
-    background: rgba(227,227,227,0.08) !important;
+    background: rgba(31,21,30,0.05) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(227,227,227,0.12) !important;
+    border: 1px solid rgba(31,21,30,0.10) !important;
     border-radius: 12px !important;
   }
   /* Premium: save pulse */
@@ -249,7 +249,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#121212; }
+    background:#E5D0BB; }
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
@@ -259,9 +259,9 @@
     font-family:'Playwrite US Trad', cursive;
     font-weight:400;
     font-size:2.7rem;
-    color:#E3E3E3;
-    -webkit-text-stroke:1px #E3E3E3;
-    text-stroke:1px #E3E3E3;
+    color:#1F151E;
+    -webkit-text-stroke:1px #1F151E;
+    text-stroke:1px #1F151E;
     clip-path:inset(0 100% 0 0);
     animation:splashWipe 0.95s cubic-bezier(.4,0,.2,1) .08s both;
   }
@@ -270,9 +270,9 @@
     font-family:'Playwrite US Trad', cursive;
     font-weight:400;
     font-size:2.7rem;
-    color:#E3E3E3;
-    -webkit-text-stroke:1px #E3E3E3;
-    text-stroke:1px #E3E3E3;
+    color:#1F151E;
+    -webkit-text-stroke:1px #1F151E;
+    text-stroke:1px #1F151E;
     margin-left:0.15rem;
     opacity:0;
     transform:scale(0.2);
@@ -286,7 +286,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#121212; color:#E3E3E3; flex-direction:column;
+      background:#E5D0BB; color:#1F151E; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -303,7 +303,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #121212);
+      background: var(--page-bg, #E5D0BB);
       overflow: hidden;
     }
     #root {
@@ -311,7 +311,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #121212);
+      background: var(--page-bg, #E5D0BB);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -360,7 +360,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #121212);
+      background: var(--page-bg, #E5D0BB);
     }
     .desktop-topbar {
       display: flex;
@@ -376,7 +376,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #121212);
+      background: var(--page-bg, #E5D0BB);
     }
     .desktop-split {
       display: grid;
@@ -535,12 +535,12 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#3E3E3E', hex2:'#2E2E2E' },
-  WS:   { label:'WS',   hex:'#525252', hex2:'#454545' },
-  RH:   { label:'RH',   hex:'#6B6B6B', hex2:'#5A5A5A' },
-  MMUH: { label:'MMUH', hex:'#858585', hex2:'#737373' }
+  NX:   { label:'NX',   hex:'#203B59', hex2:'#1A3048' },
+  WS:   { label:'WS',   hex:'#839CB6', hex2:'#6F87A0' },
+  RH:   { label:'RH',   hex:'#85301C', hex2:'#6E2817' },
+  MMUH: { label:'MMUH', hex:'#1F151E', hex2:'#161014' }
 };
-const EXTRA_SITE_HUES = ['#2A2A2A','#4A4A4A','#7A7A7A','#9A9A9A','#B8B8B8','#333333','#555555','#888888'];
+const EXTRA_SITE_HUES = ['#2A4A6A','#6A8AAA','#A04030','#3A2A35','#4A6A8A','#9A5038','#253545','#5A7088'];
 
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -633,10 +633,10 @@ const hslToHex = (h,s,l) => {
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
 };
-let INK='#E3E3E3', MID='#A8A8A8', GREY='#696969', LINE='rgba(227,227,227,0.16)';
-let VIOLET='#E3E3E3', APRICOT='#E3E3E3';
+let INK='#1F151E', MID='#5A4A40', GREY='#7A6A60', LINE='rgba(31,21,30,0.14)';
+let VIOLET='#203B59', APRICOT='#FFEDDC';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
-let LOCKED='#E3E3E3', LOCKEDBG='rgba(227,227,227,0.10)';
+let LOCKED='#1F151E', LOCKEDBG='rgba(31,21,30,0.08)';
 
 function applySites(list) {
   Object.keys(SITES).forEach(k => delete SITES[k]);
@@ -660,10 +660,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#121212', SURF2='#3E3E3E', SURF3='#3E3E3E';
-let FIELDBG='rgba(227,227,227,0.08)', EMPTY='#3E3E3E';
-let PAGE_BG='#121212';
-let CARD_BG='#3E3E3E';
+let SURF='#E5D0BB', SURF2='#FFEDDC', SURF3='#FFEDDC';
+let FIELDBG='rgba(31,21,30,0.06)', EMPTY='#FFEDDC';
+let PAGE_BG='#E5D0BB';
+let CARD_BG='#FFEDDC';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -677,8 +677,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#121212';
-  CARD_BG = '#3E3E3E';
+  PAGE_BG = '#E5D0BB';
+  CARD_BG = '#FFEDDC';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -718,24 +718,24 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    each other's — rather than one universal rule. Shared by ticket cards,
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
-  '#3E3E3E': '#E3E3E3',
-  '#525252': '#E3E3E3',
-  '#6B6B6B': '#E3E3E3',
-  '#858585': '#121212',
-  '#2E2E2E': '#E3E3E3',
-  '#454545': '#E3E3E3',
-  '#5A5A5A': '#E3E3E3',
-  '#737373': '#E3E3E3'
+  '#203B59': '#FFEDDC',
+  '#839CB6': '#1F151E',
+  '#85301C': '#FFEDDC',
+  '#1F151E': '#FFEDDC',
+  '#1A3048': '#FFEDDC',
+  '#6F87A0': '#1F151E',
+  '#6E2817': '#FFEDDC',
+  '#161014': '#FFEDDC'
 };
 const siteOnColor = (hex) => {
-  if (!hex) return '#E3E3E3';
+  if (!hex) return '#1F151E';
   const h = hex.toUpperCase();
   if (SITE_TEXT_PAIRS[h]) return SITE_TEXT_PAIRS[h];
   try {
     const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
     const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
-    return lum > 0.45 ? '#121212' : '#E3E3E3';
-  } catch (err) { return '#E3E3E3'; }
+    return lum > 0.45 ? '#1F151E' : '#FFEDDC';
+  } catch (err) { return '#1F151E'; }
 };
 
 const multiSiteBg = (siteKeys) => {
@@ -1253,6 +1253,29 @@ const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 
   e('path', { d:'M4 7 H20 M9 7 V5a1 1 0 0 1 1-1 h4 a1 1 0 0 1 1 1 V7 M6 7 L7 20 a1 1 0 0 0 1 1 h8 a1 1 0 0 0 1-1 L18 7',
     fill:'none', stroke:col, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }));
 
+/* Haptic feedback — Vibration API where available (Android / some browsers).
+   Patterns stay short so they feel like system ticks rather than buzzes.
+   No-ops safely when unsupported (most iOS Safari builds). */
+const HAPTIC = {
+  light: 8,
+  selection: 12,
+  medium: 18,
+  heavy: 28,
+  success: [10, 40, 14],
+  warning: [18, 30, 18],
+  error: [28, 40, 28, 40, 36],
+  open: [8, 24, 12],
+  close: 10
+};
+function haptic(kind) {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.vibrate) return;
+    const p = HAPTIC[kind] != null ? HAPTIC[kind] : HAPTIC.light;
+    navigator.vibrate(0); // cancel any ongoing pattern
+    navigator.vibrate(p);
+  } catch (err) {}
+}
+
 function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entryDelay, glow, children }) {
   const [holding, setHolding] = useState(false);
   const timerRef = useRef(null);
@@ -1278,6 +1301,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entry
         timerRef.current = null;
         setHolding(false);
         suppressClickRef.current = true;
+        haptic('medium');
         onLongPress();
       }, 550);
     }
@@ -1320,6 +1344,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entry
       return;
     }
     if (movedRef.current) return;
+    haptic('selection');
     if (onTap) onTap();
   };
 
@@ -1526,7 +1551,7 @@ function App() {
            are preserved. */
         /* Greyscale theme from palette image — always force these hexes so
            older saved site colours cannot reappear after load. */
-        const FIXED_SITE_PALETTE = ['#3E3E3E', '#525252', '#6B6B6B', '#858585'];
+        const FIXED_SITE_PALETTE = ['#203B59', '#839CB6', '#85301C', '#1F151E'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
         const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
         applySites(fixedSites);
@@ -1676,6 +1701,7 @@ function App() {
   }, [ready, user]);
 
   const backupNow = async () => {
+    haptic('medium');
     if (PREVIEW_MODE) { alert('Cloud backup is disabled in preview mode.'); return; }
     const ok = await snapshotToCloud();
     alert(ok ? 'Backup saved to the cloud.' : 'Could not save a backup — check your connection.');
@@ -1700,6 +1726,7 @@ function App() {
   };
 
   const restoreBackup = async (b) => {
+    haptic('warning');
     if (!window.confirm('Replace your current tickets with the backup from '+fmtDate(b.savedAt)+'? This will overwrite what\'s currently synced, on every device.')) return;
     await persist(b.jobs || []);
     setBackupsOpen(false);
@@ -1712,7 +1739,7 @@ function App() {
     catch (err) { setAuthError(err && err.message ? err.message : 'Could not sign in.'); }
     setAuthBusy(false);
   };
-  const signOutUser = () => { if (!PREVIEW_MODE) auth.signOut(); };
+  const signOutUser = () => { haptic('medium'); if (!PREVIEW_MODE) auth.signOut(); };
 
   const fmtDate  = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   const fmtDay   = (s) => s ? new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
@@ -1875,6 +1902,7 @@ function App() {
   };
 
   const doSpreadsheet = async (scope) => {
+    haptic('success');
     const src = scopeTickets(scope);
     if (!src.length) { alert('Nothing to export.'); return; }
     if (typeof ExcelJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
@@ -1916,6 +1944,7 @@ function App() {
   };
 
   const doCopyText = async (scope) => {
+    haptic('success');
     const src = scopeTickets(scope);
     if (!src.length) { alert('Nothing to copy.'); return; }
     const byDate = {};
@@ -2064,11 +2093,13 @@ function App() {
   };
 
   const openNew = (date, ret) => {
+    haptic('open');
     setForm(blank(date)); setEditingId(null); setReturnTo(ret || null);
     setDayDetail(null); setSwipeX(0); setView('form'); window.scrollTo(0,0);
   };
 
   const openEdit = (j, ret) => {
+    haptic('medium');
     setForm({
       ticketNumber: j.ticketNumber || '',
       summary: j.summary || '',
@@ -2128,6 +2159,7 @@ function App() {
   };
 
   const saveAndClose = async () => {
+    haptic('success');
     if (!form.ticketNumber.trim()) { alert('Enter a ticket number to save.'); return; }
     if (!form.start) { alert('Set a start time to save.'); return; }
     const dupe = jobs.find(j => j.id !== editingId && String(j.ticketNumber).trim().toLowerCase() === form.ticketNumber.trim().toLowerCase());
@@ -2137,6 +2169,7 @@ function App() {
   };
 
   const backOut = async () => {
+    haptic('close');
     if (savingRef.current) return; // already saving (button + swipe can't double-fire)
     savingRef.current = true;
     try {
@@ -2167,6 +2200,7 @@ function App() {
     setDayDetail(null);
   };
   const toggleLock = (id) => {
+    haptic('success');
     const sid = id == null ? null : String(id);
     setJobs(prev => {
       const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !j.locked } : j);
@@ -2282,7 +2316,7 @@ function App() {
     setDayDetail(null);
     setPinnedDay(null);
   };
-  const goToday = () => { setAnchorDate(new Date()); setPinnedDay(null); };
+  const goToday = () => { haptic('selection'); setAnchorDate(new Date()); setPinnedDay(null); };
 
   const onCalTouchStart = (ev) => {
     if (monthPickerOpen || menuOpen) return;
@@ -2385,7 +2419,7 @@ function App() {
       color:INK, fontWeight:550, fontSize:'0.95rem', cursor:'pointer' } }, 'Close');
 
   const monthShort = anchorDate.toLocaleDateString('en-GB',{ month:'long' });
-  const closeMenu = () => { setMenuOpen(false); setMenuSlide(0); setMenuSearch(''); };
+  const closeMenu = () => { haptic('close'); setMenuOpen(false); setMenuSlide(0); setMenuSearch(''); };
 
   const sideMenuItem = (label, onClick, muted) =>
     e('button', {
@@ -2450,7 +2484,7 @@ function App() {
               sideMenuItem(view === 'list' ? 'Calendar' : 'All tickets', ()=>{ setView(view === 'list' ? 'month' : 'list'); window.scrollTo(0,0); }),
               sideMenuItem('Export to Excel', ()=> setChooser('excel')),
               sideMenuItem('Copy as text', ()=> setChooser('text')),
-              sideMenuItem('Stock', ()=> { setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
+              sideMenuItem('Stock', ()=> { haptic('open'); setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
               sideMenuItem('Settings', ()=> openSettings()),
               settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
                 borderTop:'1px solid rgba(255,255,255,0.1)' } },
@@ -2519,7 +2553,7 @@ function App() {
   const onEdgeEnd = () => {
     if (!edgeSwipe.current.live) { setMenuSlide(0); return; }
     edgeSwipe.current.live = false;
-    if (menuSlide >= 0.28) { setMenuOpen(true); setMenuSlide(1); }
+    if (menuSlide >= 0.28) { haptic('open'); setMenuOpen(true); setMenuSlide(1); }
     else setMenuSlide(0);
   };
 
@@ -2545,7 +2579,7 @@ function App() {
         boxShadow: '0 8px 28px rgba(10,20,28,0.18), 0 2px 8px rgba(10,20,28,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
         transition:'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease'
       }
-    }, PlusIcon(26, '#E3E3E3'))
+    }, PlusIcon(26, '#203B59'))
   );
 
 
@@ -2690,93 +2724,46 @@ function App() {
       ];
 
       const isExpanded = expandKey && expandedCardId === expandKey;
-      const canEdit = isExpanded && !(j.locked && settings.lockReadOnly);
 
       if (isExpanded) {
-        const fieldStyle = {
-          width:'100%', border:'1px solid rgba(227,227,227,0.12)', background:'rgba(227,227,227,0.08)',
-          borderRadius:'10px', padding:'0.5rem 0.65rem', outline:'none', color:onC, fontSize:'0.82rem',
-          fontWeight:550, fontFamily:'inherit'
-        };
+        const labelS = { fontSize:'0.62rem', fontWeight:650, letterSpacing:'0.06em', textTransform:'uppercase',
+          color:onC, opacity:0.55, marginBottom:'0.18rem' };
+        const bodyS = { fontSize:'0.84rem', fontWeight:550, color:onC, lineHeight:1.4, whiteSpace:'pre-wrap', wordBreak:'break-word' };
+        const row = (label, content) => content ? e('div', { key:label, style:{ marginTop:'0.45rem' } },
+          e('div', { style:labelS }, label),
+          e('div', { style:bodyS }, content)
+        ) : null;
+        const siteLabel = s ? s.label : (j.site || '—');
+        const machLabel = eq.length ? eq.map(x => EQUIP[x] || x).join(', ') : '';
+        const dateLabel = segStart ? fmtDay(segStart) : (j.startDateTime ? fmtDay(j.startDateTime) : '');
+        const timeLine = [t1 && ('Travel ' + t1), (tStart && tFinish) ? (tStart + ' – ' + tFinish) : (tStart || tFinish || ''), t2 && ('Travel ' + t2)].filter(Boolean).join('  ·  ');
+        const notes = (j.workDone != null && String(j.workDone).trim()) ? String(j.workDone).trim() : '';
+        const partsLines = parts.map(p => (p.partNumber || '') + (p.partDescription ? ' — ' + p.partDescription : '')).filter(Boolean);
         children.push(
-          e('div', { key:'exp', style:{ marginTop:'0.65rem', display:'flex', flexDirection:'column', gap:'0.45rem',
-            borderTop:'1px solid rgba(227,227,227,0.12)', paddingTop:'0.55rem' } },
-            e('div', { style:{ display:'flex', gap:'0.35rem' } },
-              e('select', {
-                value: j.site || '',
-                disabled: !canEdit,
-                onClick:(ev)=>ev.stopPropagation(),
-                onChange:(ev)=>{ if (canEdit) patchJob(j.id, { site: ev.target.value }); },
-                style:{ ...fieldStyle, flex:1 }
-              }, e('option', { value:'' }, 'Site'),
-                Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label))),
-              e('select', {
-                value: (eq[0] || ''),
-                disabled: !canEdit,
-                onClick:(ev)=>ev.stopPropagation(),
-                onChange:(ev)=>{ if (canEdit) patchJob(j.id, { equipment: ev.target.value ? [ev.target.value] : [] }); },
-                style:{ ...fieldStyle, flex:1 }
-              }, e('option', { value:'' }, 'Machine'),
-                Object.keys(EQUIP).map(k => e('option', { key:k, value:k }, EQUIP[k])))
+          e('div', { key:'exp', style:{ marginTop:'0.55rem', display:'flex', flexDirection:'column',
+            borderTop:'1px solid ' + hexToRgba(onC, 0.18), paddingTop:'0.5rem', paddingBottom:'0.15rem' } },
+            e('div', { style:{ display:'flex', flexWrap:'wrap', gap:'0.35rem 0.75rem' } },
+              e('div', null, e('div', { style:labelS }, 'Site'), e('div', { style:bodyS }, siteLabel)),
+              machLabel ? e('div', null, e('div', { style:labelS }, 'Machine'), e('div', { style:bodyS }, machLabel)) : null,
+              dateLabel ? e('div', null, e('div', { style:labelS }, 'Date'), e('div', { style:bodyS }, dateLabel)) : null,
+              durationLabel ? e('div', null, e('div', { style:labelS }, 'Duration'), e('div', { style:bodyS }, durationLabel)) : null
             ),
-            e('div', { style:{ display:'flex', gap:'0.35rem', alignItems:'center' } },
-              e('input', { type:'time', value: (segStart||'').slice(11,16) || '', disabled:!canEdit,
-                onClick:(ev)=>ev.stopPropagation(),
-                onChange:(ev)=>{
-                  if (!canEdit) return;
-                  const d = (segStart||j.startDateTime||'').slice(0,10) || todayISO();
-                  const val = d + 'T' + ev.target.value;
-                  if (seg) {
-                    const nextEx = ex.map((x,xi)=> xi===dayIndex-2 ? { ...x, startDateTime: val } : x);
-                    patchJob(j.id, { extraDays: nextEx });
-                  } else patchJob(j.id, { startDateTime: val });
-                },
-                style:{ ...fieldStyle, flex:1 } }),
-              e('span', { style:{ color:onC, opacity:0.5 } }, '–'),
-              e('input', { type:'time', value: (segFinish||'').slice(11,16) || '', disabled:!canEdit,
-                onClick:(ev)=>ev.stopPropagation(),
-                onChange:(ev)=>{
-                  if (!canEdit) return;
-                  const d = (segFinish||j.finishDateTime||'').slice(0,10) || todayISO();
-                  const val = d + 'T' + ev.target.value;
-                  if (seg) {
-                    const nextEx = ex.map((x,xi)=> xi===dayIndex-2 ? { ...x, finishDateTime: val } : x);
-                    patchJob(j.id, { extraDays: nextEx });
-                  } else patchJob(j.id, { finishDateTime: val });
-                },
-                style:{ ...fieldStyle, flex:1 } })
-            ),
-            e('textarea', {
-              value: j.workDone || '',
-              disabled: !canEdit,
-              placeholder: 'Work notes…',
-              rows: 4,
-              onClick:(ev)=>ev.stopPropagation(),
-              onChange:(ev)=>{ if (canEdit) patchJob(j.id, { workDone: ev.target.value }); },
-              style:{ ...fieldStyle, resize:'vertical', minHeight:'4.5rem', lineHeight:1.35, fontWeight:500 }
-            }),
-            parts.length ? e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.25rem' } },
-              parts.map((p,pi) => e('div', { key:pi, style:{ fontSize:'0.72rem', color:faintC, fontWeight:550 } },
-                (p.partNumber || '') + (p.partDescription ? ' — ' + p.partDescription : '')))
+            timeLine ? row('Times', timeLine) : null,
+            summaryText ? row('Description', summaryText) : null,
+            notes ? row('Notes', notes) : null,
+            partsLines.length ? e('div', { key:'parts', style:{ marginTop:'0.45rem' } },
+              e('div', { style:labelS }, 'Parts'),
+              e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.2rem' } },
+                partsLines.map((line, pi) => e('div', { key:pi, style:{ ...bodyS, fontSize:'0.8rem' } }, line)))
             ) : null,
-            e('div', { style:{ display:'flex', gap:'0.4rem', marginTop:'0.15rem' } },
-              e('button', {
-                onClick:(ev)=>{ ev.stopPropagation(); setExpandedCardId(null); },
-                style:{ flex:1, border:'1px solid rgba(227,227,227,0.14)', background:'rgba(227,227,227,0.08)',
-                  color:onC, borderRadius:'10px', padding:'0.5rem', fontWeight:600, fontSize:'0.75rem', cursor:'pointer' }
-              }, 'Done'),
-              e('button', {
-                onClick:(ev)=>{ ev.stopPropagation(); setExpandedCardId(null); openEdit(j, { view:'month' }); },
-                style:{ flex:1, border:'none', background:'rgba(227,227,227,0.16)',
-                  color:onC, borderRadius:'10px', padding:'0.5rem', fontWeight:600, fontSize:'0.75rem', cursor:'pointer' }
-              }, 'Full editor')
-            )
+            e('div', { style:{ marginTop:'0.55rem', fontSize:'0.62rem', color:onC, opacity:0.5, fontWeight:550 } },
+              'Hold to edit')
           )
         );
       }
 
       const partsCount = parts.length;
-      const taperOn = cardPerspective && overlapped;
+      const taperOn = false;
       /* Depth: soft elevation always; stronger when stacked so edges stay readable */
       const cardShadow = overlapped
         ? '0 8px 24px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.22)'
@@ -2791,7 +2778,7 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'12px', clipPath: cardClipPath(taperOn ? 8 : 0),
+          borderRadius:'12px',
           padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem', cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), clip-path .28s cubic-bezier(.22,1.1,.35,1), padding .25s ease' }
@@ -2842,9 +2829,9 @@ function App() {
         locked: !!(j && j.locked),
         radius:'14px',
         glow: null,
-        onLock:()=>{ if (j && j.id != null) toggleLock(j.id); },
-        onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) remove(j.id); },
-        onLongPress: groupKey ? (() => setCardPerspective(p => !p)) : null,
+        onLock:()=>{ if (j && j.id != null) { haptic('success'); toggleLock(j.id); } },
+        onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) { haptic('error'); remove(j.id); } },
+        onLongPress: ()=>{ if (j) { setExpandedCardId(null); openEdit(j, ret || { view:'month' }); } },
         onTap:()=>{
           if (groupKey && !isOpen) { openStack(groupKey); return; }
           if (groupKey) openStack(groupKey);
@@ -3037,10 +3024,10 @@ function App() {
     && e('div', { key:'journey', style:{
         position:'fixed', left:'0.75rem', bottom:'calc(0.85rem + env(safe-area-inset-bottom))',
         maxWidth:'calc(100vw - 5.2rem)', zIndex:35,
-        background: 'rgba(18,18,18,0.35)',
+        background: 'rgba(255,237,220,0.75)',
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-        boxShadow:'none', borderRadius:'999px',
-        border: '1px solid rgba(227,227,227,0.06)',
+        boxShadow:'0 2px 10px rgba(31,21,30,0.08)', borderRadius:'999px',
+        border: '1px solid rgba(31,21,30,0.08)',
         padding:'0.28rem 0.45rem', overflowX:'auto',
         display:'flex', alignItems:'center' } },
       e('div', { style:{ display:'flex', alignItems:'center', gap:'0.18rem', flexWrap:'nowrap', whiteSpace:'nowrap' } },
@@ -3064,6 +3051,7 @@ function App() {
   };
 
   const closeMonthPicker = () => {
+    haptic('close');
     setMonthPickerOpen(false);
     setMpDY(0);
     setMpDragging(false);
@@ -3288,7 +3276,7 @@ function App() {
       e('button', {
         onClick:()=>{
           if (window.__dateLongPressed) { window.__dateLongPressed = false; return; }
-          setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); setMonthPickerOpen(true);
+          setMpDY(0); setMpDragging(false); setMpMonthDX(0); setMpMonthDragging(false); haptic('open'); setMonthPickerOpen(true);
         },
         onContextMenu:(ev)=>{ ev.preventDefault(); },
         onTouchStart:(ev)=>{
@@ -3385,11 +3373,11 @@ function App() {
      rule the real ticket cards use, so contrast is guaranteed regardless of
      which site is active, and the form looks like the card you'll review
      afterwards. */
-  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#3E3E3E';
+  const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#203B59';
   const formOnC = siteOnColor(formSiteHex);
   /* Translucent glass fields over the site-coloured section shell */
-  const formFieldBg = 'rgba(227,227,227,0.10)';
-  const formFieldBg2 = 'rgba(227,227,227,0.07)';
+  const formFieldBg = 'rgba(255,255,255,0.28)';
+  const formFieldBg2 = 'rgba(255,255,255,0.18)';
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
@@ -3562,7 +3550,7 @@ function App() {
               onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .35s ease, color .35s ease', ['--ph-color']:formOnC } }),
-            e('input', { type:'text', value:form.summary || '', placeholder:'Short description (optional)', className:'field-graphite',
+            e('input', { type:'text', value:form.summary || '', placeholder:'Description', className:'field-graphite',
               onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
               maxLength: 80,
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
@@ -3692,7 +3680,7 @@ function App() {
     )
   );
 
-  const openSettings = () => { setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(true); };
+  const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(true); };
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list }); };
   const commitEquip = (list) => { setEquipEdits(list); applyEquip(list); setThemeTick(t=>t+1); saveSettings({ equipment:list }); };
@@ -3714,7 +3702,7 @@ function App() {
       e('div', { style:{ flex:1, minWidth:0 } },
         e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, label),
         sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px', lineHeight:1.35 } }, sub)),
-      e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); onToggle(); },
+      e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); haptic('selection'); onToggle(); },
         style:{ width:'48px', height:'28px', borderRadius:'4px', background: value?INK:SURF3,
         border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0, padding:0, cursor:'pointer' } },
         e('div', { style:{ position:'absolute', top:'3px', left: value?'24px':'3px', width:'20px', height:'20px', borderRadius:'2px',
@@ -3724,7 +3712,7 @@ function App() {
     e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid '+LINE } },
       e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:MID } }, label),
       e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
-        options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>onChange(opt.key),
+        options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>{ haptic('selection'); onChange(opt.key); },
           style:{ padding:'0.38rem 0.7rem', borderRadius:'4px', border: value===opt.key?'none':'1px solid '+LINE,
             background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
             fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, opt.label))));
@@ -3748,29 +3736,29 @@ function App() {
   const collapseSection = (key, title, icon, children) => {
     const open = !!settingsSections[key];
     return e('div', { key:key, className:'settings-span-2', style:{
-        background: 'rgba(62,62,62,0.42)',
+        background: 'rgba(255,255,255,0.45)',
         borderRadius:'16px',
-        border:'1px solid rgba(227,227,227,0.10)',
-        boxShadow:'0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
+        border:'1px solid rgba(31,21,30,0.10)',
+        boxShadow:'0 6px 20px rgba(31,21,30,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
         overflow:'hidden', marginBottom:'0.7rem',
         backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)'
       } },
       e('button', {
-        onClick:()=>setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })),
+        onClick:()=>{ haptic('selection'); setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })); },
         style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'rgba(227,227,227,0.06)', border:'none', padding:'0.7rem 0.95rem', cursor:'pointer', textAlign:'left' }
+          background:'rgba(32,59,89,0.06)', border:'none', padding:'0.7rem 0.95rem', cursor:'pointer', textAlign:'left' }
       },
-        e('div', { style:{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(227,227,227,0.10)', flexShrink:0,
+        e('div', { style:{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(32,59,89,0.10)', flexShrink:0,
           display:'flex', alignItems:'center', justifyContent:'center',
-          border:'1px solid rgba(227,227,227,0.08)' } }, icon(15, '#E3E3E3')),
-        e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:600, color:'#E3E3E3', letterSpacing:'0.04em', textTransform:'uppercase' } }, title),
+          border:'1px solid rgba(32,59,89,0.08)' } }, icon(15, '#203B59')),
+        e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:600, color:'#1F151E', letterSpacing:'0.04em', textTransform:'uppercase' } }, title),
         e('span', { style:{
           display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
           transition:'transform .22s ease', opacity:0.55
-        } }, ChevronLeft(15, '#E3E3E3'))
+        } }, ChevronLeft(15, '#203B59'))
       ),
       open && e('div', { style:{ padding:'0.85rem 1rem 1rem', display:'flex', flexDirection:'column',
-        borderTop:'1px solid rgba(227,227,227,0.06)' } }, children)
+        borderTop:'1px solid rgba(31,21,30,0.08)' } }, children)
     );
   };
 
@@ -4035,7 +4023,7 @@ function App() {
       e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.1rem 0.05rem 0.2rem' } },
         e('button', {
           className: 'd-hover-btn',
-          onClick: () => setStockOpen(false),
+          onClick: () => { haptic('close'); setStockOpen(false); },
           style: { background: 'none', border: 'none', width: '36px', height: '36px',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
         }, ChevronLeft(18, INK)),
