@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#E5D0BB">
+<meta name="theme-color" content="#F5F4F1">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
@@ -23,33 +23,68 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
+  :root {
+    --page-bg: #F5F4F1;
+    --ink: #1F151E;
+    --sea: #203B59;
+    --lagoon: #839CB6;
+    --ruby: #85301C;
+    --charcoal: #1F151E;
+    --cotton: #FFEDDC;
+    --line: rgba(31,21,30,0.10);
+    --line-strong: rgba(31,21,30,0.16);
+    --scrim: rgba(31,21,30,0.48);
+    --ease-spring: cubic-bezier(.22,1.15,.35,1);
+    --ease-out: cubic-bezier(.22,.9,.3,1);
+    --ease-press: cubic-bezier(.34,1.4,.64,1);
+    --shadow-card: 0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22);
+    --shadow-card-stack: 0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26);
+    --shadow-sheet: 0 -12px 48px rgba(31,21,30,0.14), 0 -2px 12px rgba(31,21,30,0.06);
+    --glass-bar: rgba(245,244,241,0.78);
+    --glass-sheet: rgba(255,255,255,0.88);
+    --glass-field: rgba(31,21,30,0.045);
+    --focus-ring: 0 0 0 3px rgba(32,59,89,0.22);
+  }
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
   html, body {
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
-    background:var(--page-bg, #E5D0BB);
+    background:var(--page-bg);
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
-    color:#1F151E; -webkit-tap-highlight-color:transparent;
+    color:var(--ink); -webkit-tap-highlight-color:transparent;
   }
-  #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh;
-    background:var(--page-bg, #E5D0BB);
+  /* Subtle paper grain on page */
+  body::before {
+    content:'';
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:0.035;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  #root { width:100%; max-width:100%; overflow-x:hidden; min-height:100vh; position:relative; z-index:1;
+    background:transparent;
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
-  input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:light; }
+  input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:light; font-variant-numeric:tabular-nums; }
   select { -webkit-appearance:none; appearance:none; color-scheme:light; }
-  button { 
-    font-family:inherit; 
-    transition: transform .14s cubic-bezier(.22,.9,.3,1), opacity .12s ease, filter .12s ease, box-shadow .14s ease;
+  button {
+    font-family:inherit;
+    transition: transform .16s var(--ease-press), opacity .12s ease, filter .12s ease, box-shadow .18s var(--ease-out);
     -webkit-tap-highlight-color: transparent;
   }
-  button:active { 
-    transform: scale(0.94); 
-    opacity: 0.82; 
-    filter: brightness(0.92);
+  button:active {
+    transform: scale(0.94);
+    opacity: 0.88;
+    filter: brightness(0.94);
   }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring) !important;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
   .fab-btn:active {
     transform: scale(0.88) !important;
     opacity: 0.9;
@@ -59,7 +94,7 @@
   .fab-wrap {
     position: fixed;
     right: 1.15rem;
-    bottom: calc(1.35rem + env(safe-area-inset-bottom));
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
     width: 56px;
     height: 56px;
     z-index: 35;
@@ -160,28 +195,47 @@
   .fab-style-preview .fab-glow { pointer-events: none; }
 
 
-  /* Premium: frosted surfaces */
+  /* Unified glass system */
   .glass-bar {
-    background: rgba(229,208,187,0.82) !important;
-    backdrop-filter: blur(18px) saturate(1.2);
-    -webkit-backdrop-filter: blur(18px) saturate(1.2);
-    border-bottom: 1px solid rgba(31,21,30,0.10);
+    background: var(--glass-bar) !important;
+    backdrop-filter: blur(20px) saturate(1.25);
+    -webkit-backdrop-filter: blur(20px) saturate(1.25);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset;
   }
   .glass-sheet {
-    background: rgba(255,237,220,0.88) !important;
-    backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    border: 1px solid rgba(31,21,30,0.10);
+    background: var(--glass-sheet) !important;
+    backdrop-filter: blur(28px) saturate(1.3);
+    -webkit-backdrop-filter: blur(28px) saturate(1.3);
+    border: 1px solid var(--line);
     border-bottom: none;
-    box-shadow: 0 -8px 40px rgba(31,21,30,0.12), 0 -2px 10px rgba(31,21,30,0.06) !important;
+    box-shadow: var(--shadow-sheet) !important;
+    overscroll-behavior: contain;
   }
   .glass-field {
-    background: rgba(31,21,30,0.05) !important;
+    background: var(--glass-field) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(31,21,30,0.10) !important;
+    border: 1px solid var(--line) !important;
     border-radius: 12px !important;
+    transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out), background .2s ease;
   }
+  .glass-field:focus, input.glass-field:focus, textarea.glass-field:focus {
+    border-color: rgba(32,59,89,0.35) !important;
+    box-shadow: var(--focus-ring);
+    background: rgba(255,255,255,0.55) !important;
+  }
+  .scrim {
+    background: var(--scrim) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .hairline { border-color: var(--line) !important; }
+  .chip-active {
+    box-shadow: 0 2px 8px rgba(32,59,89,0.18), inset 0 1px 0 rgba(255,255,255,0.2);
+    transform: translateY(-0.5px);
+  }
+
   /* Premium: save pulse */
   @keyframes savedPulse {
     0% { box-shadow: 0 0 0 0 rgba(46,160,90,0.5), 0 4px 14px rgba(0,0,0,0.12); }
@@ -249,7 +303,7 @@
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
   #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#E5D0BB; }
+    background:#F5F4F1; }
   /* Total splash lifetime now needs to cover the full write-then-full-stop
      sequence (finishes ~2.2s in) plus a brief beat to actually see it,
      before fading out — 2.9s total, fade starting at 86% (~2.5s). */
@@ -286,7 +340,7 @@
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
     .landscape-lock {
       display:flex; position:fixed; inset:0; z-index:9999;
-      background:#E5D0BB; color:#1F151E; flex-direction:column;
+      background:#F5F4F1; color:#1F151E; flex-direction:column;
       align-items:center; justify-content:center; gap:0.8rem; text-align:center; padding:2rem;
       font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -303,7 +357,7 @@
     .mobile-only-inline { display: none !important; }
 
     html, body {
-      background: var(--page-bg, #E5D0BB);
+      background: var(--page-bg, #F5F4F1);
       overflow: hidden;
     }
     #root {
@@ -311,7 +365,7 @@
       margin: 0;
       min-height: 100vh;
       height: 100vh;
-      background: var(--page-bg, #E5D0BB);
+      background: var(--page-bg, #F5F4F1);
       box-shadow: none;
       border-radius: 0;
       overflow: hidden;
@@ -360,7 +414,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      background: var(--page-bg, #E5D0BB);
+      background: var(--page-bg, #F5F4F1);
     }
     .desktop-topbar {
       display: flex;
@@ -376,7 +430,7 @@
       flex: 1;
       overflow: auto;
       padding: 1.25rem 1.35rem 1.5rem;
-      background: var(--page-bg, #E5D0BB);
+      background: var(--page-bg, #F5F4F1);
     }
     .desktop-split {
       display: grid;
@@ -472,6 +526,66 @@
   @media (max-width: 899px) {
     .desktop-only { display: none !important; }
   }
+
+  /* Expand card reveal */
+  @keyframes expandIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-expand-body {
+    animation: expandIn .32s var(--ease-spring) both;
+  }
+  /* Soft fade on clamped text */
+  .clamp-fade {
+    -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  }
+  /* Skeleton loading */
+  @keyframes skeletonPulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.85; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, rgba(31,21,30,0.06) 0%, rgba(31,21,30,0.12) 50%, rgba(31,21,30,0.06) 100%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.2s ease-in-out infinite;
+    border-radius: 10px;
+  }
+  .skeleton-line { height: 12px; margin: 0.4rem 0; border-radius: 6px; }
+  /* Stack polish */
+  .stack-wrap {
+    transition: margin-top .45s var(--ease-spring), filter .3s var(--ease-out), transform .3s var(--ease-out) !important;
+  }
+  /* Press / chips */
+  .d-hover-btn:active, .chips button:active {
+    transform: scale(0.96);
+  }
+  /* Desktop hover lift */
+  @media (hover:hover) and (min-width: 900px) {
+    .d-hover-btn:hover, .nav-item:hover {
+      filter: brightness(1.03);
+      box-shadow: 0 4px 14px rgba(31,21,30,0.08);
+    }
+    .stack-wrap:hover > div > div {
+      transform: translateY(-1px);
+    }
+  }
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    body::before { display: none; }
+  }
+  /* Form focus glow (Sea Abyss) */
+  input:focus, textarea:focus, select:focus {
+    border-color: rgba(32,59,89,0.4) !important;
+    box-shadow: var(--focus-ring);
+  }
+
 </style>
 </head>
 <body>
@@ -633,7 +747,7 @@ const hslToHex = (h,s,l) => {
   const toHex = x => Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0');
   return '#'+toHex(r)+toHex(g)+toHex(b);
 };
-let INK='#1F151E', MID='#5A4A40', GREY='#7A6A60', LINE='rgba(31,21,30,0.14)';
+let INK='#1F151E', MID='#5A4A40', GREY='#7A6A60', LINE='rgba(31,21,30,0.10)';
 let VIOLET='#203B59', APRICOT='#FFEDDC';
 let TRAVEL='#5B5D66', TRAVELBG='rgba(10,10,12,0.06)', RED='#B3261E';
 let LOCKED='#1F151E', LOCKEDBG='rgba(31,21,30,0.08)';
@@ -660,10 +774,10 @@ function slugKey(label, existingKeys) {
   return key;
 }
 
-let SURF='#E5D0BB', SURF2='#FFEDDC', SURF3='#FFEDDC';
+let SURF='#F5F4F1', SURF2='#FFFFFF', SURF3='#FFFFFF';
 let FIELDBG='rgba(31,21,30,0.06)', EMPTY='#FFEDDC';
-let PAGE_BG='#E5D0BB';
-let CARD_BG='#FFEDDC';
+let PAGE_BG='#F5F4F1';
+let CARD_BG='#FFFFFF';
 let BG_DIM = 0;
 let CARD_DIM = 0;
 
@@ -677,8 +791,8 @@ function applySurfaceLightness() {
   /* Fixed colours only — background brightness/card brightness sliders were
      removed along with the theme picker, so this always resolves to the
      one cream surface colour from the chart, regardless of arguments. */
-  PAGE_BG = '#E5D0BB';
-  CARD_BG = '#FFEDDC';
+  PAGE_BG = '#F5F4F1';
+  CARD_BG = '#FFFFFF';
   SURF = CARD_BG;
   try {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
@@ -2440,7 +2554,7 @@ function App() {
     },
       e('div', {
         onClick: closeMenu,
-        style:{ position:'absolute', inset:0, background:'rgba(0,0,0,'+(0.45 * (menuOpen ? 1 : menuSlide))+')',
+        style:{ position:'absolute', inset:0, background:'rgba(31,21,30,'+(0.52 * (menuOpen ? 1 : menuSlide))+')',
           transition: menuOpen ? 'none' : 'background .12s ease' }
       }),
       e('div', {
@@ -2700,7 +2814,7 @@ function App() {
               background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
               borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
               display:'inline-block', maxWidth:'100%' } }, title),
-            summaryText ? e('div', { style:{
+            summaryText ? e('div', { className:'clamp-fade', style:{
               fontSize: (0.62 * tScale).toFixed(3) + 'rem',
               fontWeight: 500, color: faintC, opacity: 0.88,
               marginTop: '0.12rem', lineHeight: 1.2,
@@ -2713,11 +2827,11 @@ function App() {
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFeatureSettings:'"tnum"' } }, tStart),
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
               margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
             e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFeatureSettings:'"tnum"' } }, tFinish)),
           durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:650, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
@@ -2740,7 +2854,7 @@ function App() {
         const notes = (j.workDone != null && String(j.workDone).trim()) ? String(j.workDone).trim() : '';
         const partsLines = parts.map(p => (p.partNumber || '') + (p.partDescription ? ' — ' + p.partDescription : '')).filter(Boolean);
         children.push(
-          e('div', { key:'exp', style:{ marginTop:'0.55rem', display:'flex', flexDirection:'column',
+          e('div', { key:'exp', className:'card-expand-body', style:{ marginTop:'0.55rem', display:'flex', flexDirection:'column',
             borderTop:'1px solid ' + hexToRgba(onC, 0.18), paddingTop:'0.5rem', paddingBottom:'0.15rem' } },
             e('div', { style:{ display:'flex', flexWrap:'wrap', gap:'0.35rem 0.75rem' } },
               e('div', null, e('div', { style:labelS }, 'Site'), e('div', { style:bodyS }, siteLabel)),
@@ -2760,14 +2874,15 @@ function App() {
               'Hold to edit')
           )
         );
+        // mark expand block for CSS animation via class on last child — applied below on body wrap
       }
 
       const partsCount = parts.length;
       const taperOn = false;
       /* Depth: soft elevation always; stronger when stacked so edges stay readable */
       const cardShadow = overlapped
-        ? '0 8px 24px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.22)'
-        : '0 5px 16px rgba(0,0,0,0.14), 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.18)';
+        ? '0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26)'
+        : '0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22)';
       const cardBorder = s
         ? ('1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08))
         : ('1px solid ' + LINE);
@@ -2783,10 +2898,10 @@ function App() {
           minHeight: isExpanded ? 'auto' : '48px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), clip-path .28s cubic-bezier(.22,1.1,.35,1), padding .25s ease' }
       },
-        /* Soft top sheen for depth without looking plastic */
-        s ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+        /* Sheen only on expanded cards — keeps stacks quieter */
+        (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
           position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
-          background:'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 42%)'
+          background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 42%)'
         } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
@@ -3846,13 +3961,21 @@ function App() {
               e('span', { style:{ fontSize:'0.72rem', color:MID, fontWeight:600 } }, 'Restore')))));
 
 
-  if (user === undefined) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
+  if (user === undefined) return e('div', { style:{ padding:'2.5rem 1.25rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
+      e('div', { className:'skeleton', style:{ height:'2.2rem', width:'40%', borderRadius:'10px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'100%', borderRadius:'14px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'100%', borderRadius:'14px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'92%', borderRadius:'14px' } }));
 
   if (user === null) {
     return e(SignInScreen, { onSignIn:signIn, busy:authBusy, error:authError });
   }
 
-  if (!ready) return e('div', { style:{ padding:'4rem', textAlign:'center', color:GREY } }, 'Loading…');
+  if (!ready) return e('div', { style:{ padding:'2.5rem 1.25rem', display:'flex', flexDirection:'column', gap:'0.75rem' } },
+      e('div', { className:'skeleton', style:{ height:'2.2rem', width:'40%', borderRadius:'10px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'100%', borderRadius:'14px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'100%', borderRadius:'14px' } }),
+      e('div', { className:'skeleton', style:{ height:'5.5rem', width:'92%', borderRadius:'14px' } }));
 
   if (backupsOpen) return e('div', { key:'backups', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, backupsView);
 
