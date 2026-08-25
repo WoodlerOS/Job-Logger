@@ -768,12 +768,62 @@ try { dbFS.enablePersistence({ synchronizeTabs:true }).catch(()=>{}); } catch (e
    the supplied colour chart. Middle chart colour is the app's surface/
    background cream; the other four are the fixed ticket colours. ---------- */
 const SITES = {
-  NX:   { label:'NX',   hex:'#203B59', hex2:'#1A3048' },
-  WS:   { label:'WS',   hex:'#839CB6', hex2:'#6F87A0' },
-  RH:   { label:'RH',   hex:'#85301C', hex2:'#6E2817' },
-  MMUH: { label:'MMUH', hex:'#1F151E', hex2:'#161014' }
+  NX:   { label:'NX',   hex:'#203B59', hex2:'#1A3048', on:'#FFEDDC' },
+  WS:   { label:'WS',   hex:'#839CB6', hex2:'#6F87A0', on:'#1F151E' },
+  RH:   { label:'RH',   hex:'#9A3412', hex2:'#7C2D12', on:'#FFF7ED' },
+  MMUH: { label:'MMUH', hex:'#FDBA74', hex2:'#F59E0B', on:'#1F151E' }
 };
-const EXTRA_SITE_HUES = ['#2A4A6A','#6A8AAA','#A04030','#3A2A35','#4A6A8A','#9A5038','#253545','#5A7088'];
+
+const THEME_PRESETS = [
+  {
+    id: 'coastal', name: 'Coastal',
+    colors: ['#203B59', '#839CB6', '#9A3412', '#FDBA74'],
+    text: ['#FFEDDC', '#1F151E', '#FFF7ED', '#1F151E']
+  },
+  {
+    id: 'harbour', name: 'Harbour',
+    colors: ['#0F2C4C', '#5B8FB9', '#B45309', '#FCD34D'],
+    text: ['#E8F1F8', '#0A1628', '#FFFBEB', '#1C1917']
+  },
+  {
+    id: 'ember', name: 'Ember',
+    colors: ['#1C1917', '#78716C', '#C2410C', '#FDBA74'],
+    text: ['#FAFAF9', '#FAFAF9', '#FFF7ED', '#1C1917']
+  },
+  {
+    id: 'slate', name: 'Slate',
+    colors: ['#1E293B', '#64748B', '#94A3B8', '#E2E8F0'],
+    text: ['#F8FAFC', '#F8FAFC', '#0F172A', '#0F172A']
+  },
+  {
+    id: 'forest', name: 'Forest',
+    colors: ['#14532D', '#3F6212', '#A3E635', '#D9F99D'],
+    text: ['#ECFDF5', '#ECFDF5', '#14532D', '#14532D']
+  },
+  {
+    id: 'dusk', name: 'Dusk',
+    colors: ['#312E81', '#6366F1', '#C026D3', '#F0ABFC'],
+    text: ['#EEF2FF', '#EEF2FF', '#FAF5FF', '#3B0764']
+  }
+];
+function applyThemePreset(preset, siteList) {
+  const base = (siteList && siteList.length) ? siteList : sitesToList();
+  return base.map((site, idx) => {
+    const hex = preset.colors[idx % preset.colors.length];
+    const on = preset.text[idx % preset.text.length];
+    return { ...site, hex, on, hex2: shade(hex, -0.22) };
+  });
+}
+function readableOn(hex) {
+  try {
+    const h = hex.replace('#','');
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+    return lum > 0.55 ? '#1F151E' : '#FFEDDC';
+  } catch (err) { return '#1F151E'; }
+}
+
+const EXTRA_SITE_HUES = ['#2A4A6A','#6A8AAA','#C2410C','#FCD34D','#1E3A5F','#93C5FD','#EA580C','#FED7AA'];
 
 
 const EQUIP = { C:'Alinity C', I:'Alinity I', SCM:'Alinity SCM', GLP:'GLP track' };
@@ -873,13 +923,18 @@ let LOCKED='#1F151E', LOCKEDBG='rgba(31,21,30,0.08)';
 
 function applySites(list) {
   Object.keys(SITES).forEach(k => delete SITES[k]);
-  list.forEach(item => { SITES[item.key] = { label:item.label, hex:item.hex, hex2:shade(item.hex,-0.22) }; });
+  list.forEach(item => {
+    const hex = item.hex;
+    const on = item.on || readableOn(hex);
+    SITES[item.key] = { label:item.label, hex, hex2: item.hex2 || shade(hex,-0.22), on };
+    SITE_TEXT_PAIRS[String(hex).toUpperCase()] = on;
+  });
 }
 function applyEquip(list) {
   Object.keys(EQUIP).forEach(k => delete EQUIP[k]);
   list.forEach(item => { EQUIP[item.key] = item.label; });
 }
-function sitesToList() { return Object.keys(SITES).map(k => ({ key:k, label:SITES[k].label, hex:SITES[k].hex })); }
+function sitesToList() { return Object.keys(SITES).map(k => ({ key:k, label:SITES[k].label, hex:SITES[k].hex, on: SITES[k].on || readableOn(SITES[k].hex) })); }
 function equipToList() { return Object.keys(EQUIP).map(k => ({ key:k, label:EQUIP[k] })); }
 function nextAutoColour(existingHexes) {
   const used = new Set(existingHexes.map(h => h.toUpperCase()));
@@ -951,23 +1006,20 @@ const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.
    each other's — rather than one universal rule. Shared by ticket cards,
    the form sections, and the calendar's coloured day cells. */
 const SITE_TEXT_PAIRS = {
-  '#203B59': '#FFEDDC',
-  '#839CB6': '#1F151E',
-  '#85301C': '#FFEDDC',
-  '#1F151E': '#FFEDDC',
-  '#1A3048': '#FFEDDC',
-  '#6F87A0': '#1F151E',
-  '#6E2817': '#FFEDDC',
-  '#161014': '#FFEDDC'
+  '#203B59': '#FFEDDC', '#839CB6': '#1F151E', '#9A3412': '#FFF7ED', '#FDBA74': '#1F151E',
+  '#1A3048': '#FFEDDC', '#6F87A0': '#1F151E', '#7C2D12': '#FFF7ED', '#F59E0B': '#1F151E'
 };
 const siteOnColor = (hex) => {
   if (!hex) return '#1F151E';
-  const h = hex.toUpperCase();
+  const h = String(hex).toUpperCase();
   if (SITE_TEXT_PAIRS[h]) return SITE_TEXT_PAIRS[h];
   try {
+    for (const k of Object.keys(SITES)) {
+      if (SITES[k].hex && SITES[k].hex.toUpperCase() === h && SITES[k].on) return SITES[k].on;
+    }
     const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
     const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
-    return lum > 0.45 ? '#1F151E' : '#FFEDDC';
+    return lum > 0.55 ? '#1F151E' : '#FFEDDC';
   } catch (err) { return '#1F151E'; }
 };
 
@@ -1477,7 +1529,19 @@ const normalizeJobDates = (j) => {
 };
 let TIME_ROUNDING = 5;
 const roundNow = () => { const d=new Date(); const step = TIME_ROUNDING || 1; d.setMinutes(Math.floor(d.getMinutes()/step)*step);
-  return pad(d.getHours())+':'+pad(d.getMinutes()); };
+  return snapWorkTime(pad(d.getHours())+':'+pad(d.getMinutes())); };
+/* Work times: 06:00–20:00 only, snapped to 5-minute steps (iOS often ignores min/max/step). */
+function snapWorkTime(val) {
+  if (!val || !/^\d{1,2}:\d{2}$/.test(val)) return val || '';
+  let h = parseInt(val.split(':')[0], 10), m = parseInt(val.split(':')[1], 10);
+  if (isNaN(h) || isNaN(m)) return val;
+  m = Math.round(m / 5) * 5;
+  if (m === 60) { m = 0; h += 1; }
+  if (h < 6) { h = 6; m = 0; }
+  if (h > 20) { h = 20; m = 0; }
+  if (h === 20) m = 0;
+  return pad(h)+':'+pad(m);
+}
 const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
   return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
 
@@ -1676,7 +1740,7 @@ function App() {
   const [mpMonthDragging, setMpMonthDragging] = useState(false);
   const mpMonthTouch = useRef({ x:0, y:0, live:false });
   const mpPanelRef = useRef(null);
-  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, export: true, equipment: false, account: true });
+  const [settingsSections, setSettingsSections] = useState({ appearance: true, tickets: true, themes: true, export: false, equipment: false, account: true });
   const themeDraft = null;
   const edgeSwipe = useRef({ live:false, x:0, y:0 });
   const [menuSlide, setMenuSlide] = useState(0); // 0 closed … 1 open visual
@@ -1739,7 +1803,7 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 52;
+  const CAL_TRIGGER = 26;
 
   const jobsRef = useRef(jobs);
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
@@ -1829,10 +1893,14 @@ function App() {
            are preserved. */
         /* Greyscale theme from palette image — always force these hexes so
            older saved site colours cannot reappear after load. */
-        const FIXED_SITE_PALETTE = ['#203B59', '#839CB6', '#85301C', '#1F151E'];
         const baseSites = (merged.sites && merged.sites.length) ? merged.sites : sitesToList();
-        const fixedSites = baseSites.map((s, idx) => ({ ...s, hex: FIXED_SITE_PALETTE[idx % FIXED_SITE_PALETTE.length] }));
-        applySites(fixedSites);
+        const themeId = merged.themeId || 'coastal';
+        if (themeId !== 'custom') {
+          const preset = THEME_PRESETS.find(t => t.id === themeId) || THEME_PRESETS[0];
+          applySites(applyThemePreset(preset, baseSites));
+        } else {
+          applySites(baseSites.map(s => ({ ...s, on: s.on || readableOn(s.hex) })));
+        }
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
         TIME_ROUNDING = merged.timeRounding || 5;
         if (!appliedDefaultsRef.current) {
@@ -2662,37 +2730,21 @@ function App() {
   const goToday = () => { haptic('selection'); setAnchorDate(new Date()); setPinnedDay(null); };
 
   const onCalTouchStart = (ev) => {
-    if (monthPickerOpen || menuOpen || expandedCardId) return;
+    if (monthPickerOpen || menuOpen) return;
     const t = ev.touches[0];
-    calTouch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
-    setCalDragging(false);
+    calTouch.current = { x:t.clientX, y:t.clientY, live:true };
+    setCalDragging(true);
   };
   const onCalTouchMove = (ev) => {
     if (!calTouch.current.live) return;
     const t = ev.touches[0];
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
-    if (!calTouch.current.locked) {
-      /* Require clearer horizontal intent so vertical scrolling never jiggles days */
-      if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
-      if (Math.abs(dy) >= Math.abs(dx) * 0.65 || Math.abs(dy) > 14) {
-        calTouch.current.live = false;
-        setCalDragging(false);
-        setCalDX(0);
-        return;
-      }
-      calTouch.current.locked = true;
-      setCalDragging(true);
-    }
-    setCalDX(Math.max(-72, Math.min(72, dx * 0.55)));
+    if (Math.abs(dy) > Math.abs(dx) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
+    setCalDX(Math.max(-80, Math.min(80, dx)));
   };
   const onCalTouchEnd = () => {
-    if (!calTouch.current.live || !calTouch.current.locked) {
-      calTouch.current.live = false;
-      setCalDragging(false);
-      setCalDX(0);
-      return;
-    }
+    if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
     calTouch.current.live = false;
     setCalDragging(false);
     if (calDX <= -CAL_TRIGGER) shift(1);
@@ -2982,16 +3034,6 @@ function App() {
   );
 
 
-  const expandedJob = (() => {
-    if (!expandedCardId) return null;
-    const id = String(expandedCardId).split('-d')[0];
-    return jobs.find(j => String(j.id) === id) || null;
-  })();
-  const edgeTint = expandedJob && SITES[expandedJob.site] && e('div', {
-    key: 'edge-tint',
-    className: 'edge-tint',
-    style: { background: SITES[expandedJob.site].hex }
-  });
 
   const saveToast = savedGlow ? e('div', {
     key: 'save-toast',
@@ -3216,7 +3258,7 @@ function App() {
   const swipeCard = (j, i, ret, stagger, dayIndex, groupKey, stackIndex) => {
     const isOpen = groupKey ? !!stackOpen[groupKey] : true;
     /* Collapsed stack: stronger peek so edges stay visible; open: comfortable gap */
-    const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.9rem' : '-20px') : (stackIndex > 0 ? '0.9rem' : 0);
+    const overlap = (groupKey && stackIndex > 0) ? (isOpen ? '0.28rem' : '-20px') : (stackIndex > 0 ? '0.28rem' : 0);
     const overlapped = !!(groupKey && !isOpen);
     const card = e(SwipeCard, {
         key: (j && j.id != null) ? String(j.id) + (dayIndex ? '-d'+dayIndex : '') : ('idx-'+i),
@@ -3825,7 +3867,7 @@ function App() {
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
       e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
-        onChange:(ev)=>update({ [field]:ev.target.value }),
+        onChange:(ev)=>update({ [field]:snapWorkTime(ev.target.value) }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
           fontSize:'0.92rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
@@ -3847,7 +3889,7 @@ function App() {
         background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .35s ease, color .35s ease' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
       e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
-        onChange:(ev)=>update({ [field]:ev.target.value }),
+        onChange:(ev)=>update({ [field]:snapWorkTime(ev.target.value) }),
         onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
         style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
           fontSize:'1.35rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
@@ -4097,7 +4139,23 @@ function App() {
 
   const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(true); };
 
-  const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list }); };
+  const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list, themeId: 'custom' }); };
+  const applyThemeId = (id) => {
+    if (id === 'custom') {
+      saveSettings({ themeId: 'custom' });
+      setThemeTick(t=>t+1);
+      return;
+    }
+    const preset = THEME_PRESETS.find(t => t.id === id);
+    if (!preset) return;
+    const next = applyThemePreset(preset, siteEdits.length ? siteEdits : sitesToList());
+    setSiteEdits(next);
+    applySites(next);
+    setThemeTick(t=>t+1);
+    saveSettings({ sites: next, themeId: id });
+    haptic('success');
+  };
+  const updateSiteOnColour = (idx, val) => commitSites(siteEdits.map((s,i)=> i===idx?{...s,on:val}:s));
   const commitEquip = (list) => { setEquipEdits(list); applyEquip(list); setThemeTick(t=>t+1); saveSettings({ equipment:list }); };
   const updateSiteLabel = (idx, val) => setSiteEdits(prev => prev.map((s,i)=> i===idx?{...s,label:val}:s));
   const updateSiteColour = (idx, val) => commitSites(siteEdits.map((s,i)=> i===idx?{...s,hex:val}:s));
@@ -4208,6 +4266,75 @@ function App() {
         settings.timeRounding, (v)=>{ TIME_ROUNDING = v; saveSettings({ timeRounding:v }); }),
       chipSelect('Default export scope', [{key:'day',label:'Day'},{key:'week',label:'Week'},{key:'month',label:'Month'},{key:'all',label:'All'}],
         settings.defaultExportScope, (v)=>saveSettings({ defaultExportScope:v }))
+    ]),
+
+
+    collapseSection('themes', 'Themes', ticketIcon, [
+      e('div', { key:'thint', style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.55rem', lineHeight:1.35 } },
+        'Colour palettes for ticket cards. All presets are tuned for readable text.'),
+      e('div', { key:'grid', style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
+        THEME_PRESETS.map(p => {
+          const active = (settings.themeId || 'coastal') === p.id;
+          return e('button', {
+            key: p.id,
+            onClick: ()=>applyThemeId(p.id),
+            style: {
+              textAlign:'left', border: active ? '2px solid #203B59' : '1px solid '+LINE,
+              background: SURF2, borderRadius:'14px', padding:'0.65rem 0.7rem', cursor:'pointer'
+            }
+          },
+            e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK, marginBottom:'0.45rem' } }, p.name),
+            e('div', { style:{ display:'flex', gap:'4px' } },
+              p.colors.map((c,i) => e('div', {
+                key:i,
+                style:{ flex:1, height:'22px', borderRadius:'6px', background:c,
+                  color:p.text[i], fontSize:'0.55rem', fontWeight:700,
+                  display:'flex', alignItems:'center', justifyContent:'center' }
+              }, 'Aa'))
+            )
+          );
+        })
+      ),
+      e('button', {
+        key:'custom',
+        onClick: ()=>applyThemeId('custom'),
+        style: {
+          marginTop:'0.65rem', width:'100%', textAlign:'left',
+          border: (settings.themeId === 'custom') ? '2px solid #203B59' : '1px solid '+LINE,
+          background: SURF2, borderRadius:'14px', padding:'0.7rem 0.85rem', cursor:'pointer'
+        }
+      },
+        e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK } }, 'Custom'),
+        e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px' } }, 'Pick card and text colours per site')
+      ),
+      (settings.themeId === 'custom' || true) && e('div', { key:'customEditor', style:{ marginTop:'0.75rem', display:'flex', flexDirection:'column', gap:'0.55rem' } },
+        siteEdits.map((site, idx) => e('div', {
+          key: site.key + idx,
+          style:{ background:'rgba(31,21,30,0.04)', borderRadius:'12px', padding:'0.65rem 0.75rem',
+            border:'1px solid '+LINE }
+        },
+          e('div', { style:{ fontSize:'0.75rem', fontWeight:700, color:INK, marginBottom:'0.4rem' } }, site.label || site.key),
+          e('div', { style:{ display:'flex', gap:'0.75rem', alignItems:'center', flexWrap:'wrap' } },
+            e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.68rem', color:GREY, fontWeight:600 } },
+              'Card',
+              e('input', { type:'color', value: site.hex || '#203B59',
+                onChange:(ev)=>updateSiteColour(idx, ev.target.value),
+                style:{ width:'36px', height:'28px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
+            ),
+            e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.68rem', color:GREY, fontWeight:600 } },
+              'Text',
+              e('input', { type:'color', value: site.on || readableOn(site.hex),
+                onChange:(ev)=>updateSiteOnColour(idx, ev.target.value),
+                style:{ width:'36px', height:'28px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
+            ),
+            e('div', {
+              style:{ flex:1, minWidth:'72px', borderRadius:'8px', padding:'0.4rem 0.55rem',
+                background: site.hex, color: site.on || readableOn(site.hex),
+                fontSize:'0.72rem', fontWeight:700, textAlign:'center' }
+            }, 'Preview')
+          )
+        ))
+      )
     ]),
 
     collapseSection('export', 'Export', ticketIcon, [
@@ -4556,7 +4683,7 @@ function App() {
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
             transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, stockBody),
-        menu, chooserSheet, formSheet, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint)
+        menu, chooserSheet, formSheet, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner)
     );
   }
 
@@ -4575,7 +4702,7 @@ function App() {
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
             transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, settingsBody),
-        menu, chooserSheet, formSheet, fab, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint)
+        menu, chooserSheet, formSheet, fab, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner)
     );
   }
 
@@ -4680,7 +4807,7 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint,
+    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator, saveToast, contextMenuUI, undoToastUI, offlineBanner,
     view === 'month' && !monthPickerOpen && !settingsOpen && !backupsOpen ? topDateBar : null
     ),
     /* sheets available on desktop too for export chooser etc */
