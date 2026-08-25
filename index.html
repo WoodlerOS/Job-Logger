@@ -67,6 +67,7 @@
     padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
   input, textarea, select { -webkit-user-select:text; user-select:text; font-family:inherit; max-width:100%; }
+  input:focus, textarea:focus, select:focus { scroll-margin-bottom: 40vh; }
   input[type="time"], input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; color-scheme:light; font-variant-numeric:tabular-nums; }
   select { -webkit-appearance:none; appearance:none; color-scheme:light; }
   button {
@@ -584,6 +585,124 @@
   input:focus, textarea:focus, select:focus {
     border-color: rgba(32,59,89,0.4) !important;
     box-shadow: var(--focus-ring);
+  }
+
+
+  /* Context menu */
+  .ctx-menu {
+    position: fixed; z-index: 120;
+    min-width: 220px; max-width: 280px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border-radius: 16px;
+    border: 1px solid rgba(31,21,30,0.10);
+    box-shadow: 0 20px 50px rgba(31,21,30,0.22), 0 4px 12px rgba(31,21,30,0.08);
+    overflow: hidden;
+    animation: ctxPop .28s cubic-bezier(.22,1.15,.35,1) both;
+  }
+  @keyframes ctxPop {
+    from { opacity: 0; transform: scale(0.92) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .ctx-menu button {
+    width: 100%; text-align: left; border: none; background: transparent;
+    padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 600;
+    color: #1F151E; cursor: pointer;
+    border-bottom: 1px solid rgba(31,21,30,0.06);
+  }
+  .ctx-menu button:last-child { border-bottom: none; }
+  .ctx-menu button.danger { color: #85301C; }
+  .ctx-menu button:active { background: rgba(32,59,89,0.06); }
+  /* Undo toast */
+  .undo-toast {
+    position: fixed; left: 50%; bottom: calc(5.8rem + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 110;
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(31,21,30,0.92); color: #FFEDDC;
+    padding: 0.65rem 0.75rem 0.65rem 1.1rem;
+    border-radius: 999px; font-size: 0.82rem; font-weight: 600;
+    box-shadow: 0 12px 32px rgba(31,21,30,0.28);
+    backdrop-filter: blur(16px);
+    animation: fadeInUp .32s cubic-bezier(.22,.9,.3,1) both;
+    max-width: calc(100vw - 2rem);
+  }
+  .undo-toast button {
+    border: none; background: #203B59; color: #FFEDDC;
+    border-radius: 999px; padding: 0.4rem 0.85rem;
+    font-weight: 700; font-size: 0.75rem; cursor: pointer;
+  }
+  /* Offline banner */
+  .offline-banner {
+    position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; z-index: 90;
+    background: rgba(133,48,28,0.92); color: #FFEDDC;
+    text-align: center; padding: 0.4rem 0.75rem;
+    font-size: 0.72rem; font-weight: 650; letter-spacing: 0.02em;
+    backdrop-filter: blur(12px);
+  }
+  /* Status chip */
+  .status-chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: rgba(32,59,89,0.08); color: #203B59;
+    border: 1px solid rgba(32,59,89,0.12);
+    border-radius: 999px; padding: 0.28rem 0.7rem;
+    font-size: 0.68rem; font-weight: 650;
+  }
+  /* Segmented control */
+  .seg {
+    display: flex; background: rgba(31,21,30,0.06);
+    border-radius: 10px; padding: 3px; gap: 2px;
+  }
+  .seg button {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    padding: 0.4rem 0.7rem; border-radius: 8px;
+    font-size: 0.72rem; font-weight: 650; color: rgba(31,21,30,0.55);
+  }
+  .seg button.on {
+    background: #fff; color: #1F151E;
+    box-shadow: 0 2px 8px rgba(31,21,30,0.1);
+  }
+  /* Edge tint when card expanded */
+  .edge-tint {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 6px; z-index: 30;
+    pointer-events: none; opacity: 0.55;
+    transition: background .35s ease, opacity .35s ease;
+  }
+  /* Quiet success check */
+  @keyframes quietCheck {
+    0% { transform: scale(0.6); opacity: 0; }
+    40% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .quiet-check { animation: quietCheck .45s cubic-bezier(.22,1.15,.35,1) both; }
+  /* Empty state */
+  .empty-art { opacity: 0.55; margin: 0 auto 0.75rem; display: block; }
+  /* Pull refresh indicator */
+  .pull-ind {
+    text-align: center; font-size: 0.7rem; font-weight: 600; color: #839CB6;
+    height: 0; overflow: hidden; transition: height .2s ease;
+  }
+  /* Dark mode (system) */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-bg: #12141A;
+      --ink: #F2EEE8;
+      --line: rgba(255,237,220,0.12);
+      --glass-bar: rgba(18,20,26,0.78);
+      --glass-sheet: rgba(28,30,38,0.92);
+      --glass-field: rgba(255,255,255,0.06);
+      --scrim: rgba(0,0,0,0.55);
+      --shadow-card: 0 10px 28px rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+      --shadow-card-stack: 0 14px 36px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    body { color: #F2EEE8; }
+    .ctx-menu { background: rgba(28,30,38,0.94); }
+    .ctx-menu button { color: #F2EEE8; border-bottom-color: rgba(255,255,255,0.06); }
+    .seg { background: rgba(255,255,255,0.08); }
+    .seg button { color: rgba(255,255,255,0.5); }
+    .seg button.on { background: rgba(255,255,255,0.14); color: #FFEDDC; }
+    .status-chip { background: rgba(131,156,182,0.15); color: #839CB6; border-color: rgba(131,156,182,0.25); }
   }
 
 </style>
@@ -1404,6 +1523,7 @@ function SwipeCard({ locked, onLock, onDelete, onTap, onLongPress, radius, entry
   const beginHold = (x, y) => {
     movedRef.current = false;
     startRef.current = { x, y };
+    try { window.__lastTouchX = x; window.__lastTouchY = y; } catch (err) {}
     setHolding(true);
     /* A single long-press now does one thing: toggle perspective mode on
        the stack this card belongs to. The lock/delete bubble that used to
@@ -1573,6 +1693,13 @@ function App() {
      always render as plain rectangles regardless of this toggle. */
   const [cardPerspective, setCardPerspective] = useState(false);
   const [expandedCardId, setExpandedCardId] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null); // { j, ret, x, y }
+  const [undoToast, setUndoToast] = useState(null); // { label, restore }
+  const undoTimer = useRef(null);
+  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  const [pullY, setPullY] = useState(0);
+  const pullRef = useRef({ y:0, live:false });
+  const [headerCollapse, setHeaderCollapse] = useState(0);
   const stackTimers = useRef({});
   const openStack = (groupKey) => {
     setStackOpen(prev => (prev[groupKey] ? prev : { ...prev, [groupKey]: true }));
@@ -1617,10 +1744,35 @@ function App() {
   }, [monthPickerOpen]);
 
 
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || 0;
+      setHeaderCollapse(Math.min(1, y / 80));
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   function blank(date) {
     const d = date || todayISO();
-    return { ticketNumber:'', summary:'', site:'', equipment:[], date:d,
-      t1:'', start:'00:00', finish:'00:00', t2:'', extra:[],
+    let lastSite = '', lastEq = [];
+    try {
+      lastSite = localStorage.getItem('ticketsLastSite') || '';
+      const eq = localStorage.getItem('ticketsLastEquip');
+      if (eq) lastEq = JSON.parse(eq) || [];
+    } catch (err) {}
+    const now = roundNow();
+    return { ticketNumber:'', summary:'', site: lastSite,
+      equipment: Array.isArray(lastEq) ? lastEq : [], date:d,
+      t1:'', start: now, finish: now, t2:'', extra:[],
       workDone: ukDate(d) + '\n', parts:[], locked:false };
   }
 
@@ -2269,6 +2421,10 @@ function App() {
 
   const commit = async () => {
     const rec = packRec();
+    try {
+      if (rec.site) localStorage.setItem('ticketsLastSite', rec.site);
+      if (rec.equipment && rec.equipment.length) localStorage.setItem('ticketsLastEquip', JSON.stringify(rec.equipment));
+    } catch (err) {}
     await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
   };
 
@@ -2302,9 +2458,16 @@ function App() {
     }
   };
 
+  const showUndo = (label, restoreFn) => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndoToast({ label, restore: restoreFn });
+    undoTimer.current = setTimeout(() => setUndoToast(null), 4200);
+  };
   const remove = (id) => {
     const sid = id == null ? null : String(id);
+    let snapshot = null;
     setJobs(prev => {
+      snapshot = prev.find(j => String(j.id) === sid) || null;
       const next = prev.filter(j => String(j.id) !== sid);
       if (!PREVIEW_MODE && user) {
         try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
@@ -2312,17 +2475,47 @@ function App() {
       return next;
     });
     setDayDetail(null);
+    setExpandedCardId(null);
+    if (snapshot) {
+      showUndo('Ticket deleted', () => {
+        setJobs(prev => {
+          const next = [snapshot, ...prev.filter(j => String(j.id) !== sid)];
+          if (!PREVIEW_MODE && user) {
+            try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+          }
+          return next;
+        });
+        setUndoToast(null);
+        haptic('success');
+      });
+    }
   };
   const toggleLock = (id) => {
     haptic('success');
     const sid = id == null ? null : String(id);
+    let wasLocked = false;
     setJobs(prev => {
+      const cur = prev.find(j => String(j.id) === sid);
+      wasLocked = !!(cur && cur.locked);
       const next = prev.map(j => String(j.id) === sid ? { ...j, locked: !j.locked } : j);
       if (!PREVIEW_MODE && user) {
         try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
       }
       return next;
     });
+    if (!wasLocked) {
+      showUndo('Marked complete', () => {
+        setJobs(prev => {
+          const next = prev.map(j => String(j.id) === sid ? { ...j, locked: false } : j);
+          if (!PREVIEW_MODE && user) {
+            try { dbFS.collection('users').doc(user.uid).set({ jobs: next }, { merge:true }); } catch (err) {}
+          }
+          return next;
+        });
+        setUndoToast(null);
+        haptic('selection');
+      });
+    }
   };
   const setJobLocked = (id, locked) => {
     const sid = id == null ? null : String(id);
@@ -2697,6 +2890,60 @@ function App() {
   );
 
 
+
+  const contextMenuUI = contextMenu && e('div', { key:'ctx-root' },
+    e('div', {
+      onClick: ()=>setContextMenu(null),
+      className: 'scrim',
+      style: { position:'fixed', inset:0, zIndex:119, background:'rgba(31,21,30,0.35)' }
+    }),
+    e('div', {
+      className: 'ctx-menu',
+      style: {
+        left: contextMenu.x + 'px',
+        top: contextMenu.y + 'px'
+      }
+    },
+      e('button', { onClick: ()=>{ const {j,ret}=contextMenu; setContextMenu(null); openEdit(j, ret); } }, 'Edit'),
+      e('button', { onClick: ()=>{ const {j}=contextMenu; setContextMenu(null); if (j && j.id != null) toggleLock(j.id); } },
+        (contextMenu.j && contextMenu.j.locked) ? 'Mark incomplete' : 'Mark complete'),
+      e('button', { onClick: ()=>{
+          const {j,ret}=contextMenu; setContextMenu(null);
+          if (!j) return;
+          openEdit(j, ret);
+          setTimeout(() => {
+            setForm(f => ({ ...f, ticketNumber:'', locked:false }));
+            setEditingId(null);
+          }, 30);
+        } }, 'Duplicate'),
+      e('button', { className:'danger', onClick: ()=>{
+          const {j}=contextMenu; setContextMenu(null);
+          if (j && j.id != null) { haptic('error'); remove(j.id); }
+        } }, 'Delete')
+    )
+  );
+
+  const undoToastUI = undoToast && e('div', { key:'undo', className:'undo-toast' },
+    e('span', { style:{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, undoToast.label),
+    e('button', { onClick: ()=>{ if (undoToast.restore) undoToast.restore(); } }, 'Undo')
+  );
+
+  const offlineBanner = !online && e('div', { key:'offline', className:'offline-banner' },
+    'You’re offline — changes will sync when you’re back'
+  );
+
+
+  const expandedJob = (() => {
+    if (!expandedCardId) return null;
+    const id = String(expandedCardId).split('-d')[0];
+    return jobs.find(j => String(j.id) === id) || null;
+  })();
+  const edgeTint = expandedJob && SITES[expandedJob.site] && e('div', {
+    key: 'edge-tint',
+    className: 'edge-tint',
+    style: { background: SITES[expandedJob.site].hex }
+  });
+
   const saveToast = savedGlow ? e('div', {
     key: 'save-toast',
     style: {
@@ -2715,9 +2962,10 @@ function App() {
       WebkitBackdropFilter: 'blur(12px)',
       animation: 'fadeInUp .35s cubic-bezier(.22,.9,.3,1) both',
       pointerEvents: 'none',
-      border: '1px solid rgba(255,255,255,0.12)'
+      border: '1px solid rgba(255,255,255,0.12)',
+      display: 'flex', alignItems: 'center', gap: '0.45rem'
     }
-  }, 'Saved') : null;
+  }, e('span', { className:'quiet-check', style:{ fontSize:'1rem' } }, '✓'), 'Saved') : null;
 
   const DOWF = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -2946,7 +3194,12 @@ function App() {
         glow: null,
         onLock:()=>{ if (j && j.id != null) { haptic('success'); toggleLock(j.id); } },
         onDelete:()=>{ if (j && j.id != null && window.confirm('Delete this ticket?')) { haptic('error'); remove(j.id); } },
-        onLongPress: ()=>{ if (j) { setExpandedCardId(null); openEdit(j, ret || { view:'month' }); } },
+        onLongPress: ()=>{
+          if (!j) return;
+          setExpandedCardId(null);
+          haptic('medium');
+          setContextMenu({ j, ret: ret || { view:'month' }, x: Math.min(window.innerWidth - 240, Math.max(16, (window.__lastTouchX||40))), y: Math.min(window.innerHeight - 260, Math.max(80, (window.__lastTouchY||120))) });
+        },
         onTap:()=>{
           if (groupKey && !isOpen) { openStack(groupKey); return; }
           if (groupKey) openStack(groupKey);
@@ -3124,11 +3377,32 @@ function App() {
       ? mobileDayBucket.siteSequence
       : dv.siteSequence;
 
+  const dayCompleteCount = mobileDayList.filter(entry => entry.j && entry.j.locked).length;
   const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
-    settings.showJobCount !== false && e('div', { style:{ fontSize:'0.78rem', color:GREY, fontWeight:550, padding:'0 0.05rem' } },
-      mobileDayList.length + (mobileDayList.length===1?' job logged':' jobs logged')),
+    e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem', padding:'0 0.05rem' } },
+      settings.showJobCount !== false
+        ? e('div', { className:'status-chip' },
+            mobileDayList.length + (mobileDayList.length===1?' job':' jobs'),
+            mobileDayList.length ? e('span', { style:{ opacity:0.55 } }, '·') : null,
+            mobileDayList.length ? e('span', null, dayCompleteCount + ' complete') : null
+          )
+        : e('span'),
+      e('div', { className:'seg' },
+        e('button', { className: view !== 'list' ? 'on' : '', onClick:()=>{ haptic('selection'); setView('month'); } }, 'Day'),
+        e('button', { className: view === 'list' ? 'on' : '', onClick:()=>{ haptic('selection'); setView('list'); window.scrollTo(0,0); } }, 'All')
+      )
+    ),
     mobileDayList.length === 0
-      ? e('div', { style:{ fontSize:'0.85rem', color:GREY, textAlign:'center', padding:'1.2rem 0.05rem' } }, 'Nothing logged on this day')
+      ? e('div', { style:{ textAlign:'center', padding:'2.2rem 0.5rem 1.5rem', color:GREY } },
+          e('svg', { className:'empty-art', width:72, height:72, viewBox:'0 0 72 72', fill:'none' },
+            e('rect', { x:16, y:10, width:40, height:52, rx:6, stroke:GREY, strokeWidth:2 }),
+            e('path', { d:'M24 22h24M24 32h24M24 42h16', stroke:GREY, strokeWidth:2, strokeLinecap:'round' }),
+            e('circle', { cx:48, cy:48, r:10, fill:'#F5F4F1', stroke:GREY, strokeWidth:2 }),
+            e('path', { d:'M48 44v8M44 48h8', stroke:GREY, strokeWidth:2, strokeLinecap:'round' })
+          ),
+          e('div', { style:{ fontSize:'0.95rem', fontWeight:650, color:INK, marginBottom:'0.25rem' } }, 'Nothing logged'),
+          e('div', { style:{ fontSize:'0.78rem', opacity:0.75 } }, 'Tap + to add a ticket for this day')
+        )
       : e('div', { style:{ display:'flex', flexDirection:'column', paddingBottom:'3.5rem' } },
           mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))));
 
@@ -3381,10 +3655,11 @@ function App() {
      moves once shown. */
   const topDateBar = e('div', { key:'topDateBar', className:'glass-bar', style:{
       position:'fixed', top:'env(safe-area-inset-top)', left:0, right:0, zIndex:34,
-      background:'rgba(18,18,18,0.75)',
-      backdropFilter:'blur(18px) saturate(1.2)', WebkitBackdropFilter:'blur(18px) saturate(1.2)',
-      borderBottom:'1px solid rgba(227,227,227,0.12)',
-      padding:'0.4rem 0.6rem 0.55rem' } },
+      background:'rgba(245,244,241,'+(0.72 + headerCollapse * 0.2)+')',
+      backdropFilter:'blur('+(16 + headerCollapse * 8)+'px) saturate(1.2)', WebkitBackdropFilter:'blur('+(16 + headerCollapse * 8)+'px) saturate(1.2)',
+      borderBottom:'1px solid rgba(31,21,30,'+(0.06 + headerCollapse * 0.06)+')',
+      padding: (0.55 - headerCollapse * 0.15)+'rem 0.6rem '+(0.55 - headerCollapse * 0.1)+'rem',
+      transition:'padding .15s ease, background .15s ease' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
@@ -3416,9 +3691,11 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:'0.95rem', fontWeight:800, letterSpacing:'-0.3px', color:INK } },
+        e('span', { style:{ fontSize:(1.15 - headerCollapse * 0.28)+'rem', fontWeight:800, letterSpacing:'-0.35px', color:INK,
+          transition:'font-size .15s ease' } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:INK, opacity:0.65, fontWeight:550, marginTop:'1px' } }, 'Tap month · hold today')
+        e('span', { style:{ display:'block', fontSize:'0.62rem', color:INK, opacity:0.65 - headerCollapse * 0.4, fontWeight:550, marginTop:'1px',
+          height: headerCollapse > 0.7 ? 0 : 'auto', overflow:'hidden', transition:'opacity .15s ease' } }, 'Tap month · hold today')
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
@@ -4241,7 +4518,7 @@ function App() {
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
             transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, stockBody),
-        menu, chooserSheet, formSheet, swipeHint, saveToast)
+        menu, chooserSheet, formSheet, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint)
     );
   }
 
@@ -4260,7 +4537,7 @@ function App() {
           style:{ transition: swiping ? 'none' : 'transform .24s cubic-bezier(.22,.9,.3,1)',
             transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y', transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)' }
         }, settingsBody),
-        menu, chooserSheet, formSheet, fab, swipeHint, saveToast)
+        menu, chooserSheet, formSheet, fab, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint)
     );
   }
 
@@ -4365,7 +4642,7 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator, saveToast,
+    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator, saveToast, contextMenuUI, undoToastUI, offlineBanner, edgeTint,
     view === 'month' && !monthPickerOpen && !settingsOpen && !backupsOpen ? topDateBar : null
     ),
     /* sheets available on desktop too for export chooser etc */
