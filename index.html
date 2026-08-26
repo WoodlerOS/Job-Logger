@@ -685,228 +685,249 @@
   }
 
 
-  /* ========== Ticket card surface styles ==========
-     Site colour is injected as --card-tint on each card.
-     Stacked cards get .ticket-card--stack for slightly stronger depth.
-  */
-  .ticket-card {
-    position: relative;
+
+
+  /* Lava lamp background */
+  .lava-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     overflow: hidden;
-    border-radius: 12px;
-    isolation: isolate;
+    background: var(--page-bg, #F5F4F1);
   }
-
-  /* --- Solid (default) --- */
-  .ticket-card--solid {
-    background: var(--card-tint, #203B59);
-    border: 1.5px solid rgba(0, 0, 0, 0.08);
-    box-shadow:
-      0 10px 28px rgba(31, 21, 30, 0.12),
-      0 3px 8px rgba(31, 21, 30, 0.07),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  }
-  .ticket-card--solid.ticket-card--stack {
-    border-color: rgba(0, 0, 0, 0.14);
-    box-shadow:
-      0 14px 36px rgba(31, 21, 30, 0.16),
-      0 4px 12px rgba(31, 21, 30, 0.10),
-      inset 0 1px 0 rgba(255, 255, 255, 0.26);
-  }
-
-  /* --- Glass: translucent coloured glass --- */
-  .ticket-card--glass {
-    background: color-mix(in srgb, var(--card-tint, #203B59) 55%, transparent);
-    backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    border: 1px solid rgba(255, 255, 255, 0.38);
-    box-shadow:
-      0 8px 24px rgba(31, 21, 30, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.06);
-  }
-  .ticket-card--glass.ticket-card--stack {
-    box-shadow:
-      0 12px 32px rgba(31, 21, 30, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  }
-  .ticket-card--glass::before {
-    content: '';
+  .lava-bg span {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(255, 255, 255, 0.06) 36%,
-      transparent 58%
-    );
-    z-index: 0;
+    border-radius: 50%;
+    filter: blur(var(--lava-blur, 72px));
+    opacity: var(--lava-opacity, 0.4);
+    will-change: transform;
+    animation-name: lava-drift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    animation-duration: var(--lava-dur, 18s);
+  }
+  .lava-bg span:nth-child(1) {
+    width: 58vmax; height: 58vmax;
+    background: var(--lava-1, #203B59);
+    top: -18%; left: -14%;
+    animation-duration: calc(var(--lava-dur, 18s) * 1.2);
+  }
+  .lava-bg span:nth-child(2) {
+    width: 50vmax; height: 50vmax;
+    background: var(--lava-2, #839CB6);
+    bottom: -22%; right: -16%;
+    animation-duration: calc(var(--lava-dur, 18s) * 0.9);
+    animation-delay: -5s;
+  }
+  .lava-bg span:nth-child(3) {
+    width: 42vmax; height: 42vmax;
+    background: var(--lava-3, #FDBA74);
+    top: 38%; left: 28%;
+    animation-duration: calc(var(--lava-dur, 18s) * 1.1);
+    animation-delay: -9s;
+  }
+  .lava-bg span:nth-child(4) {
+    width: 36vmax; height: 36vmax;
+    background: var(--lava-4, #9A3412);
+    top: 12%; right: 8%;
+    animation-duration: calc(var(--lava-dur, 18s) * 1.35);
+    animation-delay: -3s;
+    opacity: calc(var(--lava-opacity, 0.4) * 0.85);
+  }
+  @keyframes lava-drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(6%, -5%) scale(1.08); }
+    66%  { transform: translate(-5%, 7%) scale(0.96); }
+    100% { transform: translate(4%, 3%) scale(1.05); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lava-bg span { animation: none !important; }
   }
 
-  /* --- High gloss: lacquer / wet shine --- */
-  .ticket-card--gloss {
-    background:
-      linear-gradient(
-        160deg,
-        rgba(255, 255, 255, 0.48) 0%,
-        rgba(255, 255, 255, 0.12) 22%,
-        transparent 42%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--card-tint, #203B59) 88%, white) 0%,
-        var(--card-tint, #203B59) 42%,
-        var(--card-tint, #203B59) 68%,
-        color-mix(in srgb, var(--card-tint, #203B59) 75%, black) 100%
-      );
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    box-shadow:
-      0 12px 28px rgba(31, 21, 30, 0.16),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6),
-      inset 0 -10px 22px rgba(0, 0, 0, 0.14),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  /* iOS-style settings chrome */
+  .ios-page {
+    background: #F2F2F7;
+    min-height: 100vh;
   }
-  .ticket-card--gloss::before {
-    content: '';
-    position: absolute;
+  .ios-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.85rem calc(0.55rem + env(safe-area-inset-top));
+    padding-top: calc(0.55rem + env(safe-area-inset-top));
+    background: rgba(242, 242, 247, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+    position: sticky;
     top: 0;
-    left: -10%;
-    right: -10%;
-    height: 42%;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      115deg,
-      rgba(255, 255, 255, 0.55) 0%,
-      rgba(255, 255, 255, 0.18) 28%,
-      rgba(255, 255, 255, 0) 55%
-    );
-    z-index: 0;
+    z-index: 5;
   }
-  .ticket-card--gloss::after {
+  .ios-nav-title {
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: #000;
+    letter-spacing: -0.02em;
+  }
+  .ios-nav-btn {
+    border: none;
+    background: none;
+    color: #007AFF;
+    font-size: 1rem;
+    font-weight: 400;
+    padding: 0.35rem 0.25rem;
+    cursor: pointer;
+    min-width: 3.2rem;
+  }
+  .ios-group {
+    margin: 1.1rem 0.85rem 0;
+    background: #FFFFFF;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0.5px 0 rgba(0,0,0,0.04);
+  }
+  .ios-group-label {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: rgba(60, 60, 67, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 1rem 0.4rem;
+    margin: 0.85rem 0.85rem 0;
+  }
+  .ios-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.72rem 1rem;
+    background: #FFFFFF;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    min-height: 44px;
+    position: relative;
+  }
+  .ios-row + .ios-row::before {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
+    left: 1rem;
     right: 0;
-    height: 38%;
-    pointer-events: none;
-    background: linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.16) 0%,
-      transparent 100%
-    );
-    z-index: 0;
+    top: 0;
+    height: 0.5px;
+    background: rgba(60, 60, 67, 0.18);
   }
-
-  /* --- Metallic: brushed metal --- */
-  .ticket-card--metallic {
-    background:
-      repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.04) 0px,
-        rgba(255, 255, 255, 0.04) 1px,
-        transparent 1px,
-        transparent 3px
-      ),
-      linear-gradient(
-        145deg,
-        rgba(255, 255, 255, 0.38) 0%,
-        color-mix(in srgb, var(--card-tint, #203B59) 92%, white) 18%,
-        var(--card-tint, #203B59) 36%,
-        color-mix(in srgb, var(--card-tint, #203B59) 78%, black) 52%,
-        var(--card-tint, #203B59) 68%,
-        color-mix(in srgb, var(--card-tint, #203B59) 90%, white) 86%,
-        rgba(255, 255, 255, 0.22) 100%
-      );
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow:
-      0 10px 26px rgba(31, 21, 30, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-      inset 1px 0 0 rgba(255, 255, 255, 0.12),
-      inset -1px 0 0 rgba(0, 0, 0, 0.08);
+  .ios-row-label {
+    flex: 1;
+    min-width: 0;
   }
-  .ticket-card--metallic::before {
+  .ios-row-title {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #000;
+    letter-spacing: -0.01em;
+  }
+  .ios-row-sub {
+    font-size: 0.78rem;
+    color: rgba(60, 60, 67, 0.6);
+    margin-top: 0.12rem;
+    line-height: 1.3;
+  }
+  .ios-chevron {
+    color: rgba(60, 60, 67, 0.3);
+    font-size: 1.1rem;
+    font-weight: 300;
+  }
+  .ios-value {
+    font-size: 1rem;
+    color: rgba(60, 60, 67, 0.6);
+    margin-right: 0.15rem;
+  }
+  /* iOS switch */
+  .ios-switch {
+    position: relative;
+    width: 51px;
+    height: 31px;
+    border-radius: 999px;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    background: rgba(120, 120, 128, 0.32);
+    transition: background 0.22s ease;
+  }
+  .ios-switch.on {
+    background: #34C759;
+  }
+  .ios-switch::after {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      115deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.08) 30%,
-      transparent 50%,
-      rgba(0, 0, 0, 0.06) 78%,
-      transparent 100%
-    );
-    z-index: 0;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.1);
+    transition: transform 0.22s cubic-bezier(.2,.9,.3,1);
   }
-
-  /* --- Matte --- */
-  .ticket-card--matte {
-    background: var(--card-tint, #203B59);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 8px rgba(31, 21, 30, 0.06);
+  .ios-switch.on::after {
+    transform: translateX(20px);
   }
-
-  /* --- Frosted --- */
-  .ticket-card--frosted {
-    background: color-mix(in srgb, var(--card-tint, #203B59) 42%, transparent);
-    backdrop-filter: blur(24px) saturate(1.25);
-    -webkit-backdrop-filter: blur(24px) saturate(1.25);
-    border: 1px solid rgba(255, 255, 255, 0.48);
-    box-shadow:
-      0 8px 28px rgba(31, 21, 30, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  .ios-seg {
+    display: flex;
+    background: rgba(118, 118, 128, 0.12);
+    border-radius: 9px;
+    padding: 2px;
+    gap: 2px;
   }
-  .ticket-card--frosted::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.32) 0%,
-      rgba(255, 255, 255, 0.05) 40%,
-      transparent 70%
-    );
-    z-index: 0;
+  .ios-seg button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #000;
+    cursor: pointer;
   }
-
-  /* --- Soft glow / neon --- */
-  .ticket-card--neon {
-    background: var(--card-tint, #203B59);
-    border: 1.5px solid color-mix(in srgb, var(--card-tint, #203B59) 90%, white);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.15),
-      0 0 18px color-mix(in srgb, var(--card-tint, #203B59) 55%, transparent),
-      0 8px 24px rgba(31, 21, 30, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  .ios-seg button.on {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
   }
-
-  /* Content sits above surface overlays */
-  .ticket-card > * {
+  /* Light iOS side menu */
+  .ios-menu-panel {
+    background: #F2F2F7 !important;
+    color: #000 !important;
+    border-right: 0.5px solid rgba(60,60,67,0.18) !important;
+    box-shadow: 8px 0 32px rgba(0,0,0,0.12) !important;
+  }
+  .ios-menu-item {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: #FFFFFF;
+    cursor: pointer;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #000;
+    border-bottom: 0.5px solid rgba(60, 60, 67, 0.12);
+  }
+  .ios-menu-item:first-of-type {
+    border-radius: 12px 12px 0 0;
+  }
+  .ios-menu-item:last-of-type {
+    border-radius: 0 0 12px 12px;
+    border-bottom: none;
+  }
+  .app-content-layer {
     position: relative;
     z-index: 1;
   }
-
-  @supports not (background: color-mix(in srgb, red 50%, blue)) {
-    .ticket-card--glass,
-    .ticket-card--frosted {
-      background: rgba(32, 59, 89, 0.5);
-    }
-    .ticket-card--gloss {
-      background: linear-gradient(160deg, rgba(255,255,255,0.4) 0%, var(--card-tint, #203B59) 40%, var(--card-tint, #203B59) 100%);
-    }
-    .ticket-card--metallic {
-      background: linear-gradient(145deg, rgba(255,255,255,0.3) 0%, var(--card-tint, #203B59) 40%, rgba(0,0,0,0.12) 55%, var(--card-tint, #203B59) 100%);
-    }
-  }
-
 
 </style>
 </head>
@@ -1668,12 +1689,14 @@ const DEFAULT_SETTINGS = {
   weekStartsMon: true,
   largeText: false,
   cardTextScale: 'normal', /* normal | large | xl */
-  cardStyle: 'solid', /* solid | glass | gloss | metallic | matte | frosted | neon */
   fabGlowStyle: 'halo', /* halo | drift | dual | nebula */
   fabGlowColor: '#2890FF',
   stockRemaining: null,
   themeId: 'coastal',
-  customThemes: []
+  customThemes: [],
+  lavaEnabled: true,
+  lavaIntensity: 'medium', /* low | medium | high */
+  lavaSpeed: 'medium' /* slow | medium | fast */
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -1938,6 +1961,7 @@ function App() {
   const setFormTracked = (next) => { setFormDirty(true); setForm(next); };
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [stockQuery, setStockQuery] = useState('');
   const [stockSort, setStockSort] = useState('name'); /* name | qty | short | part */
@@ -2792,6 +2816,8 @@ function App() {
     try {
       if (settingsOpen) {
         setSettingsOpen(false);
+      } else if (customOpen) {
+        setCustomOpen(false);
       } else if (stockOpen) {
         setStockOpen(false);
       } else {
@@ -3078,13 +3104,9 @@ function App() {
   const sideMenuItem = (label, onClick, muted) =>
     e('button', {
       key: label,
+      className: 'ios-menu-item',
       onClick: ()=>{ closeMenu(); if (onClick) onClick(); },
-      style:{
-        width:'100%', textAlign:'left', border:'none', background:'transparent', cursor:'pointer',
-        padding:'0.85rem 0.15rem', color: muted ? 'rgba(255,255,255,0.45)' : '#FFFFFF',
-        fontSize:'0.95rem', fontWeight: muted ? 600 : 700, letterSpacing:'-0.2px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)'
-      }
+      style: muted ? { color: 'rgba(60,60,67,0.4)' } : undefined
     }, label);
 
   const menuVisible = menuOpen || menuSlide > 0.02;
@@ -3098,28 +3120,29 @@ function App() {
           transition: menuOpen ? 'none' : 'background .12s ease' }
       }),
       e('div', {
+        className: 'ios-menu-panel',
         style:{
           position:'relative', width:'min(300px, 84vw)', height:'100%',
-          background:'rgba(18,18,18,0.78)', color:'#E3E3E3',
+          background:'#F2F2F7', color:'#000',
           backdropFilter:'blur(28px) saturate(1.25)', WebkitBackdropFilter:'blur(28px) saturate(1.25)',
-          borderRight:'1px solid rgba(227,227,227,0.10)',
-          padding:'calc(1.1rem + env(safe-area-inset-top)) 1.15rem calc(1.25rem + env(safe-area-inset-bottom))',
+          borderRight:'0.5px solid rgba(60,60,67,0.18)',
+          padding:'calc(1.1rem + env(safe-area-inset-top)) 1rem calc(1.25rem + env(safe-area-inset-bottom))',
           display:'flex', flexDirection:'column', gap:'0.15rem',
-          boxShadow:'8px 0 40px rgba(0,0,0,0.35)',
+          boxShadow:'8px 0 32px rgba(0,0,0,0.12)',
           transform: menuOpen ? 'translateX(0)' : 'translateX('+((-100 + menuSlide * 100))+'%)',
           transition: menuOpen ? 'transform .32s cubic-bezier(.22,.9,.3,1)' : (edgeSwipe.current.live ? 'none' : 'transform .22s ease'),
           willChange: 'transform'
         }
       },
-        e('div', { style:{ fontSize:'0.68rem', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase',
-          color:'rgba(255,255,255,0.4)', marginBottom:'0.85rem' } }, 'Menu'),
+        e('div', { style:{ fontSize:'1.75rem', fontWeight:700, letterSpacing:'-0.03em',
+          color:'#000', marginBottom:'0.85rem', padding:'0 0.15rem' } }, 'Menu'),
 
-        e('div', { style:{ position:'relative', marginBottom:'0.75rem' } },
+        e('div', { style:{ position:'relative', marginBottom:'0.85rem' } },
           e('input', { type:'search', value:menuSearch, placeholder:'Search tickets…',
             onChange:(ev)=>setMenuSearch(ev.target.value),
-            style:{ width:'100%', padding:'0.65rem 0.85rem', border:'1px solid rgba(255,255,255,0.12)',
-              borderRadius:'12px', outline:'none', fontSize:'0.84rem',
-              background:'rgba(255,255,255,0.06)', color:'#FFF' } })),
+            style:{ width:'100%', padding:'0.65rem 0.85rem', border:'none',
+              borderRadius:'12px', outline:'none', fontSize:'1rem',
+              background:'rgba(118,118,128,0.12)', color:'#000' } })),
 
         menuSearch.trim()
           ? (menuSearchResults.length
@@ -3127,24 +3150,25 @@ function App() {
                   menuSearchResults.map(j => e('button', {
                     key: j.id,
                     onClick: ()=>{ closeMenu(); openEdit(j, { view: 'list' }); },
-                    style:{ textAlign:'left', border:'none', background:'rgba(255,255,255,0.06)', borderRadius:'12px',
-                      padding:'0.7rem 0.8rem', color:'#FFF', cursor:'pointer' }
-                  }, e('div', { style:{ fontWeight:600, fontSize:'0.88rem' } }, j.ticketNumber || 'Ticket'),
-                     e('div', { style:{ fontSize:'0.7rem', color:'rgba(255,255,255,0.45)', marginTop:'2px' } },
+                    style:{ textAlign:'left', border:'none', background:'#FFF', borderRadius:'12px',
+                      padding:'0.7rem 0.8rem', color:'#000', cursor:'pointer', marginBottom:'0.35rem' }
+                  }, e('div', { style:{ fontWeight:600, fontSize:'0.95rem' } }, j.ticketNumber || 'Ticket'),
+                     e('div', { style:{ fontSize:'0.75rem', color:'rgba(60,60,67,0.6)', marginTop:'2px' } },
                        (SITES[j.site] ? SITES[j.site].label : '') + (j.startDateTime ? ' · ' + fmtDay(j.startDateTime) : ''))
                   )))
-              : e('div', { style:{ fontSize:'0.8rem', color:'rgba(255,255,255,0.4)', padding:'1rem 0' } }, 'No matches'))
+              : e('div', { style:{ fontSize:'0.9rem', color:'rgba(60,60,67,0.5)', padding:'1rem 0' } }, 'No matches'))
           : e('div', { style:{ display:'flex', flexDirection:'column', flex:1, overflowY:'auto' } },
-              sideMenuItem('Stock', ()=> { haptic('open'); setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
-              sideMenuItem('Settings', ()=> openSettings()),
-              settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'1.25rem', paddingTop:'0.9rem',
-                borderTop:'1px solid rgba(255,255,255,0.1)' } },
-                e('div', { style:{ fontSize:'0.65rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase',
-                  color:'rgba(255,255,255,0.35)', marginBottom:'0.55rem' } }, 'Sites'),
-                e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-                  Object.keys(SITES).map(k => e('div', { key:k, style:{ display:'flex', alignItems:'center', gap:'0.55rem' } },
-                    e('span', { style:{ width:'10px', height:'10px', borderRadius:'999px', background:siteGrad(k), flexShrink:0 } }),
-                    e('span', { style:{ fontSize:'0.82rem', fontWeight:550, color:'rgba(255,255,255,0.85)' } }, SITES[k].label)
+              e('div', { key:'nav-group', className:'ios-group', style:{ margin:'0 0 0.75rem', borderRadius:'12px', overflow:'hidden' } },
+                sideMenuItem('Stock', ()=> { haptic('open'); setMenuOpen(false); setStockOpen(true); setStockQuery(''); window.scrollTo(0,0); }),
+                sideMenuItem('Customisation', ()=> openCustom()),
+                sideMenuItem('Settings', ()=> openSettings())
+              ),
+              settings.showRouteKey !== false && e('div', { key:'key', style:{ marginTop:'0.5rem' } },
+                e('div', { className:'ios-group-label', style:{ margin:'0.5rem 0 0.35rem' } }, 'Sites'),
+                e('div', { className:'ios-group', style:{ margin:0 } },
+                  Object.keys(SITES).map(k => e('div', { key:k, className:'ios-row', style:{ cursor:'default' } },
+                    e('span', { style:{ width:'12px', height:'12px', borderRadius:'999px', background:siteGrad(k), flexShrink:0 } }),
+                    e('span', { className:'ios-row-title' }, SITES[k].label)
                   ))
                 )
               )
@@ -3152,8 +3176,8 @@ function App() {
 
         e('button', {
           onClick: closeMenu,
-          style:{ marginTop:'auto', border:'none', background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)',
-            borderRadius:'12px', padding:'0.75rem', fontWeight:600, fontSize:'0.82rem', cursor:'pointer' }
+          style:{ marginTop:'auto', border:'none', background:'#FFFFFF', color:'#007AFF',
+            borderRadius:'12px', padding:'0.85rem', fontWeight:600, fontSize:'1rem', cursor:'pointer' }
         }, 'Close')
       )
     );
@@ -3208,7 +3232,7 @@ function App() {
     else setMenuSlide(0);
   };
 
-  const fab = (view !== 'form' && !settingsOpen && !stockOpen && !backupsOpen && !themesOpen) && e('div', {
+  const fab = (view !== 'form' && !settingsOpen && !customOpen && !stockOpen && !backupsOpen && !themesOpen) && e('div', {
     className: 'fab-wrap',
     style: {
       position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
@@ -3445,21 +3469,28 @@ function App() {
 
       const partsCount = parts.length;
       const taperOn = false;
-      const styleKey = settings.cardStyle || 'solid';
-      const tint = s ? s.hex : SURF;
-      const cardClass = 'ticket-card ticket-card--' + styleKey + (overlapped ? ' ticket-card--stack' : '');
+      const cardShadow = overlapped
+        ? '0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26)'
+        : '0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22)';
+      const cardBorder = s
+        ? ('1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08))
+        : ('1px solid ' + LINE);
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
-        className: cardClass,
-        style: {
-          ['--card-tint']: tint,
-          padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem',
-          cursor: 'pointer',
+        style:{ background: s ? s.hex : SURF,
+          overflow:'hidden', position:'relative',
+          border: cardBorder,
+          boxShadow: cardShadow,
+          borderRadius:'12px',
+          padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem', cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
-          transition: 'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease'
-        }
+          transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
+        (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+          position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
+          background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 42%)'
+        } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         /* Bottom strip: this is what peeks out from behind the card once the
            next one overlaps on top of it. Parts (gear) and the multi-visit
@@ -4390,7 +4421,8 @@ function App() {
     )
   );
 
-  const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(true); };
+  const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setCustomOpen(false); setSettingsOpen(true); };
+  const openCustom = () => { haptic('open'); setSiteEdits(sitesToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(false); setCustomOpen(true); window.scrollTo(0,0); };
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list, themeId: 'custom' }); };
   const applyThemeId = (id) => {
@@ -4446,26 +4478,31 @@ function App() {
   const removeEquip = (idx) => commitEquip(equipEdits.filter((_,i)=>i!==idx));
   const addEquip = () => commitEquip([...equipEdits, { key:slugKey('EQ', equipEdits.map(x=>x.key)), label:'New equipment' }]);
 
+  const iosToggle = (value, onToggle) =>
+    e('button', {
+      type: 'button',
+      className: 'ios-switch' + (value ? ' on' : ''),
+      onClick: (ev) => { ev.stopPropagation(); haptic('selection'); onToggle(); },
+      'aria-pressed': !!value
+    });
+
   const toggleRow = (label, sub, value, onToggle) =>
-    e('div', { key:label, style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.65rem', textAlign:'left',
-      background:'transparent', border:'none', borderBottom:'1px solid rgba(10,10,12,0.06)', borderRadius:0, padding:'0.78rem 0.2rem' } },
-      e('div', { style:{ flex:1, minWidth:0 } },
-        e('div', { style:{ fontSize:'0.84rem', fontWeight:600, color:INK } }, label),
-        sub && e('div', { style:{ fontSize:'0.66rem', color:GREY, marginTop:'2px', lineHeight:1.35 } }, sub)),
-      e('button', { type:'button', onClick:(ev)=>{ ev.stopPropagation(); haptic('selection'); onToggle(); },
-        style:{ width:'48px', height:'28px', borderRadius:'4px', background: value?INK:SURF3,
-        border:'1px solid '+(value?INK:LINE), position:'relative', transition:'background .2s ease, border-color .2s ease', flexShrink:0, padding:0, cursor:'pointer' } },
-        e('div', { style:{ position:'absolute', top:'3px', left: value?'24px':'3px', width:'20px', height:'20px', borderRadius:'2px',
-          background: DARK_MODE ? '#F2F2F5' : '#FFFFFF', boxShadow:'none', transition:'left .2s cubic-bezier(.22,.9,.3,1)' } })));
+    e('div', { key: label, className: 'ios-row', style: { cursor: 'default' } },
+      e('div', { className: 'ios-row-label' },
+        e('div', { className: 'ios-row-title' }, label),
+        sub ? e('div', { className: 'ios-row-sub' }, sub) : null),
+      iosToggle(value, onToggle));
 
   const chipSelect = (label, options, value, onChange) =>
-    e('div', { key:label, style:{ display:'flex', flexDirection:'column', gap:'0.45rem', padding:'0.55rem 0.15rem 0.7rem', borderBottom:'1px solid '+LINE } },
-      e('span', { style:{ fontSize:'0.72rem', fontWeight:600, color:MID } }, label),
-      e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
-        options.map(opt => e('button', { key:String(opt.key), className:'d-hover-btn', onClick:()=>{ haptic('selection'); onChange(opt.key); },
-          style:{ padding:'0.38rem 0.7rem', borderRadius:'4px', border: value===opt.key?'none':'1px solid '+LINE,
-            background: value===opt.key?INK:SURF2, color: value===opt.key?APRICOT:INK,
-            fontSize:'0.72rem', fontWeight:600, cursor:'pointer' } }, opt.label))));
+    e('div', { key: label, className: 'ios-row', style: { flexDirection: 'column', alignItems: 'stretch', gap: '0.55rem', cursor: 'default' } },
+      e('div', { className: 'ios-row-title' }, label),
+      e('div', { className: 'ios-seg' },
+        options.map(opt => e('button', {
+          key: String(opt.key),
+          type: 'button',
+          className: value === opt.key ? 'on' : '',
+          onClick: () => { haptic('selection'); onChange(opt.key); }
+        }, opt.label))));
 
   /* Small icon badges for settings section headers — squared off to match
      the machine-code/card aesthetic elsewhere, with the same orange accent
@@ -4485,59 +4522,179 @@ function App() {
 
   const collapseSection = (key, title, icon, children) => {
     const open = !!settingsSections[key];
-    return e('div', { key:key, className:'settings-span-2', style:{
-        background: 'rgba(255,255,255,0.45)',
-        borderRadius:'16px',
-        border:'1px solid rgba(31,21,30,0.10)',
-        boxShadow:'0 6px 20px rgba(31,21,30,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
-        overflow:'hidden', marginBottom:'0.7rem',
-        backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)'
-      } },
-      e('button', {
-        onClick:()=>{ haptic('selection'); setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })); },
-        style:{ width:'100%', display:'flex', alignItems:'center', gap:'0.7rem',
-          background:'rgba(32,59,89,0.06)', border:'none', padding:'0.7rem 0.95rem', cursor:'pointer', textAlign:'left' }
-      },
-        e('div', { style:{ width:'28px', height:'28px', borderRadius:'9px', background:'rgba(32,59,89,0.10)', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'center',
-          border:'1px solid rgba(32,59,89,0.08)' } }, icon(15, '#203B59')),
-        e('span', { style:{ flex:1, fontSize:'0.8rem', fontWeight:600, color:'#1F151E', letterSpacing:'0.04em', textTransform:'uppercase' } }, title),
-        e('span', { style:{
-          display:'inline-flex', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)',
-          transition:'transform .22s ease', opacity:0.55
-        } }, ChevronLeft(15, '#203B59'))
-      ),
-      open && e('div', { style:{ padding:'0.85rem 1rem 1rem', display:'flex', flexDirection:'column',
-        borderTop:'1px solid rgba(31,21,30,0.08)' } }, children)
+    return e('div', { key: key },
+      e('div', { className: 'ios-group-label' }, title),
+      e('div', { className: 'ios-group' },
+        e('button', {
+          type: 'button',
+          className: 'ios-row',
+          onClick: () => { haptic('selection'); setSettingsSections(prev => ({ ...prev, [key]: !prev[key] })); }
+        },
+          e('div', { className: 'ios-row-label' },
+            e('div', { className: 'ios-row-title' }, open ? 'Hide options' : 'Show options')),
+          e('span', { className: 'ios-chevron', style: { transform: open ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform .2s' } }, '›')
+        ),
+        open ? e('div', { style: { borderTop: '0.5px solid rgba(60,60,67,0.12)' } }, children) : null
+      )
     );
   };
 
-  const settingsView = e('div', { style:{ padding:'0.75rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.15rem' } },
-    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.15rem 0.1rem 0.55rem' } },
-      e('button', { className:'d-hover-btn', onClick:()=>setSettingsOpen(false), style:{ background:'none', border:'none', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.95rem', fontWeight:650, letterSpacing:'-0.25px', color:INK } }, 'Settings'),
-      e('span', { style:{ width:'36px' } })),
 
-    collapseSection('tickets', 'Tickets & cards', ticketIcon, [
-      e('div', { key:'fontHead', style:{ fontSize:'0.72rem', fontWeight:650, color:INK, letterSpacing:'-0.15px',
-        margin:'0.15rem 0 0.35rem', padding:'0.15rem 0' } }, 'Ticket text'),
+  const lavaLayer = (settings.lavaEnabled !== false) && e('div', {
+    key: 'lava',
+    className: 'lava-bg',
+    'aria-hidden': true,
+    style: {
+      ['--lava-opacity']: settings.lavaIntensity === 'high' ? 0.55 : settings.lavaIntensity === 'low' ? 0.22 : 0.38,
+      ['--lava-blur']: settings.lavaIntensity === 'high' ? '88px' : settings.lavaIntensity === 'low' ? '56px' : '72px',
+      ['--lava-dur']: settings.lavaSpeed === 'fast' ? '12s' : settings.lavaSpeed === 'slow' ? '26s' : '18s',
+      ['--lava-1']: (SITES.NX && SITES.NX.hex) || '#203B59',
+      ['--lava-2']: (SITES.WS && SITES.WS.hex) || '#839CB6',
+      ['--lava-3']: (SITES.MMUH && SITES.MMUH.hex) || '#FDBA74',
+      ['--lava-4']: (SITES.RH && SITES.RH.hex) || '#9A3412'
+    }
+  }, e('span'), e('span'), e('span'), e('span'));
+
+  const customView = e('div', { className: 'ios-page', style: { paddingBottom: '2.5rem' } },
+    e('div', { className: 'ios-nav' },
+      e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false) }, 'Back'),
+      e('span', { className: 'ios-nav-title' }, 'Customisation'),
+      e('span', { style: { minWidth: '3.2rem' } })
+    ),
+
+    e('div', { className: 'ios-group-label' }, 'Background'),
+    e('div', { className: 'ios-group' },
+      toggleRow('Lava lamp background', 'Soft moving colour blobs behind the app',
+        settings.lavaEnabled !== false, ()=>saveSettings({ lavaEnabled: !(settings.lavaEnabled !== false) })),
+      chipSelect('Intensity', [
+        {key:'low', label:'Low'}, {key:'medium', label:'Medium'}, {key:'high', label:'High'}
+      ], settings.lavaIntensity || 'medium', (v)=>saveSettings({ lavaIntensity: v })),
+      chipSelect('Speed', [
+        {key:'slow', label:'Slow'}, {key:'medium', label:'Medium'}, {key:'fast', label:'Fast'}
+      ], settings.lavaSpeed || 'medium', (v)=>saveSettings({ lavaSpeed: v }))
+    ),
+
+    e('div', { className: 'ios-group-label' }, 'Cards'),
+    e('div', { className: 'ios-group' },
       chipSelect('Card text size', [
-        {key:'normal', label:'Normal'},
-        {key:'large', label:'Large'},
-        {key:'xl', label:'Extra large'}
+        {key:'normal', label:'Normal'}, {key:'large', label:'Large'}, {key:'xl', label:'XL'}
       ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
         saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
-      }),
-      chipSelect('Card surface', [
-        {key:'solid', label:'Solid'},
-        {key:'glass', label:'Glass'},
-        {key:'gloss', label:'High gloss'},
-        {key:'metallic', label:'Metallic'},
-        {key:'matte', label:'Matte'},
-        {key:'frosted', label:'Frosted'},
-        {key:'neon', label:'Soft glow'}
-      ], settings.cardStyle || 'solid', (v)=>saveSettings({ cardStyle: v })),
+      })
+    ),
+
+    e('div', { className: 'ios-group-label' }, 'Themes'),
+    e('div', { className: 'ios-group', style: { padding: '0.75rem' } },
+      e('div', { style: { fontSize: '0.85rem', color: 'rgba(60,60,67,0.6)', marginBottom: '0.65rem', lineHeight: 1.35 } },
+        'Tap a palette, fine-tune on the live card, then save if you want it in the list.'),
+      /* reuse live theme editor by inlining minimal version */
+      (() => {
+        const list = siteEdits.length ? siteEdits : sitesToList();
+        const idx = Math.min(themePreviewIdx, Math.max(0, list.length - 1));
+        const cur = list[idx] || { hex: '#203B59', on: '#FFEDDC', label: 'Site', key: 'X' };
+        const onC = cur.on || readableOn(cur.hex);
+        return e('div', null,
+          e('div', {
+            style: {
+              background: cur.hex, color: onC, borderRadius: '14px', padding: '0.85rem 0.95rem',
+              marginBottom: '0.55rem',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
+            }
+          },
+            e('div', { style: { fontSize: '0.72rem', fontWeight: 600, opacity: 0.85 } }, 'Preview'),
+            e('div', { style: { fontSize: '1.2rem', fontWeight: 700, marginTop: '0.25rem' } }, '09:00 – 11:30'),
+            e('div', { style: { fontSize: '0.75rem', opacity: 0.8, marginTop: '0.2rem' } }, (cur.label || cur.key))
+          ),
+          e('div', { style: { display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.55rem' } },
+            list.map((st, i) => e('button', {
+              key: st.key + i, type: 'button',
+              onClick: () => setThemePreviewIdx(i),
+              style: {
+                padding: '0.35rem 0.65rem', borderRadius: '999px', cursor: 'pointer',
+                border: i === idx ? '2px solid #007AFF' : '1px solid rgba(60,60,67,0.18)',
+                background: st.hex, color: st.on || readableOn(st.hex),
+                fontSize: '0.72rem', fontWeight: 600
+              }
+            }, st.label || st.key))
+          ),
+          e('div', { style: { display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' } },
+            e('label', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' } },
+              'Card',
+              e('input', { type: 'color', value: cur.hex || '#203B59',
+                onChange: (ev) => {
+                  const list2 = list.map((st, i) => i === idx ? { ...st, hex: ev.target.value, on: st.on || readableOn(ev.target.value) } : st);
+                  setSiteEdits(list2); applySites(list2); setThemeTick(t => t + 1);
+                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
+                },
+                style: { width: '36px', height: '28px', border: 'none', background: 'transparent', padding: 0 } })
+            ),
+            e('label', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' } },
+              'Text',
+              e('input', { type: 'color', value: cur.on || readableOn(cur.hex),
+                onChange: (ev) => {
+                  const list2 = list.map((st, i) => i === idx ? { ...st, on: ev.target.value } : st);
+                  setSiteEdits(list2); applySites(list2); setThemeTick(t => t + 1);
+                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
+                },
+                style: { width: '36px', height: '28px', border: 'none', background: 'transparent', padding: 0 } })
+            )
+          )
+        );
+      })()
+    ),
+
+    e('div', { className: 'ios-group-label' }, 'Palettes'),
+    e('div', { className: 'ios-group', style: { padding: '0.65rem' } },
+      e('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
+        [...THEME_PRESETS, ...(settings.customThemes || [])].map(p => {
+          const active = (settings.themeId || 'coastal') === p.id;
+          return e('button', {
+            key: p.id, type: 'button',
+            onClick: () => applyThemeId(p.id),
+            style: {
+              textAlign: 'left', border: active ? '2px solid #007AFF' : '1px solid rgba(60,60,67,0.15)',
+              background: '#F9F9FB', borderRadius: '12px', padding: '0.6rem', cursor: 'pointer'
+            }
+          },
+            e('div', { style: { fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem' } }, p.name),
+            e('div', { style: { display: 'flex', gap: '3px' } },
+              (p.colors || []).map((c, i) => e('div', {
+                key: i,
+                style: { flex: 1, height: '18px', borderRadius: '4px', background: c }
+              }))
+            )
+          );
+        })
+      ),
+      e('div', { style: { display: 'flex', gap: '0.4rem', marginTop: '0.75rem' } },
+        e('input', {
+          type: 'text', value: themeNameDraft, placeholder: 'Name this theme…',
+          onChange: (ev) => setThemeNameDraft(ev.target.value),
+          style: {
+            flex: 1, border: '1px solid rgba(60,60,67,0.18)', borderRadius: '10px',
+            padding: '0.55rem 0.7rem', fontSize: '0.9rem', background: '#FFF'
+          }
+        }),
+        e('button', {
+          type: 'button', onClick: saveNamedTheme,
+          style: {
+            border: 'none', background: '#007AFF', color: '#FFF', borderRadius: '10px',
+            padding: '0.55rem 0.85rem', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
+          }
+        }, 'Save')
+      )
+    )
+  );
+
+
+  const settingsView = e('div', { className: 'ios-page', style: { paddingBottom: '2.5rem' } },
+    e('div', { className: 'ios-nav' },
+      e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setSettingsOpen(false) }, 'Back'),
+      e('span', { className: 'ios-nav-title' }, 'Settings'),
+      e('span', { style: { minWidth: '3.2rem' } })
+    ),
+
+    collapseSection('tickets', 'Tickets', ticketIcon, [
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
@@ -4555,133 +4712,6 @@ function App() {
     ]),
 
 
-    collapseSection('themes', 'Themes', ticketIcon, [
-      e('div', { key:'thint', style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.55rem', lineHeight:1.35 } },
-        'Tap a palette, then fine-tune the live card. Save your own themes to the list.'),
-
-      /* Live interactive preview card */
-      e('div', { key:'live', style:{ marginBottom:'0.85rem' } },
-        (() => {
-          const list = siteEdits.length ? siteEdits : sitesToList();
-          const idx = Math.min(themePreviewIdx, Math.max(0, list.length - 1));
-          const cur = list[idx] || { hex:'#203B59', on:'#FFEDDC', label:'Site', key:'X' };
-          const onC = cur.on || readableOn(cur.hex);
-          return e('div', null,
-            e('div', {
-              style:{
-                background: cur.hex, color: onC, borderRadius:'16px', padding:'0.85rem 0.95rem 1rem',
-                boxShadow:'0 12px 28px rgba(31,21,30,0.14), inset 0 1px 0 rgba(255,255,255,0.2)',
-                transition:'background .12s linear, color .12s linear',
-                border:'1px solid rgba(0,0,0,0.06)'
-              }
-            },
-              e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0.55rem' } },
-                e('span', { style:{ fontSize:'0.72rem', fontWeight:700, opacity:0.85 } }, 'Alinity C'),
-                e('span', { style:{ fontSize:'0.78rem', fontWeight:700 } }, 'JT-1042')
-              ),
-              e('div', { style:{ fontSize:'1.15rem', fontWeight:700, letterSpacing:'-0.03em', fontVariantNumeric:'tabular-nums' } }, '09:00 – 11:30'),
-              e('div', { style:{ fontSize:'0.72rem', fontWeight:550, opacity:0.8, marginTop:'0.35rem' } }, (cur.label || cur.key) + ' · Preview'),
-              e('div', { style:{ fontSize:'0.7rem', opacity:0.7, marginTop:'0.55rem', lineHeight:1.35 } }, 'Sample notes appear like this on the card.')
-            ),
-            e('div', { style:{ display:'flex', gap:'0.35rem', marginTop:'0.55rem', flexWrap:'wrap' } },
-              list.map((st, i) => e('button', {
-                key: st.key + i, type:'button',
-                onClick:()=>setThemePreviewIdx(i),
-                style:{
-                  padding:'0.35rem 0.65rem', borderRadius:'999px', cursor:'pointer',
-                  border: i===idx ? '2px solid #203B59' : '1px solid '+LINE,
-                  background: st.hex, color: st.on || readableOn(st.hex),
-                  fontSize:'0.68rem', fontWeight:700
-                }
-              }, st.label || st.key))
-            ),
-            e('div', { style:{ display:'flex', gap:'0.85rem', marginTop:'0.65rem', alignItems:'center', flexWrap:'wrap' } },
-              e('label', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.72rem', fontWeight:600, color:INK } },
-                'Card',
-                e('input', { type:'color', value: cur.hex || '#203B59',
-                  onChange:(ev)=>{
-                    const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, hex:ev.target.value, on: st.on || readableOn(ev.target.value) } : st);
-                    setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
-                    saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
-                  },
-                  style:{ width:'42px', height:'32px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
-              ),
-              e('label', { style:{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.72rem', fontWeight:600, color:INK } },
-                'Text',
-                e('input', { type:'color', value: cur.on || readableOn(cur.hex),
-                  onChange:(ev)=>{
-                    const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, on:ev.target.value } : st);
-                    setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
-                    saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
-                  },
-                  style:{ width:'42px', height:'32px', border:'none', background:'transparent', cursor:'pointer', padding:0 } })
-              ),
-              e('button', {
-                type:'button',
-                onClick:()=>{
-                  const list2 = (siteEdits.length ? siteEdits : sitesToList()).map((st,i)=> i===idx ? { ...st, on: readableOn(st.hex) } : st);
-                  setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
-                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
-                },
-                style:{ border:'1px solid '+LINE, background:SURF2, borderRadius:'8px', padding:'0.35rem 0.55rem',
-                  fontSize:'0.68rem', fontWeight:600, color:INK, cursor:'pointer' }
-              }, 'Auto text')
-            )
-          );
-        })()
-      ),
-
-      /* Save current as named theme */
-      e('div', { key:'saveRow', style:{ display:'flex', gap:'0.4rem', marginBottom:'0.85rem' } },
-        e('input', {
-          type:'text', value:themeNameDraft, placeholder:'Name this theme…',
-          onChange:(ev)=>setThemeNameDraft(ev.target.value),
-          style:{ flex:1, border:'1px solid '+LINE, borderRadius:'12px', padding:'0.55rem 0.75rem',
-            fontSize:'0.84rem', background:SURF2, color:INK, outline:'none' }
-        }),
-        e('button', {
-          type:'button', onClick:saveNamedTheme,
-          style:{ border:'none', background:'#203B59', color:'#FFEDDC', borderRadius:'12px',
-            padding:'0.55rem 0.85rem', fontWeight:700, fontSize:'0.78rem', cursor:'pointer', whiteSpace:'nowrap' }
-        }, 'Save')
-      ),
-
-      /* Preset + saved list */
-      e('div', { key:'listHead', style:{ fontSize:'0.68rem', fontWeight:700, color:GREY, letterSpacing:'0.04em',
-        textTransform:'uppercase', marginBottom:'0.4rem' } }, 'Palettes'),
-      e('div', { key:'grid', style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
-        [...THEME_PRESETS, ...(settings.customThemes || [])].map(p => {
-          const active = (settings.themeId || 'coastal') === p.id;
-          const isUser = String(p.id).indexOf('user_') === 0;
-          return e('div', { key: p.id, style:{ position:'relative' } },
-            e('button', {
-              type:'button',
-              onClick: ()=>applyThemeId(p.id),
-              style: {
-                width:'100%', textAlign:'left', border: active ? '2px solid #203B59' : '1px solid '+LINE,
-                background: SURF2, borderRadius:'14px', padding:'0.65rem 0.7rem', cursor:'pointer'
-              }
-            },
-              e('div', { style:{ fontSize:'0.78rem', fontWeight:700, color:INK, marginBottom:'0.45rem' } }, p.name),
-              e('div', { style:{ display:'flex', gap:'4px' } },
-                (p.colors || []).map((c,i) => e('div', {
-                  key:i,
-                  style:{ flex:1, height:'22px', borderRadius:'6px', background:c,
-                    color:(p.text && p.text[i]) || readableOn(c), fontSize:'0.55rem', fontWeight:700,
-                    display:'flex', alignItems:'center', justifyContent:'center' }
-                }, 'Aa'))
-              )
-            ),
-            isUser ? e('button', {
-              type:'button',
-              onClick:(ev)=>{ ev.stopPropagation(); deleteCustomTheme(p.id); },
-              style:{ position:'absolute', top:'6px', right:'6px', border:'none', background:'rgba(31,21,30,0.08)',
-                borderRadius:'999px', width:'22px', height:'22px', fontSize:'0.7rem', cursor:'pointer', color:INK }
-            }, '×') : null
-          );
-        })
-      )
-    ]),
 
     collapseSection('export', 'Export', ticketIcon, [
       e('div', { key:'exhint', style:{ fontSize:'0.72rem', color:GREY, marginBottom:'0.45rem', lineHeight:1.35 } },
@@ -5018,6 +5048,7 @@ function App() {
   if (stockOpen) {
     const stockBody = e('div', { key:'stock', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, stockView);
     return e('div', { className: 'desktop-shell' },
+      lavaLayer,
       desktopSidebar,
       e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
@@ -5033,10 +5064,30 @@ function App() {
     );
   }
 
+  if (customOpen) {
+    const customBody = e('div', { key:'custom', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, customView);
+    return e('div', { className: 'desktop-shell' },
+      lavaLayer,
+      desktopSidebar,
+      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:'transparent' } },
+        desktopTopbar,
+        e('div', { className: 'desktop-content app-content-layer', style:{ flex:1, overflow:'auto' } }, customBody)
+      ),
+      e('div', { className: 'mobile-only app-content-layer', style:{ width:'100%', minHeight:'100vh', overflow:'auto', background:'transparent' } },
+        e('div', {
+          onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
+          style:{ transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
+            transform:'translateX('+swipeX+'px)', borderRadius: swipeX > 6 ? '12px' : '0', touchAction:'pan-y' }
+        }, customBody),
+        menu, chooserSheet, formSheet, swipeHint, saveToast, contextMenuUI, undoToastUI, offlineBanner)
+    );
+  }
+
   if (settingsOpen) {
     const pane = settingsView;
     const settingsBody = e('div', { key:'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, pane);
     return e('div', { className: 'desktop-shell' },
+      lavaLayer,
       desktopSidebar,
       e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
@@ -5141,6 +5192,7 @@ function App() {
     : desktopCalSplit;
 
   return e('div', { className: 'desktop-shell' },
+      lavaLayer,
     desktopSidebar,
     e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
       desktopTopbar,
