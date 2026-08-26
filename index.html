@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#F5F4F1">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
@@ -50,6 +50,8 @@
     margin:0; padding:0; width:100%; max-width:100%;
     overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y;
     background:var(--page-bg);
+    min-height:100%;
+    min-height:100dvh;
     background-attachment:fixed;
     font-family:"Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing:-0.01em;
@@ -687,124 +689,6 @@
 
 
 
-  /* Floating Color Orbs — vibrant soft orbs */
-  .lava-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255,255,255,0.55) 0%, transparent 55%),
-      linear-gradient(165deg, #E8EEF5 0%, #F5F4F1 40%, #EDE6DF 100%);
-  }
-  .lava-bg .orb {
-    position: absolute;
-    border-radius: 50%;
-    will-change: transform;
-    mix-blend-mode: multiply;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-  }
-  .lava-bg .orb::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%,
-      rgba(255,255,255,0.95) 0%,
-      var(--orb-mid, rgba(131,156,182,0.85)) 28%,
-      var(--orb-color, #839CB6) 55%,
-      transparent 72%);
-    filter: blur(var(--orb-blur, 40px));
-    opacity: var(--orb-opacity, 0.85);
-  }
-  .lava-bg .orb::after {
-    content: '';
-    position: absolute;
-    inset: 18%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 35%,
-      rgba(255,255,255,0.7) 0%,
-      var(--orb-color, #839CB6) 45%,
-      transparent 70%);
-    filter: blur(calc(var(--orb-blur, 40px) * 0.45));
-    opacity: 0.9;
-  }
-  .lava-bg .orb-1 {
-    width: 72vmax; height: 72vmax;
-    top: -28%; left: -24%;
-    --orb-color: var(--lava-1, #3B82F6);
-    --orb-mid: #93C5FD;
-    --orb-blur: 48px;
-    animation: orb-float-a var(--lava-dur, 16s) ease-in-out infinite alternate;
-  }
-  .lava-bg .orb-2 {
-    width: 64vmax; height: 64vmax;
-    bottom: -30%; right: -22%;
-    --orb-color: var(--lava-2, #A78BFA);
-    --orb-mid: #DDD6FE;
-    --orb-blur: 52px;
-    animation: orb-float-b calc(var(--lava-dur, 16s) * 1.15) ease-in-out infinite alternate;
-    animation-delay: -4s;
-  }
-  .lava-bg .orb-3 {
-    width: 48vmax; height: 48vmax;
-    top: 32%; left: 22%;
-    --orb-color: var(--lava-3, #FB923C);
-    --orb-mid: #FED7AA;
-    --orb-blur: 36px;
-    animation: orb-float-c calc(var(--lava-dur, 16s) * 0.95) ease-in-out infinite alternate;
-    animation-delay: -7s;
-  }
-  .lava-bg .orb-4 {
-    width: 40vmax; height: 40vmax;
-    top: 8%; right: -5%;
-    --orb-color: var(--lava-4, #F472B6);
-    --orb-mid: #FBCFE8;
-    --orb-blur: 34px;
-    animation: orb-float-a calc(var(--lava-dur, 16s) * 1.25) ease-in-out infinite alternate;
-    animation-delay: -2s;
-  }
-  .lava-bg .orb-5 {
-    width: 36vmax; height: 36vmax;
-    bottom: 18%; left: -8%;
-    --orb-color: #22D3EE;
-    --orb-mid: #A5F3FC;
-    --orb-blur: 30px;
-    animation: orb-float-b calc(var(--lava-dur, 16s) * 1.05) ease-in-out infinite alternate;
-    animation-delay: -9s;
-  }
-  .lava-bg .orb-6 {
-    width: 28vmax; height: 28vmax;
-    top: 55%; right: 18%;
-    --orb-color: #FBBF24;
-    --orb-mid: #FDE68A;
-    --orb-blur: 26px;
-    animation: orb-float-c calc(var(--lava-dur, 16s) * 0.85) ease-in-out infinite alternate;
-    animation-delay: -5s;
-  }
-  @keyframes orb-float-a {
-    0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50%  { transform: translate(10%, 8%) scale(1.12) rotate(4deg); }
-    100% { transform: translate(-6%, 12%) scale(0.94) rotate(-3deg); }
-  }
-  @keyframes orb-float-b {
-    0%   { transform: translate(0, 0) scale(1.05) rotate(0deg); }
-    50%  { transform: translate(-12%, -7%) scale(0.92) rotate(-5deg); }
-    100% { transform: translate(8%, -10%) scale(1.1) rotate(3deg); }
-  }
-  @keyframes orb-float-c {
-    0%   { transform: translate(0, 0) scale(0.98); }
-    33%  { transform: translate(9%, -11%) scale(1.14); }
-    66%  { transform: translate(-8%, 6%) scale(1.02); }
-    100% { transform: translate(5%, 9%) scale(1.08); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .lava-bg .orb { animation: none !important; }
-  }
-
   /* iOS-style settings chrome */
   .ios-page {
     background: #F2F2F7;
@@ -1227,6 +1111,16 @@ function applyEquip(list) {
   Object.keys(EQUIP).forEach(k => delete EQUIP[k]);
   list.forEach(item => { EQUIP[item.key] = item.label; });
 }
+function applyPageBg(hex) {
+  const bg = hex || '#F5F4F1';
+  PAGE_BG = bg;
+  try {
+    document.documentElement.style.setProperty('--page-bg', bg);
+    document.body.style.background = bg;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', bg);
+  } catch (err) {}
+}
 function sitesToList() { return Object.keys(SITES).map(k => ({ key:k, label:SITES[k].label, hex:SITES[k].hex, on: SITES[k].on || readableOn(SITES[k].hex) })); }
 function equipToList() { return Object.keys(EQUIP).map(k => ({ key:k, label:EQUIP[k] })); }
 function nextAutoColour(existingHexes) {
@@ -1265,7 +1159,7 @@ function applySurfaceLightness() {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
     document.documentElement.style.setProperty('--card-bg', CARD_BG);
     document.documentElement.style.setProperty('--line', 'rgba(10,10,12,0.13)');
-    document.body.style.background = 'transparent';
+    document.body.style.background = PAGE_BG;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
   } catch (err) {}
@@ -1753,9 +1647,7 @@ const DEFAULT_SETTINGS = {
   stockRemaining: null,
   themeId: 'coastal',
   customThemes: [],
-  lavaEnabled: true,
-  lavaIntensity: 'medium', /* low | medium | high */
-  lavaSpeed: 'medium' /* slow | medium | fast */
+  pageBg: '#F5F4F1'
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -2229,6 +2121,7 @@ function App() {
         }
         if (merged.equipment && merged.equipment.length) applyEquip(merged.equipment);
         TIME_ROUNDING = merged.timeRounding || 5;
+        if (merged.pageBg) applyPageBg(merged.pageBg);
         if (!appliedDefaultsRef.current) {
           setCalMode(merged.defaultCalMode || 'day');
           setShowWeekends(!(merged.hideWeekendsDefault !== false));
@@ -4047,13 +3940,12 @@ function App() {
   const topDateBar = e('div', { key:'topDateBar', style:{
       position:'fixed', top:0, left:0, right:0, zIndex:34,
       paddingTop: 'env(safe-area-inset-top)',
-      background:'rgba(245,244,241,'+(0.22 + headerCollapse * 0.4)+')',
-      backdropFilter:'blur('+(14 + headerCollapse * 10)+'px) saturate(1.4)', WebkitBackdropFilter:'blur('+(14 + headerCollapse * 10)+'px) saturate(1.4)',
-      borderBottom:'1px solid rgba(31,21,30,'+(0.04 + headerCollapse * 0.06)+')',
+      background: PAGE_BG,
+      borderBottom:'1px solid rgba(31,21,30,'+(0.06 + headerCollapse * 0.05)+')',
       paddingBottom: (0.55 - headerCollapse * 0.1)+'rem',
       paddingLeft: '0.6rem',
       paddingRight: '0.6rem',
-      transition:'background .15s ease, padding .15s ease' } },
+      transition:'background .12s linear, padding .15s ease' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
@@ -4602,27 +4494,6 @@ function App() {
   };
 
 
-  const lavaLayer = (settings.lavaEnabled !== false) && e('div', {
-    key: 'lava',
-    className: 'lava-bg',
-    'aria-hidden': true,
-    style: {
-      ['--orb-opacity']: settings.lavaIntensity === 'high' ? '1' : settings.lavaIntensity === 'low' ? '0.55' : '0.85',
-      ['--lava-dur']: settings.lavaSpeed === 'fast' ? '11s' : settings.lavaSpeed === 'slow' ? '24s' : '16s',
-      ['--lava-1']: (SITES.NX && SITES.NX.hex) || '#3B82F6',
-      ['--lava-2']: (SITES.WS && SITES.WS.hex) || '#A78BFA',
-      ['--lava-3']: (SITES.MMUH && SITES.MMUH.hex) || '#FB923C',
-      ['--lava-4']: (SITES.RH && SITES.RH.hex) || '#F472B6'
-    }
-  },
-    e('div', { className: 'orb orb-1' }),
-    e('div', { className: 'orb orb-2' }),
-    e('div', { className: 'orb orb-3' }),
-    e('div', { className: 'orb orb-4' }),
-    e('div', { className: 'orb orb-5' }),
-    e('div', { className: 'orb orb-6' })
-  );
-
   const customView = e('div', { className: 'ios-page', style: { paddingBottom: '2.5rem' } },
     e('div', { className: 'ios-nav' },
       e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false) }, 'Back'),
@@ -4632,14 +4503,57 @@ function App() {
 
     e('div', { className: 'ios-group-label' }, 'Background'),
     e('div', { className: 'ios-group' },
-      toggleRow('Lava lamp background', 'Soft moving colour blobs behind the app',
-        settings.lavaEnabled !== false, ()=>saveSettings({ lavaEnabled: !(settings.lavaEnabled !== false) })),
-      chipSelect('Intensity', [
-        {key:'low', label:'Low'}, {key:'medium', label:'Medium'}, {key:'high', label:'High'}
-      ], settings.lavaIntensity || 'medium', (v)=>saveSettings({ lavaIntensity: v })),
-      chipSelect('Speed', [
-        {key:'slow', label:'Slow'}, {key:'medium', label:'Medium'}, {key:'fast', label:'Fast'}
-      ], settings.lavaSpeed || 'medium', (v)=>saveSettings({ lavaSpeed: v }))
+      e('div', { className: 'ios-row', style: { cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: '0.65rem' } },
+        e('div', { className: 'ios-row-title' }, 'Page colour'),
+        e('div', {
+          style: {
+            borderRadius: '14px', padding: '1rem', minHeight: '88px',
+            background: settings.pageBg || PAGE_BG || '#F5F4F1',
+            border: '1px solid rgba(60,60,67,0.12)',
+            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.4)',
+            transition: 'background .12s linear'
+          }
+        },
+          e('div', { style: { fontSize: '0.78rem', fontWeight: 600, color: 'rgba(0,0,0,0.45)' } }, 'Live preview'),
+          e('div', { style: { fontSize: '0.95rem', fontWeight: 600, color: 'rgba(0,0,0,0.75)', marginTop: '0.35rem' } }, 'Background colour')
+        ),
+        e('div', { style: { display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' } },
+          e('input', {
+            type: 'color',
+            value: settings.pageBg || PAGE_BG || '#F5F4F1',
+            onChange: (ev) => {
+              const hex = ev.target.value;
+              applyPageBg(hex);
+              saveSettings({ pageBg: hex });
+            },
+            style: { width: '44px', height: '36px', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }
+          }),
+          e('span', { style: { fontSize: '0.9rem', color: 'rgba(60,60,67,0.7)', fontVariantNumeric: 'tabular-nums' } },
+            (settings.pageBg || PAGE_BG || '#F5F4F1').toUpperCase()),
+          e('button', {
+            type: 'button',
+            onClick: () => { applyPageBg('#F5F4F1'); saveSettings({ pageBg: '#F5F4F1' }); },
+            style: {
+              marginLeft: 'auto', border: '1px solid rgba(60,60,67,0.18)', background: '#FFF',
+              borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+            }
+          }, 'Reset')
+        ),
+        e('div', { style: { display: 'flex', gap: '0.4rem', flexWrap: 'wrap' } },
+          ['#F5F4F1', '#F2F2F7', '#EEF2FF', '#F0FDF4', '#FFF7ED', '#FDF2F8', '#ECFEFF', '#18181B'].map(hex =>
+            e('button', {
+              key: hex, type: 'button',
+              onClick: () => { applyPageBg(hex); saveSettings({ pageBg: hex }); },
+              title: hex,
+              style: {
+                width: '28px', height: '28px', borderRadius: '8px', cursor: 'pointer',
+                background: hex,
+                border: (settings.pageBg || PAGE_BG) === hex ? '2px solid #007AFF' : '1px solid rgba(0,0,0,0.12)'
+              }
+            })
+          )
+        )
+      )
     ),
 
     e('div', { className: 'ios-group-label' }, 'Cards'),
@@ -5116,7 +5030,7 @@ function App() {
   if (stockOpen) {
     const stockBody = e('div', { key:'stock', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, stockView);
     return e('div', { className: 'desktop-shell' },
-      lavaLayer,
+
       desktopSidebar,
       e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
@@ -5135,13 +5049,13 @@ function App() {
   if (customOpen) {
     const customBody = e('div', { key:'custom', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, customView);
     return e('div', { className: 'desktop-shell' },
-      lavaLayer,
+
       desktopSidebar,
-      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:'transparent' } },
+      e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
         e('div', { className: 'desktop-content app-content-layer', style:{ flex:1, overflow:'auto' } }, customBody)
       ),
-      e('div', { className: 'mobile-only app-content-layer', style:{ width:'100%', minHeight:'100vh', overflow:'auto', background:'transparent' } },
+      e('div', { className: 'mobile-only app-content-layer', style:{ width:'100%', minHeight:'100vh', overflow:'auto', background:PAGE_BG } },
         e('div', {
           onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
           style:{ transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
@@ -5155,7 +5069,7 @@ function App() {
     const pane = settingsView;
     const settingsBody = e('div', { key:'settings', style:{ animation:'fadeInUp .42s cubic-bezier(.22,.9,.3,1) both' } }, pane);
     return e('div', { className: 'desktop-shell' },
-      lavaLayer,
+
       desktopSidebar,
       e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
         desktopTopbar,
@@ -5260,7 +5174,7 @@ function App() {
     : desktopCalSplit;
 
   return e('div', { className: 'desktop-shell' },
-      lavaLayer,
+
     desktopSidebar,
     e('div', { className: 'desktop-main desktop-only', style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', height:'100vh', overflow:'hidden', background:PAGE_BG } },
       desktopTopbar,
