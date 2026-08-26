@@ -1533,8 +1533,27 @@ function snapWorkTime(val) {
   if (h === 20) m = 0;
   return pad(h)+':'+pad(m);
 }
-const shiftTime = (t, h) => { if (!t) return ''; const p=t.split(':');
-  return pad((Number(p[0])+h+24)%24)+':'+p[1]; };
+/* Prebuilt list — native <select> is reliable on iOS; type=time ignores min/max/step */
+const WORK_TIME_OPTIONS = (() => {
+  const out = [];
+  for (let h = 6; h <= 20; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      if (h === 20 && m > 0) break;
+      out.push(pad(h)+':'+pad(m));
+    }
+  }
+  return out;
+})();
+const shiftTime = (t, hrs) => {
+  if (!t) return '';
+  const p = t.split(':');
+  let h = Number(p[0]) + (hrs || 0), m = Number(p[1]) || 0;
+  if (h < 6) { h = 6; m = 0; }
+  if (h > 20 || (h === 20 && m > 0)) { h = 20; m = 0; }
+  m = Math.round(m / 5) * 5;
+  if (m === 60) { m = 0; h = Math.min(20, h + 1); }
+  return snapWorkTime(pad(h)+':'+pad(m));
+};
 
 const AUTO_BACKUP_KEY = 'autoBackupDate';
 const TrashIcon = (size, col) => e('svg', { width:size, height:size, viewBox:'0 0 24 24', style:{ display:'block', pointerEvents:'none' } },
@@ -1838,7 +1857,7 @@ function App() {
       const eq = localStorage.getItem('ticketsLastEquip');
       if (eq) lastEq = JSON.parse(eq) || [];
     } catch (err) {}
-    const now = roundNow();
+    const now = snapWorkTime(roundNow()) || '06:00';
     return { ticketNumber:'', summary:'', site: lastSite,
       equipment: Array.isArray(lastEq) ? lastEq : [], date:d,
       t1:'', start: now, finish: now, t2:'', extra:[],
@@ -3858,16 +3877,36 @@ function App() {
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.6rem' } }, children)
     );
 
+  const timeSelect = (time, field, update, opts) => {
+    const val = snapWorkTime(time || '') || '';
+    const big = !!(opts && opts.big);
+    return e('select', {
+      value: val && WORK_TIME_OPTIONS.indexOf(val) >= 0 ? val : (val ? snapWorkTime(val) : ''),
+      onChange:(ev)=>update({ [field]: ev.target.value }),
+      onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
+      style:{
+        border:'none', background:'transparent', outline:'none', cursor:'pointer',
+        color: formOnC, fontWeight:600, fontVariantNumeric:'tabular-nums',
+        fontSize: big ? '1.25rem' : '0.92rem',
+        textAlign: big ? 'center' : 'right',
+        width: big ? '100%' : 'auto',
+        maxWidth: big ? '120px' : 'none',
+        letterSpacing: big ? '-0.5px' : '0',
+        padding: big ? '0.1rem 0' : 0,
+        WebkitAppearance:'menulist', appearance:'menulist'
+      }
+    },
+      e('option', { value:'' }, '—'),
+      WORK_TIME_OPTIONS.map(t => e('option', { key:t, value:t }, t))
+    );
+  };
+
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
         background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
-      e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
-        onChange:(ev)=>update({ [field]:snapWorkTime(ev.target.value) }),
-        onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-        style:{ width:'68px', border:'none', background:'transparent', outline:'none', textAlign:'right',
-          fontSize:'0.92rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, cursor:'pointer' } }),
+      timeSelect(time, field, update, { big:false }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
         style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:formFieldBg2,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
@@ -3885,11 +3924,7 @@ function App() {
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
         background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
-      e('input', { type:'time', value:time, min:'06:00', max:'20:00', step:300,
-        onChange:(ev)=>update({ [field]:snapWorkTime(ev.target.value) }),
-        onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
-        style:{ width:'100%', maxWidth:'110px', border:'none', background:'transparent', outline:'none', textAlign:'center',
-          fontSize:'1.35rem', fontWeight:600, color:formOnC, fontVariantNumeric:'tabular-nums', padding:0, letterSpacing:'-0.6px', cursor:'pointer' } }));
+      timeSelect(time, field, update, { big:true }));
 
   const durationCaption = (text) =>
     e('div', { style:{ textAlign:'center', fontSize:'0.7rem', fontWeight:600, color:formOnC, padding:'2px 0' } }, text);
@@ -4010,26 +4045,18 @@ function App() {
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
                 transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
-            e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.45rem' } },
-              e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
-                Object.keys(SITES).map(k => {
-                  const sc = SITES[k];
-                  const on = form.site === k;
-                  return e('button', {
-                    key:k, type:'button',
-                    onClick:()=>setForm({ ...form, site:k }),
-                    style:{
-                      padding:'0.48rem 0.72rem', borderRadius:'10px', cursor:'pointer',
-                      border: on ? '2px solid '+siteOnColor(sc.hex) : '2px solid transparent',
-                      background: sc.hex, color: siteOnColor(sc.hex),
-                      fontSize:'0.78rem', fontWeight:700, letterSpacing:'0.02em',
-                      boxShadow: on ? '0 2px 10px rgba(0,0,0,0.18)' : 'none',
-                      transition:'transform .1s ease, box-shadow .1s ease'
-                    }
-                  }, sc.label);
-                })
-              ),
-              e('div', { style:{ display:'flex', alignItems:'center', gap:'0.35rem',
+            e('div', { style:{ display:'flex', gap:'0.4rem' } },
+              e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
+                borderRadius:'12px', padding:'0 0.65rem',
+                border:'1px solid rgba(227,227,227,0.12)',
+                background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
+                transition:'background .08s linear, color .08s linear' } },
+                e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
+                  style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
+                    fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : formOnC } },
+                  e('option', { value:'' }, 'Site'),
+                  Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
+              e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)',
                 backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
