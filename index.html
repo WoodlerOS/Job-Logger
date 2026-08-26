@@ -1444,6 +1444,7 @@ const DEFAULT_SETTINGS = {
   weekStartsMon: true,
   largeText: false,
   cardTextScale: 'normal', /* normal | large | xl */
+  cardStyle: 'solid', /* solid | glass | gloss | metallic | matte | frosted | neon */
   fabGlowStyle: 'halo', /* halo | drift | dual | nebula */
   fabGlowColor: '#2890FF',
   stockRemaining: null,
@@ -1709,6 +1710,8 @@ function App() {
   const [chooser, setChooser] = useState(null);
   const [formMenu, setFormMenu] = useState(false);
   const [form, setForm] = useState(blank());
+  const [formDirty, setFormDirty] = useState(false);
+  const setFormTracked = (next) => { setFormDirty(true); setForm(next); };
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
@@ -2456,7 +2459,7 @@ function App() {
 
   const openNew = (date, ret) => {
     haptic('open');
-    setForm(blank(date)); setEditingId(null); setReturnTo(ret || null);
+    setForm(blank(date)); setFormDirty(false); setEditingId(null); setReturnTo(ret || null);
     setDayDetail(null); setSwipeX(0); setView('form'); window.scrollTo(0,0);
   };
 
@@ -2484,7 +2487,7 @@ function App() {
       parts: (j.parts||[]).filter(p => p.partNumber || p.partDescription),
       locked: !!j.locked
     });
-    setEditingId(j.id); setReturnTo(ret || null);
+    setEditingId(j.id); setReturnTo(ret || null); setFormDirty(false);
     setDayDetail(null); setSwipeX(0); setView('form'); window.scrollTo(0,0);
   };
 
@@ -2547,7 +2550,7 @@ function App() {
 
   const saveAndClose = async () => {
     haptic('success');
-    if (!formWorthSaving()) { goBack(); return; }
+    if (!formDirty || !formWorthSaving()) { goBack(); return; }
     if (!form.start) { form.start = form.finish || '06:00'; }
     const tn = form.ticketNumber.trim();
     if (tn) {
@@ -2568,7 +2571,7 @@ function App() {
       } else if (stockOpen) {
         setStockOpen(false);
       } else {
-        if (formWorthSaving()) await commit();
+        if (formDirty && formWorthSaving()) await commit();
         goBack();
       }
       setSavedGlow(1);
@@ -3110,6 +3113,68 @@ function App() {
       (T+C)+'px 100%, '+T+'px calc(100% - '+C+'px), 0 '+C+'px)';
   };
 
+
+  const cardSurfaceStyle = (hex, overlapped, isExpanded) => {
+    const styleKey = settings.cardStyle || 'solid';
+    const base = hex || SURF;
+    const shadowSolid = overlapped
+      ? '0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26)'
+      : '0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22)';
+    if (styleKey === 'glass') {
+      return {
+        background: hexToRgba(base, 0.55),
+        backdropFilter: 'blur(18px) saturate(1.35)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.35)',
+        border: '1px solid ' + hexToRgba('#ffffff', 0.35),
+        boxShadow: overlapped
+          ? '0 12px 32px rgba(31,21,30,0.12), inset 0 1px 0 rgba(255,255,255,0.4)'
+          : '0 8px 24px rgba(31,21,30,0.08), inset 0 1px 0 rgba(255,255,255,0.45)'
+      };
+    }
+    if (styleKey === 'gloss') {
+      return {
+        background: 'linear-gradient(160deg, ' + hexToRgba('#ffffff', 0.45) + ' 0%, ' + base + ' 38%, ' + base + ' 72%, ' + hexToRgba('#000000', 0.18) + ' 100%)',
+        border: '1px solid ' + hexToRgba('#ffffff', 0.28),
+        boxShadow: '0 12px 28px rgba(31,21,30,0.16), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -8px 20px rgba(0,0,0,0.12)'
+      };
+    }
+    if (styleKey === 'metallic') {
+      return {
+        background: 'linear-gradient(145deg, ' + hexToRgba('#ffffff', 0.35) + ' 0%, ' + base + ' 28%, ' + hexToRgba('#000000', 0.15) + ' 52%, ' + base + ' 78%, ' + hexToRgba('#ffffff', 0.2) + ' 100%)',
+        border: '1px solid ' + hexToRgba('#ffffff', 0.25),
+        boxShadow: '0 10px 26px rgba(31,21,30,0.14), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.15)'
+      };
+    }
+    if (styleKey === 'matte') {
+      return {
+        background: base,
+        border: '1px solid ' + hexToRgba('#000000', 0.06),
+        boxShadow: '0 2px 8px rgba(31,21,30,0.06)'
+      };
+    }
+    if (styleKey === 'frosted') {
+      return {
+        background: hexToRgba(base, 0.42),
+        backdropFilter: 'blur(24px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
+        border: '1px solid ' + hexToRgba('#ffffff', 0.45),
+        boxShadow: '0 8px 28px rgba(31,21,30,0.1), inset 0 1px 0 rgba(255,255,255,0.55)'
+      };
+    }
+    if (styleKey === 'neon') {
+      return {
+        background: base,
+        border: '1.5px solid ' + hexToRgba(base, 0.9),
+        boxShadow: '0 0 0 1px ' + hexToRgba('#ffffff', 0.15) + ', 0 0 18px ' + hexToRgba(base, 0.55) + ', 0 8px 24px rgba(31,21,30,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
+      };
+    }
+    return {
+      background: base,
+      border: '1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08),
+      boxShadow: shadowSolid
+    };
+  };
+
   const ticketDetailCard = (j, i, dayIndex, overlapped, expandKey) => {
     try {
       if (!j) {
@@ -3216,27 +3281,24 @@ function App() {
 
       const partsCount = parts.length;
       const taperOn = false;
-      /* Depth: soft elevation always; stronger when stacked so edges stay readable */
-      const cardShadow = overlapped
-        ? '0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26)'
-        : '0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22)';
-      const cardBorder = s
-        ? ('1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08))
-        : ('1px solid ' + LINE);
+      const surface = cardSurfaceStyle(s ? s.hex : SURF, overlapped, isExpanded);
+      const styleKey = settings.cardStyle || 'solid';
 
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
-        style:{ background: s ? s.hex : SURF,
+        style: Object.assign({
           overflow:'hidden', position:'relative',
-          border: cardBorder,
-          boxShadow: cardShadow,
           borderRadius:'12px',
           padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem', cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
-          transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), clip-path .28s cubic-bezier(.22,1.1,.35,1), padding .25s ease' }
+          transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease'
+        }, surface)
       },
-        /* Sheen only on expanded cards — keeps stacks quieter */
-        (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+        (styleKey === 'gloss' || styleKey === 'metallic') ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+          position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
+          background:'linear-gradient(115deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.12) 28%, rgba(255,255,255,0) 52%)'
+        } }) : null,
+        (styleKey === 'solid' && s && isExpanded) ? e('div', { key:'sheen2', 'aria-hidden':true, style:{
           position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
           background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 42%)'
         } }) : null,
@@ -3286,8 +3348,8 @@ function App() {
         onLongPress: ()=>{
           if (!j) return;
           setExpandedCardId(null);
-          haptic('medium');
-          setContextMenu({ j, ret: ret || { view:'month' }, x: Math.min(window.innerWidth - 240, Math.max(16, (window.__lastTouchX||40))), y: Math.min(window.innerHeight - 260, Math.max(80, (window.__lastTouchY||120))) });
+          setContextMenu(null);
+          openEdit(j, ret || { view:'month' });
         },
         onTap:()=>{
           if (groupKey && !isOpen) { openStack(groupKey, true); return; }
@@ -3862,7 +3924,7 @@ function App() {
         display:'flex', flexDirection:'column', gap:'0.65rem',
         padding: '0.95rem 1rem 1.05rem',
         position:'relative',
-        transition:'background .08s linear, color .08s linear, box-shadow .15s ease',
+        transition:'none',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)'
       } },
@@ -3877,36 +3939,35 @@ function App() {
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.6rem' } }, children)
     );
 
-  const timeSelect = (time, field, update, opts) => {
-    const val = snapWorkTime(time || '') || '';
+  /* Native iOS wheel; step=300 + snap on change/blur for 5-minute steps */
+  const timeInput = (time, field, update, opts) => {
     const big = !!(opts && opts.big);
-    return e('select', {
-      value: val && WORK_TIME_OPTIONS.indexOf(val) >= 0 ? val : (val ? snapWorkTime(val) : ''),
-      onChange:(ev)=>update({ [field]: ev.target.value }),
+    const val = time ? snapWorkTime(time) : '';
+    const apply = (raw) => update({ [field]: raw ? snapWorkTime(raw) : '' });
+    return e('input', {
+      type:'time', value: val, step:300, min:'06:00', max:'20:00',
+      onChange:(ev)=>apply(ev.target.value),
+      onBlur:(ev)=>apply(ev.target.value),
       onClick:(ev)=>ev.stopPropagation(), onMouseDown:(ev)=>ev.stopPropagation(),
       style:{
         border:'none', background:'transparent', outline:'none', cursor:'pointer',
-        color: formOnC, fontWeight:600, fontVariantNumeric:'tabular-nums',
-        fontSize: big ? '1.25rem' : '0.92rem',
+        color:formOnC, fontWeight:600, fontVariantNumeric:'tabular-nums',
+        fontSize: big ? '1.35rem' : '0.92rem',
         textAlign: big ? 'center' : 'right',
-        width: big ? '100%' : 'auto',
-        maxWidth: big ? '120px' : 'none',
-        letterSpacing: big ? '-0.5px' : '0',
-        padding: big ? '0.1rem 0' : 0,
-        WebkitAppearance:'menulist', appearance:'menulist'
+        width: big ? '100%' : '68px',
+        maxWidth: big ? '110px' : '68px',
+        letterSpacing: big ? '-0.6px' : '0',
+        padding:0
       }
-    },
-      e('option', { value:'' }, '—'),
-      WORK_TIME_OPTIONS.map(t => e('option', { key:t, value:t }, t))
-    );
+    });
   };
 
   const travelBlock = (time, field, label, update) =>
     e('div', { style:{ display:'flex', alignItems:'center', gap:'0.5rem',
-        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
+        background: formFieldBg, borderRadius:'12px', padding:'0.5rem 0.7rem', border:'1px solid rgba(227,227,227,0.12)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)' } },
       PlaneIcon(13, formOnC),
       e('span', { style:{ flex:1, fontSize:'0.78rem', color:formOnC, fontWeight:600 } }, label),
-      timeSelect(time, field, update, { big:false }),
+      timeInput(time, field, update, { big:false }),
       e('button', { onClick:()=>update({ [field]:'' }), title:'Remove travel',
         style:{ width:'22px', height:'22px', borderRadius:'4px', border:'none', background:formFieldBg2,
           display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, padding:0 } },
@@ -3922,9 +3983,9 @@ function App() {
 
   const bigTimeBlock = (time, field, label, update) =>
     e('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem',
-        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
+        background: formFieldBg2, borderRadius:'12px', padding:'0.55rem 0.55rem 0.65rem', border:'1px solid rgba(227,227,227,0.10)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)' } },
       e('span', { style:{ fontSize:'0.7rem', color:formOnC, fontWeight:600, letterSpacing:'0.3px', textTransform:'uppercase' } }, label),
-      timeSelect(time, field, update, { big:true }));
+      timeInput(time, field, update, { big:true }));
 
   const durationCaption = (text) =>
     e('div', { style:{ textAlign:'center', fontSize:'0.7rem', fontWeight:600, color:formOnC, padding:'2px 0' } }, text);
@@ -3965,7 +4026,7 @@ function App() {
         padding:'0.75rem 0.85rem 0.85rem',
         border: '1px solid rgba(227,227,227,0.14)',
         boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
-        display:'flex', flexDirection:'column', gap:'0.5rem', transition:'background .08s linear, color .08s linear',
+        display:'flex', flexDirection:'column', gap:'0.5rem',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } },
       e('div', { 'aria-hidden':true, style:{
         position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
@@ -4036,32 +4097,32 @@ function App() {
         sectionShell('Ticket',
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
-              onChange:(ev)=>setForm({ ...form, ticketNumber:ev.target.value }),
+              onChange:(ev)=>setFormTracked({ ...form, ticketNumber:ev.target.value }),
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
-                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+                fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'none', ['--ph-color']:formOnC } }),
             e('input', { type:'text', value:form.summary || '', placeholder:'Description', className:'field-graphite',
-              onChange:(ev)=>setForm({ ...form, summary:ev.target.value }),
+              onChange:(ev)=>setFormTracked({ ...form, summary:ev.target.value }),
               maxLength: 80,
               style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
-                transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+                transition:'none', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'12px', padding:'0 0.65rem',
                 border:'1px solid rgba(227,227,227,0.12)',
                 background: SITES[form.site] ? SITES[form.site].hex : formFieldBg,
-                transition:'background .08s linear, color .08s linear' } },
-                e('select', { value:form.site, onChange:(ev)=>setForm({ ...form, site:ev.target.value }),
+                transition:'none' } },
+                e('select', { value:form.site, onChange:(ev)=>setFormTracked({ ...form, site:ev.target.value }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
                     fontSize:'0.82rem', fontWeight:650, color: SITES[form.site] ? siteOnColor(SITES[form.site].hex) : formOnC } },
                   e('option', { value:'' }, 'Site'),
                   Object.keys(SITES).map(k => e('option', { key:k, value:k }, SITES[k].label)))),
               e('div', { style:{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:'0.35rem',
                 borderRadius:'12px', padding:'0 0.65rem', background:formFieldBg, border:'1px solid rgba(227,227,227,0.12)',
-                backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'background .08s linear, color .08s linear' } },
+                backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', transition:'none' } },
                 e('span', { style:{ width:'7px', height:'7px', borderRadius:'999px', flexShrink:0,
                   background: form.equipment.length ? formOnC : hexToRgba(formOnC, 0.3) } }),
-                e('select', { value:form.equipment[0] || '', onChange:(ev)=>setForm({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
+                e('select', { value:form.equipment[0] || '', onChange:(ev)=>setFormTracked({ ...form, equipment: ev.target.value ? [ev.target.value] : [] }),
                   style:{ flex:1, minWidth:0, border:'none', background:'transparent', outline:'none', padding:'0.55rem 0',
                     fontSize:'0.82rem', fontWeight:600, color: formOnC } },
                   e('option', { value:'' }, 'Machine'),
@@ -4075,11 +4136,11 @@ function App() {
 
         sectionShell('Notes',
           e('textarea', { value:form.workDone, placeholder:'What was done…',
-            onChange:(ev)=>setForm({ ...form, workDone:ev.target.value }),
+            onChange:(ev)=>setFormTracked({ ...form, workDone:ev.target.value }),
             className: 'work-done-field field-graphite',
             style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.8rem 0.95rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
               flex:1, minHeight:'8rem', resize:'vertical', lineHeight:1.55, fontSize:'0.9rem',
-              outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+              outline:'none', color:formOnC, transition:'none', ['--ph-color']:formOnC } }),
           CopyBtn(form.workDone, 'work')
         ),
 
@@ -4091,7 +4152,7 @@ function App() {
               onChange:(ev)=>updateExtra(i, { notes: ev.target.value }),
               style:{ border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.85rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
                 minHeight:'6rem', resize:'vertical', lineHeight:1.5, fontSize:'0.88rem',
-                outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+                outline:'none', color:formOnC, transition:'none', ['--ph-color']:formOnC } }),
             CopyBtn(d.notes || '', 'notes-e'+i)
           )
         ]),
@@ -4113,11 +4174,11 @@ function App() {
                 e('input', { type:'text', value:p.partNumber, placeholder:'Part no.', list:'partList', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partNumber',ev.target.value),
                   style:{ flex:'0 0 34%', minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', fontWeight:600, outline:'none', color:formOnC, transition:'none', ['--ph-color']:formOnC } }),
                 e('input', { type:'text', value:p.partDescription, placeholder:'Description', className:'field-graphite',
                   onChange:(ev)=>setPart(i,'partDescription',ev.target.value),
                   style:{ flex:1, minWidth:0, border:'1px solid rgba(227,227,227,0.12)', background:formFieldBg, borderRadius:'12px',
-                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'background .08s linear, color .08s linear', ['--ph-color']:formOnC } }),
+                    padding:'0.42rem 0.55rem', fontSize:'0.78rem', outline:'none', color:formOnC, transition:'none', ['--ph-color']:formOnC } }),
                 e('button', { onClick:()=>setForm({ ...form, parts: form.parts.filter((_,x)=>x!==i) }),
                   style:{ border:'none', background:'none', color:formOnC, opacity:0.6, fontSize:'0.75rem', fontWeight:600, cursor:'pointer', width:'16px', flexShrink:0 } }, '✕')))),
             e('button', { onClick:()=>setForm({ ...form, parts:[ ...form.parts, { partNumber:'', partDescription:'' } ] }),
@@ -4310,6 +4371,15 @@ function App() {
       ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
         saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
       }),
+      chipSelect('Card surface', [
+        {key:'solid', label:'Solid'},
+        {key:'glass', label:'Glass'},
+        {key:'gloss', label:'High gloss'},
+        {key:'metallic', label:'Metallic'},
+        {key:'matte', label:'Matte'},
+        {key:'frosted', label:'Frosted'},
+        {key:'neon', label:'Soft glow'}
+      ], settings.cardStyle || 'solid', (v)=>saveSettings({ cardStyle: v })),
       toggleRow('Lock when complete', 'Completed tickets stay read-only until unlocked',
         settings.lockReadOnly, ()=>saveSettings({ lockReadOnly: !settings.lockReadOnly })),
       toggleRow('Show duration on cards', 'On-site time on the right of the time line',
