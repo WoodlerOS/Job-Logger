@@ -687,63 +687,122 @@
 
 
 
-  /* Lava lamp background */
+  /* Floating Color Orbs — vibrant soft orbs */
   .lava-bg {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    background: var(--page-bg, #F5F4F1);
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255,255,255,0.55) 0%, transparent 55%),
+      linear-gradient(165deg, #E8EEF5 0%, #F5F4F1 40%, #EDE6DF 100%);
   }
-  .lava-bg span {
+  .lava-bg .orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(var(--lava-blur, 72px));
-    opacity: var(--lava-opacity, 0.4);
     will-change: transform;
-    animation-name: lava-drift;
+    mix-blend-mode: multiply;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
-    animation-duration: var(--lava-dur, 18s);
   }
-  .lava-bg span:nth-child(1) {
-    width: 58vmax; height: 58vmax;
-    background: var(--lava-1, #203B59);
-    top: -18%; left: -14%;
-    animation-duration: calc(var(--lava-dur, 18s) * 1.2);
+  .lava-bg .orb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%,
+      rgba(255,255,255,0.95) 0%,
+      var(--orb-mid, rgba(131,156,182,0.85)) 28%,
+      var(--orb-color, #839CB6) 55%,
+      transparent 72%);
+    filter: blur(var(--orb-blur, 40px));
+    opacity: var(--orb-opacity, 0.85);
   }
-  .lava-bg span:nth-child(2) {
-    width: 50vmax; height: 50vmax;
-    background: var(--lava-2, #839CB6);
-    bottom: -22%; right: -16%;
-    animation-duration: calc(var(--lava-dur, 18s) * 0.9);
-    animation-delay: -5s;
+  .lava-bg .orb::after {
+    content: '';
+    position: absolute;
+    inset: 18%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%,
+      rgba(255,255,255,0.7) 0%,
+      var(--orb-color, #839CB6) 45%,
+      transparent 70%);
+    filter: blur(calc(var(--orb-blur, 40px) * 0.45));
+    opacity: 0.9;
   }
-  .lava-bg span:nth-child(3) {
-    width: 42vmax; height: 42vmax;
-    background: var(--lava-3, #FDBA74);
-    top: 38%; left: 28%;
-    animation-duration: calc(var(--lava-dur, 18s) * 1.1);
+  .lava-bg .orb-1 {
+    width: 72vmax; height: 72vmax;
+    top: -28%; left: -24%;
+    --orb-color: var(--lava-1, #3B82F6);
+    --orb-mid: #93C5FD;
+    --orb-blur: 48px;
+    animation: orb-float-a var(--lava-dur, 16s) ease-in-out infinite alternate;
+  }
+  .lava-bg .orb-2 {
+    width: 64vmax; height: 64vmax;
+    bottom: -30%; right: -22%;
+    --orb-color: var(--lava-2, #A78BFA);
+    --orb-mid: #DDD6FE;
+    --orb-blur: 52px;
+    animation: orb-float-b calc(var(--lava-dur, 16s) * 1.15) ease-in-out infinite alternate;
+    animation-delay: -4s;
+  }
+  .lava-bg .orb-3 {
+    width: 48vmax; height: 48vmax;
+    top: 32%; left: 22%;
+    --orb-color: var(--lava-3, #FB923C);
+    --orb-mid: #FED7AA;
+    --orb-blur: 36px;
+    animation: orb-float-c calc(var(--lava-dur, 16s) * 0.95) ease-in-out infinite alternate;
+    animation-delay: -7s;
+  }
+  .lava-bg .orb-4 {
+    width: 40vmax; height: 40vmax;
+    top: 8%; right: -5%;
+    --orb-color: var(--lava-4, #F472B6);
+    --orb-mid: #FBCFE8;
+    --orb-blur: 34px;
+    animation: orb-float-a calc(var(--lava-dur, 16s) * 1.25) ease-in-out infinite alternate;
+    animation-delay: -2s;
+  }
+  .lava-bg .orb-5 {
+    width: 36vmax; height: 36vmax;
+    bottom: 18%; left: -8%;
+    --orb-color: #22D3EE;
+    --orb-mid: #A5F3FC;
+    --orb-blur: 30px;
+    animation: orb-float-b calc(var(--lava-dur, 16s) * 1.05) ease-in-out infinite alternate;
     animation-delay: -9s;
   }
-  .lava-bg span:nth-child(4) {
-    width: 36vmax; height: 36vmax;
-    background: var(--lava-4, #9A3412);
-    top: 12%; right: 8%;
-    animation-duration: calc(var(--lava-dur, 18s) * 1.35);
-    animation-delay: -3s;
-    opacity: calc(var(--lava-opacity, 0.4) * 0.85);
+  .lava-bg .orb-6 {
+    width: 28vmax; height: 28vmax;
+    top: 55%; right: 18%;
+    --orb-color: #FBBF24;
+    --orb-mid: #FDE68A;
+    --orb-blur: 26px;
+    animation: orb-float-c calc(var(--lava-dur, 16s) * 0.85) ease-in-out infinite alternate;
+    animation-delay: -5s;
   }
-  @keyframes lava-drift {
-    0%   { transform: translate(0, 0) scale(1); }
-    33%  { transform: translate(6%, -5%) scale(1.08); }
-    66%  { transform: translate(-5%, 7%) scale(0.96); }
-    100% { transform: translate(4%, 3%) scale(1.05); }
+  @keyframes orb-float-a {
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50%  { transform: translate(10%, 8%) scale(1.12) rotate(4deg); }
+    100% { transform: translate(-6%, 12%) scale(0.94) rotate(-3deg); }
+  }
+  @keyframes orb-float-b {
+    0%   { transform: translate(0, 0) scale(1.05) rotate(0deg); }
+    50%  { transform: translate(-12%, -7%) scale(0.92) rotate(-5deg); }
+    100% { transform: translate(8%, -10%) scale(1.1) rotate(3deg); }
+  }
+  @keyframes orb-float-c {
+    0%   { transform: translate(0, 0) scale(0.98); }
+    33%  { transform: translate(9%, -11%) scale(1.14); }
+    66%  { transform: translate(-8%, 6%) scale(1.02); }
+    100% { transform: translate(5%, 9%) scale(1.08); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .lava-bg span { animation: none !important; }
+    .lava-bg .orb { animation: none !important; }
   }
 
   /* iOS-style settings chrome */
@@ -1206,7 +1265,7 @@ function applySurfaceLightness() {
     document.documentElement.style.setProperty('--page-bg', PAGE_BG);
     document.documentElement.style.setProperty('--card-bg', CARD_BG);
     document.documentElement.style.setProperty('--line', 'rgba(10,10,12,0.13)');
-    document.body.style.background = PAGE_BG;
+    document.body.style.background = 'transparent';
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', PAGE_BG);
   } catch (err) {}
@@ -3985,13 +4044,16 @@ function App() {
      wrapper that animates on every view change — that animation is what was
      making a merely-sticky header appear to drift. This one truly never
      moves once shown. */
-  const topDateBar = e('div', { key:'topDateBar', className:'glass-bar', style:{
-      position:'fixed', top:'env(safe-area-inset-top)', left:0, right:0, zIndex:34,
-      background:'rgba(245,244,241,'+(0.72 + headerCollapse * 0.2)+')',
-      backdropFilter:'blur('+(16 + headerCollapse * 8)+'px) saturate(1.2)', WebkitBackdropFilter:'blur('+(16 + headerCollapse * 8)+'px) saturate(1.2)',
-      borderBottom:'1px solid rgba(31,21,30,'+(0.06 + headerCollapse * 0.06)+')',
-      padding: (0.55 - headerCollapse * 0.15)+'rem 0.6rem '+(0.55 - headerCollapse * 0.1)+'rem',
-      transition:'padding .15s ease, background .15s ease' } },
+  const topDateBar = e('div', { key:'topDateBar', style:{
+      position:'fixed', top:0, left:0, right:0, zIndex:34,
+      paddingTop: 'env(safe-area-inset-top)',
+      background:'rgba(245,244,241,'+(0.22 + headerCollapse * 0.4)+')',
+      backdropFilter:'blur('+(14 + headerCollapse * 10)+'px) saturate(1.4)', WebkitBackdropFilter:'blur('+(14 + headerCollapse * 10)+'px) saturate(1.4)',
+      borderBottom:'1px solid rgba(31,21,30,'+(0.04 + headerCollapse * 0.06)+')',
+      paddingBottom: (0.55 - headerCollapse * 0.1)+'rem',
+      paddingLeft: '0.6rem',
+      paddingRight: '0.6rem',
+      transition:'background .15s ease, padding .15s ease' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
@@ -4034,7 +4096,7 @@ function App() {
 
   const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { style:{ height:'3.6rem', flexShrink:0 } }),
+    e('div', { style:{ height:'calc(3.6rem + env(safe-area-inset-top))', flexShrink:0 } }),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -4545,15 +4607,21 @@ function App() {
     className: 'lava-bg',
     'aria-hidden': true,
     style: {
-      ['--lava-opacity']: settings.lavaIntensity === 'high' ? 0.55 : settings.lavaIntensity === 'low' ? 0.22 : 0.38,
-      ['--lava-blur']: settings.lavaIntensity === 'high' ? '88px' : settings.lavaIntensity === 'low' ? '56px' : '72px',
-      ['--lava-dur']: settings.lavaSpeed === 'fast' ? '12s' : settings.lavaSpeed === 'slow' ? '26s' : '18s',
-      ['--lava-1']: (SITES.NX && SITES.NX.hex) || '#203B59',
-      ['--lava-2']: (SITES.WS && SITES.WS.hex) || '#839CB6',
-      ['--lava-3']: (SITES.MMUH && SITES.MMUH.hex) || '#FDBA74',
-      ['--lava-4']: (SITES.RH && SITES.RH.hex) || '#9A3412'
+      ['--orb-opacity']: settings.lavaIntensity === 'high' ? '1' : settings.lavaIntensity === 'low' ? '0.55' : '0.85',
+      ['--lava-dur']: settings.lavaSpeed === 'fast' ? '11s' : settings.lavaSpeed === 'slow' ? '24s' : '16s',
+      ['--lava-1']: (SITES.NX && SITES.NX.hex) || '#3B82F6',
+      ['--lava-2']: (SITES.WS && SITES.WS.hex) || '#A78BFA',
+      ['--lava-3']: (SITES.MMUH && SITES.MMUH.hex) || '#FB923C',
+      ['--lava-4']: (SITES.RH && SITES.RH.hex) || '#F472B6'
     }
-  }, e('span'), e('span'), e('span'), e('span'));
+  },
+    e('div', { className: 'orb orb-1' }),
+    e('div', { className: 'orb orb-2' }),
+    e('div', { className: 'orb orb-3' }),
+    e('div', { className: 'orb orb-4' }),
+    e('div', { className: 'orb orb-5' }),
+    e('div', { className: 'orb orb-6' })
+  );
 
   const customView = e('div', { className: 'ios-page', style: { paddingBottom: '2.5rem' } },
     e('div', { className: 'ios-nav' },
