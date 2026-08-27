@@ -894,6 +894,66 @@
     z-index: 1;
   }
 
+
+  /* ========== 2026 shell ========== */
+  :root {
+    --dock-bg: rgba(255,255,255,0.62);
+    --tile-r: 28px;
+  }
+  .ticket-type {
+    border-radius: 28px !important;
+    border: 1px solid rgba(255,255,255,0.22) !important;
+    box-shadow:
+      0 18px 40px rgba(20,16,18,0.14),
+      0 2px 8px rgba(20,16,18,0.06),
+      inset 0 1px 0 rgba(255,255,255,0.28) !important;
+  }
+  .hero-date {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 34;
+    padding: calc(env(safe-area-inset-top) + 0.85rem) 1.15rem 0.85rem;
+    background: linear-gradient(180deg, var(--page-bg) 70%, color-mix(in srgb, var(--page-bg) 0%, transparent) 100%);
+    pointer-events: none;
+  }
+  .hero-date button, .hero-date .hero-hit { pointer-events: auto; }
+  .app-dock {
+    position: fixed;
+    left: 50%;
+    bottom: calc(0.85rem + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem;
+    border-radius: 999px;
+    background: var(--dock-bg);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: 0 16px 40px rgba(20,16,18,0.16), inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  .dock-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #1C1614;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .dock-btn.primary {
+    width: 56px; height: 56px;
+    background: #1C1614;
+    color: #F3EEE6;
+    box-shadow: 0 8px 20px rgba(28,22,20,0.28);
+  }
+  .form-card.form-section {
+    border-radius: 28px !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+  }
+
 </style>
 </head>
 <body>
@@ -3208,26 +3268,22 @@ function App() {
   };
 
   const fab = (view !== 'form' && !settingsOpen && !customOpen && !stockOpen && !backupsOpen && !themesOpen) && e('div', {
-    className: 'fab-wrap',
-    style: {
-      position:'fixed', right:'1.15rem', bottom:'calc(1.35rem + env(safe-area-inset-bottom))',
-      width:'56px', height:'56px', zIndex:35
-    }
+    className: 'app-dock',
+    key: 'dock'
   },
+    e('button', { className:'dock-btn', onClick:()=>{ haptic('open'); setMenuOpen(true); } },
+      e('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none' },
+        e('path', { d:'M4 7h16M4 12h16M4 17h10', stroke:'#1C1614', strokeWidth:1.8, strokeLinecap:'round' }))
+    ),
     e('button', {
-      className: 'fab-btn',
-      onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null),
-      style: {
-        position:'relative', zIndex:1,
-        width:'56px', height:'56px', borderRadius:'50%', cursor:'pointer',
-        background: '#1C1614',
-        color: '#F3EEE6',
-        border: '1px solid rgba(255,255,255,0.08)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        boxShadow: '0 14px 32px rgba(28,22,20,0.28), 0 2px 6px rgba(28,22,20,0.16)',
-        transition:'transform .22s cubic-bezier(.22,1.2,.32,1), box-shadow .22s ease'
-      }
-    }, PlusIcon(22, '#F3EEE6'))
+      className: 'dock-btn primary',
+      onClick: () => openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null)
+    }, PlusIcon(22, '#F3EEE6')),
+    e('button', { className:'dock-btn', onClick:()=>{ haptic('open'); setStockOpen(true); setMenuOpen(false); window.scrollTo(0,0); } },
+      e('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none' },
+        e('path', { d:'M4 7.5L12 3l8 4.5v9L12 21l-8-4.5v-9z', stroke:'#1C1614', strokeWidth:1.7, strokeLinejoin:'round' }),
+        e('path', { d:'M12 12v9M12 12L4 7.5M12 12l8-4.5', stroke:'#1C1614', strokeWidth:1.4, strokeLinejoin:'round', opacity:0.7 }))
+    )
   );
 
 
@@ -3456,8 +3512,8 @@ function App() {
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'12px',
-          padding: isExpanded ? '0.65rem 0.7rem 0.85rem' : '0.55rem 0.65rem 1.85rem', cursor:'pointer',
+          borderRadius:'28px',
+          padding: isExpanded ? '1rem 1.05rem 1.1rem' : '0.9rem 1rem 2.05rem', cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
@@ -3959,15 +4015,8 @@ function App() {
      wrapper that animates on every view change — that animation is what was
      making a merely-sticky header appear to drift. This one truly never
      moves once shown. */
-  const topDateBar = e('div', { key:'topDateBar', style:{
-      position:'fixed', top:0, left:0, right:0, zIndex:34,
-      paddingTop: 'env(safe-area-inset-top)',
-      background: PAGE_BG,
-      borderBottom:'1px solid rgba(31,21,30,'+(0.06 + headerCollapse * 0.05)+')',
-      paddingBottom: (0.55 - headerCollapse * 0.1)+'rem',
-      paddingLeft: '0.6rem',
-      paddingRight: '0.6rem',
-      transition:'background .12s linear, padding .15s ease' } },
+  const topDateBar = e('div', { key:'topDateBar', className:'hero-date', style:{
+      background: 'linear-gradient(180deg, '+PAGE_BG+' 62%, transparent 100%)' } },
     e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.15rem 0.05rem 0', gap:'0.15rem', maxWidth:'440px', margin:'0 auto' } },
       e('button', { onClick:()=>shift(-1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center' } }, ChevronLeft(16, INK)),
@@ -3996,21 +4045,21 @@ function App() {
         },
         onMouseUp:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
         onMouseLeave:()=>{ if (window.__dateHoldTimer) { clearTimeout(window.__dateHoldTimer); window.__dateHoldTimer = null; } },
-        style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
-          borderRadius:'10px' }
+        className:'hero-hit',
+        style:{ background:'none', border:'none', cursor:'pointer', padding:'6px 10px', flex:1, textAlign:'center' }
       },
-        e('span', { className:'display-date', style:{ fontSize:(1.55 - headerCollapse * 0.32)+'rem', fontWeight:400, letterSpacing:'-0.03em', color:INK,
-          transition:'font-size .15s ease', lineHeight:1.05 } },
-          anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
-        e('span', { style:{ display:'block', fontSize:'0.62rem', color:INK, opacity:0.65 - headerCollapse * 0.4, fontWeight:550, marginTop:'1px',
-          height: headerCollapse > 0.7 ? 0 : 'auto', overflow:'hidden', transition:'opacity .15s ease' } }, 'Tap month · hold today')
+        e('span', { className:'display-date', style:{ fontSize:'2.05rem', fontWeight:400, letterSpacing:'-0.04em', color:INK,
+          lineHeight:1.02, display:'block' } },
+          anchorDate.toLocaleDateString('en-GB',{ weekday:'long' })),
+        e('span', { className:'display-date', style:{ fontSize:'1.15rem', color:INK, opacity:0.55, display:'block', marginTop:'2px' } },
+          anchorDate.toLocaleDateString('en-GB',{ day:'numeric', month:'long' }))
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
 
   const monthView = e('div', { className:'view-enter', style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
-    e('div', { style:{ height:'calc(3.6rem + env(safe-area-inset-top))', flexShrink:0 } }),
+    e('div', { style:{ height:'calc(6.4rem + env(safe-area-inset-top))', flexShrink:0 } }),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -4082,9 +4131,9 @@ function App() {
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
         background: formSiteHex,
-        borderRadius:'16px',
-        border: '1px solid rgba(227,227,227,0.14)',
-        boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
+        borderRadius:'28px',
+        border: '1px solid rgba(255,255,255,0.2)',
+        boxShadow: '0 16px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.2)',
         overflow:'hidden',
         display:'flex', flexDirection:'column', gap:'0.65rem',
         padding: '0.95rem 1rem 1.05rem',
@@ -4098,7 +4147,7 @@ function App() {
         background:'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 45%)'
       } }),
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.4rem', minHeight:'22px' } },
-        e('div', { style:{ fontSize:'0.85rem', fontWeight:600, color:formOnC, letterSpacing:'0.03em', textTransform:'uppercase' } }, title),
+        e('div', { className:'display-date', style:{ fontSize:'1.15rem', fontWeight:400, color:formOnC } }, title),
         corner ? e('div', { style:{ marginLeft:'auto', flexShrink:0 } }, corner) : null
       ),
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.6rem' } }, children)
