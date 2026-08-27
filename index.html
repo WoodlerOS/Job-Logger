@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Caveat:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Allura&family=Great+Vibes&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -351,42 +351,47 @@
     overflow:hidden;
   }
   #splash .splash-art { display:none; }
-  #splash.standalone-play { animation:splashHide 2.6s ease forwards; }
+  #splash.standalone-play { animation:splashHide 3.1s ease forwards; }
   #splash .word-wrap {
     display:flex; align-items:baseline; justify-content:center;
     position:relative; z-index:1;
   }
   #splash .word-text {
-    font-family: "Caveat", "Segoe Script", cursive;
-    font-size: clamp(52px, 16vw, 84px);
-    font-weight: 600; letter-spacing: -0.01em; color: #111;
-  }
-  #splash .word-text .ch {
-    display:inline-block;
-    opacity:0;
-    transform: translateY(8px);
-    animation: writeLetter .16s ease forwards;
-    animation-delay: calc(var(--i) * .11s);
+    font-family: "Snell Roundhand", "Snell Roundhand Cursive", cursive;
+    font-size: clamp(58px, 18vw, 96px);
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: 0.01em;
+    color: #111;
+    line-height: 0.9;
+    display: inline-block;
+    clip-path: inset(0 100% 0 0);
+    animation: writeOn 1.15s cubic-bezier(.22,.72,.18,1) forwards;
   }
   #splash .full-stop {
-    font-family: "Caveat", cursive;
-    font-size: clamp(52px, 16vw, 84px);
-    font-weight: 700; color: #111;
-    opacity:0; transform: scale(0.2);
-    animation: popStop .38s cubic-bezier(.34,1.56,.64,1) forwards;
-    animation-delay: .92s;
+    font-family: "Snell Roundhand", "Snell Roundhand Cursive", cursive;
+    font-size: clamp(58px, 18vw, 96px);
+    font-weight: 400;
+    color: #111;
+    line-height: 0.9;
+    margin-left: 0.04em;
+    display: inline-block;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: 50% 80%;
+    animation: popStop .48s cubic-bezier(.34,1.6,.42,1) 1.22s forwards;
   }
-  @keyframes writeLetter {
-    from { opacity:0; transform: translateY(8px) rotate(-6deg); }
-    to { opacity:1; transform: none; }
+  @keyframes writeOn {
+    0% { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
   }
   @keyframes popStop {
-    0% { opacity:0; transform: scale(0.2); }
-    70% { opacity:1; transform: scale(1.18); }
+    0% { opacity:0; transform: scale(0); }
+    62% { opacity:1; transform: scale(1.28); }
     100% { opacity:1; transform: scale(1); }
   }
   @keyframes splashHide {
-    0%, 70% { opacity:1; visibility:visible; }
+    0%, 74% { opacity:1; visibility:visible; }
     100% { opacity:0; visibility:hidden; }
   }
   .chips::-webkit-scrollbar { display:none; }
@@ -1020,7 +1025,7 @@
 <body>
 <div id="splash">
   <div class="word-wrap">
-    <span class="word-text"><span class="ch" style="--i:0">t</span><span class="ch" style="--i:1">i</span><span class="ch" style="--i:2">c</span><span class="ch" style="--i:3">k</span><span class="ch" style="--i:4">e</span><span class="ch" style="--i:5">t</span><span class="ch" style="--i:6">s</span></span><span class="full-stop">.</span>
+    <span class="word-text">tickets</span><span class="full-stop">.</span>
   </div>
 </div>
 <script>
@@ -1039,7 +1044,7 @@
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
     s.addEventListener('click', removeIt);
     s.addEventListener('touchstart', function(ev){ try { ev.preventDefault(); } catch(e){} removeIt(); }, { passive:false });
-    setTimeout(removeIt, 2800);
+    setTimeout(removeIt, 3200);
     s.classList.add('standalone-play');
   } catch (err) {
     var el = document.getElementById('splash');
