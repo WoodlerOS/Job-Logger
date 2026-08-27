@@ -98,7 +98,7 @@
   }
   .ticket-type,
   .ticket-type * {
-    font-family: var(--display) !important;
+    font-family: var(--card-font, var(--display)) !important;
     letter-spacing: -0.02em;
   }
   .ticket-type .ticket-num {
@@ -912,8 +912,8 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 34;
-    padding: calc(env(safe-area-inset-top) + 0.85rem) 1.15rem 0.85rem;
-    background: linear-gradient(180deg, var(--page-bg) 70%, color-mix(in srgb, var(--page-bg) 0%, transparent) 100%);
+    padding: calc(env(safe-area-inset-top) + 0.35rem) 0.85rem 0.35rem;
+    background: var(--page-bg);
     pointer-events: none;
   }
   .hero-date button, .hero-date .hero-hit { pointer-events: auto; }
@@ -1730,7 +1730,10 @@ const DEFAULT_SETTINGS = {
   stockRemaining: null,
   themeId: 'coastal',
   customThemes: [],
-  pageBg: '#F5F4F1'
+  pageBg: '#F5F4F1',
+  cardFont: 'serif',
+  cardLayout: 'classic',
+  cardRadius: 'round'
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -3418,8 +3421,15 @@ function App() {
 
       const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'normal');
       const tScale = scaleKey === 'xl' ? 1.28 : scaleKey === 'large' ? 1.14 : 1;
+      const cardFont = settings.cardFont || 'serif';
+      const fontFam = cardFont === 'sans' ? '"Outfit", sans-serif' : 'var(--display)';
+      const layout = settings.cardLayout || 'classic';
+      const compact = layout === 'compact';
+      const banner = layout === 'banner';
+      const radiusKey = settings.cardRadius || 'round';
+      const rad = radiusKey === 'square' ? '10px' : radiusKey === 'soft' ? '18px' : '28px';
       const numberSize = (0.72 * tScale).toFixed(3) + 'rem';
-      const bigTimeSize = (1.05 * tScale).toFixed(3) + 'rem';
+      const bigTimeSize = ((compact ? 0.92 : 1.05) * tScale).toFixed(3) + 'rem';
       const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
       const capSize = (0.68 * tScale).toFixed(3) + 'rem';
       const durSize = (0.78 * tScale).toFixed(3) + 'rem';
@@ -3509,11 +3519,12 @@ function App() {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         className: 'ticket-type',
         style:{ background: s ? s.hex : SURF,
+          ['--card-font']: fontFam,
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
-          borderRadius:'28px',
-          padding: isExpanded ? '1rem 1.05rem 1.1rem' : '0.9rem 1rem 2.05rem', cursor:'pointer',
+          borderRadius: rad,
+          padding: isExpanded ? '1rem 1.05rem 1.1rem' : (compact ? '0.55rem 0.7rem 1.55rem' : '0.75rem 0.85rem 1.75rem'), cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
@@ -3753,7 +3764,7 @@ function App() {
       ? mobileDayBucket.siteSequence
       : dv.siteSequence;
 
-  const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.8rem' } },
+  const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.35rem' } },
     mobileDayList.length === 0
       ? e('div', { style:{ textAlign:'center', padding:'2.2rem 0.5rem 1.5rem', color:GREY } },
           e('svg', { className:'empty-art', width:72, height:72, viewBox:'0 0 72 72', fill:'none' },
@@ -3765,7 +3776,7 @@ function App() {
           e('div', { style:{ fontSize:'0.95rem', fontWeight:650, color:INK, marginBottom:'0.25rem' } }, 'Nothing logged'),
           e('div', { style:{ fontSize:'0.78rem', opacity:0.75 } }, 'Tap + to add a ticket for this day')
         )
-      : e('div', { style:{ display:'flex', flexDirection:'column', paddingBottom:'3.5rem' } },
+      : e('div', { style:{ display:'flex', flexDirection:'column', paddingBottom:'0.4rem' } },
           mobileDayList.map((entry,i) => swipeCard(entry.j, i, { view:'month', day:mobileDayNum }, i, entry.dayIndex, 'day:'+dv.iso, i))));
 
   /* Journey indicator: fixed bottom-left, mirroring the FAB's fixed bottom-right
@@ -3773,8 +3784,8 @@ function App() {
      scrolling away with it. */
   const journeyIndicator = (view === 'month' && !monthPickerOpen && !settingsOpen && !themesOpen && !backupsOpen && mobileDayList.length > 0)
     && e('div', { key:'journey', style:{
-        position:'fixed', left:'0.75rem', bottom:'calc(0.85rem + env(safe-area-inset-bottom))',
-        maxWidth:'calc(100vw - 5.2rem)', zIndex:35,
+        position:'fixed', left:'0.75rem', bottom:'calc(5.15rem + env(safe-area-inset-bottom))',
+        maxWidth:'calc(100vw - 2rem)', zIndex:33,
         background: 'rgba(255,255,255,0.88)',
         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
         boxShadow:'0 2px 10px rgba(31,21,30,0.08)', borderRadius:'999px',
@@ -4048,18 +4059,16 @@ function App() {
         className:'hero-hit',
         style:{ background:'none', border:'none', cursor:'pointer', padding:'6px 10px', flex:1, textAlign:'center' }
       },
-        e('span', { className:'display-date', style:{ fontSize:'2.05rem', fontWeight:400, letterSpacing:'-0.04em', color:INK,
-          lineHeight:1.02, display:'block' } },
-          anchorDate.toLocaleDateString('en-GB',{ weekday:'long' })),
-        e('span', { className:'display-date', style:{ fontSize:'1.15rem', color:INK, opacity:0.55, display:'block', marginTop:'2px' } },
-          anchorDate.toLocaleDateString('en-GB',{ day:'numeric', month:'long' }))
+        e('span', { className:'display-date', style:{ fontSize:'1.55rem', fontWeight:400, letterSpacing:'-0.03em', color:INK,
+          lineHeight:1.05, display:'block' } },
+          anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' }))
       ),
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
 
-  const monthView = e('div', { className:'view-enter', style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+  const monthView = e('div', { className:'view-enter', style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem' } },
 
-    e('div', { style:{ height:'calc(6.4rem + env(safe-area-inset-top))', flexShrink:0 } }),
+    e('div', { style:{ height:'calc(4.15rem + env(safe-area-inset-top))', flexShrink:0 } }),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -4067,13 +4076,10 @@ function App() {
         transform:'translateX('+calDX+'px)',
         transition: calDragging ? 'none' : 'transform .2s cubic-bezier(.22,.9,.3,1)',
         opacity: 1 - Math.abs(calDX)/220,
-        minHeight: '62vh',
-        padding: '0 0.55rem 2rem',
+        padding: '0 0.55rem 0',
         touchAction: 'pan-y'
       } },
-      dayView,
-      /* Extra swipe surface so day changes work outside card edges */
-      e('div', { style:{ minHeight:'28vh', width:'100%' } })
+      dayView
     )
   );
 
@@ -4285,19 +4291,19 @@ function App() {
 
   const formView = e('div', {
     onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
-    style:{ padding:'0.7rem 0.85rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.9rem',
+    style:{ padding:'0.45rem 0.7rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.75rem', background:PAGE_BG,
       transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
       transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 6 ? '12px' : '0',
       touchAction: 'pan-y',
       boxShadow: 'none' } },
 
-    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.05rem 0.1rem 0' } },
-      e('button', { onClick:backOut, style:{ background:'none', border:'none', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(18, INK)),
-      e('span', { style:{ fontSize:'0.9rem', fontWeight:650, letterSpacing:'-0.2px' } }, editingId ? 'Edit ticket' : 'New ticket'),
-      e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'36px', height:'36px',
-        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(17, INK))),
+    e('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.15rem 0.05rem 0.15rem' } },
+      e('button', { onClick:backOut, style:{ background:'none', border:'none', width:'40px', height:'40px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, ChevronLeft(20, INK)),
+      e('span', { className:'display-date', style:{ fontSize:'1.45rem', color:INK } }, editingId ? 'Edit ticket' : 'New ticket'),
+      e('button', { onClick:()=>setFormMenu(true), style:{ background:'none', border:'none', width:'40px', height:'40px',
+        display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(18, INK))),
 
     e('div', { className: 'form-desktop-grid',
       style:{ display:'flex', flexDirection:'column', gap:'0.9rem',
@@ -4565,176 +4571,139 @@ function App() {
   };
 
 
-  const customView = e('div', { className: 'ios-page', style: { paddingBottom: '2.5rem' } },
-    e('div', { className: 'ios-nav' },
-      e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false) }, 'Back'),
-      e('span', { className: 'ios-nav-title' }, 'Customisation'),
+
+  const setCardOpt = (patch) => saveSettings(patch);
+
+  const previewJob = {
+    id: '__preview__',
+    ticketNumber: 'T-1042',
+    summary: 'Filter change',
+    site: (siteEdits[themePreviewIdx] && siteEdits[themePreviewIdx].key) || Object.keys(SITES)[0] || 'NX',
+    equipment: ['I'],
+    startDateTime: (todayISO()+'T09:00'),
+    finishDateTime: (todayISO()+'T11:30'),
+    hasTravel: true,
+    travelDateTime: (todayISO()+'T08:30'),
+    workDone: 'Replaced filter and tested flow.',
+    parts: [{ partNumber: 'FL-12', partDescription: 'Inline filter' }],
+    locked: false
+  };
+
+  const studioChip = (label, options, value, onChange) =>
+    e('div', { key: label, style: { marginBottom: '0.85rem' } },
+      e('div', { className:'display-date', style: { fontSize: '1.05rem', marginBottom: '0.4rem', color: INK } }, label),
+      e('div', { style: { display: 'flex', gap: '0.35rem', flexWrap: 'wrap' } },
+        options.map(opt => e('button', {
+          key: String(opt.key), type: 'button',
+          onClick: () => { haptic('selection'); onChange(opt.key); },
+          style: {
+            padding: '0.45rem 0.75rem', borderRadius: '999px', cursor: 'pointer',
+            border: value === opt.key ? 'none' : '1px solid rgba(28,22,20,0.12)',
+            background: value === opt.key ? '#1C1614' : 'rgba(255,255,255,0.7)',
+            color: value === opt.key ? '#F3EEE6' : '#1C1614',
+            fontSize: '0.78rem', fontWeight: 600
+          }
+        }, opt.label))
+      )
+    );
+
+  const customView = e('div', { className: 'view-enter', style: { paddingBottom: '2.5rem', background: PAGE_BG, minHeight: '100vh' } },
+    e('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between',
+      padding: 'calc(0.4rem + env(safe-area-inset-top)) 0.85rem 0.6rem' } },
+      e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false), style:{ color:INK } }, 'Back'),
+      e('span', { className: 'display-date', style: { fontSize: '1.45rem', color: INK } }, 'Studio'),
       e('span', { style: { minWidth: '3.2rem' } })
     ),
 
-    e('div', { className: 'ios-group-label' }, 'Background'),
-    e('div', { className: 'ios-group' },
-      e('div', { className: 'ios-row', style: { cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: '0.65rem' } },
-        e('div', { className: 'ios-row-title' }, 'Page colour'),
-        e('div', {
-          style: {
-            borderRadius: '14px', padding: '1rem', minHeight: '88px',
-            background: settings.pageBg || PAGE_BG || '#F5F4F1',
-            border: '1px solid rgba(60,60,67,0.12)',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.4)',
-            transition: 'background .12s linear'
-          }
-        },
-          e('div', { style: { fontSize: '0.78rem', fontWeight: 600, color: 'rgba(0,0,0,0.45)' } }, 'Live preview'),
-          e('div', { style: { fontSize: '0.95rem', fontWeight: 600, color: 'rgba(0,0,0,0.75)', marginTop: '0.35rem' } }, 'Background colour')
-        ),
-        e('div', { style: { display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' } },
-          e('input', {
-            type: 'color',
-            value: settings.pageBg || PAGE_BG || '#F5F4F1',
-            onChange: (ev) => {
-              const hex = ev.target.value;
-              applyPageBg(hex);
-              saveSettings({ pageBg: hex });
-            },
-            style: { width: '44px', height: '36px', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }
-          }),
-          e('span', { style: { fontSize: '0.9rem', color: 'rgba(60,60,67,0.7)', fontVariantNumeric: 'tabular-nums' } },
-            (settings.pageBg || PAGE_BG || '#F5F4F1').toUpperCase()),
-          e('button', {
-            type: 'button',
-            onClick: () => { applyPageBg('#F5F4F1'); saveSettings({ pageBg: '#F5F4F1' }); },
-            style: {
-              marginLeft: 'auto', border: '1px solid rgba(60,60,67,0.18)', background: '#FFF',
-              borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
-            }
-          }, 'Reset')
-        ),
-        e('div', { style: { display: 'flex', gap: '0.4rem', flexWrap: 'wrap' } },
-          ['#F5F4F1', '#F2F2F7', '#EEF2FF', '#F0FDF4', '#FFF7ED', '#FDF2F8', '#ECFEFF', '#18181B'].map(hex =>
-            e('button', {
-              key: hex, type: 'button',
-              onClick: () => { applyPageBg(hex); saveSettings({ pageBg: hex }); },
-              title: hex,
-              style: {
-                width: '28px', height: '28px', borderRadius: '8px', cursor: 'pointer',
-                background: hex,
-                border: (settings.pageBg || PAGE_BG) === hex ? '2px solid #007AFF' : '1px solid rgba(0,0,0,0.12)'
-              }
-            })
-          )
+    e('div', { style: { position:'sticky', top:0, zIndex:6, padding:'0.4rem 0.85rem 0.85rem',
+      background: 'linear-gradient(180deg, '+PAGE_BG+' 70%, transparent 100%)' } },
+      ticketDetailCard(previewJob, 0, 0, false, null)
+    ),
+
+    e('div', { style: { padding: '0.2rem 1rem 1.5rem' } },
+      studioChip('Typeface', [
+        {key:'serif', label:'Serif'}, {key:'sans', label:'Sans'}
+      ], settings.cardFont || 'serif', (v)=>setCardOpt({ cardFont: v })),
+
+      studioChip('Size', [
+        {key:'normal', label:'Regular'}, {key:'large', label:'Large'}, {key:'xl', label:'XL'}
+      ], settings.cardTextScale || 'normal', (v)=>setCardOpt({ cardTextScale: v, largeText: v !== 'normal' })),
+
+      studioChip('Layout', [
+        {key:'classic', label:'Classic'}, {key:'compact', label:'Compact'}, {key:'banner', label:'Times first'}
+      ], settings.cardLayout || 'classic', (v)=>setCardOpt({ cardLayout: v })),
+
+      studioChip('Corners', [
+        {key:'round', label:'Round'}, {key:'soft', label:'Soft'}, {key:'square', label:'Sharp'}
+      ], settings.cardRadius || 'round', (v)=>setCardOpt({ cardRadius: v })),
+
+      studioChip('Duration', [
+        {key:'on', label:'Show'}, {key:'off', label:'Hide'}
+      ], settings.showDurationOnCards !== false ? 'on' : 'off', (v)=>setCardOpt({ showDurationOnCards: v === 'on' })),
+
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'1rem 0 0.45rem', color:INK } }, 'Page colour'),
+      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.65rem', flexWrap:'wrap', marginBottom:'1rem' } },
+        e('input', { type:'color', value: settings.pageBg || PAGE_BG,
+          onChange:(ev)=>{ applyPageBg(ev.target.value); setCardOpt({ pageBg: ev.target.value }); },
+          style:{ width:'42px', height:'32px', border:'none', background:'transparent', padding:0 } }),
+        ['#F5F4F1','#F2F2F7','#EEF2FF','#F0FDF4','#FFF7ED','#FDF2F8','#ECFEFF','#18181B'].map(hex =>
+          e('button', { key:hex, type:'button', onClick:()=>{ applyPageBg(hex); setCardOpt({ pageBg: hex }); },
+            style:{ width:'26px', height:'26px', borderRadius:'8px', background:hex, cursor:'pointer',
+              border: (settings.pageBg||PAGE_BG)===hex ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.12)' } })
         )
-      )
-    ),
+      ),
 
-    e('div', { className: 'ios-group-label' }, 'Cards'),
-    e('div', { className: 'ios-group' },
-      chipSelect('Card text size', [
-        {key:'normal', label:'Normal'}, {key:'large', label:'Large'}, {key:'xl', label:'XL'}
-      ], settings.cardTextScale || (settings.largeText ? 'large' : 'normal'), (v)=>{
-        saveSettings({ cardTextScale: v, largeText: v !== 'normal' });
-      })
-    ),
-
-    e('div', { className: 'ios-group-label' }, 'Themes'),
-    e('div', { className: 'ios-group', style: { padding: '0.75rem' } },
-      e('div', { style: { fontSize: '0.85rem', color: 'rgba(60,60,67,0.6)', marginBottom: '0.65rem', lineHeight: 1.35 } },
-        'Tap a palette, fine-tune on the live card, then save if you want it in the list.'),
-      /* reuse live theme editor by inlining minimal version */
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'0.4rem 0 0.45rem', color:INK } }, 'Site colours'),
+      e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap', marginBottom:'0.65rem' } },
+        (siteEdits.length ? siteEdits : sitesToList()).map((st,i) => e('button', {
+          key: st.key+i, type:'button', onClick:()=>setThemePreviewIdx(i),
+          style:{ padding:'0.35rem 0.65rem', borderRadius:'999px', cursor:'pointer',
+            border: i===themePreviewIdx ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.1)',
+            background: st.hex, color: st.on || readableOn(st.hex), fontSize:'0.75rem', fontWeight:600 }
+        }, st.label || st.key))
+      ),
       (() => {
         const list = siteEdits.length ? siteEdits : sitesToList();
-        const idx = Math.min(themePreviewIdx, Math.max(0, list.length - 1));
-        const cur = list[idx] || { hex: '#203B59', on: '#FFEDDC', label: 'Site', key: 'X' };
-        const onC = cur.on || readableOn(cur.hex);
-        return e('div', null,
-          e('div', {
-            style: {
-              background: cur.hex, color: onC, borderRadius: '14px', padding: '0.85rem 0.95rem',
-              marginBottom: '0.55rem',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
-            }
-          },
-            e('div', { style: { fontSize: '0.72rem', fontWeight: 600, opacity: 0.85 } }, 'Preview'),
-            e('div', { style: { fontSize: '1.2rem', fontWeight: 700, marginTop: '0.25rem' } }, '09:00 – 11:30'),
-            e('div', { style: { fontSize: '0.75rem', opacity: 0.8, marginTop: '0.2rem' } }, (cur.label || cur.key))
-          ),
-          e('div', { style: { display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.55rem' } },
-            list.map((st, i) => e('button', {
-              key: st.key + i, type: 'button',
-              onClick: () => setThemePreviewIdx(i),
-              style: {
-                padding: '0.35rem 0.65rem', borderRadius: '999px', cursor: 'pointer',
-                border: i === idx ? '2px solid #007AFF' : '1px solid rgba(60,60,67,0.18)',
-                background: st.hex, color: st.on || readableOn(st.hex),
-                fontSize: '0.72rem', fontWeight: 600
-              }
-            }, st.label || st.key))
-          ),
-          e('div', { style: { display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' } },
-            e('label', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' } },
-              'Card',
-              e('input', { type: 'color', value: cur.hex || '#203B59',
-                onChange: (ev) => {
-                  const list2 = list.map((st, i) => i === idx ? { ...st, hex: ev.target.value, on: st.on || readableOn(ev.target.value) } : st);
-                  setSiteEdits(list2); applySites(list2); setThemeTick(t => t + 1);
-                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
-                },
-                style: { width: '36px', height: '28px', border: 'none', background: 'transparent', padding: 0 } })
-            ),
-            e('label', { style: { display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' } },
-              'Text',
-              e('input', { type: 'color', value: cur.on || readableOn(cur.hex),
-                onChange: (ev) => {
-                  const list2 = list.map((st, i) => i === idx ? { ...st, on: ev.target.value } : st);
-                  setSiteEdits(list2); applySites(list2); setThemeTick(t => t + 1);
-                  saveSettings({ sites: list2, themeId: settings.themeId || 'coastal' });
-                },
-                style: { width: '36px', height: '28px', border: 'none', background: 'transparent', padding: 0 } })
-            )
-          )
+        const idx = Math.min(themePreviewIdx, Math.max(0, list.length-1));
+        const cur = list[idx] || { hex:'#203B59', on:'#FFEDDC' };
+        return e('div', { style:{ display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem' } },
+          e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.85rem' } }, 'Card',
+            e('input', { type:'color', value: cur.hex || '#203B59',
+              onChange:(ev)=>{
+                const list2 = list.map((st,i)=> i===idx ? { ...st, hex: ev.target.value, on: st.on || readableOn(ev.target.value) } : st);
+                setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
+                saveSettings({ sites:list2, themeId: settings.themeId || 'coastal' });
+              }, style:{ width:'36px', height:'28px', border:'none', background:'transparent' } })),
+          e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.85rem' } }, 'Text',
+            e('input', { type:'color', value: cur.on || readableOn(cur.hex),
+              onChange:(ev)=>{
+                const list2 = list.map((st,i)=> i===idx ? { ...st, on: ev.target.value } : st);
+                setSiteEdits(list2); applySites(list2); setThemeTick(t=>t+1);
+                saveSettings({ sites:list2, themeId: settings.themeId || 'coastal' });
+              }, style:{ width:'36px', height:'28px', border:'none', background:'transparent' } }))
         );
-      })()
-    ),
+      })(),
 
-    e('div', { className: 'ios-group-label' }, 'Palettes'),
-    e('div', { className: 'ios-group', style: { padding: '0.65rem' } },
-      e('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' } },
-        [...THEME_PRESETS, ...(settings.customThemes || [])].map(p => {
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'0.2rem 0 0.5rem', color:INK } }, 'Palettes'),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem' } },
+        [...THEME_PRESETS, ...(settings.customThemes||[])].map(p => {
           const active = (settings.themeId || 'coastal') === p.id;
-          return e('button', {
-            key: p.id, type: 'button',
-            onClick: () => applyThemeId(p.id),
-            style: {
-              textAlign: 'left', border: active ? '2px solid #007AFF' : '1px solid rgba(60,60,67,0.15)',
-              background: '#F9F9FB', borderRadius: '12px', padding: '0.6rem', cursor: 'pointer'
-            }
-          },
-            e('div', { style: { fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem' } }, p.name),
-            e('div', { style: { display: 'flex', gap: '3px' } },
-              (p.colors || []).map((c, i) => e('div', {
-                key: i,
-                style: { flex: 1, height: '18px', borderRadius: '4px', background: c }
-              }))
+          return e('button', { key:p.id, type:'button', onClick:()=>applyThemeId(p.id),
+            style:{ textAlign:'left', border: active ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.1)',
+              background:'rgba(255,255,255,0.65)', borderRadius:'16px', padding:'0.6rem', cursor:'pointer' } },
+            e('div', { style:{ fontSize:'0.78rem', fontWeight:600, marginBottom:'0.35rem' } }, p.name),
+            e('div', { style:{ display:'flex', gap:'3px' } },
+              (p.colors||[]).map((c,i)=> e('div', { key:i, style:{ flex:1, height:'16px', borderRadius:'4px', background:c } }))
             )
           );
         })
       ),
-      e('div', { style: { display: 'flex', gap: '0.4rem', marginTop: '0.75rem' } },
-        e('input', {
-          type: 'text', value: themeNameDraft, placeholder: 'Name this theme…',
-          onChange: (ev) => setThemeNameDraft(ev.target.value),
-          style: {
-            flex: 1, border: '1px solid rgba(60,60,67,0.18)', borderRadius: '10px',
-            padding: '0.55rem 0.7rem', fontSize: '0.9rem', background: '#FFF'
-          }
-        }),
-        e('button', {
-          type: 'button', onClick: saveNamedTheme,
-          style: {
-            border: 'none', background: '#007AFF', color: '#FFF', borderRadius: '10px',
-            padding: '0.55rem 0.85rem', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
-          }
-        }, 'Save')
+      e('div', { style:{ display:'flex', gap:'0.4rem', marginTop:'0.75rem' } },
+        e('input', { type:'text', value:themeNameDraft, placeholder:'Name this palette…',
+          onChange:(ev)=>setThemeNameDraft(ev.target.value),
+          style:{ flex:1, border:'1px solid rgba(0,0,0,0.1)', borderRadius:'12px', padding:'0.55rem 0.7rem', fontSize:'0.9rem', background:'rgba(255,255,255,0.7)' } }),
+        e('button', { type:'button', onClick:saveNamedTheme,
+          style:{ border:'none', background:'#1C1614', color:'#F3EEE6', borderRadius:'12px', padding:'0.55rem 0.85rem', fontWeight:600, fontSize:'0.85rem', cursor:'pointer' } }, 'Save')
       )
     )
   );
