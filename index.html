@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -44,6 +44,9 @@
     --glass-sheet: rgba(255,255,255,0.88);
     --glass-field: rgba(31,21,30,0.045);
     --focus-ring: 0 0 0 3px rgba(32,59,89,0.22);
+    --display: "Instrument Serif", "Times New Roman", serif;
+    --copper: #B08A5B;
+    --ink-soft: rgba(28,22,20,0.62);
   }
   * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing:border-box; }
   html, body {
@@ -87,6 +90,19 @@
     box-shadow: var(--focus-ring) !important;
   }
   .tabular { font-variant-numeric: tabular-nums; }
+  .display-date {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+  .view-enter {
+    animation: viewEnter .55s var(--ease-spring) both;
+  }
+  @keyframes viewEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
 
   .fab-btn:active {
     transform: scale(0.88) !important;
@@ -305,39 +321,32 @@
   .burst-dot { position:absolute; top:50%; left:50%; width:7px; height:7px; border-radius:999px; background:#0A0A0C;
     animation:burstFly .7s cubic-bezier(.22,.9,.3,1) forwards; }
 
-  #splash { position:fixed; top:0; right:0; bottom:0; left:0; z-index:99999; display:flex; align-items:center; justify-content:center;
-    background:#F5F4F1; }
-  /* Total splash lifetime now needs to cover the full write-then-full-stop
-     sequence (finishes ~2.2s in) plus a brief beat to actually see it,
-     before fading out — 2.9s total, fade starting at 86% (~2.5s). */
-  #splash.standalone-play { animation:splashHide 1.7s ease forwards; cursor:pointer; }
-  #splash .word-wrap { display:flex; align-items:baseline; }
-  #splash .word-text {
-    font-family:'Playwrite US Trad', cursive;
-    font-weight:400;
-    font-size:2.7rem;
-    color:#1F151E;
-    -webkit-text-stroke:1px #1F151E;
-    text-stroke:1px #1F151E;
-    clip-path:inset(0 100% 0 0);
-    animation:splashWipe 0.95s cubic-bezier(.4,0,.2,1) .08s both;
+  #splash {
+    position:fixed; inset:0; z-index:99999;
+    display:flex; align-items:center; justify-content:center;
+    background:#F3EEE6;
+    cursor:pointer;
+    overflow:hidden;
   }
-  @keyframes splashWipe { to { clip-path:inset(0 0% 0 0); } }
-  #splash .full-stop {
-    font-family:'Playwrite US Trad', cursive;
-    font-weight:400;
-    font-size:2.7rem;
-    color:#1F151E;
-    -webkit-text-stroke:1px #1F151E;
-    text-stroke:1px #1F151E;
-    margin-left:0.15rem;
+  #splash .splash-art {
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    object-position:center 46%;
     opacity:0;
-    transform:scale(0.2);
-    transform-origin:bottom center;
-    animation:splashDot .28s cubic-bezier(.3,1.6,.5,1) 1.1s forwards;
+    transform:scale(1.06);
+    animation: splashArtIn 1.1s cubic-bezier(.16,1,.3,1) both;
   }
-  @keyframes splashDot { 0% { opacity:0; transform:scale(0.2); } 70% { opacity:1; transform:scale(1.2); } 100% { opacity:1; transform:scale(1); } }
-  @keyframes splashHide { 0%, 78% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; } }
+  #splash.standalone-play { animation:splashHide 2.2s ease forwards; }
+  #splash .word-wrap { display:none; }
+  @keyframes splashArtIn {
+    from { opacity:0; transform:scale(1.08); filter:blur(8px); }
+    to { opacity:1; transform:scale(1); filter:blur(0); }
+  }
+  @keyframes splashHide {
+    0%, 72% { opacity:1; visibility:visible; }
+    100% { opacity:0; visibility:hidden; }
+  }
   .chips::-webkit-scrollbar { display:none; }
   .landscape-lock { display:none; }
   @media (orientation:landscape) and (hover:none) and (pointer:coarse) {
@@ -691,7 +700,7 @@
 
   /* iOS-style settings chrome */
   .ios-page {
-    background: #F2F2F7;
+    background: var(--page-bg);
     min-height: 100vh;
   }
   .ios-nav {
@@ -700,7 +709,7 @@
     justify-content: space-between;
     padding: 0.55rem 0.85rem calc(0.55rem + env(safe-area-inset-top));
     padding-top: calc(0.55rem + env(safe-area-inset-top));
-    background: rgba(242, 242, 247, 0.85);
+    background: color-mix(in srgb, var(--page-bg) 86%, white);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
@@ -709,15 +718,17 @@
     z-index: 5;
   }
   .ios-nav-title {
-    font-size: 1.05rem;
-    font-weight: 650;
-    color: #000;
+    font-size: 1.15rem;
+    font-weight: 400;
+    font-family: var(--display);
+    font-style: italic;
+    color: #1C1614;
     letter-spacing: -0.02em;
   }
   .ios-nav-btn {
     border: none;
     background: none;
-    color: #007AFF;
+    color: #203B59;
     font-size: 1rem;
     font-weight: 400;
     padding: 0.35rem 0.25rem;
@@ -726,8 +737,10 @@
   }
   .ios-group {
     margin: 1.1rem 0.85rem 0;
-    background: #FFFFFF;
-    border-radius: 12px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 0.5px 0 rgba(0,0,0,0.04);
   }
@@ -767,9 +780,9 @@
     min-width: 0;
   }
   .ios-row-title {
-    font-size: 1rem;
-    font-weight: 400;
-    color: #000;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1C1614;
     letter-spacing: -0.01em;
   }
   .ios-row-sub {
@@ -802,7 +815,7 @@
     transition: background 0.22s ease;
   }
   .ios-switch.on {
-    background: #34C759;
+    background: #203B59;
   }
   .ios-switch::after {
     content: '';
@@ -843,8 +856,8 @@
   }
   /* Light iOS side menu */
   .ios-menu-panel {
-    background: #F2F2F7 !important;
-    color: #000 !important;
+    background: color-mix(in srgb, var(--page-bg) 92%, white) !important;
+    color: #1C1614 !important;
     border-right: 0.5px solid rgba(60,60,67,0.18) !important;
     box-shadow: 8px 0 32px rgba(0,0,0,0.12) !important;
   }
@@ -876,6 +889,7 @@
 </head>
 <body>
 <div id="splash">
+  <img class="splash-art" src="splash-wordmark.jpg" alt="" />
   <div class="word-wrap">
     <span class="word-text">tickets</span><span class="full-stop">.</span>
   </div>
@@ -896,7 +910,7 @@
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
     s.addEventListener('click', removeIt);
     s.addEventListener('touchstart', function(ev){ try { ev.preventDefault(); } catch(e){} removeIt(); }, { passive:false });
-    setTimeout(removeIt, 1900);
+    setTimeout(removeIt, 2200);
     s.classList.add('standalone-play');
   } catch (err) {
     var el = document.getElementById('splash');
@@ -3086,8 +3100,8 @@ function App() {
           willChange: 'transform'
         }
       },
-        e('div', { style:{ fontSize:'1.75rem', fontWeight:700, letterSpacing:'-0.03em',
-          color:'#000', marginBottom:'0.85rem', padding:'0 0.15rem' } }, 'Menu'),
+        e('div', { className:'display-date', style:{ fontSize:'2rem', fontWeight:400, letterSpacing:'-0.03em',
+          color:'#1C1614', marginBottom:'0.85rem', padding:'0 0.15rem' } }, 'Menu'),
 
         e('div', { style:{ position:'relative', marginBottom:'0.85rem' } },
           e('input', { type:'search', value:menuSearch, placeholder:'Search tickets…',
@@ -3197,16 +3211,14 @@ function App() {
       style: {
         position:'relative', zIndex:1,
         width:'56px', height:'56px', borderRadius:'50%', cursor:'pointer',
-        background: 'rgba(155,168,171,0.18)',
-        color: '#E3E3E3',
-        border: '1px solid rgba(155,168,171,0.35)',
+        background: '#1C1614',
+        color: '#F3EEE6',
+        border: '1px solid rgba(255,255,255,0.08)',
         display:'flex', alignItems:'center', justifyContent:'center',
-        backdropFilter: 'blur(18px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
-        boxShadow: '0 8px 28px rgba(10,20,28,0.18), 0 2px 8px rgba(10,20,28,0.08), inset 0 1px 0 rgba(255,255,255,0.55)',
-        transition:'transform .18s cubic-bezier(.34,1.4,.64,1), opacity .12s ease, box-shadow .18s ease, filter .12s ease'
+        boxShadow: '0 14px 32px rgba(28,22,20,0.28), 0 2px 6px rgba(28,22,20,0.16)',
+        transition:'transform .22s cubic-bezier(.22,1.2,.32,1), box-shadow .22s ease'
       }
-    }, PlusIcon(26, '#203B59'))
+    }, PlusIcon(22, '#F3EEE6'))
   );
 
 
@@ -3386,12 +3398,12 @@ function App() {
         t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.4rem' : '0.55rem' } }),
         e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem', marginTop:'2px' } },
           e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFeatureSettings:'"tnum"' } }, tStart),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:300, color:onC, opacity:0.5,
-              margin:'0 0.28em', whiteSpace:'nowrap' } }, '–'),
-            e('span', { style:{ fontSize:bigTimeSize, fontWeight:650, color:onC, letterSpacing:'-0.035em',
-              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums', fontFeatureSettings:'"tnum"' } }, tFinish)),
+            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
+            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.45,
+              margin:'0 0.22em', whiteSpace:'nowrap' } }, '–'),
+            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
+              whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
           durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:650, color:onC, opacity:0.92, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
         ),
         t2 ? travelLine(t2, 'marginTop') : null
@@ -3977,8 +3989,8 @@ function App() {
         style:{ background:'none', border:'none', cursor:'pointer', padding:'4px 8px', flex:1, textAlign:'center',
           borderRadius:'10px' }
       },
-        e('span', { style:{ fontSize:(1.15 - headerCollapse * 0.28)+'rem', fontWeight:800, letterSpacing:'-0.35px', color:INK,
-          transition:'font-size .15s ease' } },
+        e('span', { className:'display-date', style:{ fontSize:(1.55 - headerCollapse * 0.32)+'rem', fontWeight:400, letterSpacing:'-0.03em', color:INK,
+          transition:'font-size .15s ease', lineHeight:1.05 } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' })),
         e('span', { style:{ display:'block', fontSize:'0.62rem', color:INK, opacity:0.65 - headerCollapse * 0.4, fontWeight:550, marginTop:'1px',
           height: headerCollapse > 0.7 ? 0 : 'auto', overflow:'hidden', transition:'opacity .15s ease' } }, 'Tap month · hold today')
@@ -3986,7 +3998,7 @@ function App() {
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
 
-  const monthView = e('div', { style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
+  const monthView = e('div', { className:'view-enter', style:{ padding:'0 0 5.5rem', display:'flex', flexDirection:'column', gap:'0.7rem' } },
 
     e('div', { style:{ height:'calc(3.6rem + env(safe-area-inset-top))', flexShrink:0 } }),
 
@@ -4008,7 +4020,7 @@ function App() {
 
   // daySheet popup removed — tapping a day now switches to Day mode
 
-  const listView = e('div', { style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
+  const listView = e('div', { className:'view-enter', style:{ padding:'0 0.85rem 5.5rem', display:'flex', flexDirection:'column', gap:'0.65rem' } },
     e('div', { style:{ display:'flex', gap:'0.5rem', alignItems:'center' } },
       e('input', { type:'search', value:query, placeholder:'Search tickets, notes, parts…',
         onChange:(ev)=>setQuery(ev.target.value),
