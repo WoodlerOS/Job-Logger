@@ -114,21 +114,19 @@
   }
   .ticket-type::before {
     z-index: 0;
-    opacity: 0.62;
+    opacity: 0.28;
     mix-blend-mode: multiply;
     background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 180px 180px;
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.35'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
   }
   .ticket-type::after {
     z-index: 0;
-    opacity: 0.38;
-    mix-blend-mode: overlay;
+    opacity: 0.16;
+    mix-blend-mode: soft-light;
     background-image:
-      radial-gradient(90% 70% at 18% 8%, rgba(255,255,255,0.55), transparent 52%),
-      radial-gradient(70% 60% at 88% 20%, rgba(180,90,40,0.18), transparent 50%),
-      radial-gradient(80% 80% at 70% 100%, rgba(40,70,90,0.14), transparent 55%),
-      radial-gradient(40% 30% at 40% 60%, rgba(255,255,255,0.22), transparent 60%);
+      radial-gradient(90% 70% at 16% 0%, rgba(255,255,255,0.35), transparent 58%),
+      radial-gradient(70% 50% at 100% 100%, rgba(255,255,255,0.12), transparent 60%);
   }
   .ticket-type > * { position: relative; z-index: 1; }
   .view-enter {
@@ -1020,7 +1018,25 @@
   }
   .theme-emoji-tabs { display:flex; gap:0.4rem; overflow-x:auto; padding:0.15rem 0 0.65rem; -webkit-overflow-scrolling:touch; }
   .theme-emoji-tabs::-webkit-scrollbar { display:none; }
-  .theme-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:0.45rem; }
+  .theme-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:0.32rem; }
+  .custom-page {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .custom-page .ios-nav {
+    padding: calc(env(safe-area-inset-top) + 0.15rem) 0.7rem 0.2rem;
+    border-bottom: none;
+    background: transparent;
+    position: relative;
+  }
+  .custom-page .ios-group-label {
+    margin: 0.28rem 0 0.15rem;
+    padding: 0.1rem 0.1rem;
+  }
+  .custom-page .ios-group { margin: 0.25rem 0 0; }
+  .preview-stack { position: relative; height: 148px; margin: 0 0 0.35rem; }
 
   .dock-btn.primary {
     width: 56px; height: 56px;
@@ -2350,7 +2366,7 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 68;
+  const CAL_TRIGGER = 46;
 
   const jobsRef = useRef(jobs);
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
@@ -3300,31 +3316,31 @@ function App() {
   const onCalTouchStart = (ev) => {
     if (monthPickerOpen || menuOpen || settingsOpen || customOpen || stockOpen) return;
     const t = ev.touches[0];
-    calTouch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
+    calTouch.current = { x:t.clientX, y:t.clientY, live:true, locked:false, dx:0 };
   };
   const onCalTouchMove = (ev) => {
     if (!calTouch.current.live) return;
     const t = ev.touches[0];
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
+    calTouch.current.dx = dx;
     if (!calTouch.current.locked) {
-      if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
-      if (Math.abs(dx) < Math.abs(dy) + 18) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      if (Math.abs(dx) <= Math.abs(dy) + 8) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
       calTouch.current.locked = true;
       setCalDragging(true);
-      try { ev.preventDefault(); } catch (err) {}
     }
-    const raw = Math.max(-90, Math.min(90, dx));
-    const eased = raw * 0.22;
-    setCalDX(eased);
+    setCalDX(Math.max(-34, Math.min(34, dx * 0.32)));
   };
   const onCalTouchEnd = () => {
-    if (!calTouch.current.live) { setCalDragging(false); setCalDX(0); return; }
+    const raw = calTouch.current.dx || 0;
+    const live = calTouch.current.live && calTouch.current.locked;
     calTouch.current.live = false;
     setCalDragging(false);
-    if (calDX <= -CAL_TRIGGER) { haptic('selection'); shift(1); }
-    else if (calDX >= CAL_TRIGGER) { haptic('selection'); shift(-1); }
     setCalDX(0);
+    if (!live) return;
+    if (raw <= -CAL_TRIGGER) { haptic('selection'); shift(1); }
+    else if (raw >= CAL_TRIGGER) { haptic('selection'); shift(-1); }
   };
 
   const [sheetDY, setSheetDY] = useState(0);
@@ -3683,7 +3699,7 @@ function App() {
 
 
 
-  const ticketDetailCard = (j, i, dayIndex, overlapped, expandKey) => {
+  const ticketDetailCard = (j, i, dayIndex, overlapped, expandKey, compact) => {
     try {
       if (!j) {
         return e('div', { style:{ padding:'0.85rem', background:SURF, border:'1px solid '+LINE, borderRadius:'6px', color:GREY } }, 'Empty ticket');
@@ -3744,7 +3760,7 @@ function App() {
           ),
           e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.12rem' } }, badge)
         ),
-        e('div', { key:'times', style:{ marginTop:'0.7rem', display:'flex', alignItems:'baseline', gap:'0.35rem' } },
+        compact ? null : e('div', { key:'times', style:{ marginTop:'0.7rem', display:'flex', alignItems:'baseline', gap:'0.35rem' } },
           t1 ? e('span', { style:{ fontSize:'0.7rem', fontStyle:'italic', color:faintC, opacity:0.7, marginRight:'0.15rem' } }, t1) : null,
           e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em',
             fontVariantNumeric:'tabular-nums' } }, tStart),
@@ -3795,8 +3811,10 @@ function App() {
           border: cardBorder,
           boxShadow: cardShadow,
           borderRadius: rad,
-          padding: isExpanded ? '1.05rem 1.05rem 1.1rem' : '0.95rem 1.05rem 1.05rem', cursor:'pointer',
-          minHeight: isExpanded ? 'auto' : '110px',
+          padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1.05rem 1.05rem 1.1rem' : '0.95rem 1.05rem 1.05rem'), cursor:'pointer',
+          minHeight: compact ? '68px' : (isExpanded ? 'auto' : '110px'),
+          WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
+          maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
         (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -3804,12 +3822,7 @@ function App() {
           background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 42%)'
         } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
-        (j.locked && settings.allowComplete) ? e('div', { key:'notch', 'aria-hidden':true, style:{
-          position:'absolute', top:'-11px', left:'50%', transform:'translateX(-50%)',
-          width:'22px', height:'22px', borderRadius:'50%', background: PAGE_BG,
-          boxShadow:'inset 0 -1px 0 rgba(31,21,30,0.06)'
-        } }) : null,
-        (!overlapped) && e('div', { key:'strip', style:{ position:'absolute', right:'0.75rem', bottom:'0.55rem',
+        (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', right:'0.75rem', bottom:'0.55rem',
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
@@ -4349,7 +4362,7 @@ function App() {
           if (stackOpen[gk] || expandedCardId) { openStack(gk, false); setExpandedCardId(null); }
         }
       },
-      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', height:'100dvh', overflow: homeNeedsScroll ? 'auto' : 'hidden', overscrollBehavior:'none', touchAction: homeNeedsScroll ? 'pan-y' : 'none' }
+      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', height:'100dvh', overflow: homeNeedsScroll ? 'auto' : 'hidden', overscrollBehavior:'none', touchAction: homeNeedsScroll ? 'pan-y' : 'pan-y' }
     },
 
     e('div', { style:{ height:'calc(2.85rem + env(safe-area-inset-top))', flexShrink:0 } }),
@@ -4895,14 +4908,27 @@ function App() {
     );
 
   const filteredThemes = THEME_PRESETS.filter(t => t.cat === themeCat);
-  const customView = e('div', { className: 'ios-page view-enter', style: { paddingBottom: '2.5rem', background: PAGE_BG, minHeight: '100vh' } },
+  const previewJobs = Object.keys(SITES).map((key, idx) => ({
+    ...previewJob,
+    id: '__preview__' + key,
+    site: key,
+    ticketNumber: ['T-1042','T-1188','T-2210','T-0904'][idx],
+    summary: ['Filter change','Pump check','Seal replace','Sensor cal'][idx],
+    equipment: [['I'],['C'],['A'],['I']][idx]
+  }));
+  const customView = e('div', { className: 'ios-page custom-page view-enter', style: { background: PAGE_BG } },
     e('div', { className: 'ios-nav' },
       e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false), style:{ color:INK } }, 'Back'),
       e('span', { className: 'ios-nav-title', style:{ color:INK } }, 'Colours'),
       e('span', { style: { minWidth: '3.2rem' } })
     ),
-    e('div', { style:{ padding:'0.15rem 0.9rem 1.6rem' } },
-      e('div', { style:{ padding:'0 0 0.85rem' } }, ticketDetailCard(previewJob, 0, 0, false, null)),
+    e('div', { style:{ padding:'0 0.9rem 0.4rem', flex:1, minHeight:0, display:'flex', flexDirection:'column' } },
+      e('div', { className:'preview-stack' },
+        previewJobs.map((pj, idx) => e('div', {
+          key: pj.id,
+          style:{ position:'absolute', left:0, right:0, top: (idx * 26) + 'px', zIndex: 4-idx }
+        }, ticketDetailCard(pj, idx, 0, idx > 0, null, true)))
+      ),
       e('div', { className:'ios-group-label' }, 'Themes'),
       e('div', { className:'theme-emoji-tabs' },
         THEME_CATS.map(cat => e('button', {
@@ -4940,7 +4966,7 @@ function App() {
               background: SURF2, borderRadius:'14px', padding:'0.35rem', cursor:'pointer'
             }
           },
-            e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'3px', height:'44px' } },
+            e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px', height:'30px' } },
               (pr.colors||[]).slice(0,4).map((c,i)=> e('div', { key:i, style:{ background:c, borderRadius: i<2 ? '6px 6px 2px 2px' : '2px 2px 6px 6px' } }))
             )
           );
@@ -4953,14 +4979,14 @@ function App() {
             key:hex, type:'button',
             onClick:()=>{ applyPageBg(hex); saveSettings({ pageBg: hex }); setThemeTick(t=>t+1); },
             style:{
-              width:'34px', height:'34px', borderRadius:'10px', background:hex, cursor:'pointer',
+              width:'28px', height:'28px', borderRadius:'8px', background:hex, cursor:'pointer',
               border: (settings.pageBg||PAGE_BG)===hex ? '2px solid '+INK : '1px solid rgba(0,0,0,0.16)',
               boxShadow: pageLum(hex) < 0.45 ? 'inset 0 0 0 1px rgba(255,255,255,0.18)' : 'none'
             }
           }))
         ),
-        e('div', { style:{ fontSize:'0.72rem', color:GREY, marginTop:'0.55rem', lineHeight:1.4 } },
-          'Light and dark papers both work. Menus and type follow the page tone.')
+        e('div', { style:{ fontSize:'0.68rem', color:GREY, marginTop:'0.3rem', lineHeight:1.3 } },
+          'Type follows light or dark paper.')
       )
     )
   );
@@ -5351,7 +5377,7 @@ function App() {
         desktopTopbar,
         e('div', { className: 'desktop-content app-content-layer', style:{ flex:1, overflow:'auto' } }, customBody)
       ),
-      e('div', { className: 'mobile-only app-content-layer', style:{ width:'100%', minHeight:'100vh', overflow:'auto', background:PAGE_BG } },
+      e('div', { className: 'mobile-only app-content-layer', style:{ width:'100%', height:'100dvh', overflow:'hidden', background:PAGE_BG } },
         e('div', {
           onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
           style:{ transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
