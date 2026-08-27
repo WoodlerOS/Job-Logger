@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Caveat:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -103,8 +103,21 @@
   }
   .ticket-type .ticket-num {
     font-style: italic;
-    font-weight: 400;
+    font-weight: 600;
   }
+  .ticket-type::before {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none; z-index: 0;
+    border-radius: inherit;
+    opacity: 0.28;
+    mix-blend-mode: multiply;
+    background-image:
+      radial-gradient(120% 80% at 12% 0%, rgba(255,255,255,0.28), transparent 46%),
+      radial-gradient(90% 70% at 100% 100%, rgba(80,50,20,0.08), transparent 55%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  }
+  .ticket-type > * { position: relative; z-index: 1; }
   .view-enter {
     animation: viewEnter .55s var(--ease-spring) both;
   }
@@ -338,24 +351,42 @@
     overflow:hidden;
   }
   #splash .splash-art { display:none; }
-  #splash.standalone-play { animation:splashHide 2.2s ease forwards; }
+  #splash.standalone-play { animation:splashHide 2.6s ease forwards; }
   #splash .word-wrap {
     display:flex; align-items:baseline; justify-content:center;
     position:relative; z-index:1;
-    animation: splashArtIn 1.1s cubic-bezier(.16,1,.3,1) both;
   }
   #splash .word-text {
-    font-family: "Instrument Serif", "Times New Roman", serif;
-    font-size: clamp(42px, 14vw, 72px);
-    font-weight: 400; letter-spacing: -0.04em; color: #1F151E;
+    font-family: "Caveat", "Segoe Script", cursive;
+    font-size: clamp(52px, 16vw, 84px);
+    font-weight: 600; letter-spacing: -0.01em; color: #111;
   }
-  #splash .full-stop { font-family: "Instrument Serif", serif; font-size: clamp(42px, 14vw, 72px); color: #85301C; }
-  @keyframes splashArtIn {
-    from { opacity:0; transform:scale(1.08); filter:blur(8px); }
-    to { opacity:1; transform:scale(1); filter:blur(0); }
+  #splash .word-text .ch {
+    display:inline-block;
+    opacity:0;
+    transform: translateY(8px);
+    animation: writeLetter .16s ease forwards;
+    animation-delay: calc(var(--i) * .11s);
+  }
+  #splash .full-stop {
+    font-family: "Caveat", cursive;
+    font-size: clamp(52px, 16vw, 84px);
+    font-weight: 700; color: #111;
+    opacity:0; transform: scale(0.2);
+    animation: popStop .38s cubic-bezier(.34,1.56,.64,1) forwards;
+    animation-delay: .92s;
+  }
+  @keyframes writeLetter {
+    from { opacity:0; transform: translateY(8px) rotate(-6deg); }
+    to { opacity:1; transform: none; }
+  }
+  @keyframes popStop {
+    0% { opacity:0; transform: scale(0.2); }
+    70% { opacity:1; transform: scale(1.18); }
+    100% { opacity:1; transform: scale(1); }
   }
   @keyframes splashHide {
-    0%, 72% { opacity:1; visibility:visible; }
+    0%, 70% { opacity:1; visibility:visible; }
     100% { opacity:0; visibility:hidden; }
   }
   .chips::-webkit-scrollbar { display:none; }
@@ -947,8 +978,27 @@
     overflow: hidden;
     transition: width .32s cubic-bezier(.22,1,.36,1), height .32s cubic-bezier(.22,1,.36,1), opacity .22s ease, margin .32s ease;
   }
+  .app-dock.collapsed {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .app-dock.collapsed .dock-side {
     width: 0; height: 0; opacity: 0; margin: 0; pointer-events: none;
+  }
+  .app-dock.collapsed .dock-btn.primary {
+    background: rgba(255,255,255,0.38);
+    color: #1C1614;
+    border: none;
+    box-shadow:
+      0 10px 28px rgba(20,16,18,0.14),
+      inset 0 1px 0 rgba(255,255,255,0.78),
+      inset 0 -8px 16px rgba(255,255,255,0.18);
+    backdrop-filter: blur(22px) saturate(1.8);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
   }
   .theme-emoji-tabs { display:flex; gap:0.4rem; overflow-x:auto; padding:0.15rem 0 0.65rem; -webkit-overflow-scrolling:touch; }
   .theme-emoji-tabs::-webkit-scrollbar { display:none; }
@@ -970,7 +1020,7 @@
 <body>
 <div id="splash">
   <div class="word-wrap">
-    <span class="word-text">tickets</span><span class="full-stop">.</span>
+    <span class="word-text"><span class="ch" style="--i:0">t</span><span class="ch" style="--i:1">i</span><span class="ch" style="--i:2">c</span><span class="ch" style="--i:3">k</span><span class="ch" style="--i:4">e</span><span class="ch" style="--i:5">t</span><span class="ch" style="--i:6">s</span></span><span class="full-stop">.</span>
   </div>
 </div>
 <script>
@@ -989,7 +1039,7 @@
     s.addEventListener('animationend', function(ev){ if (ev.animationName === 'splashHide') removeIt(); });
     s.addEventListener('click', removeIt);
     s.addEventListener('touchstart', function(ev){ try { ev.preventDefault(); } catch(e){} removeIt(); }, { passive:false });
-    setTimeout(removeIt, 2200);
+    setTimeout(removeIt, 2800);
     s.classList.add('standalone-play');
   } catch (err) {
     var el = document.getElementById('splash');
@@ -1035,39 +1085,142 @@ const SITES = {
 };
 
 const THEME_CATS = ['Sea','Earth','Night','Warm','Cool','Pastel','Jewel','Forest','Urban','Fruit'];
-const THEME_SEEDS = [
-  { cat:'Sea', name:'Coastal', colors:['#203B59','#5B87A8','#2F6F8A','#9EC4D6'] },
-  { cat:'Earth', name:'Terracotta', colors:['#7C2D12','#B45309','#A16207','#D6B48A'] },
-  { cat:'Night', name:'Midnight', colors:['#1E1B4B','#3730A3','#4C1D95','#6D28D9'] },
-  { cat:'Warm', name:'Ember', colors:['#9A3412','#C2410C','#B45309','#EA580C'] },
-  { cat:'Cool', name:'Arctic', colors:['#0C4A6E','#0369A1','#0E7490','#0284C7'] },
-  { cat:'Pastel', name:'Bloom', colors:['#9D7A9A','#C9A4B8','#8FA6C0','#B7C9A8'] },
-  { cat:'Jewel', name:'Orchid', colors:['#581C87','#6D28D9','#7E22CE','#A21CAF'] },
-  { cat:'Forest', name:'Meadow', colors:['#14532D','#166534','#3F6212','#4D7C0F'] },
-  { cat:'Urban', name:'Graphite', colors:['#292524','#44403C','#57534E','#78716C'] },
-  { cat:'Fruit', name:'Citrus', colors:['#9A3412','#C2410C','#B45309','#CA8A04'] }
-];
-const shiftHexHue = (hex, deg) => {
-  const [h,ss,ll] = hexToHsl(hex);
-  return hslToHex((h + deg + 360) % 360, Math.min(72, Math.max(28, ss)), Math.min(62, Math.max(22, ll)));
+const THEME_FAMILIES = {
+  Sea: [
+    ['#1B3A4B','#E07A5F','#3D5A80','#F2CC8F'],
+    ['#0E4D5C','#C44536','#2A9D8F','#E9C46A'],
+    ['#12355B','#F4A261','#2A6F97','#E76F51'],
+    ['#1D3557','#E63946','#457B9D','#F1FAEE'],
+    ['#023047','#FB8500','#219EBC','#FFB703'],
+    ['#0B132B','#5BC0BE','#3A506B','#F4D35E'],
+    ['#14213D','#FCA311','#00A6A6','#E5E5E5'],
+    ['#001219','#EE9B00','#005F73','#AE2012'],
+    ['#0D1B2A','#E07A5F','#1B998B','#C9ADA7'],
+    ['#1A535C','#FF6B6B','#4ECDC4','#FFE66D']
+  ],
+  Earth: [
+    ['#6B2D13','#C17F3A','#2F4F3A','#E6C28B'],
+    ['#4A2C2A','#C4622D','#6B7F5A','#D7B377'],
+    ['#3E2723','#E07A3D','#5D737E','#F1D6B8'],
+    ['#5C3A21','#B85C38','#3F5B4E','#E8C39E'],
+    ['#7A3E1D','#D4A373','#3D5A4C','#F4E1C1'],
+    ['#4E342E','#FF8A5B','#2E6B4E','#F2C14E'],
+    ['#5D4037','#E76F51','#264653','#E9C46A'],
+    ['#3E2723','#C97D60','#6A994E','#F4D6A8'],
+    ['#6D4C41','#F4A261','#2A9D8F','#EDE0D4'],
+    ['#4B2E2A','#D97706','#3F6212','#FEF3C7']
+  ],
+  Night: [
+    ['#1B1464','#E056A0','#2E86AB','#F6C945'],
+    ['#0D0C1D','#7C5CBF','#FF6B6B','#48CFAE'],
+    ['#150050','#FB2576','#3F0071','#00F5D4'],
+    ['#0B132B','#5E60CE','#F72585','#4CC9F0'],
+    ['#240046','#FF6D00','#5A189A','#00BBF9'],
+    ['#10002B','#E0AAFF','#7B2CBF','#FF9E00'],
+    ['#1A1423','#FF5D8F','#4361EE','#FEE440'],
+    ['#0F0E17','#C77DFF','#3A86FF','#80ED99'],
+    ['#160F30','#F15BB5','#00BBF9','#FEE440'],
+    ['#1E1E2F','#FF4D6D','#4EA8DE','#C9F2C7']
+  ],
+  Warm: [
+    ['#9B2226','#EE9B00','#005F73','#E9D8A6'],
+    ['#9A031E','#FB8B24','#0F4C5C','#E36414'],
+    ['#6A040F','#F48C06','#2A9D8F','#EAE2B7'],
+    ['#7F1D1D','#F59E0B','#1D4E89','#FDE68A'],
+    ['#9F1239','#FB923C','#0E7490','#FCD34D'],
+    ['#7C2D12','#F97316','#155E75','#FBBF24'],
+    ['#881337','#EA580C','#1E3A5F','#FDE047'],
+    ['#9A3412','#F59E0B','#3F6212','#FED7AA'],
+    ['#B91C1C','#F59E0B','#0369A1','#FEF3C7'],
+    ['#C2410C','#EAB308','#0F766E','#FFEDD5']
+  ],
+  Cool: [
+    ['#12355B','#F4A261','#2A9D8F','#E76F51'],
+    ['#0B3C5D','#E07A5F','#3282B8','#BBE1FA'],
+    ['#1B4965','#F76C5E','#5FA8D3','#CAE9FF'],
+    ['#013A63','#EE6C4D','#2EC4B6','#E0FBFC'],
+    ['#023E8A','#FF6B6B','#48CAE4','#FFD166'],
+    ['#0077B6','#EF476F','#06D6A0','#FFD166'],
+    ['#1446A0','#F72585','#4CC9F0','#B5E48C'],
+    ['#1D3557','#E63946','#457B9D','#A8DADC'],
+    ['#0A2463','#FB3640','#3E92CC','#D8F3DC'],
+    ['#274C77','#E07A5F','#6096BA','#A3CEF1']
+  ],
+  Pastel: [
+    ['#E07A5F','#81B29A','#3D405B','#F2CC8F'],
+    ['#F4A5AE','#8ECAE6','#BDE0FE','#FFD6A5'],
+    ['#CDB4DB','#FFC8DD','#BDE0FE','#A2D2FF'],
+    ['#FFAFCC','#A2D2FF','#CDB4DB','#BDE0FE'],
+    ['#F6BD60','#84A59D','#F5CAC3','#F7EDE2'],
+    ['#EAAC8B','#E56B6F','#355070','#B56576'],
+    ['#FFB4A2','#E5989B','#6D6875','#B5838D'],
+    ['#F2CC8F','#81B29A','#E07A5F','#3D405B'],
+    ['#FFC8A2','#A0C4FF','#BDB2FF','#CAFFBF'],
+    ['#FDCFBF','#90CAF9','#C5E1A5','#FFE082']
+  ],
+  Jewel: [
+    ['#5A189A','#E01A4F','#00A6A6','#F4D35E'],
+    ['#3C096C','#FF006E','#3A86FF','#FFBE0B'],
+    ['#480CA8','#F72585','#4CC9F0','#80ED99'],
+    ['#240046','#FF4D6D','#4361EE','#FEE440'],
+    ['#6A040F','#DC2F02','#0077B6','#FFBA08'],
+    ['#4C1D95','#DB2777','#0891B2','#F59E0B'],
+    ['#6B21A8','#E11D48','#0E7490','#CA8A04'],
+    ['#581C87','#BE123C','#1D4ED8','#16A34A'],
+    ['#7E22CE','#E11D48','#2563EB','#D97706'],
+    ['#5B21B6','#F43F5E','#0284C7','#65A30D']
+  ],
+  Forest: [
+    ['#1B4332','#E76F51','#40916C','#F4A261'],
+    ['#081C15','#D00000','#2D6A4F','#E9C46A'],
+    ['#1E3A2A','#BC4749','#386641','#F2E8CF'],
+    ['#14332A','#C1121F','#588157','#DAD7CD'],
+    ['#2D6A4F','#E07A5F','#1B4332','#D8F3DC'],
+    ['#344E41','#BC6C25','#3A5A40','#DAD7CD'],
+    ['#283618','#BC4749','#606C38','#FEFAE0'],
+    ['#1D2C1F','#D62828','#52796F','#CAD2C5'],
+    ['#204E32','#E07A3D','#2D6A4F','#F4E3C1'],
+    ['#0B3D2E','#C44536','#3E8914','#F2C14E']
+  ],
+  Urban: [
+    ['#111111','#E63946','#457B9D','#F1FAEE'],
+    ['#1C1C1C','#F4A261','#2A9D8F','#E9C46A'],
+    ['#212529','#FF6B6B','#4D96FF','#FFE66D'],
+    ['#2B2D42','#EF233C','#8D99AE','#EDF2F4'],
+    ['#0D1B2A','#E0AFA0','#415A77','#E0E1DD'],
+    ['#22223B','#F72585','#4A4E69','#F2E9E4'],
+    ['#1B1B1E','#FF7F51','#3D5A80','#C9ADA7'],
+    ['#242423','#F94144','#277DA1','#F9C74F'],
+    ['#2F3E46','#E07A5F','#52796F','#CAD2C5'],
+    ['#191919','#FF4D6D','#48CAE4','#FEE440']
+  ],
+  Fruit: [
+    ['#9B2226','#55A630','#0077B6','#EE9B00'],
+    ['#C1121F','#2A9D8F','#F4A261','#264653'],
+    ['#D62828','#2A9D8F','#F77F00','#003049'],
+    ['#E63946','#2A9D8F','#F4A261','#1D3557'],
+    ['#C9184A','#52B788','#F4A261','#1B4332'],
+    ['#E76F51','#2A9D8F','#E9C46A','#264653'],
+    ['#D00000','#38B000','#0077B6','#FFBA08'],
+    ['#E01E37','#0081A7','#F4A261','#3D348B'],
+    ['#C1121F','#669BBC','#F4A261','#003049'],
+    ['#E5383B','#57CC99','#F4A261','#22577A']
+  ]
 };
-const buildThemePresets = () => THEME_SEEDS.flatMap((seed, si) =>
-  Array.from({ length: 10 }, (_, i) => {
-    const colors = seed.colors.map((c, ci) => shiftHexHue(c, i * 7 + ci * 2));
-    return {
-      id: seed.cat.toLowerCase() + '-' + i,
-      name: i === 0 ? seed.name : seed.name + ' ' + (i + 1),
-      cat: seed.cat,
-      colors,
-      text: colors.map(c => {
-        try {
-          const h = c.replace('#','');
-          const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-          return ((0.2126*r + 0.7152*g + 0.0722*b) / 255) > 0.55 ? '#1F151E' : '#FFEDDC';
-        } catch (err) { return '#1F151E'; }
-      })
-    };
-  })
+const buildThemePresets = () => THEME_CATS.flatMap(cat =>
+  (THEME_FAMILIES[cat] || []).map((colors, i) => ({
+    id: cat.toLowerCase() + '-' + i,
+    name: cat + ' ' + (i + 1),
+    cat,
+    colors,
+    text: colors.map(c => {
+      try {
+        const h = c.replace('#','');
+        const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+        return ((0.2126*r + 0.7152*g + 0.0722*b) / 255) > 0.55 ? '#1F151E' : '#FFEDDC';
+      } catch (err) { return '#1F151E'; }
+    })
+  }))
 );
 const PAGE_PRESETS = [
   '#F5F4F1','#F2F2F7','#EEE8DF','#E8F0EA','#E7EEF6','#F7EFE8','#F3E8EE','#F6F1E4',
@@ -2097,6 +2250,16 @@ function App() {
     }
     setMpJustOpened(false);
   }, [monthPickerOpen]);
+  useEffect(() => {
+    if (view !== 'month' || settingsOpen || customOpen || stockOpen || menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+      document.documentElement.style.overflow = '';
+    };
+  }, [view, settingsOpen, customOpen, stockOpen, menuOpen]);
   const [mpDY, setMpDY] = useState(0);
   const [mpDragging, setMpDragging] = useState(false);
   const [mpMonthDX, setMpMonthDX] = useState(0);
@@ -3402,7 +3565,7 @@ function App() {
       onTouchEnd:()=>{ if (fabHold.current) { clearTimeout(fabHold.current); fabHold.current = null; } },
       onTouchCancel:()=>{ if (fabHold.current) { clearTimeout(fabHold.current); fabHold.current = null; } },
       onContextMenu:(ev)=>ev.preventDefault()
-    }, PlusIcon(22, '#F3EEE6')),
+    }, PlusIcon(22, dockOpen ? '#F3EEE6' : '#1C1614')),
     e('button', { className:'dock-btn dock-side', onClick:()=>{ haptic('open'); setStockOpen(true); setMenuOpen(false); setDockOpen(false); window.scrollTo(0,0); } },
       e('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none' },
         e('path', { d:'M4 7.5L12 3l8 4.5v9L12 21l-8-4.5v-9z', stroke:'currentColor', strokeWidth:1.7, strokeLinejoin:'round' }),
@@ -3542,10 +3705,10 @@ function App() {
 
       const fontFam = 'var(--display)';
       const rad = '26px';
-      const numberSize = '1.18rem';
-      const bigTimeSize = '0.98rem';
-      const smallTimeSize = '0.86rem';
-      const capSize = '0.78rem';
+      const numberSize = '1.32rem';
+      const bigTimeSize = '1.05rem';
+      const smallTimeSize = '0.96rem';
+      const capSize = '0.82rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -3558,7 +3721,7 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.82rem', fontWeight:400, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
+        flexShrink:0, fontSize:'0.92rem', fontWeight:600, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, fontStyle:'italic', color:faintC, letterSpacing:'-0.02em',
@@ -3568,11 +3731,11 @@ function App() {
       const children = [
         e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.7rem' } },
           e('div', { key:'left', style:{ minWidth:0, flex:1 } },
-            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
-              lineHeight:1.15, wordBreak:'break-word' } }, title),
+            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:600, color:onC, letterSpacing:'-0.03em',
+              lineHeight:1.12, wordBreak:'break-word' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: smallTimeSize, fontWeight: 500, fontStyle: 'normal', color: faintC, opacity: 0.9,
-              marginTop: '0.22rem', lineHeight: 1.35, wordBreak: 'break-word'
+              fontSize: smallTimeSize, fontWeight: 600, fontStyle: 'normal', color: onC, opacity: 0.88,
+              marginTop: '0.18rem', lineHeight: 1.32, wordBreak: 'break-word'
             } }, summaryText) : null
           ),
           e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.12rem' } }, badge)
@@ -3629,7 +3792,7 @@ function App() {
           boxShadow: cardShadow,
           borderRadius: rad,
           padding: isExpanded ? '1.05rem 1.05rem 1.1rem' : '0.95rem 1.05rem 1.05rem', cursor:'pointer',
-          minHeight: isExpanded ? 'auto' : '112px',
+          minHeight: isExpanded ? 'auto' : '118px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
         (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -4172,6 +4335,7 @@ function App() {
       e('button', { onClick:()=>shift(1), style:{ background:'none', border:'none', cursor:'pointer', padding:'3px',
         display:'flex', alignItems:'center', justifyContent:'center', transform:'rotate(180deg)' } }, ChevronLeft(16, INK))));
 
+  const homeNeedsScroll = !!(stackOpen['day:'+(dv && dv.iso)] || (mobileDayList && mobileDayList.length > 4));
   const monthView = e('div', {
       className:'view-enter',
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -4181,23 +4345,21 @@ function App() {
           if (stackOpen[gk] || expandedCardId) { openStack(gk, false); setExpandedCardId(null); }
         }
       },
-      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', minHeight:'100vh', touchAction:'pan-y' }
+      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', height:'100dvh', overflow: homeNeedsScroll ? 'auto' : 'hidden', overscrollBehavior:'none', touchAction: homeNeedsScroll ? 'pan-y' : 'pan-x' }
     },
 
     e('div', { style:{ height:'calc(2.85rem + env(safe-area-inset-top))', flexShrink:0 } }),
 
     e('div', {
       style:{
-        transform:'translateX('+calDX+'px) scale('+(1 - Math.min(0.04, Math.abs(calDX)/2000))+')',
-        transition: calDragging ? 'none' : 'transform .48s cubic-bezier(.22,1.15,.35,1), opacity .36s ease',
-        opacity: 1 - Math.abs(calDX)/280,
-        padding: '0 0.55rem 0',
-        minHeight: '70vh'
+        transform:'translateX('+calDX+'px)',
+        transition: calDragging ? 'none' : 'transform .42s cubic-bezier(.22,1.15,.35,1)',
+        padding: '0 0.55rem 0'
       } },
       dayView,
       e('div', {
         onClick:()=>{ const gk = 'day:'+dv.iso; if (stackOpen[gk] || expandedCardId) { openStack(gk, false); setExpandedCardId(null); } },
-        style:{ minHeight:'36vh', flex:1 }
+        style:{ minHeight: homeNeedsScroll ? '18vh' : '8vh' }
       })
     )
   );
@@ -4750,7 +4912,20 @@ function App() {
           }
         }, cat))
       ),
-      e('div', { className:'theme-grid' },
+      e('div', {
+        className:'theme-grid',
+        onTouchStart:(ev)=>{ const t=ev.touches[0]; window.__themeSwipe={x:t.clientX,y:t.clientY}; },
+        onTouchEnd:(ev)=>{
+          const st = window.__themeSwipe; window.__themeSwipe=null;
+          if (!st || !ev.changedTouches || !ev.changedTouches[0]) return;
+          const t = ev.changedTouches[0];
+          const dx = t.clientX - st.x, dy = t.clientY - st.y;
+          if (Math.abs(dx) < 46 || Math.abs(dx) < Math.abs(dy) + 10) return;
+          const idx = THEME_CATS.indexOf(themeCat);
+          const next = dx < 0 ? THEME_CATS[(idx+1)%THEME_CATS.length] : THEME_CATS[(idx-1+THEME_CATS.length)%THEME_CATS.length];
+          haptic('selection'); setThemeCat(next);
+        }
+      },
         filteredThemes.map(pr => {
           const active = (settings.themeId || 'sea-0') === pr.id || (settings.themeId || 'coastal') === pr.id;
           return e('button', {
@@ -5304,7 +5479,7 @@ function App() {
       onTouchStart:onEdgeStart, onTouchMove:onEdgeMove, onTouchEnd:onEdgeEnd, onTouchCancel:onEdgeEnd,
       style:{ minHeight:'100%' }
     }, body),
-    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, journeyIndicator, saveToast, contextMenuUI, undoToastUI, offlineBanner,
+    menu, monthPicker, chooserSheet, formSheet, swipeHint, fab, saveToast, contextMenuUI, undoToastUI, offlineBanner,
     view === 'month' && !monthPickerOpen && !settingsOpen && !backupsOpen ? topDateBar : null
     ),
     /* sheets available on desktop too for export chooser etc */
