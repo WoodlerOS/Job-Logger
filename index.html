@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Nunito:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -912,7 +912,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 34;
-    padding: calc(env(safe-area-inset-top) + 0.12rem) 0.7rem 0.15rem;
+    padding: calc(env(safe-area-inset-top) + 0.15rem) 0.7rem 0.2rem;
     background: var(--page-bg);
     pointer-events: none;
   }
@@ -1724,7 +1724,7 @@ const DEFAULT_SETTINGS = {
   sortTickets: 'time',
   weekStartsMon: true,
   largeText: false,
-  cardTextScale: 'large', /* regular | large | xl | xxl */
+  cardTextScale: 'l', /* s | m | l | xl */
   fabGlowStyle: 'halo', /* halo | drift | dual | nebula */
   fabGlowColor: '#2890FF',
   stockRemaining: null,
@@ -1733,31 +1733,8 @@ const DEFAULT_SETTINGS = {
   pageBg: '#F5F4F1',
   cardFont: 'serif',
   cardLayout: 'classic',
-  cardRadius: 'round'
-};
-const CARD_FONTS = [
-  { key:'serif', name:'Instrument Serif', family:'var(--display)' },
-  { key:'newsreader', name:'Newsreader', family:'"Newsreader", serif' },
-  { key:'fraunces', name:'Fraunces', family:'"Fraunces", serif' },
-  { key:'playfair', name:'Playfair', family:'"Playfair Display", serif' },
-  { key:'cormorant', name:'Cormorant', family:'"Cormorant Garamond", serif' },
-  { key:'literata', name:'Literata', family:'"Literata", serif' },
-  { key:'source', name:'Source Serif', family:'"Source Serif 4", serif' },
-  { key:'sans', name:'Outfit', family:'"Outfit", sans-serif' },
-  { key:'dm', name:'DM Sans', family:'"DM Sans", sans-serif' },
-  { key:'ibm', name:'IBM Plex', family:'"IBM Plex Sans", sans-serif' }
-];
-const CARD_LAYOUTS = [
-  { key:'classic', name:'Classic' },
-  { key:'banner', name:'Times first' },
-  { key:'editorial', name:'Editorial' },
-  { key:'split', name:'Split band' },
-  { key:'magazine', name:'Magazine' },
-  { key:'stack', name:'Ruled' }
-];
-const cardFontFamily = (key) => {
-  const f = CARD_FONTS.find(x => x.key === key);
-  return f ? f.family : 'var(--display)';
+  cardRadius: 'round',
+  cardFill: 'soft'
 };
 
 const pad = (n) => String(n).padStart(2,'0');
@@ -2023,7 +2000,6 @@ function App() {
   const [returnTo, setReturnTo] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
-  const [studioPage, setStudioPage] = useState(null);
   const [stockOpen, setStockOpen] = useState(false);
   const [stockQuery, setStockQuery] = useState('');
   const [stockSort, setStockSort] = useState('name'); /* name | qty | short | part */
@@ -2880,7 +2856,7 @@ function App() {
       if (settingsOpen) {
         setSettingsOpen(false);
       } else if (customOpen) {
-        setStudioPage(null); setCustomOpen(false);
+        setCustomOpen(false);
       } else if (stockOpen) {
         setStockOpen(false);
       } else {
@@ -3444,18 +3420,30 @@ function App() {
       const faintC = s ? hexToRgba(onC, 0.97) : GREY;
       const title = (j.ticketNumber != null && String(j.ticketNumber).trim()) ? String(j.ticketNumber) : 'Ticket';
 
-      const scaleKey = settings.cardTextScale || (settings.largeText ? 'large' : 'large');
-      const tScale = scaleKey === 'xxl' ? 1.22 : scaleKey === 'xl' ? 1.12 : scaleKey === 'regular' ? 1 : 1.06;
+      const scaleKey = settings.cardTextScale || 'l';
+      const tScale = scaleKey === 'xl' ? 1.48 : scaleKey === 's' ? 1.08 : scaleKey === 'm' ? 1.22 : 1.34;
+      const FONT_MAP = {
+        serif: '"Instrument Serif", serif',
+        editorial: '"Fraunces", serif',
+        news: '"Newsreader", serif',
+        sans: '"Outfit", sans-serif',
+        rounded: '"Nunito", sans-serif',
+        mono: '"IBM Plex Mono", monospace'
+      };
       const cardFont = settings.cardFont || 'serif';
-      const fontFam = cardFontFamily(cardFont);
+      const fontFam = FONT_MAP[cardFont] || FONT_MAP.serif;
       const layout = settings.cardLayout || 'classic';
       const radiusKey = settings.cardRadius || 'round';
-      const rad = radiusKey === 'square' ? '12px' : radiusKey === 'soft' ? '22px' : '32px';
-      const numberSize = (0.98 * tScale).toFixed(3) + 'rem';
+      const rad = radiusKey === 'square' ? '10px' : radiusKey === 'soft' ? '18px' : '28px';
+      const fillMode = settings.cardFill || 'soft';
+      const cardBg = s
+        ? (fillMode === 'solid' ? s.hex : ('color-mix(in srgb, ' + s.hex + ' 58%, white)'))
+        : SURF;
+      const numberSize = (1.02 * tScale).toFixed(3) + 'rem';
       const bigTimeSize = (1.22 * tScale).toFixed(3) + 'rem';
-      const smallTimeSize = (0.82 * tScale).toFixed(3) + 'rem';
-      const capSize = (0.8 * tScale).toFixed(3) + 'rem';
-      const durSize = (0.92 * tScale).toFixed(3) + 'rem';
+      const smallTimeSize = (0.66 * tScale).toFixed(3) + 'rem';
+      const capSize = (0.68 * tScale).toFixed(3) + 'rem';
+      const durSize = (0.78 * tScale).toFixed(3) + 'rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -3475,56 +3463,67 @@ function App() {
         opacity:0.82, [marginProp]:'0.3rem' } }, text);
 
       const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
-      const titleBlock = (align) => e('div', { key:'tnblock', style:{ textAlign: align || 'right', minWidth:0, maxWidth: align==='left' ? '100%' : '78%' } },
-        e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:400, color:faintC,
-          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
-          background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
-          borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0.1rem 0',
-          display:'inline-block', maxWidth:'100%' } }, title),
-        summaryText ? e('div', { className:'clamp-fade', style:{
-          fontSize: smallTimeSize, fontWeight: 400, fontStyle: 'italic', color: faintC, opacity: 0.86,
-          marginTop: '0.12rem', lineHeight: 1.3,
-          display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
-          overflow: 'hidden', wordBreak: 'break-word'
-        } }, summaryText) : null
-      );
-      const timesRow = e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem' } },
-        e('span', { style:{ display:'inline-flex', alignItems:'baseline', flexWrap:'wrap' } },
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
+      const numEl = e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:400, color:faintC,
+        whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+        background: j.locked ? hexToRgba(onC, 0.12) : 'transparent',
+        borderRadius:'8px', padding: j.locked ? '0.18rem 0.55rem' : '0',
+        display:'inline-block', maxWidth:'100%' } }, title);
+      const sumEl = summaryText ? e('div', { className:'clamp-fade', style:{
+        fontSize: smallTimeSize, fontWeight: 400, fontStyle: 'italic', color: faintC, opacity: 0.86,
+        marginTop: '0.1rem', lineHeight: 1.25,
+        display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical',
+        overflow: 'hidden', wordBreak: 'break-word'
+      } }, summaryText) : null;
+      const timeEl = e('div', { key:'main', style:{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.5rem' } },
+        e('span', { style:{ display:'inline-flex', alignItems:'baseline' } },
+          e('span', { style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
             whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tStart),
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.45,
+          e('span', { style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.45,
             margin:'0 0.22em', whiteSpace:'nowrap' } }, '–'),
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
+          e('span', { style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
             whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' } }, tFinish)),
-        durationLabel ? e('span', { className:'display-date', style:{ fontSize:durSize, fontWeight:400, color:onC, opacity:0.78, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
+        durationLabel ? e('span', { style:{ fontSize:durSize, fontWeight:400, color:onC, opacity:0.78, whiteSpace:'nowrap', flexShrink:0 } }, durationLabel) : null
       );
+
       let children;
-      if (layout === 'banner') {
-        children = [ timesRow, t1 ? travelLine(t1, 'marginTop') : null, t2 ? travelLine(t2, 'marginTop') : null,
-          e('div', { key:'top', style:{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', gap:'0.5rem', marginTop:'0.7rem' } }, badge, titleBlock('right')) ];
-      } else if (layout === 'editorial') {
-        children = [ e('div', { key:'top', style:{ display:'flex', justifyContent:'space-between', marginBottom:'0.55rem' } }, badge),
-          t1 ? travelLine(t1, 'marginBottom') : null, timesRow, t2 ? travelLine(t2, 'marginTop') : null,
-          e('div', { key:'foot', style:{ marginTop:'0.85rem' } }, titleBlock('left')) ];
-      } else if (layout === 'split') {
-        children = [ e('div', { key:'band', style:{ margin:'-0.15rem -0.15rem 0.7rem', padding:'0.55rem 0.65rem 0.6rem',
-            background: hexToRgba(onC, 0.12), borderRadius:'16px' } },
-            e('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.5rem' } }, badge, titleBlock('right'))),
-          t1 ? travelLine(t1, 'marginBottom') : null, timesRow, t2 ? travelLine(t2, 'marginTop') : null ];
-      } else if (layout === 'magazine') {
-        children = [ e('div', { key:'mag', style:{ display:'flex', gap:'0.7rem', alignItems:'stretch' } },
-            e('div', { key:'rule', style:{ width:'5px', borderRadius:'99px', background:onC, opacity:0.55, flexShrink:0 } }),
-            e('div', { style:{ minWidth:0, flex:1, display:'flex', flexDirection:'column', gap:'0.45rem' } },
-              titleBlock('left'), t1 ? travelLine(t1, 'marginTop') : null, timesRow, t2 ? travelLine(t2, 'marginTop') : null)) ];
-      } else if (layout === 'stack') {
-        children = [ e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem',
-            paddingBottom:'0.55rem', marginBottom:'0.55rem', borderBottom:'1px solid '+hexToRgba(onC, 0.2) } }, badge, titleBlock('right')),
-          t1 ? travelLine(t1, 'marginBottom') : null, timesRow, t2 ? travelLine(t2, 'marginTop') : null ];
+      if (layout === 'split') {
+        children = [
+          e('div', { key:'split', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.75rem' } },
+            e('div', { style:{ minWidth:0, flex:1 } }, timeEl, t1 ? travelLine(t1, 'marginTop') : null, t2 ? travelLine(t2, 'marginTop') : null),
+            e('div', { style:{ textAlign:'right', maxWidth:'42%' } }, badge, numEl, sumEl)
+          )
+        ];
+      } else if (layout === 'poster') {
+        children = [
+          e('div', { key:'poster', style:{ position:'relative', minHeight:'4.2rem' } },
+            e('div', { 'aria-hidden':true, style:{ position:'absolute', right:'-0.15rem', top:'-0.35rem', fontSize:(2.4*tScale).toFixed(3)+'rem',
+              opacity:0.16, fontWeight:400, lineHeight:1, pointerEvents:'none', whiteSpace:'nowrap' } }, title),
+            e('div', { style:{ position:'relative', zIndex:1 } }, badge, timeEl, t1 ? travelLine(t1, 'marginTop') : null, sumEl, t2 ? travelLine(t2, 'marginTop') : null)
+          )
+        ];
+      } else if (layout === 'rail') {
+        children = [
+          e('div', { key:'rail', style:{ display:'flex', gap:'0.85rem', alignItems:'stretch' } },
+            e('div', { style:{ display:'flex', flexDirection:'column', justifyContent:'center', minWidth:'4.6rem' } },
+              e('div', { style:{ fontSize:bigTimeSize, color:onC, lineHeight:1.05 } }, tStart),
+              e('div', { style:{ fontSize:smallTimeSize, color:onC, opacity:0.55, margin:'0.1rem 0' } }, 'to'),
+              e('div', { style:{ fontSize:bigTimeSize, color:onC, lineHeight:1.05 } }, tFinish)
+            ),
+            e('div', { style:{ width:'1px', background: hexToRgba(onC, 0.22) } }),
+            e('div', { style:{ flex:1, minWidth:0 } },
+              e('div', { style:{ display:'flex', justifyContent:'space-between', gap:'0.4rem' } }, badge, numEl),
+              sumEl, t1 ? travelLine(t1, 'marginTop') : null, durationLabel ? e('div', { style:{ marginTop:'0.25rem', fontSize:durSize, color:onC, opacity:0.75 } }, durationLabel) : null
+            )
+          )
+        ];
       } else {
         children = [
-          e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } }, badge, titleBlock('right')),
-          t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.45rem' : '0.6rem' } }),
-          timesRow,
+          e('div', { key:'top', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.5rem' } },
+            badge,
+            e('div', { key:'tnblock', style:{ textAlign:'right', minWidth:0, maxWidth:'70%' } }, numEl, sumEl)
+          ),
+          t1 ? travelLine(t1, 'marginTop') : e('div', { key:'sp', style:{ height: summaryText ? '0.4rem' : '0.55rem' } }),
+          timeEl,
           t2 ? travelLine(t2, 'marginTop') : null
         ];
       }
@@ -3554,8 +3553,8 @@ function App() {
       const partsCount = parts.length;
       const taperOn = false;
       const cardShadow = overlapped
-        ? '0 16px 40px rgba(31,21,30,0.12), 0 4px 12px rgba(31,21,30,0.06), inset 0 1px 0 rgba(255,255,255,0.34)'
-        : '0 12px 32px rgba(31,21,30,0.08), 0 2px 8px rgba(31,21,30,0.04), inset 0 1px 0 rgba(255,255,255,0.32)';
+        ? '0 14px 36px rgba(31,21,30,0.16), 0 4px 12px rgba(31,21,30,0.10), inset 0 1px 0 rgba(255,255,255,0.26)'
+        : '0 10px 28px rgba(31,21,30,0.12), 0 3px 8px rgba(31,21,30,0.07), inset 0 1px 0 rgba(255,255,255,0.22)';
       const cardBorder = s
         ? ('1.5px solid ' + hexToRgba('#000000', overlapped ? 0.14 : 0.08))
         : ('1px solid ' + LINE);
@@ -3563,13 +3562,13 @@ function App() {
       return e('div', {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         className: 'ticket-type',
-        style:{ background: s ? s.hex : SURF,
+        style:{ background: cardBg,
           ['--card-font']: fontFam,
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
           borderRadius: rad,
-          padding: isExpanded ? '1.1rem 1.1rem 1.15rem' : '0.95rem 1.05rem 1.9rem', cursor:'pointer',
+          padding: isExpanded ? '1rem 1.05rem 1.1rem' : '0.8rem 0.9rem 1.8rem', cursor:'pointer',
           minHeight: isExpanded ? 'auto' : '48px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
@@ -3811,7 +3810,7 @@ function App() {
 
   const dayView = e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.35rem' } },
     mobileDayList.length === 0
-      ? e('div', { style:{ textAlign:'center', padding:'0.55rem 0.5rem 1rem', color:GREY } },
+      ? e('div', { style:{ textAlign:'center', padding:'2.2rem 0.5rem 1.5rem', color:GREY } },
           e('svg', { className:'empty-art', width:72, height:72, viewBox:'0 0 72 72', fill:'none' },
             e('rect', { x:16, y:10, width:40, height:52, rx:6, stroke:GREY, strokeWidth:2 }),
             e('path', { d:'M24 22h24M24 32h24M24 42h16', stroke:GREY, strokeWidth:2, strokeLinecap:'round' }),
@@ -4104,7 +4103,7 @@ function App() {
         className:'hero-hit',
         style:{ background:'none', border:'none', cursor:'pointer', padding:'6px 10px', flex:1, textAlign:'center' }
       },
-        e('span', { className:'display-date', style:{ fontSize:'1.55rem', fontWeight:400, letterSpacing:'-0.03em', color:INK,
+        e('span', { className:'display-date', style:{ fontSize:'1.28rem', fontWeight:400, letterSpacing:'-0.03em', color:INK,
           lineHeight:1.05, display:'block' } },
           anchorDate.toLocaleDateString('en-GB',{ weekday:'short', day:'numeric', month:'short' }))
       ),
@@ -4113,7 +4112,7 @@ function App() {
 
   const monthView = e('div', { className:'view-enter', style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem' } },
 
-    e('div', { style:{ height:'calc(2.85rem + env(safe-area-inset-top))', flexShrink:0 } }),
+    e('div', { style:{ height:'2.55rem', flexShrink:0 } }),
 
     e('div', {
       onTouchStart:onCalTouchStart, onTouchMove:onCalTouchMove, onTouchEnd:onCalTouchEnd, onTouchCancel:onCalTouchEnd,
@@ -4174,17 +4173,17 @@ function App() {
      which site is active, and the form looks like the card you'll review
      afterwards. */
   const formSiteHex = (form.site && SITES[form.site]) ? SITES[form.site].hex : '#203B59';
-  const formOnC = siteOnColor(formSiteHex);
+  const formOnC = INK;
   /* Translucent glass fields over the site-coloured section shell */
-  const formFieldBg = 'rgba(255,255,255,0.28)';
-  const formFieldBg2 = 'rgba(255,255,255,0.18)';
+  const formFieldBg = 'rgba(255,255,255,0.55)';
+  const formFieldBg2 = 'rgba(255,255,255,0.4)';
 
   const sectionShell = (title, children, corner) =>
     e('div', { className: 'form-card form-section', style: {
-        background: formSiteHex,
-        borderRadius:'32px',
-        border: '1px solid rgba(255,255,255,0.28)',
-        boxShadow: '0 10px 28px rgba(31,21,30,0.08), inset 0 1px 0 rgba(255,255,255,0.32)',
+        background: 'color-mix(in srgb, '+formSiteHex+' 46%, white)',
+        borderRadius:'28px',
+        border: '1px solid rgba(28,22,20,0.06)',
+        boxShadow: '0 10px 28px rgba(28,22,20,0.08), inset 0 1px 0 rgba(255,255,255,0.65)',
         overflow:'hidden',
         display:'flex', flexDirection:'column', gap:'0.65rem',
         padding: '1.15rem 1.15rem 1.2rem',
@@ -4288,9 +4287,9 @@ function App() {
   const dayPanel = (d, update, prefix, title, onRemove, site) =>
     e('div', { key:prefix, style:{
         background: formSiteHex, borderRadius:'16px', overflow:'hidden', position:'relative',
-        padding:'0.95rem 1rem 1rem',
-        border: '1px solid rgba(255,255,255,0.22)',
-        boxShadow: '0 8px 24px rgba(31,21,30,0.08), inset 0 1px 0 rgba(255,255,255,0.28)',
+        padding:'0.75rem 0.85rem 0.85rem',
+        border: '1px solid rgba(227,227,227,0.14)',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
         display:'flex', flexDirection:'column', gap:'0.5rem',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } },
       e('div', { 'aria-hidden':true, style:{
@@ -4336,7 +4335,7 @@ function App() {
 
   const formView = e('div', {
     onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
-    style:{ padding:'0.35rem 0.85rem 2.6rem', display:'flex', flexDirection:'column', gap:'1.05rem', background:PAGE_BG,
+    style:{ padding:'0.45rem 0.7rem 2.5rem', display:'flex', flexDirection:'column', gap:'0.75rem', background:PAGE_BG,
       transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1,.36,1)',
       transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 6 ? '12px' : '0',
@@ -4351,7 +4350,7 @@ function App() {
         display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } }, DotsIcon(18, INK))),
 
     e('div', { className: 'form-desktop-grid',
-      style:{ display:'flex', flexDirection:'column', gap:'1.05rem',
+      style:{ display:'flex', flexDirection:'column', gap:'0.9rem',
         pointerEvents: (form.locked && settings.lockReadOnly) ? 'none' : 'auto',
         opacity: (form.locked && settings.lockReadOnly) ? 0.55 : 1,
         transition:'opacity .25s ease' } },
@@ -4363,12 +4362,12 @@ function App() {
           e('div', { style:{ display:'flex', flexDirection:'column', gap:'0.55rem' } },
             e('input', { type:'text', value:form.ticketNumber, placeholder:'Ticket number', className:'field-graphite',
               onChange:(ev)=>setFormTracked({ ...form, ticketNumber:ev.target.value }),
-              style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.75rem 0.9rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'16px', padding:'0.85rem 1rem',
                 fontWeight:600, fontSize:'1.05rem', outline:'none', color:formOnC, letterSpacing:'-0.3px', transition:'none', ['--ph-color']:formOnC } }),
             e('input', { type:'text', value:form.summary || '', placeholder:'Description', className:'field-graphite',
               onChange:(ev)=>setFormTracked({ ...form, summary:ev.target.value }),
               maxLength: 80,
-              style:{ border:'none', background:formFieldBg, borderRadius:'12px', padding:'0.55rem 0.9rem',
+              style:{ border:'none', background:formFieldBg, borderRadius:'16px', padding:'0.7rem 1rem',
                 fontWeight:500, fontSize:'0.86rem', outline:'none', color:formOnC, letterSpacing:'-0.15px',
                 transition:'none', ['--ph-color']:formOnC } }),
             e('div', { style:{ display:'flex', gap:'0.4rem' } },
@@ -4497,8 +4496,8 @@ function App() {
     )
   );
 
-  const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setStudioPage(null); setCustomOpen(false); setSettingsOpen(true); };
-  const openCustom = () => { haptic('open'); setSiteEdits(sitesToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(false); setStudioPage(null); setCustomOpen(true); window.scrollTo(0,0); };
+  const openSettings = () => { haptic('open'); setSiteEdits(sitesToList()); setEquipEdits(equipToList()); setMenuOpen(false); setStockOpen(false); setCustomOpen(false); setSettingsOpen(true); };
+  const openCustom = () => { haptic('open'); setSiteEdits(sitesToList()); setMenuOpen(false); setStockOpen(false); setSettingsOpen(false); setCustomOpen(true); window.scrollTo(0,0); };
 
   const commitSites = (list) => { setSiteEdits(list); applySites(list); setThemeTick(t=>t+1); saveSettings({ sites:list, themeId: 'custom' }); };
   const applyThemeId = (id) => {
@@ -4652,59 +4651,58 @@ function App() {
       )
     );
 
-  const studioBack = () => {
-    if (studioPage) setStudioPage(null);
-    else { setStudioPage(null); setCustomOpen(false); }
-  };
-  const fontLabel = (CARD_FONTS.find(f => f.key === (settings.cardFont || 'serif')) || CARD_FONTS[0]).name;
-  const sizeLabel = ({regular:'Regular', large:'Large', xl:'XL', xxl:'XXL'})[settings.cardTextScale || 'large'] || 'Large';
-  const layoutLabel = (CARD_LAYOUTS.find(l => l.key === (settings.cardLayout || 'classic')) || CARD_LAYOUTS[0]).name;
-  const studioNav = e('div', { className: 'ios-nav' },
-    e('button', { type:'button', className:'ios-nav-btn', onClick:studioBack }, studioPage ? 'Studio' : 'Back'),
-    e('span', { className: 'ios-nav-title' }, studioPage === 'font' ? 'Font' : studioPage === 'size' ? 'Text Size' : studioPage === 'layout' ? 'Layout' : 'Studio'),
-    e('span', { style: { minWidth: '3.2rem' } })
-  );
-  const studioHub = e('div', { key:'hub' },
-    e('div', { style:{ padding:'0.35rem 1rem 0.85rem' } }, ticketDetailCard(previewJob, 0, 0, false, null)),
-    e('div', { className:'ios-group-label' }, 'Typography'),
-    e('div', { className:'ios-group' },
-      e('button', { type:'button', className:'ios-row', onClick:()=>{ haptic('selection'); setStudioPage('font'); } },
-        e('div', { className:'ios-row-label' }, e('div', { className:'ios-row-title' }, 'Font'),
-          e('div', { className:'ios-row-sub' }, 'Does not change the card frame')),
-        e('span', { className:'ios-row-sub', style:{ display:'flex', alignItems:'center', gap:'0.35rem' } }, fontLabel, e('span', { className:'ios-chevron' }, '›'))),
-      e('button', { type:'button', className:'ios-row', onClick:()=>{ haptic('selection'); setStudioPage('size'); } },
-        e('div', { className:'ios-row-label' }, e('div', { className:'ios-row-title' }, 'Text size'),
-          e('div', { className:'ios-row-sub' }, 'Smallest step stays readable')),
-        e('span', { className:'ios-row-sub', style:{ display:'flex', alignItems:'center', gap:'0.35rem' } }, sizeLabel, e('span', { className:'ios-chevron' }, '›')))
+  const customView = e('div', { className: 'view-enter', style: { paddingBottom: '2.5rem', background: PAGE_BG, minHeight: '100vh' } },
+    e('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between',
+      padding: 'calc(0.4rem + env(safe-area-inset-top)) 0.85rem 0.6rem' } },
+      e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false), style:{ color:INK } }, 'Back'),
+      e('span', { className: 'display-date', style: { fontSize: '1.45rem', color: INK } }, 'Studio'),
+      e('span', { style: { minWidth: '3.2rem' } })
     ),
-    e('div', { className:'ios-group-label' }, 'Card'),
-    e('div', { className:'ios-group' },
-      e('button', { type:'button', className:'ios-row', onClick:()=>{ haptic('selection'); setStudioPage('layout'); } },
-        e('div', { className:'ios-row-label' }, e('div', { className:'ios-row-title' }, 'Layout'),
-          e('div', { className:'ios-row-sub' }, 'Changes structure, not just padding')),
-        e('span', { className:'ios-row-sub', style:{ display:'flex', alignItems:'center', gap:'0.35rem' } }, layoutLabel, e('span', { className:'ios-chevron' }, '›'))),
-      e('div', { className:'ios-row', style:{ cursor:'default', flexDirection:'column', alignItems:'stretch', gap:'0.45rem' } },
-        e('div', { className:'ios-row-title' }, 'Corners'),
-        e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap' } },
-          [{key:'round',label:'Round'},{key:'soft',label:'Soft'},{key:'square',label:'Sharp'}].map(opt =>
-            e('button', { key:opt.key, type:'button', onClick:()=>{ haptic('selection'); setCardOpt({ cardRadius: opt.key }); },
-              style:{ padding:'0.4rem 0.7rem', borderRadius:'999px', border:'none', cursor:'pointer', fontSize:'0.78rem', fontWeight:600,
-                background: (settings.cardRadius||'round')===opt.key ? INK : SURF2, color: (settings.cardRadius||'round')===opt.key ? (DARK_MODE ? '#0A0A0C' : '#FFF') : INK } }, opt.label))
-        )
-      )
+
+    e('div', { style: { position:'sticky', top:0, zIndex:6, padding:'0.4rem 0.85rem 0.85rem',
+      background: 'linear-gradient(180deg, '+PAGE_BG+' 70%, transparent 100%)' } },
+      ticketDetailCard(previewJob, 0, 0, false, null)
     ),
-    e('div', { className:'ios-group-label' }, 'Page'),
-    e('div', { className:'ios-group' },
-      e('div', { className:'ios-row', style:{ cursor:'default', flexWrap:'wrap', gap:'0.45rem' } },
+
+    e('div', { style: { padding: '0.2rem 1rem 1.5rem' } },
+      studioChip('Font', [
+        {key:'serif', label:'Instrument'}, {key:'editorial', label:'Fraunces'}, {key:'news', label:'Newsreader'},
+        {key:'sans', label:'Outfit'}, {key:'rounded', label:'Nunito'}, {key:'mono', label:'Plex Mono'}
+      ], settings.cardFont || 'serif', (v)=>setCardOpt({ cardFont: v })),
+
+      studioChip('Text size', [
+        {key:'s', label:'S'}, {key:'m', label:'M'}, {key:'l', label:'L'}, {key:'xl', label:'XL'}
+      ], settings.cardTextScale || 'l', (v)=>setCardOpt({ cardTextScale: v, largeText: v === 'xl' || v === 'l' })),
+
+      studioChip('Layout', [
+        {key:'classic', label:'Classic'}, {key:'split', label:'Split'}, {key:'rail', label:'Rail'}, {key:'poster', label:'Poster'}
+      ], settings.cardLayout || 'classic', (v)=>setCardOpt({ cardLayout: v })),
+
+      studioChip('Fill', [
+        {key:'soft', label:'Wash'}, {key:'solid', label:'Solid'}
+      ], settings.cardFill || 'soft', (v)=>setCardOpt({ cardFill: v })),
+
+      studioChip('Corners', [
+        {key:'round', label:'Round'}, {key:'soft', label:'Soft'}, {key:'square', label:'Sharp'}
+      ], settings.cardRadius || 'round', (v)=>setCardOpt({ cardRadius: v })),
+
+      studioChip('Duration', [
+        {key:'on', label:'Show'}, {key:'off', label:'Hide'}
+      ], settings.showDurationOnCards !== false ? 'on' : 'off', (v)=>setCardOpt({ showDurationOnCards: v === 'on' })),
+
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'1rem 0 0.45rem', color:INK } }, 'Page colour'),
+      e('div', { style:{ display:'flex', alignItems:'center', gap:'0.65rem', flexWrap:'wrap', marginBottom:'1rem' } },
+        e('input', { type:'color', value: settings.pageBg || PAGE_BG,
+          onChange:(ev)=>{ applyPageBg(ev.target.value); setCardOpt({ pageBg: ev.target.value }); },
+          style:{ width:'42px', height:'32px', border:'none', background:'transparent', padding:0 } }),
         ['#F5F4F1','#F2F2F7','#EEF2FF','#F0FDF4','#FFF7ED','#FDF2F8','#ECFEFF','#18181B'].map(hex =>
           e('button', { key:hex, type:'button', onClick:()=>{ applyPageBg(hex); setCardOpt({ pageBg: hex }); },
             style:{ width:'26px', height:'26px', borderRadius:'8px', background:hex, cursor:'pointer',
               border: (settings.pageBg||PAGE_BG)===hex ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.12)' } })
         )
-      )
-    ),
-    e('div', { className:'ios-group-label' }, 'Site colours'),
-    e('div', { className:'ios-group', style:{ padding:'0.65rem 0.85rem 0.85rem' } },
+      ),
+
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'0.4rem 0 0.45rem', color:INK } }, 'Site colours'),
       e('div', { style:{ display:'flex', gap:'0.35rem', flexWrap:'wrap', marginBottom:'0.65rem' } },
         (siteEdits.length ? siteEdits : sitesToList()).map((st,i) => e('button', {
           key: st.key+i, type:'button', onClick:()=>setThemePreviewIdx(i),
@@ -4717,7 +4715,7 @@ function App() {
         const list = siteEdits.length ? siteEdits : sitesToList();
         const idx = Math.min(themePreviewIdx, Math.max(0, list.length-1));
         const cur = list[idx] || { hex:'#203B59', on:'#FFEDDC' };
-        return e('div', { style:{ display:'flex', gap:'1rem', alignItems:'center' } },
+        return e('div', { style:{ display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem' } },
           e('label', { style:{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.85rem' } }, 'Card',
             e('input', { type:'color', value: cur.hex || '#203B59',
               onChange:(ev)=>{
@@ -4733,77 +4731,29 @@ function App() {
                 saveSettings({ sites:list2, themeId: settings.themeId || 'coastal' });
               }, style:{ width:'36px', height:'28px', border:'none', background:'transparent' } }))
         );
-      })()
-    ),
-    e('div', { className:'ios-group-label' }, 'Palettes'),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem', padding:'0 0.2rem 0.4rem' } },
-      [...THEME_PRESETS, ...(settings.customThemes||[])].map(pr => {
-        const active = (settings.themeId || 'coastal') === pr.id;
-        return e('button', { key:pr.id, type:'button', onClick:()=>applyThemeId(pr.id),
-          style:{ textAlign:'left', border: active ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.1)',
-            background:'rgba(255,255,255,0.65)', borderRadius:'16px', padding:'0.6rem', cursor:'pointer' } },
-          e('div', { style:{ fontSize:'0.78rem', fontWeight:600, marginBottom:'0.35rem' } }, pr.name),
-          e('div', { style:{ display:'flex', gap:'3px' } },
-            (pr.colors||[]).map((c,i)=> e('div', { key:i, style:{ flex:1, height:'16px', borderRadius:'4px', background:c } }))
-          )
-        );
-      })
-    ),
-    e('div', { style:{ display:'flex', gap:'0.4rem', padding:'0.2rem 0.2rem 1rem' } },
-      e('input', { type:'text', value:themeNameDraft, placeholder:'Name this palette…',
-        onChange:(ev)=>setThemeNameDraft(ev.target.value),
-        style:{ flex:1, border:'1px solid rgba(0,0,0,0.1)', borderRadius:'12px', padding:'0.55rem 0.7rem', fontSize:'0.9rem', background:'rgba(255,255,255,0.7)' } }),
-      e('button', { type:'button', onClick:saveNamedTheme,
-        style:{ border:'none', background:'#1C1614', color:'#F3EEE6', borderRadius:'12px', padding:'0.55rem 0.85rem', fontWeight:600, fontSize:'0.85rem', cursor:'pointer' } }, 'Save')
-    )
-  );
-  const studioFontPage = e('div', { key:'font', className:'ios-group' },
-    CARD_FONTS.map(f => e('button', { key:f.key, type:'button', className:'ios-row', onClick:()=>{ haptic('selection'); setCardOpt({ cardFont: f.key }); } },
-      e('div', { className:'ios-row-label' },
-        e('div', { className:'ios-row-title', style:{ fontFamily:f.family, fontSize:'1.15rem' } }, 'Ticket 1042'),
-        e('div', { className:'ios-row-sub' }, f.name)),
-      e('span', { className:'ios-row-sub' }, (settings.cardFont||'serif')===f.key ? '●' : '')
-    ))
-  );
-  const studioSizePage = e('div', { key:'size' },
-    e('div', { style:{ fontSize:'0.78rem', color:GREY, lineHeight:1.4, padding:'0 0.2rem 0.7rem' } },
-      'Same idea as iPhone Display & Text Size. Only the type changes. The card padding stays put.'),
-    e('div', { className:'ios-group' },
-      e('div', { className:'ios-row', style:{ flexDirection:'column', alignItems:'stretch', gap:'0.7rem', cursor:'default' } },
-        e('div', { style:{ fontFamily:cardFontFamily(settings.cardFont), fontSize: ({regular:'1.22rem', large:'1.29rem', xl:'1.37rem', xxl:'1.49rem'})[settings.cardTextScale||'large'] } }, '09:00 – 11:30'),
-        e('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:'0.78rem', color:GREY } },
-          e('span', null, 'Aa'), e('span', { style:{ fontWeight:700, color:INK } }, sizeLabel), e('span', { style:{ fontSize:'1.15rem' } }, 'Aa')),
-        e('input', { type:'range', min:0, max:3, step:1,
-          value: ['regular','large','xl','xxl'].indexOf(settings.cardTextScale||'large'),
-          onChange:(ev)=>{
-            const key = ['regular','large','xl','xxl'][Number(ev.target.value)] || 'large';
-            setCardOpt({ cardTextScale: key, largeText: key !== 'regular' });
-          }, style:{ width:'100%', accentColor: INK } })
+      })(),
+
+      e('div', { className:'display-date', style:{ fontSize:'1.05rem', margin:'0.2rem 0 0.5rem', color:INK } }, 'Palettes'),
+      e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem' } },
+        [...THEME_PRESETS, ...(settings.customThemes||[])].map(p => {
+          const active = (settings.themeId || 'coastal') === p.id;
+          return e('button', { key:p.id, type:'button', onClick:()=>applyThemeId(p.id),
+            style:{ textAlign:'left', border: active ? '2px solid #1C1614' : '1px solid rgba(0,0,0,0.1)',
+              background:'rgba(255,255,255,0.65)', borderRadius:'16px', padding:'0.6rem', cursor:'pointer' } },
+            e('div', { style:{ fontSize:'0.78rem', fontWeight:600, marginBottom:'0.35rem' } }, p.name),
+            e('div', { style:{ display:'flex', gap:'3px' } },
+              (p.colors||[]).map((c,i)=> e('div', { key:i, style:{ flex:1, height:'16px', borderRadius:'4px', background:c } }))
+            )
+          );
+        })
+      ),
+      e('div', { style:{ display:'flex', gap:'0.4rem', marginTop:'0.75rem' } },
+        e('input', { type:'text', value:themeNameDraft, placeholder:'Name this palette…',
+          onChange:(ev)=>setThemeNameDraft(ev.target.value),
+          style:{ flex:1, border:'1px solid rgba(0,0,0,0.1)', borderRadius:'12px', padding:'0.55rem 0.7rem', fontSize:'0.9rem', background:'rgba(255,255,255,0.7)' } }),
+        e('button', { type:'button', onClick:saveNamedTheme,
+          style:{ border:'none', background:'#1C1614', color:'#F3EEE6', borderRadius:'12px', padding:'0.55rem 0.85rem', fontWeight:600, fontSize:'0.85rem', cursor:'pointer' } }, 'Save')
       )
-    )
-  );
-  const studioLayoutPage = e('div', { key:'lay' },
-    e('div', { style:{ fontSize:'0.78rem', color:GREY, lineHeight:1.4, padding:'0 0.2rem 0.7rem' } },
-      'Each option rearranges the ticket number, times, and badge.'),
-    e('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.55rem' } },
-      CARD_LAYOUTS.map(l => e('button', { key:l.key, type:'button', onClick:()=>{ haptic('selection'); setCardOpt({ cardLayout: l.key }); },
-        style:{ textAlign:'left', border: (settings.cardLayout||'classic')===l.key ? '2px solid '+INK : '1px solid rgba(0,0,0,0.1)',
-          background:'#fff', borderRadius:'16px', padding:'0.65rem', cursor:'pointer' } },
-        e('div', { style:{ fontSize:'0.62rem', color:GREY, marginBottom:'0.35rem', letterSpacing:'0.04em', textTransform:'uppercase' } }, l.name),
-        e('div', { style:{ fontSize:'0.72rem', color:INK, lineHeight:1.35 } },
-          l.key==='banner' ? 'Times on top, number underneath' :
-          l.key==='editorial' ? 'Times first, number sinks to the foot' :
-          l.key==='split' ? 'Tinted title band, times below' :
-          l.key==='magazine' ? 'Accent rule and left column' :
-          l.key==='stack' ? 'Number ruled off from the times' :
-          'Badge and number above the times')
-      ))
-    )
-  );
-  const customView = e('div', { className: 'ios-page view-enter', style: { paddingBottom: '2.5rem', background: PAGE_BG, minHeight: '100vh' } },
-    studioNav,
-    e('div', { style:{ padding:'0.2rem 0 1.5rem' } },
-      studioPage === 'font' ? studioFontPage : studioPage === 'size' ? studioSizePage : studioPage === 'layout' ? studioLayoutPage : studioHub
     )
   );
 
