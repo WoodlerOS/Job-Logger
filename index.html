@@ -103,19 +103,32 @@
   }
   .ticket-type .ticket-num {
     font-style: italic;
-    font-weight: 600;
+    font-weight: 500;
   }
-  .ticket-type::before {
+  .ticket-type::before,
+  .ticket-type::after {
     content: "";
     position: absolute; inset: 0;
-    pointer-events: none; z-index: 0;
+    pointer-events: none;
     border-radius: inherit;
-    opacity: 0.28;
+  }
+  .ticket-type::before {
+    z-index: 0;
+    opacity: 0.62;
     mix-blend-mode: multiply;
     background-image:
-      radial-gradient(120% 80% at 12% 0%, rgba(255,255,255,0.28), transparent 46%),
-      radial-gradient(90% 70% at 100% 100%, rgba(80,50,20,0.08), transparent 55%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+  .ticket-type::after {
+    z-index: 0;
+    opacity: 0.38;
+    mix-blend-mode: overlay;
+    background-image:
+      radial-gradient(90% 70% at 18% 8%, rgba(255,255,255,0.55), transparent 52%),
+      radial-gradient(70% 60% at 88% 20%, rgba(180,90,40,0.18), transparent 50%),
+      radial-gradient(80% 80% at 70% 100%, rgba(40,70,90,0.14), transparent 55%),
+      radial-gradient(40% 30% at 40% 60%, rgba(255,255,255,0.22), transparent 60%);
   }
   .ticket-type > * { position: relative; z-index: 1; }
   .view-enter {
@@ -2216,6 +2229,7 @@ function App() {
   const [dockOpen, setDockOpen] = useState(false);
   const dockTimer = useRef(null);
   const fabHold = useRef(null);
+  const dockHeld = useRef(false);
   const [themeCat, setThemeCat] = useState('Sea');
   const [formSlideY, setFormSlideY] = useState(0);
   const formSlideYRef = useRef(0);
@@ -2336,7 +2350,7 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 26;
+  const CAL_TRIGGER = 68;
 
   const jobsRef = useRef(jobs);
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
@@ -3186,6 +3200,7 @@ function App() {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { touch.current.live = false; return; }
     if (savingRef.current) { touch.current.live = false; return; } // don't start a new swipe mid-save
     const t = ev.touches[0];
+    if ((settingsOpen || customOpen || stockOpen) && t.clientX > 22) { touch.current.live = false; return; }
     touch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
     setSwiping(true);
   };
@@ -3195,26 +3210,12 @@ function App() {
     const dx = t.clientX - touch.current.x;
     const dy = t.clientY - touch.current.y;
     if (!touch.current.locked) {
-      /* Direction is decided once, a few pixels into the gesture, and then
-         committed for the rest of it — the old version re-checked this on
-         every single move event, so a gesture that wavered even slightly
-         would flicker in and out of "swiping", which is what made it feel
-         jerky. A few px of dead zone also stops accidental taps from
-         registering as a swipe at all. */
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
       if (Math.abs(dy) > Math.abs(dx)) {
-        if (view === 'form' && editingId != null) {
-          touch.current.locked = 'peer';
-        } else {
-          touch.current.live = false; setSwiping(false); setSwipeX(0); return;
-        }
+        touch.current.live = false; setSwiping(false); setSwipeX(0); return;
       } else {
         touch.current.locked = 'save';
       }
-    }
-    if (touch.current.locked === 'peer') {
-      formSlideYRef.current = Math.max(-140, Math.min(140, dy)); setFormSlideY(formSlideYRef.current);
-      return;
     }
     /* Rubber-band easing: linear-ish up to ~130px, then increasingly
        resistant rather than hard-clamping at the cap — a hard clamp is what
@@ -3243,18 +3244,11 @@ function App() {
   };
   const onTouchEnd = () => {
     const x = swipeXRef.current || 0;
-    const y = formSlideYRef.current;
-    const kind = touch.current.locked;
     touch.current.live = false;
     setSwiping(false);
     swipeXRef.current = 0;
     setSwipeX(0);
     formSlideYRef.current = 0; setFormSlideY(0);
-    if (kind === 'peer') {
-      if (y <= -56) openPeerByDir(1);
-      else if (y >= 56) openPeerByDir(-1);
-      return;
-    }
     if (x >= SWIPE_TRIGGER) backOut();
   };
 
@@ -3307,7 +3301,6 @@ function App() {
     if (monthPickerOpen || menuOpen || settingsOpen || customOpen || stockOpen) return;
     const t = ev.touches[0];
     calTouch.current = { x:t.clientX, y:t.clientY, live:true, locked:false };
-    setCalDragging(true);
   };
   const onCalTouchMove = (ev) => {
     if (!calTouch.current.live) return;
@@ -3315,12 +3308,14 @@ function App() {
     const dx = t.clientX - calTouch.current.x;
     const dy = t.clientY - calTouch.current.y;
     if (!calTouch.current.locked) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      if (Math.abs(dy) > Math.abs(dx) + 12) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
+      if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
+      if (Math.abs(dx) < Math.abs(dy) + 18) { calTouch.current.live = false; setCalDragging(false); setCalDX(0); return; }
       calTouch.current.locked = true;
+      setCalDragging(true);
+      try { ev.preventDefault(); } catch (err) {}
     }
-    const raw = Math.max(-160, Math.min(160, dx));
-    const eased = raw * (Math.abs(raw) < 90 ? 0.92 : 0.55);
+    const raw = Math.max(-90, Math.min(90, dx));
+    const eased = raw * 0.22;
     setCalDX(eased);
   };
   const onCalTouchEnd = () => {
@@ -3563,10 +3558,14 @@ function App() {
     e('button', {
       className: 'dock-btn primary',
       onClick: () => {
-        if (dockOpen) { setDockOpen(false); openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null); }
-        else openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null);
+        if (dockHeld.current) { dockHeld.current = false; return; }
+        openNew(calMode === 'day' ? dv.iso : null, view === 'list' ? { view:'list' } : null);
+        setDockOpen(false);
       },
-      onTouchStart:()=>{ fabHold.current = setTimeout(expandDock, 420); },
+      onTouchStart:()=>{
+        dockHeld.current = false;
+        fabHold.current = setTimeout(() => { dockHeld.current = true; expandDock(); }, 420);
+      },
       onTouchEnd:()=>{ if (fabHold.current) { clearTimeout(fabHold.current); fabHold.current = null; } },
       onTouchCancel:()=>{ if (fabHold.current) { clearTimeout(fabHold.current); fabHold.current = null; } },
       onContextMenu:(ev)=>ev.preventDefault()
@@ -3710,10 +3709,10 @@ function App() {
 
       const fontFam = 'var(--display)';
       const rad = '26px';
-      const numberSize = '1.32rem';
-      const bigTimeSize = '1.05rem';
-      const smallTimeSize = '0.96rem';
-      const capSize = '0.82rem';
+      const numberSize = '1.2rem';
+      const bigTimeSize = '0.98rem';
+      const smallTimeSize = '0.9rem';
+      const capSize = '0.8rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -3726,7 +3725,7 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.92rem', fontWeight:600, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
+        flexShrink:0, fontSize:'0.86rem', fontWeight:500, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, fontStyle:'italic', color:faintC, letterSpacing:'-0.02em',
@@ -3736,10 +3735,10 @@ function App() {
       const children = [
         e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.7rem' } },
           e('div', { key:'left', style:{ minWidth:0, flex:1 } },
-            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:600, color:onC, letterSpacing:'-0.03em',
+            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:500, color:onC, letterSpacing:'-0.03em',
               lineHeight:1.12, wordBreak:'break-word' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: smallTimeSize, fontWeight: 600, fontStyle: 'normal', color: onC, opacity: 0.88,
+              fontSize: smallTimeSize, fontWeight: 500, fontStyle: 'normal', color: onC, opacity: 0.86,
               marginTop: '0.18rem', lineHeight: 1.32, wordBreak: 'break-word'
             } }, summaryText) : null
           ),
@@ -3797,7 +3796,7 @@ function App() {
           boxShadow: cardShadow,
           borderRadius: rad,
           padding: isExpanded ? '1.05rem 1.05rem 1.1rem' : '0.95rem 1.05rem 1.05rem', cursor:'pointer',
-          minHeight: isExpanded ? 'auto' : '118px',
+          minHeight: isExpanded ? 'auto' : '110px',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
         (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -4350,7 +4349,7 @@ function App() {
           if (stackOpen[gk] || expandedCardId) { openStack(gk, false); setExpandedCardId(null); }
         }
       },
-      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', height:'100dvh', overflow: homeNeedsScroll ? 'auto' : 'hidden', overscrollBehavior:'none', touchAction: homeNeedsScroll ? 'pan-y' : 'pan-x' }
+      style:{ padding:'0 0 5.2rem', display:'flex', flexDirection:'column', gap:'0.25rem', height:'100dvh', overflow: homeNeedsScroll ? 'auto' : 'hidden', overscrollBehavior:'none', touchAction: homeNeedsScroll ? 'pan-y' : 'none' }
     },
 
     e('div', { style:{ height:'calc(2.85rem + env(safe-area-inset-top))', flexShrink:0 } }),
@@ -4579,7 +4578,7 @@ function App() {
     onTouchStart:onTouchStart, onTouchMove:onTouchMove, onTouchEnd:onTouchEnd, onTouchCancel:onTouchEnd,
     style:{ padding:'0.35rem 0.85rem 2.6rem', display:'flex', flexDirection:'column', gap:'1.05rem', background:PAGE_BG,
       transition: swiping ? 'none' : 'transform .42s cubic-bezier(.22,1.15,.35,1), opacity .28s ease',
-      transform:'translateX('+swipeX+'px) translateY('+formSlideY+'px)',
+      transform:'translateX('+swipeX+'px)',
       borderRadius: swipeX > 6 ? '12px' : '0',
       touchAction: 'pan-y',
       boxShadow: 'none' } },
