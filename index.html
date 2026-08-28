@@ -2259,6 +2259,8 @@ function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [themeTick, setThemeTick] = useState(0);
   const [siteEdits, setSiteEdits] = useState([]);
+  const [stackDrag, setStackDrag] = useState(null);
+  const stackDragRef = useRef(null);
   const [equipEdits, setEquipEdits] = useState([]);
 
   const [query, setQuery] = useState('');
@@ -2366,7 +2368,7 @@ function App() {
   const [calDX, setCalDX] = useState(0);
   const [calDragging, setCalDragging] = useState(false);
   const calTouch = useRef({ x:0, y:0, live:false });
-  const CAL_TRIGGER = 46;
+  const CAL_TRIGGER = 28;
 
   const jobsRef = useRef(jobs);
   useEffect(() => { jobsRef.current = jobs; }, [jobs]);
@@ -3019,13 +3021,13 @@ function App() {
       summary: j.summary || '',
       site: j.site || '',
       equipment: eqOf(j),
-      date: (j.startDateTime||'').slice(0,10) || todayISO(),
+      date: localYMD(j.startDateTime) || todayISO(),
       t1: j.hasTravel && j.travelDateTime ? j.travelDateTime.slice(11,16) : '',
       start: (j.startDateTime||'').slice(11,16),
       finish: (j.finishDateTime||'').slice(11,16),
       t2: j.hasTravel2 && j.travel2DateTime ? j.travel2DateTime.slice(11,16) : '',
       extra: exOf(j).map(d => ({
-        date: (d.startDateTime||'').slice(0,10),
+        date: localYMD(d.startDateTime),
         t1: d.hasTravel && d.travelDateTime ? d.travelDateTime.slice(11,16) : '',
         start: (d.startDateTime||'').slice(11,16),
         finish: (d.finishDateTime||'').slice(11,16),
@@ -3074,6 +3076,11 @@ function App() {
       if (rec.equipment && rec.equipment.length) localStorage.setItem('ticketsLastEquip', JSON.stringify(rec.equipment));
     } catch (err) {}
     await persist(editingId ? jobs.map(j => j.id===editingId ? rec : j) : [rec, ...jobs]);
+    const dest = localYMD(rec.startDateTime || form.date);
+    if (dest) {
+      const jump = toLocalDate(dest);
+      if (jump) setAnchorDate(jump);
+    }
   };
 
 
@@ -3330,7 +3337,7 @@ function App() {
       calTouch.current.locked = true;
       setCalDragging(true);
     }
-    setCalDX(Math.max(-34, Math.min(34, dx * 0.32)));
+    setCalDX(Math.max(-40, Math.min(40, dx * 0.42)));
   };
   const onCalTouchEnd = () => {
     const raw = calTouch.current.dx || 0;
@@ -3817,9 +3824,15 @@ function App() {
           maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
-        (s && isExpanded) ? e('div', { key:'sheen', 'aria-hidden':true, style:{
+        e('div', { key:'sheen', 'aria-hidden':true, style:{
           position:'absolute', inset:0, pointerEvents:'none', borderRadius:'inherit',
-          background:'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 42%)'
+          background:'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 38%)'
+        } }),
+        (j.locked && settings.allowComplete) ? e('div', { key:'notch-rim', 'aria-hidden':true, style:{
+          position:'absolute', top:0, left:'50%', transform:'translate(-50%,-50%)',
+          width:'26px', height:'26px', borderRadius:'50%',
+          boxShadow:'inset 0 0 0 1.5px rgba(255,255,255,0.55), 0 1px 0 rgba(255,255,255,0.2)',
+          pointerEvents:'none', zIndex:3
         } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
         (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', right:'0.75rem', bottom:'0.55rem',
@@ -4564,12 +4577,21 @@ function App() {
       e('div', { style:{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'0.4rem' } }, buildTimes(d, update, prefix)));
 
 
-  const updateMain  = (patch) => setForm({ ...form, ...patch });
+  const updateMain  = (patch) => {
+    const next = { ...form, ...patch };
+    if (patch.date != null && patch.date !== form.date) {
+      const text = form.workDone || '';
+      const nl = text.indexOf('\n');
+      const rest = nl === -1 ? '' : text.slice(nl);
+      next.workDone = ukDate(patch.date) + rest;
+    }
+    setFormTracked(next);
+  };
   /* Editing an extra day's date also keeps that day's notes prefix in sync — the
      first line always shows the current date, exactly like Day 1's notes box,
      but everything the user typed after it (from the first newline onward) is
      left untouched. */
-  const updateExtra = (i, patch) => setForm({ ...form, extra: form.extra.map((x,idx) => {
+  const updateExtra = (i, patch) => setFormTracked({ ...form, extra: form.extra.map((x,idx) => {
     if (idx !== i) return x;
     const next = { ...x, ...patch };
     if (patch.date != null && patch.date !== x.date) {
@@ -4583,7 +4605,7 @@ function App() {
   const addExtraDay = () => {
     const last = form.extra.length ? form.extra[form.extra.length-1] : form;
     const nextDate = addDayISO(last.date, 1);
-    setForm({ ...form, extra: [ ...form.extra, {
+    setFormTracked({ ...form, extra: [ ...form.extra, {
       date: nextDate, t1:'', start: form.start, finish: form.finish, t2:'', notes: ukDate(nextDate) + '\n' } ] });
   };
 
@@ -4908,14 +4930,42 @@ function App() {
     );
 
   const filteredThemes = THEME_PRESETS.filter(t => t.cat === themeCat);
-  const previewJobs = Object.keys(SITES).map((key, idx) => ({
+  const previewSites = (siteEdits && siteEdits.length) ? siteEdits : sitesToList();
+  const previewJobs = previewSites.map((st, idx) => ({
     ...previewJob,
-    id: '__preview__' + key,
-    site: key,
-    ticketNumber: ['T-1042','T-1188','T-2210','T-0904'][idx],
-    summary: ['Filter change','Pump check','Seal replace','Sensor cal'][idx],
-    equipment: [['I'],['C'],['A'],['I']][idx]
+    id: '__preview__' + st.key,
+    site: st.key,
+    ticketNumber: ['T-1042','T-1188','T-2210','T-0904'][idx] || ('T-10'+idx),
+    summary: ['Filter change','Pump check','Seal replace','Sensor cal'][idx] || 'Visit',
+    equipment: [['I'],['C'],['A'],['I']][idx] || ['I']
   }));
+  const onStackDragStart = (idx, ev) => {
+    const t = ev.touches ? ev.touches[0] : ev;
+    stackDragRef.current = { from: idx, y: t.clientY, to: idx };
+    setStackDrag({ from: idx, dy: 0, to: idx });
+  };
+  const onStackDragMove = (ev) => {
+    const st = stackDragRef.current;
+    if (!st) return;
+    const t = ev.touches ? ev.touches[0] : ev;
+    const dy = t.clientY - st.y;
+    const to = Math.max(0, Math.min(previewJobs.length - 1, st.from + Math.round(dy / 26)));
+    st.to = to;
+    setStackDrag({ from: st.from, dy, to });
+  };
+  const onStackDragEnd = () => {
+    const st = stackDragRef.current;
+    stackDragRef.current = null;
+    setStackDrag(null);
+    if (!st || st.to === st.from) return;
+    const list = previewSites.slice();
+    const colors = list.map(x => ({ hex:x.hex, hex2:x.hex2, on:x.on }));
+    const [moved] = colors.splice(st.from, 1);
+    colors.splice(st.to, 0, moved);
+    const next = list.map((site, i) => ({ ...site, ...colors[i] }));
+    haptic('selection');
+    commitSites(next);
+  };
   const customView = e('div', { className: 'ios-page custom-page view-enter', style: { background: PAGE_BG } },
     e('div', { className: 'ios-nav' },
       e('button', { type:'button', className:'ios-nav-btn', onClick:()=>setCustomOpen(false), style:{ color:INK } }, 'Back'),
@@ -4923,11 +4973,27 @@ function App() {
       e('span', { style: { minWidth: '3.2rem' } })
     ),
     e('div', { style:{ padding:'0 0.9rem 0.4rem', flex:1, minHeight:0, display:'flex', flexDirection:'column' } },
-      e('div', { className:'preview-stack' },
-        previewJobs.map((pj, idx) => e('div', {
-          key: pj.id,
-          style:{ position:'absolute', left:0, right:0, top: (idx * 26) + 'px', zIndex: 4-idx }
-        }, ticketDetailCard(pj, idx, 0, idx > 0, null, true)))
+      e('div', { className:'preview-stack',
+        onTouchMove:onStackDragMove, onTouchEnd:onStackDragEnd, onTouchCancel:onStackDragEnd },
+        previewJobs.map((pj, idx) => {
+          const lifting = stackDrag && stackDrag.from === idx;
+          let top = idx * 26;
+          let z = 10 - idx;
+          if (stackDrag) {
+            if (lifting) { top = stackDrag.from * 26 + stackDrag.dy; z = 20; }
+            else if (stackDrag.from < stackDrag.to && idx > stackDrag.from && idx <= stackDrag.to) top = (idx - 1) * 26;
+            else if (stackDrag.from > stackDrag.to && idx < stackDrag.from && idx >= stackDrag.to) top = (idx + 1) * 26;
+          }
+          return e('div', {
+            key: pj.id,
+            onTouchStart:(ev)=>onStackDragStart(idx, ev),
+            style:{
+              position:'absolute', left:0, right:0, top: top + 'px', zIndex: z,
+              transition: lifting ? 'none' : 'top .2s ease',
+              touchAction: 'none'
+            }
+          }, ticketDetailCard(pj, idx, 0, !lifting && idx > 0, null, true));
+        })
       ),
       e('div', { className:'ios-group-label' }, 'Themes'),
       e('div', { className:'theme-emoji-tabs' },
