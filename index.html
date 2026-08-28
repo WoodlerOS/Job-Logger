@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Allura&family=Great+Vibes&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Allura&family=Great+Vibes&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -96,14 +96,32 @@
     font-weight: 400;
     letter-spacing: -0.03em;
   }
-  .ticket-type,
-  .ticket-type * {
-    font-family: var(--card-font, var(--display)) !important;
+  .ticket-type {
     letter-spacing: -0.02em;
   }
   .ticket-type .ticket-num {
+    font-family: "Fraunces", "Instrument Serif", serif;
     font-style: italic;
     font-weight: 400;
+    font-variation-settings: "SOFT" 58, "WONK" 1, "opsz" 72, "wght" 400;
+  }
+  .ticket-type .ticket-desc {
+    font-family: "Newsreader", "Source Serif 4", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-variation-settings: "opsz" 18, "wght" 400;
+  }
+  .ticket-type .ticket-machine {
+    font-family: "Fraunces", "Instrument Serif", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-variation-settings: "SOFT" 42, "WONK" 1, "opsz" 28, "wght" 400;
+  }
+  .ticket-type .ticket-time {
+    font-family: "Fraunces", "Instrument Serif", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-variation-settings: "SOFT" 12, "WONK" 0, "opsz" 48, "wght" 400;
   }
   .ticket-type::before,
   .ticket-type::after {
@@ -3740,7 +3758,7 @@ function App() {
       const fontFam = 'var(--display)';
       const rad = '26px';
       const numberSize = compact ? '1.08rem' : '1.18rem';
-      const bigTimeSize = compact ? '0.88rem' : '1.12rem';
+      const bigTimeSize = compact ? '0.88rem' : '1.22rem';
       const smallTimeSize = compact ? '0.84rem' : '0.96rem';
       const capSize = compact ? '0.74rem' : '0.8rem';
 
@@ -3754,7 +3772,7 @@ function App() {
       const multiCount = isMulti ? (ex.length + 1) : (seg ? dayIndex : 0);
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
-      const badge = e('span', { key:'badge', style:{
+      const badge = e('span', { key:'badge', className:'ticket-machine', style:{
         flexShrink:0, fontSize: compact ? '0.8rem' : '0.92rem', fontWeight:400, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
@@ -3762,31 +3780,35 @@ function App() {
         opacity:0.82, [marginProp]:'0.3rem' } }, text);
 
       const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
+      const dot = () => e('span', { style:{ fontSize:'0.7rem', color:onC, opacity:0.4, padding:'0 0.28rem' } }, '·');
+      const travelBit = (t) => e('span', { className:'ticket-desc', style:{
+        fontSize:'0.76rem', fontStyle:'italic', color:faintC, opacity:0.72, letterSpacing:'-0.01em'
+      } }, t);
+      const mainBit = (t) => e('span', { className:'ticket-time', style:{
+        fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums'
+      } }, t);
+      const timePieces = [];
+      if (t1) { timePieces.push(travelBit(t1)); timePieces.push(dot()); }
+      timePieces.push(mainBit(tStart));
+      timePieces.push(e('span', { className:'ticket-time', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.32, padding:'0 0.22rem' } }, '–'));
+      timePieces.push(mainBit(tFinish));
+      if (t2) { timePieces.push(dot()); timePieces.push(travelBit(t2)); }
       const children = [
         e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.65rem' } },
-          e('div', { key:'left', style:{ minWidth:0, flex:1 } },
+          e('div', { key:'left', style:{ minWidth:0, flex:1, textAlign:'left' } },
             e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
               lineHeight:1.08, wordBreak:'break-word' } }, title),
-            summaryText ? e('div', { style:{
+            summaryText ? e('div', { className:'ticket-desc', style:{
               fontSize: smallTimeSize, fontWeight: 400, fontStyle: 'italic', color: onC, opacity: 0.88,
-              marginTop: compact ? '0.14rem' : '0.32rem', lineHeight: 1.35, wordBreak: 'break-word'
+              marginTop: compact ? '0.14rem' : '0.28rem', lineHeight: 1.35, wordBreak: 'break-word'
             } }, summaryText) : null
           ),
           e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.08rem' } }, badge)
         ),
         compact ? null : e('div', { key:'times', style:{
-          marginTop:'0.62rem', display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'0.35rem'
-        } },
-          e('span', { style:{ fontSize:'0.78rem', fontStyle:'italic', color:faintC, opacity: t1 ? 0.7 : 0, minWidth:'2.6rem' } }, t1 || '·'),
-          e('div', { style:{ display:'flex', alignItems:'baseline', gap:'0.38rem' } },
-            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em',
-              fontVariantNumeric:'tabular-nums' } }, tStart),
-            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.32 } }, '–'),
-            e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em',
-              fontVariantNumeric:'tabular-nums' } }, tFinish)
-          ),
-          e('span', { style:{ fontSize:'0.78rem', fontStyle:'italic', color:faintC, opacity: t2 ? 0.7 : 0, minWidth:'2.6rem', textAlign:'right' } }, t2 || '·')
-        )
+          marginTop:'auto', paddingTop:'0.55rem', paddingBottom:'0.08rem',
+          display:'flex', alignItems:'baseline', justifyContent:'flex-end', flexWrap:'wrap'
+        } }, timePieces)
       ];
 
       const isExpanded = expandKey && expandedCardId === expandKey;
@@ -3830,10 +3852,11 @@ function App() {
           border: cardBorder,
           boxShadow: cardShadow,
           borderRadius: rad,
-          padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1rem 1.05rem 1rem' : '0.88rem 1rem 0.82rem'), cursor:'pointer',
-          minHeight: compact ? '68px' : (isExpanded ? 'auto' : '122px'),
-          WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
-          maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
+          padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1rem 1.05rem 1rem' : '0.82rem 1rem 0.72rem'), cursor:'pointer',
+          minHeight: compact ? '68px' : (isExpanded ? 'auto' : '118px'),
+          display:'flex', flexDirection:'column',
+          WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 80% 0px, transparent 8.2px, #000 9px)' : 'none',
+          maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 80% 0px, transparent 8.2px, #000 9px)' : 'none',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
         e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -3841,13 +3864,13 @@ function App() {
           background:'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 38%)'
         } }),
         (j.locked && settings.allowComplete) ? e('div', { key:'notch-rim', 'aria-hidden':true, style:{
-          position:'absolute', top:0, left:'50%', transform:'translate(-50%,-50%)',
-          width:'26px', height:'26px', borderRadius:'50%',
-          boxShadow:'inset 0 0 0 1.5px rgba(255,255,255,0.55), 0 1px 0 rgba(255,255,255,0.2)',
+          position:'absolute', top:0, left:'80%', transform:'translate(-50%,-50%)',
+          width:'18px', height:'18px', borderRadius:'50%',
+          boxShadow:'inset 0 0 0 1.25px rgba(255,255,255,0.5)',
           pointerEvents:'none', zIndex:3
         } }) : null,
-        e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1 } }, children),
-        (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', right:'0.75rem', bottom:'0.55rem',
+        e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1, display:'flex', flexDirection:'column', flex:1, minHeight: compact ? 0 : '96px' } }, children),
+        (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', left:'1rem', bottom:'0.55rem',
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
