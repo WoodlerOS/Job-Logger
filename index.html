@@ -112,21 +112,28 @@
     pointer-events: none;
     border-radius: inherit;
   }
+  .ticket-type {
+    background-color: var(--card-col, #203B59);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65 0.9' numOctaves='4' stitchTiles='stitch' seed='3'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.62  0 0 0 0 0.55  0 0 0 0 0.48  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='2' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    background-size: 220px 220px, 90px 90px;
+    background-blend-mode: multiply, overlay;
+  }
   .ticket-type::before {
     z-index: 0;
-    opacity: 0.28;
-    mix-blend-mode: multiply;
+    opacity: 0.42;
+    mix-blend-mode: overlay;
     background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.35'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
+      linear-gradient(165deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.04) 38%, rgba(0,0,0,0.10) 100%);
   }
   .ticket-type::after {
     z-index: 0;
-    opacity: 0.16;
-    mix-blend-mode: soft-light;
+    opacity: 0.22;
+    mix-blend-mode: multiply;
     background-image:
-      radial-gradient(90% 70% at 16% 0%, rgba(255,255,255,0.35), transparent 58%),
-      radial-gradient(70% 50% at 100% 100%, rgba(255,255,255,0.12), transparent 60%);
+      radial-gradient(120% 80% at 0% 0%, rgba(255,255,255,0.18), transparent 52%),
+      radial-gradient(90% 70% at 100% 100%, rgba(20,12,8,0.16), transparent 58%);
   }
   .ticket-type > * { position: relative; z-index: 1; }
   .view-enter {
@@ -3732,10 +3739,10 @@ function App() {
 
       const fontFam = 'var(--display)';
       const rad = '26px';
-      const numberSize = '1.2rem';
-      const bigTimeSize = '0.98rem';
-      const smallTimeSize = '0.9rem';
-      const capSize = '0.8rem';
+      const numberSize = compact ? '1.12rem' : '1.34rem';
+      const bigTimeSize = compact ? '0.92rem' : '1.28rem';
+      const smallTimeSize = compact ? '0.86rem' : '1.02rem';
+      const capSize = compact ? '0.76rem' : '0.84rem';
 
       const t1 = segHasTravel ? fmtTime(segTravel) : '';
       const tStart = fmtTime(segStart);
@@ -3748,33 +3755,49 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', style:{
-        flexShrink:0, fontSize:'0.86rem', fontWeight:500, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
+        flexShrink:0, fontSize: compact ? '0.82rem' : '0.98rem', fontWeight:500, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, fontStyle:'italic', color:faintC, letterSpacing:'-0.02em',
         opacity:0.82, [marginProp]:'0.3rem' } }, text);
 
       const summaryText = (j.summary != null && String(j.summary).trim()) ? String(j.summary).trim() : '';
-      const children = [
-        e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.7rem' } },
+      const timeCol = (label, time, hint) => e('div', { style:{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.05rem' } },
+        e('span', { style:{ fontSize:'0.62rem', letterSpacing:'0.08em', textTransform:'uppercase', color:onC, opacity:0.55, fontWeight:500 } }, label),
+        e('span', { className:'display-date', style:{ fontSize:'1.72rem', fontWeight:400, color:onC, letterSpacing:'-0.04em',
+          fontVariantNumeric:'tabular-nums', lineHeight:0.95 } }, time),
+        hint ? e('span', { style:{ fontSize:'0.7rem', fontStyle:'italic', color:faintC, opacity:0.7 } }, hint) : null
+      );
+      const children = compact ? [
+        e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.55rem' } },
           e('div', { key:'left', style:{ minWidth:0, flex:1 } },
             e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:500, color:onC, letterSpacing:'-0.03em',
-              lineHeight:1.12, wordBreak:'break-word' } }, title),
+              lineHeight:1.05, wordBreak:'break-word' } }, title),
             summaryText ? e('div', { style:{
-              fontSize: smallTimeSize, fontWeight: 500, fontStyle: 'normal', color: onC, opacity: 0.86,
-              marginTop: '0.18rem', lineHeight: 1.32, wordBreak: 'break-word'
+              fontSize: smallTimeSize, fontWeight: 500, color: onC, opacity: 0.9,
+              marginTop: '0.12rem', lineHeight: 1.25, wordBreak: 'break-word'
             } }, summaryText) : null
           ),
-          e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.12rem' } }, badge)
-        ),
-        compact ? null : e('div', { key:'times', style:{ marginTop:'0.7rem', display:'flex', alignItems:'baseline', gap:'0.35rem' } },
-          t1 ? e('span', { style:{ fontSize:'0.7rem', fontStyle:'italic', color:faintC, opacity:0.7, marginRight:'0.15rem' } }, t1) : null,
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em',
-            fontVariantNumeric:'tabular-nums' } }, tStart),
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.38 } }, '–'),
-          e('span', { className:'display-date', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em',
-            fontVariantNumeric:'tabular-nums' } }, tFinish),
-          t2 ? e('span', { style:{ fontSize:'0.7rem', fontStyle:'italic', color:faintC, opacity:0.7, marginLeft:'0.15rem' } }, t2) : null
+          e('div', { key:'right', style:{ flexShrink:0 } }, badge)
+        )
+      ] : [
+        e('div', { key:'split', style:{ display:'flex', alignItems:'stretch', gap:'0.7rem', minHeight:'118px' } },
+          e('div', { key:'left', style:{ minWidth:0, flex:1, display:'flex', flexDirection:'column', justifyContent:'space-between' } },
+            e('div', null,
+              e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:500, color:onC, letterSpacing:'-0.03em',
+                lineHeight:1.02, wordBreak:'break-word' } }, title),
+              summaryText ? e('div', { style:{
+                fontSize: '1.08rem', fontWeight: 400, fontStyle:'italic', color: onC, opacity: 0.9,
+                marginTop: '0.28rem', lineHeight: 1.2, wordBreak: 'break-word'
+              } }, summaryText) : null
+            ),
+            e('div', { style:{ marginTop:'0.55rem' } }, badge)
+          ),
+          e('div', { key:'clock', style:{ flexShrink:0, width:'42%', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'flex-end', gap:'0.18rem' } },
+            timeCol('start', tStart, t1 ? t1 + ' travel' : ''),
+            e('span', { style:{ fontSize:'1.05rem', color:onC, opacity:0.28, lineHeight:1, margin:'0.06rem 0' } }, '–'),
+            timeCol('finish', tFinish, t2 ? t2 + ' travel' : '')
+          )
         )
       ];
 
@@ -3813,13 +3836,14 @@ function App() {
         key: 'card-'+(j.id != null ? j.id : i)+(seg ? '-d'+dayIndex : ''),
         className: 'ticket-type',
         style:{ background: s ? s.hex : SURF,
+          ['--card-col']: s ? s.hex : SURF,
           ['--card-font']: fontFam,
           overflow:'hidden', position:'relative',
           border: cardBorder,
           boxShadow: cardShadow,
           borderRadius: rad,
-          padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1.05rem 1.05rem 1.1rem' : '0.95rem 1.05rem 1.05rem'), cursor:'pointer',
-          minHeight: compact ? '68px' : (isExpanded ? 'auto' : '110px'),
+          padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1.05rem 1.1rem 1.05rem' : '0.95rem 1.05rem 0.9rem'), cursor:'pointer',
+          minHeight: compact ? '68px' : (isExpanded ? 'auto' : '148px'),
           WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
           maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 13px at 50% 0px, transparent 12px, #000 13px)' : 'none',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
