@@ -3753,8 +3753,8 @@ function App() {
 
       const fontFam = 'var(--display)';
       const rad = '26px';
-      const numberSize = compact ? '1.08rem' : '1.18rem';
-      const bigTimeSize = compact ? '0.92rem' : '1.36rem';
+      const numberSize = compact ? '1.1rem' : '1.28rem';
+      const bigTimeSize = compact ? '0.92rem' : '1.28rem';
       const smallTimeSize = compact ? '0.84rem' : '0.96rem';
       const capSize = compact ? '0.74rem' : '0.8rem';
 
@@ -3802,7 +3802,7 @@ function App() {
           e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.08rem' } }, badge)
         ),
         compact ? null : e('div', { key:'times', style:{
-          marginTop:'auto', paddingTop:'0.32rem', paddingBottom:'0.42rem',
+          marginTop:'auto', paddingTop:'0.18rem', paddingBottom:'2.1rem',
           display:'flex', alignItems:'baseline', justifyContent:'flex-end', flexWrap:'wrap'
         } }, timePieces)
       ];
@@ -3851,8 +3851,8 @@ function App() {
           padding: compact ? '0.55rem 0.85rem 0.6rem' : (isExpanded ? '1rem 1.05rem 1rem' : '0.82rem 1rem 0.72rem'), cursor:'pointer',
           minHeight: compact ? '68px' : (isExpanded ? 'auto' : '118px'),
           display:'flex', flexDirection:'column',
-          WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 80% 0px, transparent 8.2px, #000 9px)' : 'none',
-          maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 80% 0px, transparent 8.2px, #000 9px)' : 'none',
+          WebkitMaskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 12.5% 0px, transparent 8.2px, #000 9px)' : 'none',
+          maskImage: (j.locked && settings.allowComplete) ? 'radial-gradient(circle 9px at 12.5% 0px, transparent 8.2px, #000 9px)' : 'none',
           transition:'box-shadow .28s cubic-bezier(.22,.9,.3,1), border-color .22s ease, transform .18s cubic-bezier(.34,1.2,.64,1), padding .25s ease' }
       },
         e('div', { key:'sheen', 'aria-hidden':true, style:{
@@ -3860,13 +3860,13 @@ function App() {
           background:'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 38%)'
         } }),
         (j.locked && settings.allowComplete) ? e('div', { key:'notch-rim', 'aria-hidden':true, style:{
-          position:'absolute', top:0, left:'80%', transform:'translate(-50%,-50%)',
+          position:'absolute', top:0, left:'12.5%', transform:'translate(-50%,-50%)',
           width:'18px', height:'18px', borderRadius:'50%',
           boxShadow:'inset 0 0 0 1.25px rgba(255,255,255,0.5)',
           pointerEvents:'none', zIndex:3
         } }) : null,
         e('div', { key:'body', style:{ position:'relative', overflow:'visible', zIndex:1, display:'flex', flexDirection:'column', flex:1, minHeight: compact ? 0 : '96px' } }, children),
-        (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', left:'1rem', bottom:'0.55rem',
+        (!overlapped && !compact) && e('div', { key:'strip', style:{ position:'absolute', left:'1rem', bottom:'1.55rem',
           display:'flex', alignItems:'center', justifyContent:'flex-end', gap:'0.85rem' } },
           partsCount ? e('div', { key:'parts', style:{ display:'flex', alignItems:'center', gap:'6px' } },
             GearIcon(17, faintC),
