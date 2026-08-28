@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Allura&family=Great+Vibes&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=IBM+Plex+Sans:wght@400;600&family=Instrument+Serif:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,400&family=Petrona:ital,wght@0,300;0,500;1,300;1,500&family=Allura&family=Great+Vibes&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap" rel="stylesheet">
 <title>Tickets</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -100,28 +100,24 @@
     letter-spacing: -0.02em;
   }
   .ticket-type .ticket-num {
-    font-family: "Fraunces", "Instrument Serif", serif;
+    font-family: "Petrona", "Source Serif 4", serif;
     font-style: italic;
-    font-weight: 400;
-    font-variation-settings: "SOFT" 58, "WONK" 1, "opsz" 72, "wght" 400;
+    font-weight: 500;
   }
   .ticket-type .ticket-desc {
-    font-family: "Newsreader", "Source Serif 4", serif;
+    font-family: "Petrona", "Source Serif 4", serif;
     font-style: italic;
-    font-weight: 400;
-    font-variation-settings: "opsz" 18, "wght" 400;
+    font-weight: 300;
   }
   .ticket-type .ticket-machine {
-    font-family: "Fraunces", "Instrument Serif", serif;
+    font-family: "Petrona", "Source Serif 4", serif;
     font-style: italic;
-    font-weight: 400;
-    font-variation-settings: "SOFT" 42, "WONK" 1, "opsz" 28, "wght" 400;
+    font-weight: 300;
   }
   .ticket-type .ticket-time {
-    font-family: "Fraunces", "Instrument Serif", serif;
+    font-family: "Petrona", "Source Serif 4", serif;
     font-style: italic;
-    font-weight: 400;
-    font-variation-settings: "SOFT" 12, "WONK" 0, "opsz" 48, "wght" 400;
+    font-weight: 500;
   }
   .ticket-type::before,
   .ticket-type::after {
@@ -3758,7 +3754,7 @@ function App() {
       const fontFam = 'var(--display)';
       const rad = '26px';
       const numberSize = compact ? '1.08rem' : '1.18rem';
-      const bigTimeSize = compact ? '0.88rem' : '1.22rem';
+      const bigTimeSize = compact ? '0.92rem' : '1.36rem';
       const smallTimeSize = compact ? '0.84rem' : '0.96rem';
       const capSize = compact ? '0.74rem' : '0.8rem';
 
@@ -3773,7 +3769,7 @@ function App() {
 
       const badgeText = eq.length ? badgeLabelFor(eq[0]) : '·';
       const badge = e('span', { key:'badge', className:'ticket-machine', style:{
-        flexShrink:0, fontSize: compact ? '0.8rem' : '0.92rem', fontWeight:400, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
+        flexShrink:0, fontSize: compact ? '0.8rem' : '0.92rem', fontWeight:300, fontStyle:'italic', letterSpacing:'-0.02em', color:onC } }, badgeText);
 
       const travelLine = (text, marginProp) => e('div', { style:{
         fontSize:smallTimeSize, fontWeight:400, fontStyle:'italic', color:faintC, letterSpacing:'-0.02em',
@@ -3785,28 +3781,28 @@ function App() {
         fontSize:'0.76rem', fontStyle:'italic', color:faintC, opacity:0.72, letterSpacing:'-0.01em'
       } }, t);
       const mainBit = (t) => e('span', { className:'ticket-time', style:{
-        fontSize:bigTimeSize, fontWeight:400, color:onC, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums'
+        fontSize:bigTimeSize, fontWeight:500, color:onC, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums'
       } }, t);
       const timePieces = [];
       if (t1) { timePieces.push(travelBit(t1)); timePieces.push(dot()); }
       timePieces.push(mainBit(tStart));
-      timePieces.push(e('span', { className:'ticket-time', style:{ fontSize:bigTimeSize, fontWeight:400, color:onC, opacity:0.32, padding:'0 0.22rem' } }, '–'));
+      timePieces.push(e('span', { className:'ticket-time', style:{ fontSize:bigTimeSize, fontWeight:500, color:onC, opacity:0.32, padding:'0 0.22rem' } }, '–'));
       timePieces.push(mainBit(tFinish));
       if (t2) { timePieces.push(dot()); timePieces.push(travelBit(t2)); }
       const children = [
         e('div', { key:'row', style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.65rem' } },
           e('div', { key:'left', style:{ minWidth:0, flex:1, textAlign:'left' } },
-            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:400, color:onC, letterSpacing:'-0.03em',
+            e('div', { className:'ticket-num', style:{ fontSize:numberSize, fontWeight:500, color:onC, letterSpacing:'-0.03em',
               lineHeight:1.08, wordBreak:'break-word' } }, title),
             summaryText ? e('div', { className:'ticket-desc', style:{
-              fontSize: smallTimeSize, fontWeight: 400, fontStyle: 'italic', color: onC, opacity: 0.88,
+              fontSize: smallTimeSize, fontWeight: 300, fontStyle: 'italic', color: onC, opacity: 0.88,
               marginTop: compact ? '0.14rem' : '0.28rem', lineHeight: 1.35, wordBreak: 'break-word'
             } }, summaryText) : null
           ),
           e('div', { key:'right', style:{ flexShrink:0, textAlign:'right', paddingTop:'0.08rem' } }, badge)
         ),
         compact ? null : e('div', { key:'times', style:{
-          marginTop:'auto', paddingTop:'0.55rem', paddingBottom:'0.08rem',
+          marginTop:'auto', paddingTop:'0.32rem', paddingBottom:'0.42rem',
           display:'flex', alignItems:'baseline', justifyContent:'flex-end', flexWrap:'wrap'
         } }, timePieces)
       ];
