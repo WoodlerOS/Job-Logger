@@ -1695,82 +1695,82 @@ async function dbSet(k,v){try{const db=await openDB();await new Promise((res,rej
 
 const STOCK_INVENTORY_VERSION = '2026-09-active';
 const STOCK_PARTS = [
-  { partNumber:'7-14237-01', description:'DC-111 Silicone compound, (RoHS)', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'7-200378-01', description:'Head, Waste Pump (RoHS)', available:5, actual:3, missing:2, kind:'short' },
-  { partNumber:'7-202464-01', description:'Tubing, Peristaltic Head (RoHS)', available:5, actual:4, missing:1, kind:'short' },
-  { partNumber:'7-204410-02', description:'DC-4 Silicone Dielectric Grease', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'7-205346-01', description:'VLV ASSY, BULK SOLN (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'7-64407-01', description:'Gasket, Manifold Valve, Kit (RoHS)', available:2, actual:1, missing:1, kind:'short' },
-  { partNumber:'7-76656-06', description:'ASSY, ITV (ROHS)', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'7-77991-01', description:'Thermistor, P Path (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'7-94851-01', description:'Super Lube Grease (RoHS)', available:3, actual:0, missing:3, kind:'missing' },
-  { partNumber:'7-96344-04', description:'100uL Trigger Pump (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'96163-102-D15-R', description:'ARC PUMP BODY 100MicroL (RoHS)', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-10003442-01', description:'Filter Kit, Dilution Assembly', available:2, actual:1, missing:1, kind:'short' },
-  { partNumber:'A-10004887-01', description:'Sample, R1 and R2 Pipettor Arm Spring', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-10008278-02', description:'Funnel, 8 oz Plastic', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-101385-01', description:'Home Sensor, Process Path and Reagent Transport', available:4, actual:1, missing:3, kind:'short' },
-  { partNumber:'A-204217-02', description:'PM Sensor, Tested, Short Cable', available:3, actual:1, missing:2, kind:'short' },
-  { partNumber:'A-30102007-02', description:'Roller Kit, RSM Transport', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30103383-03', description:'Main Power Supply, processing Module', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30105128-01', description:'Reagent Wedge Spring', available:5, actual:2, missing:3, kind:'short' },
-  { partNumber:'A-30105717-01', description:'Transport Z Motor Assembly', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30105976-01', description:'RSM Transport Theta Encoder Cable', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30106369-02', description:'Tube, R1-R2 Pipettor Probe to PM Sensor', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-30108557-02', description:'Boom Assembly, R1-R2 Pipettor, Improved Access', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30109444-03', description:'ASSY, WASTE CHUTE, LOWER', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-30109615-01', description:'RV Waste Chute Trap Door', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30109807-03', description:'Pump, Vacuum, Dual Valve Intake and Exhaust', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30111449-01', description:'Waste Container', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30111660-01', description:'Valve, Wash Cup, All Positions', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-30111780-02', description:'Transfer Valve Manifold', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30111871-02', description:'Tubing Clip, WZ1', available:2, actual:1, missing:1, kind:'short' },
-  { partNumber:'A-30111940-03', description:'Vacuum Pump Repair Kit', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30112778-01', description:'Probe Alignment Target, Induction Heater', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30113530-01', description:'Grease Pump', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30113561-01', description:'Tubing, Wash Zone at Waste Manifold', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30114769-02', description:'Bearing Grease, Refill', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-30116125-01', description:'Tube, Vacuum Pump Connect', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-30117110-01', description:'TRI/QUAD MODULE RSM FLEX CHAIN', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35001001-02', description:'Cable, RV Translate and Pusher Motor', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35001317-01', description:'Washcup Valve', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35001791-02', description:'Wash Zone Manifold, NO VALVES', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-35002434-01', description:'ASSY, REAGENT ANTENNA', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35002446-01', description:'Cable, PP ANT, Sample PIP', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35002494-01', description:'CABLE, WZ #2 LIFT, UCB', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35005847-01', description:'Reagent Loader Z Home Sensor Cable', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35005850-01', description:'Reagent Loader Z Motor Cable', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35006339-01', description:'Washcup Trigger Isolation Valve Cable', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35006630-01', description:'PM Sensor, Assy', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'A-35017070-02', description:'Vacuum Pump, Dual Head', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35017343-01', description:'Control Board, Vacuum Pump Universal', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35022459-02', description:'Vacuum Accumulator Cap and Sensor', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35026859-01', description:'Pulley with gears for Z-Tensioner', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-35032274-01', description:'SSD for Alinity UIC', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-90000095-02', description:'RSM Slot Sensor, 15 Slot', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-90000110-01', description:'RSM 2 Axis Driver', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-90000115-02', description:'RSM Slot Sensor, 10 Slot', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-90000135-02', description:'PCB, Pipettor Control Board', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'A-90000140-01', description:'Reagent Loader Cartridge Sensor', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'B-14237-15', description:'LUBRICANT,TEFLON OIL', available:5, actual:0, missing:5, kind:'missing' },
-  { partNumber:'C-35016285-01', description:'Sensor, Trigger', available:2, actual:1, missing:1, kind:'short' },
-  { partNumber:'C-35016361-01', description:'Filter, Water Bath', available:2, actual:0, missing:2, kind:'missing' },
-  { partNumber:'C-35016435-01', description:'Tbg, Syringe valve to Syringe, R1', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016509-01', description:'Tbg, R2 Inner', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016590-01', description:'Spring, Reagent Segment', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016639-01', description:'Pinch Valve, ICT Aspiration Pump', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016657-01', description:'Sheet Valve, Vac. Pump', available:4, actual:3, missing:1, kind:'short' },
-  { partNumber:'C-35016658-01', description:'O-ring, Vacuum Pump', available:4, actual:3, missing:1, kind:'short' },
-  { partNumber:'C-35016687-01', description:'Cable, ICT Warming Housing Ground', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016701-01', description:'TBG, PM SENSOR TO JOINT, R1', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'C-35016756-02', description:'Cable, ICT to ICT Pre Amp', available:3, actual:0, missing:3, kind:'missing' },
-  { partNumber:'C-35017994-01', description:'Syringe Valve, Sample, R1, R2', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'G-41013-01', description:'MODULE CONTROLLER BOARD', available:4, actual:1, missing:3, kind:'short' },
-  { partNumber:'G-41220-01', description:'BASIC LANE AP CENTER', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'G-41261-01', description:'BLM BACKGROUND PLATE', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'G-41300-01', description:'AM GRIPPER FINGER KIT', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'G-41565-01', description:'HOME POSITION SENSOR', available:1, actual:0, missing:1, kind:'missing' },
-  { partNumber:'G-41689-01', description:'SHUTTER SLIDE BEARING SET', available:4, actual:0, missing:4, kind:'missing' }
+  { partNumber:'7-14237-01', description:'DC-111 Silicone compound, (RoHS)', available:2, actual:0, missing:2, kind:'missing', price:156.0325, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-200378-01', description:'Head, Waste Pump (RoHS)', available:5, actual:3, missing:2, kind:'short', price:135.59, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-202464-01', description:'Tubing, Peristaltic Head (RoHS)', available:5, actual:4, missing:1, kind:'short', price:176.6544, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-204410-02', description:'DC-4 Silicone Dielectric Grease', available:1, actual:0, missing:1, kind:'missing', price:254.1864, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-205346-01', description:'VLV ASSY, BULK SOLN (RoHS)', available:1, actual:0, missing:1, kind:'missing', price:308.6304, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-64407-01', description:'Gasket, Manifold Valve, Kit (RoHS)', available:2, actual:1, missing:1, kind:'short', price:191.5056, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-76656-06', description:'ASSY, ITV (ROHS)', available:1, actual:0, missing:1, kind:'missing', price:1040.425, priority:'HIGH', notes:'' },
+  { partNumber:'7-77991-01', description:'Thermistor, P Path (RoHS)', available:1, actual:0, missing:1, kind:'missing', price:138.8725, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-94851-01', description:'Super Lube Grease (RoHS)', available:3, actual:0, missing:3, kind:'missing', price:108.3225, priority:'MEDIUM', notes:'' },
+  { partNumber:'7-96344-04', description:'100uL Trigger Pump (RoHS)', available:1, actual:0, missing:1, kind:'missing', price:1187.725, priority:'HIGH', notes:'' },
+  { partNumber:'96163-102-D15-R', description:'ARC PUMP BODY 100MicroL (RoHS)', available:2, actual:0, missing:2, kind:'missing', price:791.8465, priority:'HIGH', notes:'' },
+  { partNumber:'A-10003442-01', description:'Filter Kit, Dilution Assembly', available:2, actual:1, missing:1, kind:'short', price:60.24, priority:'LOW', notes:'' },
+  { partNumber:'A-10004887-01', description:'Sample, R1 and R2 Pipettor Arm Spring', available:1, actual:0, missing:1, kind:'missing', price:86.415, priority:'LOW', notes:'' },
+  { partNumber:'A-10008278-02', description:'Funnel, 8 oz Plastic', available:1, actual:0, missing:1, kind:'missing', price:51.68, priority:'LOW', notes:'' },
+  { partNumber:'A-101385-01', description:'Home Sensor, Process Path and Reagent Transport', available:4, actual:1, missing:3, kind:'short', price:24.44, priority:'LOW', notes:'' },
+  { partNumber:'A-204217-02', description:'PM Sensor, Tested, Short Cable', available:3, actual:1, missing:2, kind:'short', price:485.3475, priority:'HIGH', notes:'' },
+  { partNumber:'A-30102007-02', description:'Roller Kit, RSM Transport', available:1, actual:0, missing:1, kind:'missing', price:108.5175, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30103383-03', description:'Main Power Supply, processing Module', available:1, actual:0, missing:1, kind:'missing', price:3509.7, priority:'HIGH', notes:'' },
+  { partNumber:'A-30105128-01', description:'Reagent Wedge Spring', available:5, actual:2, missing:3, kind:'short', price:145.6325, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30105717-01', description:'Transport Z Motor Assembly', available:1, actual:0, missing:1, kind:'missing', price:622.6175, priority:'HIGH', notes:'' },
+  { partNumber:'A-30105976-01', description:'RSM Transport Theta Encoder Cable', available:1, actual:0, missing:1, kind:'missing', price:103.845, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30106369-02', description:'Tube, R1-R2 Pipettor Probe to PM Sensor', available:2, actual:0, missing:2, kind:'missing', price:321.24, priority:'HIGH', notes:'' },
+  { partNumber:'A-30108557-02', description:'Boom Assembly, R1-R2 Pipettor, Improved Access', available:1, actual:0, missing:1, kind:'missing', price:654.5235, priority:'HIGH', notes:'' },
+  { partNumber:'A-30109444-03', description:'ASSY, WASTE CHUTE, LOWER', available:2, actual:0, missing:2, kind:'missing', price:759.775, priority:'HIGH', notes:'' },
+  { partNumber:'A-30109615-01', description:'RV Waste Chute Trap Door', available:1, actual:0, missing:1, kind:'missing', price:528.5425, priority:'HIGH', notes:'' },
+  { partNumber:'A-30109807-03', description:'Pump, Vacuum, Dual Valve Intake and Exhaust', available:1, actual:0, missing:1, kind:'missing', price:1030.7, priority:'HIGH', notes:'' },
+  { partNumber:'A-30111449-01', description:'Waste Container', available:1, actual:0, missing:1, kind:'missing', price:118.8525, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30111660-01', description:'Valve, Wash Cup, All Positions', available:2, actual:0, missing:2, kind:'missing', price:200.3976, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30111780-02', description:'Transfer Valve Manifold', available:1, actual:0, missing:1, kind:'missing', price:190.2576, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30111871-02', description:'Tubing Clip, WZ1', available:2, actual:1, missing:1, kind:'short', price:88.025, priority:'LOW', notes:'' },
+  { partNumber:'A-30111940-03', description:'Vacuum Pump Repair Kit', available:1, actual:0, missing:1, kind:'missing', price:128.375, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30112778-01', description:'Probe Alignment Target, Induction Heater', available:1, actual:0, missing:1, kind:'missing', price:229.632, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30113530-01', description:'Grease Pump', available:1, actual:0, missing:1, kind:'missing', price:162.9576, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30113561-01', description:'Tubing, Wash Zone at Waste Manifold', available:1, actual:0, missing:1, kind:'missing', price:228.384, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30114769-02', description:'Bearing Grease, Refill', available:2, actual:0, missing:2, kind:'missing', price:152.5225, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-30116125-01', description:'Tube, Vacuum Pump Connect', available:1, actual:0, missing:1, kind:'missing', price:85.05, priority:'LOW', notes:'' },
+  { partNumber:'A-30117110-01', description:'TRI/QUAD MODULE RSM FLEX CHAIN', available:1, actual:0, missing:1, kind:'missing', price:640.3725, priority:'HIGH', notes:'' },
+  { partNumber:'A-35001001-02', description:'Cable, RV Translate and Pusher Motor', available:1, actual:0, missing:1, kind:'missing', price:100.945, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-35001317-01', description:'Washcup Valve', available:1, actual:0, missing:1, kind:'missing', price:178.2768, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-35001791-02', description:'Wash Zone Manifold, NO VALVES', available:2, actual:0, missing:2, kind:'missing', price:359.7, priority:'HIGH', notes:'' },
+  { partNumber:'A-35002434-01', description:'ASSY, REAGENT ANTENNA', available:1, actual:0, missing:1, kind:'missing', price:161.7408, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-35002446-01', description:'Cable, PP ANT, Sample PIP', available:1, actual:0, missing:1, kind:'missing', price:92.015, priority:'LOW', notes:'' },
+  { partNumber:'A-35002494-01', description:'CABLE, WZ #2 LIFT, UCB', available:1, actual:0, missing:1, kind:'missing', price:92.05, priority:'LOW', notes:'' },
+  { partNumber:'A-35005847-01', description:'Reagent Loader Z Home Sensor Cable', available:1, actual:0, missing:1, kind:'missing', price:101.78, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-35005850-01', description:'Reagent Loader Z Motor Cable', available:1, actual:0, missing:1, kind:'missing', price:71.015, priority:'LOW', notes:'' },
+  { partNumber:'A-35006339-01', description:'Washcup Trigger Isolation Valve Cable', available:1, actual:0, missing:1, kind:'missing', price:75.355, priority:'LOW', notes:'' },
+  { partNumber:'A-35006630-01', description:'PM Sensor, Assy', available:2, actual:0, missing:2, kind:'missing', price:273, priority:'HIGH', notes:'' },
+  { partNumber:'A-35017070-02', description:'Vacuum Pump, Dual Head', available:1, actual:0, missing:1, kind:'missing', price:1546.5435, priority:'HIGH', notes:'' },
+  { partNumber:'A-35017343-01', description:'Control Board, Vacuum Pump Universal', available:1, actual:0, missing:1, kind:'missing', price:559.6005, priority:'HIGH', notes:'' },
+  { partNumber:'A-35022459-02', description:'Vacuum Accumulator Cap and Sensor', available:1, actual:0, missing:1, kind:'missing', price:1056.525, priority:'HIGH', notes:'' },
+  { partNumber:'A-35026859-01', description:'Pulley with gears for Z-Tensioner', available:1, actual:0, missing:1, kind:'missing', price:153.1725, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-35032274-01', description:'SSD for Alinity UIC', available:1, actual:0, missing:1, kind:'missing', price:356.28, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-90000095-02', description:'RSM Slot Sensor, 15 Slot', available:1, actual:0, missing:1, kind:'missing', price:254.8104, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-90000110-01', description:'RSM 2 Axis Driver', available:1, actual:0, missing:1, kind:'missing', price:529.576, priority:'HIGH', notes:'' },
+  { partNumber:'A-90000115-02', description:'RSM Slot Sensor, 10 Slot', available:1, actual:0, missing:1, kind:'missing', price:192.1608, priority:'MEDIUM', notes:'' },
+  { partNumber:'A-90000135-02', description:'PCB, Pipettor Control Board', available:1, actual:0, missing:1, kind:'missing', price:821.275, priority:'HIGH', notes:'' },
+  { partNumber:'A-90000140-01', description:'Reagent Loader Cartridge Sensor', available:1, actual:0, missing:1, kind:'missing', price:88.34, priority:'LOW', notes:'' },
+  { partNumber:'B-14237-15', description:'LUBRICANT,TEFLON OIL', available:5, actual:0, missing:5, kind:'missing', price:135.0375, priority:'HIGH', notes:'' },
+  { partNumber:'C-35016285-01', description:'Sensor, Trigger', available:2, actual:1, missing:1, kind:'short', price:206.7624, priority:'MEDIUM', notes:'' },
+  { partNumber:'C-35016361-01', description:'Filter, Water Bath', available:2, actual:0, missing:2, kind:'missing', price:385.715, priority:'HIGH', notes:'' },
+  { partNumber:'C-35016435-01', description:'Tbg, Syringe valve to Syringe, R1', available:1, actual:0, missing:1, kind:'missing', price:166.608, priority:'MEDIUM', notes:'' },
+  { partNumber:'C-35016509-01', description:'Tbg, R2 Inner', available:1, actual:0, missing:1, kind:'missing', price:90.09, priority:'LOW', notes:'' },
+  { partNumber:'C-35016590-01', description:'Spring, Reagent Segment', available:1, actual:0, missing:1, kind:'missing', price:21.16, priority:'LOW', notes:'' },
+  { partNumber:'C-35016639-01', description:'Pinch Valve, ICT Aspiration Pump', available:1, actual:0, missing:1, kind:'missing', price:576.4015, priority:'HIGH', notes:'' },
+  { partNumber:'C-35016657-01', description:'Sheet Valve, Vac. Pump', available:4, actual:3, missing:1, kind:'short', price:28.84, priority:'LOW', notes:'' },
+  { partNumber:'C-35016658-01', description:'O-ring, Vacuum Pump', available:4, actual:3, missing:1, kind:'short', price:28.96, priority:'LOW', notes:'' },
+  { partNumber:'C-35016687-01', description:'Cable, ICT Warming Housing Ground', available:1, actual:0, missing:1, kind:'missing', price:44.8, priority:'LOW', notes:'' },
+  { partNumber:'C-35016701-01', description:'TBG, PM SENSOR TO JOINT, R1', available:1, actual:0, missing:1, kind:'missing', price:192.7224, priority:'MEDIUM', notes:'' },
+  { partNumber:'C-35016756-02', description:'Cable, ICT to ICT Pre Amp', available:3, actual:0, missing:3, kind:'missing', price:382.195, priority:'HIGH', notes:'' },
+  { partNumber:'C-35017994-01', description:'Syringe Valve, Sample, R1, R2', available:1, actual:0, missing:1, kind:'missing', price:284.1384, priority:'MEDIUM', notes:'' },
+  { partNumber:'G-41013-01', description:'MODULE CONTROLLER BOARD', available:4, actual:1, missing:3, kind:'short', price:590.102, priority:'HIGH', notes:'1 - 3 missing in post' },
+  { partNumber:'G-41220-01', description:'BASIC LANE AP CENTER', available:1, actual:0, missing:1, kind:'missing', price:279.1464, priority:'MEDIUM', notes:'' },
+  { partNumber:'G-41261-01', description:'BLM BACKGROUND PLATE', available:1, actual:0, missing:1, kind:'missing', price:447.3995, priority:'MEDIUM', notes:'' },
+  { partNumber:'G-41300-01', description:'AM GRIPPER FINGER KIT', available:1, actual:0, missing:1, kind:'missing', price:385.08, priority:'MEDIUM', notes:'' },
+  { partNumber:'G-41565-01', description:'HOME POSITION SENSOR', available:1, actual:0, missing:1, kind:'missing', price:453.8125, priority:'MEDIUM', notes:'' },
+  { partNumber:'G-41689-01', description:'SHUTTER SLIDE BEARING SET', available:4, actual:0, missing:4, kind:'missing', price:73.4625, priority:'MEDIUM', notes:'' }
 ];
 const STOCK_REMAINING_DEFAULT = {
   '7-14237-01': 2,
@@ -2185,7 +2185,7 @@ function App() {
 
   const [stockOpen, setStockOpen] = useState(false);
   const [stockQuery, setStockQuery] = useState('');
-  const [stockSort, setStockSort] = useState('name'); /* name | qty | short | part */
+  const [stockSort, setStockSort] = useState('name'); /* name | qty | short | part | cost */
   const themesOpen = false;
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [themeTick, setThemeTick] = useState(0);
@@ -2478,11 +2478,15 @@ function App() {
         { header: 'Description', key: 'desc', width: 48 },
         { header: 'System Qty', key: 'sys', width: 12 },
         { header: 'Actual Qty', key: 'act', width: 12 },
-        { header: 'Missing', key: 'miss', width: 10 },
-        { header: 'Status', key: 'st', width: 12 }
+        { header: 'Missing Qty', key: 'miss', width: 12 },
+        { header: 'Status', key: 'st', width: 12 },
+        { header: 'Priority', key: 'pri', width: 10 },
+        { header: 'Unit Price', key: 'price', width: 12 },
+        { header: 'Missing Value', key: 'mval', width: 14 },
+        { header: 'Notes', key: 'notes', width: 28 }
       ];
       ws.spliceRows(1, 0, ['Type the count in Actual Qty when you find a part. Use the Status filter to see what is still missing.']);
-      ws.mergeCells('A1:F1');
+      ws.mergeCells('A1:J1');
       ws.getRow(2).font = { bold: true };
       rows.forEach(p => {
         ws.addRow({
@@ -2491,7 +2495,11 @@ function App() {
           sys: p.available,
           act: p.liveActual,
           miss: p.remaining,
-          st: p.status
+          st: p.status,
+          pri: p.priority || '',
+          price: p.price != null ? p.price : '',
+          mval: p.price != null ? Math.round(p.price * p.remaining * 10000) / 10000 : '',
+          notes: p.notes || ''
         });
       });
       const ok = rows.filter(p => p.status === 'OK').length;
@@ -5220,6 +5228,11 @@ function App() {
         return b.remaining - a.remaining;
       }
       if (sortKey === 'part') return a.partNumber.localeCompare(b.partNumber);
+      if (sortKey === 'cost') {
+        const ca = (a.price != null ? a.price : -1);
+        const cb = (b.price != null ? b.price : -1);
+        return (cb - ca) || a.partNumber.localeCompare(b.partNumber);
+      }
       /* name = description */
       return (a.description || '').localeCompare(b.description || '') || a.partNumber.localeCompare(b.partNumber);
     };
@@ -5229,6 +5242,7 @@ function App() {
       { key: 'name', label: 'Name' },
       { key: 'part', label: 'Part no.' },
       { key: 'qty', label: 'Qty left' },
+      { key: 'cost', label: 'Cost' },
       { key: 'short', label: 'Short first' }
     ];
 
@@ -5255,6 +5269,8 @@ function App() {
         e('div', { style: { fontSize: '0.68rem', color: GREY, fontWeight: 550, marginTop: '2px' } },
           (p.status === 'NOT FOUND' ? 'Not found  ·  missing ' : p.status === 'SHORT' ? 'Short by ' : 'Cleared  ·  was ') + p.start +
           '  ·  system ' + p.available + '  ·  had ' + p.actual +
+          (p.price != null ? '  ·  £' + Number(p.price).toFixed(2) : '') +
+          (p.priority ? '  ·  ' + p.priority : '') +
           (clearedRow ? '  ·  cleared from stock' : '')
         )
       ),
@@ -5356,16 +5372,7 @@ function App() {
 
       e('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0.1rem 0' } },
         e('span', { style: { fontSize: '0.72rem', fontWeight: 700, color: MID, letterSpacing: '0.04em', textTransform: 'uppercase' } },
-          'Still to clear  ·  ' + active.length),
-        e('button', {
-          type: 'button',
-          onClick: () => {
-            if (window.confirm('Reset all stock counts to the September 2026 stock check?')) {
-              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT), stockInventoryVersion: STOCK_INVENTORY_VERSION });
-            }
-          },
-          style: { border: 'none', background: 'none', color: GREY, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }
-        }, 'Reset')
+          'Still to clear  ·  ' + active.length)
       ),
 
       active.length === 0 && !q
