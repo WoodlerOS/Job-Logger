@@ -1693,258 +1693,162 @@ async function dbSet(k,v){try{const db=await openDB();await new Promise((res,rej
   const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(v,k);
   tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);});return true;}catch(err){return false;}}
 
+const STOCK_INVENTORY_VERSION = '2026-09-active';
 const STOCK_PARTS = [
-  { partNumber:'7-205346-01', description:'VLV ASSY, BULK SOLN (RoHS)', available:1, actual:0 },
-  { partNumber:'7-64407-01', description:'Gasket, Manifold Valve, Kit (RoHS)', available:2, actual:0 },
-  { partNumber:'7-76656-06', description:'ASSY, ITV (ROHS)', available:1, actual:0 },
-  { partNumber:'7-94851-01', description:'Super Lube Grease (RoHS)', available:1, actual:0 },
-  { partNumber:'7-96344-04', description:'100uL Trigger Pump (RoHS)', available:1, actual:0 },
-  { partNumber:'96163-102-D15-R', description:'ARC PUMP BODY 100MicroL (RoHS)', available:1, actual:0 },
-  { partNumber:'A-10003994-02', description:'Fittings Kit, Buffer Dilution System', available:1, actual:0 },
-  { partNumber:'A-10004887-01', description:'Sample, R1 and R2 Pipettor Arm Spring', available:1, actual:0 },
-  { partNumber:'A-30105976-01', description:'RSM Transport Theta Encoder Cable', available:1, actual:0 },
-  { partNumber:'A-30106369-02', description:'Tube, R1-R2 Pipettor Probe to PM Sensor', available:2, actual:0 },
-  { partNumber:'A-30106462-02', description:'Tubing, Sample Pipettor in to PM Sensor', available:1, actual:0 },
-  { partNumber:'A-30107985-02', description:'Motor, RSM Theta, Reinforced', available:1, actual:0 },
-  { partNumber:'A-30109444-03', description:'ASSY, WASTE CHUTE, LOWER', available:1, actual:0 },
-  { partNumber:'A-30109615-01', description:'RV Waste Chute Trap Door', available:1, actual:0 },
-  { partNumber:'A-30109807-03', description:'Pump, Vacuum, Dual Valve Intake and Exhaust', available:1, actual:0 },
-  { partNumber:'A-30109887-01', description:'Dispersion Pin Alignment Aid (set of 2)', available:1, actual:0 },
-  { partNumber:'A-30111449-01', description:'Waste Container', available:1, actual:0 },
-  { partNumber:'A-30111660-01', description:'Valve, Wash Cup, All Positions', available:1, actual:0 },
-  { partNumber:'A-30111671-01', description:'RSM Z-Rail Alignment Fixture', available:1, actual:0 },
-  { partNumber:'A-30111780-02', description:'Transfer Valve Manifold', available:1, actual:0 },
-  { partNumber:'A-30112778-01', description:'Probe Alignment Target, Induction Heater', available:1, actual:0 },
-  { partNumber:'A-30114769-02', description:'Bearing Grease, Refill', available:1, actual:0 },
-  { partNumber:'A-30116125-01', description:'Tube, Vacuum Pump Connect', available:1, actual:0 },
-  { partNumber:'A-30117110-01', description:'TRI/QUAD MODULE RSM FLEX CHAIN', available:1, actual:0 },
-  { partNumber:'A-35001001-02', description:'Cable, RV Translate and Pusher Motor', available:1, actual:0 },
-  { partNumber:'A-35002355-02', description:'Motor, Pipettor Z Drive', available:1, actual:0 },
-  { partNumber:'A-35002424-01', description:'SICK SENSOR -with cable', available:1, actual:0 },
-  { partNumber:'A-35002434-01', description:'ASSY, REAGENT ANTENNA', available:1, actual:0 },
-  { partNumber:'A-35002446-01', description:'Cable, PP ANT, Sample PIP', available:1, actual:0 },
-  { partNumber:'A-35002458-01', description:'RSM Transport Carrier Pick Detector Cable', available:1, actual:0 },
-  { partNumber:'A-35002479-01', description:'CABLE, WZ #1 LIFT, UCB', available:1, actual:0 },
-  { partNumber:'A-35002494-01', description:'CABLE, WZ #2 LIFT, UCB', available:1, actual:0 },
-  { partNumber:'A-35003602-01', description:'Z Belt Tension Assembly', available:1, actual:0 },
-  { partNumber:'A-35005397-03', description:'Cable, RSM Transport Interface SERDES', available:1, actual:0 },
-  { partNumber:'A-35005850-01', description:'Reagent Loader Z Motor Cable', available:1, actual:0 },
-  { partNumber:'A-35006339-01', description:'Washcup Trigger Isolation Valve Cable', available:1, actual:0 },
-  { partNumber:'A-35012783-01', description:'Memory Module (RAM), UIC', available:2, actual:0 },
-  { partNumber:'A-35014210-41', description:'CABS Key Cap assembly for Trigger', available:1, actual:0 },
-  { partNumber:'A-35017070-02', description:'Vacuum Pump, Dual Head', available:1, actual:0 },
-  { partNumber:'A-35017343-01', description:'Control Board, Vacuum Pump Universal', available:1, actual:0 },
-  { partNumber:'A-35018581-01', description:'Alignment Aid, Induction Heater Wash Cup', available:2, actual:0 },
-  { partNumber:'A-35022459-02', description:'Vacuum Accumulator Cap and Sensor', available:1, actual:0 },
-  { partNumber:'A-35026859-01', description:'Pulley with gears for Z-Tensioner', available:2, actual:0 },
-  { partNumber:'A-35030062-01', description:'2 Liter Liquid Separator Bottle', available:1, actual:0 },
-  { partNumber:'A-90000050-02', description:'PCB, RSM Load/Unload Controller', available:1, actual:0 },
-  { partNumber:'A-90000095-02', description:'RSM Slot Sensor, 15 Slot', available:1, actual:0 },
-  { partNumber:'A-90000110-01', description:'RSM 2 Axis Driver', available:1, actual:0 },
-  { partNumber:'A-90000115-02', description:'RSM Slot Sensor, 10 Slot', available:1, actual:0 },
-  { partNumber:'A-90000140-01', description:'Reagent Loader Cartridge Sensor', available:1, actual:0 },
-  { partNumber:'B-14237-15', description:'LUBRICANT,TEFLON OIL', available:1, actual:0 },
-  { partNumber:'C-35016361-01', description:'Filter, Water Bath', available:2, actual:0 },
-  { partNumber:'C-35016432-02', description:'Tbg, Syringe to PM Sensor,  R1', available:1, actual:0 },
-  { partNumber:'C-35016435-01', description:'Tbg, Syringe valve to Syringe, R1', available:1, actual:0 },
-  { partNumber:'C-35016447-01', description:'Cup, ICT-Ref', available:1, actual:0 },
-  { partNumber:'C-35016505-01', description:'Pipettor, Reagent R2 Elevator', available:1, actual:0 },
-  { partNumber:'C-35016590-01', description:'Spring, Reagent Segment', available:2, actual:0 },
-  { partNumber:'C-35016639-01', description:'Pinch Valve, ICT Aspiration Pump', available:1, actual:0 },
-  { partNumber:'C-35016687-01', description:'Cable, ICT Warming Housing Ground', available:1, actual:0 },
-  { partNumber:'C-35016701-01', description:'TBG, PM SENSOR TO JOINT, R1', available:1, actual:0 },
-  { partNumber:'C-35016756-02', description:'Cable, ICT to ICT Pre Amp', available:2, actual:0 },
-  { partNumber:'C-35016783-02', description:'ICT Warming Ring', available:1, actual:0 },
-  { partNumber:'C-35017994-01', description:'Syringe Valve, Sample, R1, R2', available:1, actual:0 },
-  { partNumber:'G-41015-01', description:'Supply distribution board 3', available:1, actual:0 },
-  { partNumber:'G-41063-01', description:'PCB peak can usb adapter', available:1, actual:0 },
-  { partNumber:'G-41222-01', description:'Basic lane AP right', available:1, actual:0 },
-  { partNumber:'G-41261-01', description:'BLM BACKGROUND PLATE', available:1, actual:0 },
-  { partNumber:'G-41378-01', description:'ROBOT GRIPPER UNIT', available:2, actual:0 },
-  { partNumber:'G-41530-01', description:'ROBOT GRIPPER ECCENTRIC SET', available:2, actual:0 },
-  { partNumber:'G-41565-01', description:'HOME POSITION SENSOR', available:1, actual:0 },
-  { partNumber:'G-41689-01', description:'SHUTTER SLIDE BEARING SET', available:4, actual:0 },
-  { partNumber:'G-41750-01', description:'BCR CLV 601', available:1, actual:0 },
-  { partNumber:'G-50102-01', description:'SERVICE CONNECTOR, 1+2, 3+4', available:1, actual:0 },
-  { partNumber:'G-55009-01', description:'ERNI PLUG IN DISCONNECTING TOOL', available:1, actual:0 },
-  { partNumber:'7-203171-01', description:'Tubing, Adapter (RoHS)', available:1, actual:1 },
-  { partNumber:'7-205229-02', description:'NOZZLE,#2 and #3 (RoHS)', available:1, actual:1 },
-  { partNumber:'7-77603-01', description:'Seal only, Trigger/Pre-Trigger Heater fitting', available:1, actual:1 },
-  { partNumber:'A-10002838-01', description:'RSM Transport Roller Bearing - Quan 6', available:1, actual:1 },
-  { partNumber:'A-10003442-01', description:'Filter Kit, Dilution Assembly', available:2, actual:1 },
-  { partNumber:'A-10004157-01', description:'Nano Fuse Kit - PC Board - All', available:1, actual:1 },
-  { partNumber:'A-10004640-01', description:'VITON O-RING, SIZE-008', available:1, actual:1 },
-  { partNumber:'A-10006463-01', description:'32 GB Flash Drive - Blank', available:1, actual:1 },
-  { partNumber:'A-100292-01', description:'Fitting Kit, Vacuum Regulator', available:1, actual:1 },
-  { partNumber:'A-101385-01', description:'Home Sensor, Process Path and Reagent Transport', available:4, actual:1 },
-  { partNumber:'A-204217-02', description:'PM Sensor, Tested, Short Cable', available:2, actual:1 },
-  { partNumber:'A-30103571-01', description:'Reagent Carousel Calibration Wedge', available:0, actual:1 },
-  { partNumber:'A-30103732-04', description:'Cooler Module', available:1, actual:1 },
-  { partNumber:'A-30103773-01', description:'RV Unload Chute', available:1, actual:1 },
-  { partNumber:'A-30104239-03', description:'Valve, Bypass, Dispense Manifold', available:1, actual:1 },
-  { partNumber:'A-30104970-01', description:'Wash Zone Lift Motor', available:0, actual:1 },
-  { partNumber:'A-30105018-02', description:'Wash Zone Slide Rail Retainer', available:1, actual:1 },
-  { partNumber:'A-30105424-01', description:'TED Engine Thermistor', available:1, actual:1 },
-  { partNumber:'A-30105717-01', description:'Transport Z Motor Assembly', available:2, actual:1 },
-  { partNumber:'A-30109536-02', description:'PCB, Wash Monitor Sensor with Probe Contacts', available:1, actual:1 },
-  { partNumber:'A-30111054-02', description:'Servo Driver 16 Amp', available:1, actual:1 },
-  { partNumber:'A-30111055-02', description:'Servo Driver 25 Amp', available:1, actual:1 },
-  { partNumber:'A-30111871-02', description:'Tubing Clip, WZ1', available:3, actual:1 },
-  { partNumber:'A-30115352-01', description:'Shutter Pin Repair Kit', available:1, actual:1 },
-  { partNumber:'A-35001317-01', description:'Washcup Valve', available:1, actual:1 },
-  { partNumber:'A-35001791-02', description:'Wash Zone Manifold, NO VALVES', available:3, actual:1 },
-  { partNumber:'A-35002431-01', description:'Pipettor Theta Home Sensor Cable', available:1, actual:1 },
-  { partNumber:'A-35005902-01', description:'Transport Theta Home Sensor Cable', available:1, actual:1 },
-  { partNumber:'A-35006187-01', description:'Sample Transport Home Sensor - Right', available:2, actual:1 },
-  { partNumber:'A-35006630-01', description:'PM Sensor, Assy', available:2, actual:1 },
-  { partNumber:'A-35018404-01', description:'Alignment Aid, Pick Spring', available:1, actual:1 },
-  { partNumber:'A-90000135-02', description:'PCB, Pipettor Control Board', available:2, actual:1 },
-  { partNumber:'A-90001065-01', description:'RSM Pick Sensor PCB Kit', available:1, actual:1 },
-  { partNumber:'A-90001090-01', description:'Circuit Board, Temp-Optics Controller', available:1, actual:1 },
-  { partNumber:'C-35016427-02', description:'P. M. Sensor', available:1, actual:1 },
-  { partNumber:'C-35016431-03', description:'Tbg, Syringe to PM Sensor, Sample', available:1, actual:1 },
-  { partNumber:'C-35016436-01', description:'Tbg, Syringe valve to Syringe, R2', available:1, actual:1 },
-  { partNumber:'C-35016460-03', description:'Wash Cup, R1 & R2 Reagent Probes', available:1, actual:1 },
-  { partNumber:'C-35016503-01', description:'Tbg, Reagent Inner, R1', available:1, actual:1 },
-  { partNumber:'C-35016509-01', description:'Tbg, R2 Inner', available:1, actual:1 },
-  { partNumber:'C-35016575-01', description:'Home Sensor, Reagent Carousel', available:1, actual:1 },
-  { partNumber:'C-35016640-01', description:'Tubing, ICT Pinch Valve', available:4, actual:1 },
-  { partNumber:'C-35016871-01', description:'Pinch Tubing, CABS', available:1, actual:1 },
-  { partNumber:'C-35017409-01', description:'Clamp,Syringe Improved', available:1, actual:1 },
-  { partNumber:'G-41019-02', description:'PCB ROBOT DISTRIBUTION 2', available:1, actual:1 },
-  { partNumber:'G-41052-01', description:'Z-BRAKE ACTOR CABLE', available:1, actual:1 },
-  { partNumber:'G-41148-01', description:'DOOR SECURITY ACTOR AM/CM', available:0, actual:1 },
-  { partNumber:'G-41186-01', description:'CORE ADAPTER', available:1, actual:1 },
-  { partNumber:'G-41220-01', description:'Basic lane AP center', available:2, actual:1 },
-  { partNumber:'G-41300-01', description:'AM GRIPPER FINGER KIT', available:2, actual:1 },
-  { partNumber:'G-41304-01', description:'CLUTCH PLATE ALUMINIUM', available:3, actual:1 },
-  { partNumber:'G-41368-01', description:'REVOLVER PUSH DOWN SPRINGS', available:1, actual:1 },
-  { partNumber:'G-41415-01', description:'Fuse 0.75AT', available:1, actual:1 },
-  { partNumber:'G-41547-01', description:'MOTOR INCREMENTAL ENCODER', available:1, actual:1 },
-  { partNumber:'G-41843-01', description:'SAL UI DISPLAY UNIT', available:1, actual:1 },
-  { partNumber:'7-77664-02', description:'Fitting Kit, Trigger_Pre-trigger (RoHS)', available:2, actual:2 },
-  { partNumber:'A-30111940-03', description:'Vacuum Pump Repair Kit', available:3, actual:2 },
-  { partNumber:'C-35016285-01', description:'Sensor, Trigger', available:2, actual:2 },
-  { partNumber:'C-35016446-01', description:'Cup, ICT-Ref with Probes', available:2, actual:2 },
-  { partNumber:'C-35016690-01', description:'Tbg, ICT to ICT Valve NC', available:3, actual:2 },
-  { partNumber:'C-35016708-02', description:'TBG, HCW NOZZLE TO HCW PUMP HEAD', available:2, actual:2 },
-  { partNumber:'G-41013-01', description:'Module controller board', available:3, actual:2 },
-  { partNumber:'G-41017-02', description:'PICCOLA BOX 2 CHANNEL', available:2, actual:2 },
-  { partNumber:'G-41022-01', description:'PCB Robot distribution 5', available:2, actual:2 },
-  { partNumber:'G-41621-01', description:'RM Separating spring set', available:2, actual:2 },
-  { partNumber:'7-200378-01', description:'Head, Waste Pump (RoHS)', available:5, actual:3 },
-  { partNumber:'7-202464-01', description:'Tubing, Peristaltic Head (RoHS)', available:3, actual:3 },
-  { partNumber:'A-30105128-01', description:'Reagent Wedge Spring', available:3, actual:3 },
-  { partNumber:'C-35016657-01', description:'Sheet Valve, Vac. Pump', available:4, actual:3 },
-  { partNumber:'C-35016658-01', description:'O-ring, Vacuum Pump', available:4, actual:3 },
-  { partNumber:'C-35024673-01', description:'Cuvette Wiper', available:1, actual:3 },
-  { partNumber:'G-41303-01', description:'ELECTRIC MOTOR 24V-11W-VI', available:1, actual:3 },
-  { partNumber:'H-10003557-01', description:'SCR, SKT HD CAP, M2x.4 X 3 MM, 18-8 SST', available:3, actual:3 },
-  { partNumber:'C-35016869-01', description:'Tubing, Pump Head Water Bath Fill', available:4, actual:4 },
-  { partNumber:'G-41321-01', description:'Cross switch controller', available:4, actual:4 },
-  { partNumber:'G-41344-01', description:'ELECTRIC MOTOR 24V-11W-VIII', available:4, actual:4 },
-  { partNumber:'G-41487-01', description:'CAP SEPARATION PLATE', available:4, actual:4 },
-  { partNumber:'C-35016656-01', description:'Diaphragm, Vac. Pump', available:7, actual:7 },
-  { partNumber:'A-30101616-01', description:'Carrier Latch', available:9, actual:9 }
+  { partNumber:'7-14237-01', description:'DC-111 Silicone compound, (RoHS)', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'7-200378-01', description:'Head, Waste Pump (RoHS)', available:5, actual:3, missing:2, kind:'short' },
+  { partNumber:'7-202464-01', description:'Tubing, Peristaltic Head (RoHS)', available:5, actual:4, missing:1, kind:'short' },
+  { partNumber:'7-204410-02', description:'DC-4 Silicone Dielectric Grease', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'7-205346-01', description:'VLV ASSY, BULK SOLN (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'7-64407-01', description:'Gasket, Manifold Valve, Kit (RoHS)', available:2, actual:1, missing:1, kind:'short' },
+  { partNumber:'7-76656-06', description:'ASSY, ITV (ROHS)', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'7-77991-01', description:'Thermistor, P Path (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'7-94851-01', description:'Super Lube Grease (RoHS)', available:3, actual:0, missing:3, kind:'missing' },
+  { partNumber:'7-96344-04', description:'100uL Trigger Pump (RoHS)', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'96163-102-D15-R', description:'ARC PUMP BODY 100MicroL (RoHS)', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-10003442-01', description:'Filter Kit, Dilution Assembly', available:2, actual:1, missing:1, kind:'short' },
+  { partNumber:'A-10004887-01', description:'Sample, R1 and R2 Pipettor Arm Spring', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-10008278-02', description:'Funnel, 8 oz Plastic', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-101385-01', description:'Home Sensor, Process Path and Reagent Transport', available:4, actual:1, missing:3, kind:'short' },
+  { partNumber:'A-204217-02', description:'PM Sensor, Tested, Short Cable', available:3, actual:1, missing:2, kind:'short' },
+  { partNumber:'A-30102007-02', description:'Roller Kit, RSM Transport', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30103383-03', description:'Main Power Supply, processing Module', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30105128-01', description:'Reagent Wedge Spring', available:5, actual:2, missing:3, kind:'short' },
+  { partNumber:'A-30105717-01', description:'Transport Z Motor Assembly', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30105976-01', description:'RSM Transport Theta Encoder Cable', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30106369-02', description:'Tube, R1-R2 Pipettor Probe to PM Sensor', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-30108557-02', description:'Boom Assembly, R1-R2 Pipettor, Improved Access', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30109444-03', description:'ASSY, WASTE CHUTE, LOWER', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-30109615-01', description:'RV Waste Chute Trap Door', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30109807-03', description:'Pump, Vacuum, Dual Valve Intake and Exhaust', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30111449-01', description:'Waste Container', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30111660-01', description:'Valve, Wash Cup, All Positions', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-30111780-02', description:'Transfer Valve Manifold', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30111871-02', description:'Tubing Clip, WZ1', available:2, actual:1, missing:1, kind:'short' },
+  { partNumber:'A-30111940-03', description:'Vacuum Pump Repair Kit', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30112778-01', description:'Probe Alignment Target, Induction Heater', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30113530-01', description:'Grease Pump', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30113561-01', description:'Tubing, Wash Zone at Waste Manifold', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30114769-02', description:'Bearing Grease, Refill', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-30116125-01', description:'Tube, Vacuum Pump Connect', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-30117110-01', description:'TRI/QUAD MODULE RSM FLEX CHAIN', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35001001-02', description:'Cable, RV Translate and Pusher Motor', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35001317-01', description:'Washcup Valve', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35001791-02', description:'Wash Zone Manifold, NO VALVES', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-35002434-01', description:'ASSY, REAGENT ANTENNA', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35002446-01', description:'Cable, PP ANT, Sample PIP', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35002494-01', description:'CABLE, WZ #2 LIFT, UCB', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35005847-01', description:'Reagent Loader Z Home Sensor Cable', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35005850-01', description:'Reagent Loader Z Motor Cable', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35006339-01', description:'Washcup Trigger Isolation Valve Cable', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35006630-01', description:'PM Sensor, Assy', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'A-35017070-02', description:'Vacuum Pump, Dual Head', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35017343-01', description:'Control Board, Vacuum Pump Universal', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35022459-02', description:'Vacuum Accumulator Cap and Sensor', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35026859-01', description:'Pulley with gears for Z-Tensioner', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-35032274-01', description:'SSD for Alinity UIC', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-90000095-02', description:'RSM Slot Sensor, 15 Slot', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-90000110-01', description:'RSM 2 Axis Driver', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-90000115-02', description:'RSM Slot Sensor, 10 Slot', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-90000135-02', description:'PCB, Pipettor Control Board', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'A-90000140-01', description:'Reagent Loader Cartridge Sensor', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'B-14237-15', description:'LUBRICANT,TEFLON OIL', available:5, actual:0, missing:5, kind:'missing' },
+  { partNumber:'C-35016285-01', description:'Sensor, Trigger', available:2, actual:1, missing:1, kind:'short' },
+  { partNumber:'C-35016361-01', description:'Filter, Water Bath', available:2, actual:0, missing:2, kind:'missing' },
+  { partNumber:'C-35016435-01', description:'Tbg, Syringe valve to Syringe, R1', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016509-01', description:'Tbg, R2 Inner', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016590-01', description:'Spring, Reagent Segment', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016639-01', description:'Pinch Valve, ICT Aspiration Pump', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016657-01', description:'Sheet Valve, Vac. Pump', available:4, actual:3, missing:1, kind:'short' },
+  { partNumber:'C-35016658-01', description:'O-ring, Vacuum Pump', available:4, actual:3, missing:1, kind:'short' },
+  { partNumber:'C-35016687-01', description:'Cable, ICT Warming Housing Ground', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016701-01', description:'TBG, PM SENSOR TO JOINT, R1', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'C-35016756-02', description:'Cable, ICT to ICT Pre Amp', available:3, actual:0, missing:3, kind:'missing' },
+  { partNumber:'C-35017994-01', description:'Syringe Valve, Sample, R1, R2', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'G-41013-01', description:'MODULE CONTROLLER BOARD', available:4, actual:1, missing:3, kind:'short' },
+  { partNumber:'G-41220-01', description:'BASIC LANE AP CENTER', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'G-41261-01', description:'BLM BACKGROUND PLATE', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'G-41300-01', description:'AM GRIPPER FINGER KIT', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'G-41565-01', description:'HOME POSITION SENSOR', available:1, actual:0, missing:1, kind:'missing' },
+  { partNumber:'G-41689-01', description:'SHUTTER SLIDE BEARING SET', available:4, actual:0, missing:4, kind:'missing' }
 ];
 const STOCK_REMAINING_DEFAULT = {
+  '7-14237-01': 2,
+  '7-200378-01': 2,
+  '7-202464-01': 1,
+  '7-204410-02': 1,
   '7-205346-01': 1,
-  '7-64407-01': 2,
+  '7-64407-01': 1,
   '7-76656-06': 1,
-  '7-94851-01': 1,
+  '7-77991-01': 1,
+  '7-94851-01': 3,
   '7-96344-04': 1,
-  '96163-102-D15-R': 1,
-  'A-10003994-02': 1,
+  '96163-102-D15-R': 2,
+  'A-10003442-01': 1,
   'A-10004887-01': 1,
+  'A-10008278-02': 1,
+  'A-101385-01': 3,
+  'A-204217-02': 2,
+  'A-30102007-02': 1,
+  'A-30103383-03': 1,
+  'A-30105128-01': 3,
+  'A-30105717-01': 1,
   'A-30105976-01': 1,
   'A-30106369-02': 2,
-  'A-30106462-02': 1,
-  'A-30107985-02': 1,
-  'A-30109444-03': 1,
+  'A-30108557-02': 1,
+  'A-30109444-03': 2,
   'A-30109615-01': 1,
   'A-30109807-03': 1,
-  'A-30109887-01': 1,
   'A-30111449-01': 1,
-  'A-30111660-01': 1,
-  'A-30111671-01': 1,
+  'A-30111660-01': 2,
   'A-30111780-02': 1,
+  'A-30111871-02': 1,
+  'A-30111940-03': 1,
   'A-30112778-01': 1,
-  'A-30114769-02': 1,
+  'A-30113530-01': 1,
+  'A-30113561-01': 1,
+  'A-30114769-02': 2,
   'A-30116125-01': 1,
   'A-30117110-01': 1,
   'A-35001001-02': 1,
-  'A-35002355-02': 1,
-  'A-35002424-01': 1,
+  'A-35001317-01': 1,
+  'A-35001791-02': 2,
   'A-35002434-01': 1,
   'A-35002446-01': 1,
-  'A-35002458-01': 1,
-  'A-35002479-01': 1,
   'A-35002494-01': 1,
-  'A-35003602-01': 1,
-  'A-35005397-03': 1,
+  'A-35005847-01': 1,
   'A-35005850-01': 1,
   'A-35006339-01': 1,
-  'A-35012783-01': 2,
-  'A-35014210-41': 1,
+  'A-35006630-01': 2,
   'A-35017070-02': 1,
   'A-35017343-01': 1,
-  'A-35018581-01': 2,
   'A-35022459-02': 1,
-  'A-35026859-01': 2,
-  'A-35030062-01': 1,
-  'A-90000050-02': 1,
+  'A-35026859-01': 1,
+  'A-35032274-01': 1,
   'A-90000095-02': 1,
   'A-90000110-01': 1,
   'A-90000115-02': 1,
-  'A-90000140-01': 1,
-  'B-14237-15': 1,
-  'C-35016361-01': 2,
-  'C-35016432-02': 1,
-  'C-35016435-01': 1,
-  'C-35016447-01': 1,
-  'C-35016505-01': 1,
-  'C-35016590-01': 2,
-  'C-35016639-01': 1,
-  'C-35016687-01': 1,
-  'C-35016701-01': 1,
-  'C-35016756-02': 2,
-  'C-35016783-02': 1,
-  'C-35017994-01': 1,
-  'G-41015-01': 1,
-  'G-41063-01': 1,
-  'G-41222-01': 1,
-  'G-41261-01': 1,
-  'G-41378-01': 2,
-  'G-41530-01': 2,
-  'G-41565-01': 1,
-  'G-41689-01': 4,
-  'G-41750-01': 1,
-  'G-50102-01': 1,
-  'G-55009-01': 1,
-  'A-10003442-01': 1,
-  'A-101385-01': 3,
-  'A-204217-02': 1,
-  'A-30103571-01': 1,
-  'A-30104970-01': 1,
-  'A-30105717-01': 1,
-  'A-30111871-02': 2,
-  'A-35001791-02': 2,
-  'A-35006187-01': 1,
-  'A-35006630-01': 1,
   'A-90000135-02': 1,
-  'C-35016640-01': 3,
-  'G-41148-01': 1,
-  'G-41220-01': 1,
-  'G-41300-01': 1,
-  'G-41304-01': 2,
-  'A-30111940-03': 1,
-  'C-35016690-01': 1,
-  'G-41013-01': 1,
-  '7-200378-01': 2,
+  'A-90000140-01': 1,
+  'B-14237-15': 5,
+  'C-35016285-01': 1,
+  'C-35016361-01': 2,
+  'C-35016435-01': 1,
+  'C-35016509-01': 1,
+  'C-35016590-01': 1,
+  'C-35016639-01': 1,
   'C-35016657-01': 1,
   'C-35016658-01': 1,
-  'C-35024673-01': 2,
-  'G-41303-01': 2
+  'C-35016687-01': 1,
+  'C-35016701-01': 1,
+  'C-35016756-02': 3,
+  'C-35017994-01': 1,
+  'G-41013-01': 3,
+  'G-41220-01': 1,
+  'G-41261-01': 1,
+  'G-41300-01': 1,
+  'G-41565-01': 1,
+  'G-41689-01': 4
 };
 const DEFAULT_SETTINGS = {
   darkMode: false,
@@ -2473,8 +2377,18 @@ function App() {
 
         const loaded = data.settings || {};
         const merged = { ...DEFAULT_SETTINGS, ...loaded };
-        if (!loaded.stockRemaining) merged.stockRemaining = Object.assign({}, STOCK_REMAINING_DEFAULT);
-        else merged.stockRemaining = Object.assign({}, STOCK_REMAINING_DEFAULT, loaded.stockRemaining);
+        if (loaded.stockInventoryVersion !== STOCK_INVENTORY_VERSION) {
+          merged.stockRemaining = Object.assign({}, STOCK_REMAINING_DEFAULT);
+          merged.stockInventoryVersion = STOCK_INVENTORY_VERSION;
+        } else if (!loaded.stockRemaining) {
+          merged.stockRemaining = Object.assign({}, STOCK_REMAINING_DEFAULT);
+        } else {
+          const cleaned = {};
+          Object.keys(STOCK_REMAINING_DEFAULT).forEach(k => {
+            cleaned[k] = loaded.stockRemaining[k] != null ? loaded.stockRemaining[k] : STOCK_REMAINING_DEFAULT[k];
+          });
+          merged.stockRemaining = cleaned;
+        }
         setSettings(merged);
         applyDarkMode();
         applySurfaceLightness();
@@ -2530,44 +2444,69 @@ function App() {
     const cur = getStockRemaining();
     const max = STOCK_REMAINING_DEFAULT[partNumber] != null ? STOCK_REMAINING_DEFAULT[partNumber] : 0;
     const nextVal = Math.max(0, Math.min(max, (cur[partNumber] != null ? cur[partNumber] : max) + delta));
-    saveSettings({ stockRemaining: { ...cur, [partNumber]: nextVal } });
+    saveSettings({ stockRemaining: { ...cur, [partNumber]: nextVal }, stockInventoryVersion: STOCK_INVENTORY_VERSION });
   };
 
   const stockRowsAll = () => {
     const remaining = getStockRemaining();
-    return STOCK_PARTS.filter(p => STOCK_REMAINING_DEFAULT[p.partNumber] != null).map(p => ({
-      ...p,
-      remaining: remaining[p.partNumber] != null ? remaining[p.partNumber] : (STOCK_REMAINING_DEFAULT[p.partNumber] || 0),
-      start: STOCK_REMAINING_DEFAULT[p.partNumber] || 0,
-      kind: p.available > p.actual ? 'short' : 'extra'
-    }));
+    return STOCK_PARTS.filter(p => STOCK_REMAINING_DEFAULT[p.partNumber] != null).map(p => {
+      const start = STOCK_REMAINING_DEFAULT[p.partNumber] || 0;
+      const rem = remaining[p.partNumber] != null ? remaining[p.partNumber] : start;
+      const liveActual = Math.max(0, (p.available || 0) - rem);
+      let status = 'OK';
+      if (rem > 0 && liveActual <= 0) status = 'NOT FOUND';
+      else if (rem > 0) status = 'SHORT';
+      return {
+        ...p,
+        remaining: rem,
+        start,
+        liveActual,
+        status,
+        kind: p.kind || (p.actual <= 0 ? 'missing' : 'short')
+      };
+    });
   };
 
   const exportStockExcel = async () => {
     if (typeof ExcelJS === 'undefined') { alert('Still loading — try again in a moment.'); return; }
     try {
-      const rows = stockRowsAll().filter(p => p.remaining > 0);
+      const rows = stockRowsAll().slice().sort((a,b) => a.partNumber.localeCompare(b.partNumber));
       const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('Remaining stock');
+      const ws = wb.addWorksheet('Inventory');
       ws.columns = [
         { header: 'Part Number', key: 'pn', width: 22 },
         { header: 'Description', key: 'desc', width: 48 },
-        { header: 'Remaining', key: 'rem', width: 12 },
-        { header: 'Original discrepancy', key: 'start', width: 18 },
-        { header: 'Type', key: 'kind', width: 10 },
-        { header: 'System qty', key: 'avail', width: 12 },
-        { header: 'Had in stock', key: 'actual', width: 14 }
+        { header: 'System Qty', key: 'sys', width: 12 },
+        { header: 'Actual Qty', key: 'act', width: 12 },
+        { header: 'Missing', key: 'miss', width: 10 },
+        { header: 'Status', key: 'st', width: 12 }
       ];
-      ws.getRow(1).font = { bold: true };
-      rows.sort((a,b) => a.partNumber.localeCompare(b.partNumber)).forEach(p => {
+      ws.spliceRows(1, 0, ['Type the count in Actual Qty when you find a part. Use the Status filter to see what is still missing.']);
+      ws.mergeCells('A1:F1');
+      ws.getRow(2).font = { bold: true };
+      rows.forEach(p => {
         ws.addRow({
-          pn: p.partNumber, desc: p.description, rem: p.remaining, start: p.start,
-          kind: p.kind === 'short' ? 'Short' : 'Extra', avail: p.available, actual: p.actual
+          pn: p.partNumber,
+          desc: p.description,
+          sys: p.available,
+          act: p.liveActual,
+          miss: p.remaining,
+          st: p.status
         });
+      });
+      const ok = rows.filter(p => p.status === 'OK').length;
+      const nf = rows.filter(p => p.status === 'NOT FOUND').length;
+      const sh = rows.filter(p => p.status === 'SHORT').length;
+      ws.addRow({
+        pn: 'TOTALS', desc: '',
+        sys: rows.reduce((n,p)=>n+(p.available||0),0),
+        act: rows.reduce((n,p)=>n+(p.liveActual||0),0),
+        miss: rows.reduce((n,p)=>n+(p.remaining||0),0),
+        st: ok + ' OK  |  ' + nf + ' not found  |  ' + sh + ' short'
       });
       const buf = await wb.xlsx.writeBuffer();
       const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const name = 'Stock-remaining-' + todayISO() + '.xlsx';
+      const name = 'Parts_Inventory_Active_Stock-' + todayISO() + '.xlsx';
       if (navigator.share && navigator.canShare) {
         try {
           const file = new File([blob], name, { type: blob.type });
@@ -5314,7 +5253,7 @@ function App() {
           fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.1px'
         } }, p.partNumber),
         e('div', { style: { fontSize: '0.68rem', color: GREY, fontWeight: 550, marginTop: '2px' } },
-          (p.kind === 'short' ? 'Short by ' : 'Extra ') + p.start +
+          (p.status === 'NOT FOUND' ? 'Not found  ·  missing ' : p.status === 'SHORT' ? 'Short by ' : 'Cleared  ·  was ') + p.start +
           '  ·  system ' + p.available + '  ·  had ' + p.actual +
           (clearedRow ? '  ·  cleared from stock' : '')
         )
@@ -5387,7 +5326,7 @@ function App() {
       ),
 
       e('div', { style: { fontSize: '0.74rem', color: GREY, fontWeight: 550, lineHeight: 1.4, padding: '0 0.1rem' } },
-        'Isolated checklist for discrepancy parts — independent of tickets. Use − to clear items; zero moves them to the bottom. Tickets do not change these counts.'),
+        'Only missing and short parts from the September 2026 stock check. Use − when you find or use one. Excel exports this same sheet with your live counts.'),
 
       e('input', {
         type: 'search',
@@ -5421,8 +5360,8 @@ function App() {
         e('button', {
           type: 'button',
           onClick: () => {
-            if (window.confirm('Reset all stock counts to the August 2026 spreadsheet values?')) {
-              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT) });
+            if (window.confirm('Reset all stock counts to the September 2026 stock check?')) {
+              saveSettings({ stockRemaining: Object.assign({}, STOCK_REMAINING_DEFAULT), stockInventoryVersion: STOCK_INVENTORY_VERSION });
             }
           },
           style: { border: 'none', background: 'none', color: GREY, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }
